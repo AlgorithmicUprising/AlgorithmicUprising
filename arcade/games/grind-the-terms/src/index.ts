@@ -7,7 +7,8 @@ type Power = 'shield' | 'airboost';
 type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power}> };
 type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; scored:boolean; collected:boolean };
 type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
-type Art = { images:Record<string,HTMLImageElement>; palette?:Record<string,string>; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
+type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number};
+type Art = { images:Record<string,HTMLImageElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
 const chunks = chunksData as Chunk[];
 const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
 
@@ -75,7 +76,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const handleCollision=(o:Obstacle)=>{
     if(shield){shield=false;shieldsUsed++;o.collected=true;bonus+=1;emit('game:shield',{used:true});return}
-    alive=false;cause=o.kind;bailRemaining=.4;state('bail');
+    alive=false;cause=o.kind;bailRemaining=.55;state('bail');
     emit('game:bail',{cause,score:score()});
   };
   const collect=(o:Obstacle)=>{
@@ -162,22 +163,25 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       const skinUrl=new URL(url,document.baseURI);
       const response=await fetch(skinUrl.toString(),{credentials:'omit'});
       if(!response.ok)throw new Error('skin HTTP '+response.status);
-      const data=await response.json() as {game:string;name?:string;files?:Record<string,string>;palette?:Record<string,string>;anims?:Art['anims']};
+      const data=await response.json() as {game:string;name?:string;files?:Record<string,string>;palette?:Record<string,string>;grid?:Art['grid'];anims?:Art['anims']};
       if(data.game!=='grind-the-terms'||!data.files)throw new Error('Unsupported skin data');
       const images:Record<string,HTMLImageElement>={};
       await Promise.all(Object.entries(data.files).map(async ([key,path])=>{
         const image=new Image();image.decoding='async';image.src=new URL(path,skinUrl).href;await image.decode();images[key]=image;
       }));
       if(request!==skinRequest)return;
-      art={images,name:data.name||'Fony',palette:data.palette,anims:data.anims};
+      if(data.grid?.skater){const g=data.grid.skater,image=images.skater;if(!image||!Number.isInteger(g.cellW)||!Number.isInteger(g.cellH)||!Number.isInteger(g.columns)||g.cellW<16||g.cellH<16||g.columns<1||image.naturalWidth<g.columns*g.cellW||image.naturalHeight<Math.ceil(39/g.columns)*g.cellH)throw new Error('Incomplete Fony sprite atlas grid')}
+      art={images,name:data.name||'Fony',palette:data.palette,grid:data.grid,anims:data.anims};
       emit('game:skin-loaded',{skin:'au',usingPlaceholder:false,assets:Object.keys(images)});
     }catch(error){if(request!==skinRequest)return;art=null;emit('game:error',{code:'SKIN_LOAD_FAILED',message:String(error),usingPlaceholder:true})}
   }
 
   const drawSheet=(ctx:CanvasRenderingContext2D,key:string,col:number,row:number,x:number,y:number,w:number,h:number)=>{
     const asset=art?.images[key];if(!asset)return false;
-    const isSkater=key==='skater',cellW=isSkater?80:144,cellH=isSkater?94:112;
-    ctx.drawImage(asset,col*cellW,row*cellH,cellW,cellH,x,y,w,h);return true;
+    const isSkater=key==='skater',cfg=art?.grid?.[key],cellW=cfg?.cellW??(isSkater?80:144),cellH=cfg?.cellH??(isSkater?94:112);
+    const sx=col*cellW,sy=row*cellH;
+    if(sx<0||sy<0||sx+cellW>asset.naturalWidth||sy+cellH>asset.naturalHeight)return false;
+    ctx.drawImage(asset,sx,sy,cellW,cellH,x,y,w,h);return true;
   };
   const drawSkater=(ctx:CanvasRenderingContext2D)=>{
     let animation=currentAnim;
@@ -187,7 +191,14 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const looping=animation==='run'||animation==='idle'||animation==='grind';
     const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
     const idx=start+frame;
-    if(drawSheet(ctx,'skater',idx%8,Math.floor(idx/8),playerX-43,boardY-86,86,90))return;
+    const cfg=art?.grid?.skater;
+    const width=cfg?.cellW??80,height=cfg?.cellH??94,columns=cfg?.columns??8;
+    const anchorX=cfg?.anchorX??width/2,anchorY=cfg?.anchorY??height-4;
+    const zoom=cfg?.displayScale??1;
+    // The world point is Fony's skateboard contact, never the changing sprite top-left.
+    // Bail frames anchor at the impact position and stop at the final frame (no looping).
+    const poseY=alive?boardY:ground;
+    if(drawSheet(ctx,'skater',idx%columns,Math.floor(idx/columns),playerX-anchorX*zoom,poseY-anchorY*zoom,width*zoom,height*zoom))return;
     // Procedural placeholder is required when art is absent or blocked.
     ctx.fillStyle='#ff3d7f';ctx.fillRect(playerX-15,boardY-43,30,33);
     ctx.fillStyle='#f0d2a4';ctx.fillRect(playerX-11,boardY-54,22,13);

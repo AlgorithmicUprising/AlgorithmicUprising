@@ -96,3 +96,67 @@ test('share emits a score event and offers a browser fallback',async({page})=>{
  await game.locator('button[part=share]').click();
  await expect(page.locator('#events')).toContainText('game:share');
 });
+
+test('Fony atlas has 39 unclipped poses sharing one board/foot baseline',async({page})=>{
+ await page.goto('/demo/');
+ const poses=await page.evaluate(async()=>{
+  const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
+  const skin=await(await fetch(url)).json();
+  const grid=skin.grid.skater,asset=new Image();
+  asset.src=new URL(skin.files.skater,url).href;await asset.decode();
+  const canvas=document.createElement('canvas');canvas.width=grid.cellW;canvas.height=grid.cellH;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const boxes=[];
+  for(let i=0;i<39;i++){
+   ctx.clearRect(0,0,grid.cellW,grid.cellH);
+   ctx.drawImage(asset,(i%grid.columns)*grid.cellW,Math.floor(i/grid.columns)*grid.cellH,grid.cellW,grid.cellH,0,0,grid.cellW,grid.cellH);
+   const {data}=ctx.getImageData(0,0,grid.cellW,grid.cellH);
+   let minX=999,minY=999,maxX=-1,maxY=-1,pixels=0;
+   for(let y=0;y<grid.cellH;y++)for(let x=0;x<grid.cellW;x++)if(data[(y*grid.cellW+x)*4+3]>180){
+    pixels++;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);
+   }
+   boxes.push({minX,minY,maxX,maxY,pixels});
+  }
+  return {grid,source:[asset.naturalWidth,asset.naturalHeight],boxes};
+ });
+ expect(poses.source).toEqual([1024,640]);
+ expect(poses.grid.anchorX).toBe(64);expect(poses.grid.anchorY).toBe(117);
+ expect(poses.boxes).toHaveLength(39);
+ for(const [i,b] of poses.boxes.entries()){
+  expect(b.pixels,`frame ${i} missing pixels`).toBeGreaterThan(250);
+  expect(b.minX,`frame ${i} clips left`).toBeGreaterThan(3);
+  expect(b.maxX,`frame ${i} clips right`).toBeLessThan(125);
+  expect(b.minY,`frame ${i} clips top`).toBeGreaterThan(3);
+  expect(b.maxY,`frame ${i} exceeds foot baseline`).toBeLessThanOrEqual(118);
+  expect(b.maxY,`frame ${i} not aligned to foot baseline`).toBeGreaterThanOrEqual(115);
+ }
+});
+
+test('running and bail animations use stable on-screen actor origin and never loop bail',async({page})=>{
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ const result=await game.evaluate(el=>{
+  const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
+  const original=ctx.drawImage.bind(ctx),poses=[];
+  ctx.drawImage=(...args)=>{if(args.length===9&&args[0]?.naturalWidth===1024)poses.push({sx:args[1],sy:args[2],dx:args[5],dy:args[6],w:args[7],h:args[8]});return original(...args)};
+  g.start();
+  for(let i=0;i<6;i++){g.update(.05);g.draw(ctx,canvas.width,canvas.height)}
+  const run=poses.slice();
+  let count=0;
+  while(!g.over()&&count++<6000)g.update(1/60);
+  g.draw(ctx,canvas.width,canvas.height);
+  const final=poses.at(-1);
+  for(let i=0;i<60;i++)g.update(1/60);
+  g.draw(ctx,canvas.width,canvas.height);
+  return {run,final,after:poses.at(-1),ended:g.over(),count};
+ });
+ expect(result.ended).toBe(true);
+ expect(result.run).toHaveLength(6);
+ for(const p of result.run){expect(p.dx).toBeCloseTo(76,0);expect(p.dy).toBeCloseTo(183,0);expect(p.w).toBe(128);expect(p.h).toBe(128)}
+ expect(result.final.dx).toBeCloseTo(76,0);
+ expect(result.final.dy).toBeCloseTo(183,0);
+ expect(result.final.sx).toBe((26%8)*128);
+ expect(result.final.sy).toBe(Math.floor(26/8)*128);
+ expect(result.after).toEqual(result.final);
+});

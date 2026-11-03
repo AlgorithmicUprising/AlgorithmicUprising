@@ -2,7 +2,7 @@
   "id": "au",
   "game": "grind-the-terms",
   "name": "Algorithmic Uprising — Fony Sprock approved punk art",
-  "version": "0.2.0-preview",
+  "version": "0.2.1-preview",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -16,16 +16,19 @@
     "paper": "#EDEAE0"
   },
   "files": {
-    "skater": "fony_sprock_atlas.png",
+    "skater": "fony_sprock_aligned_v2.png",
     "hazards": "terms_hazards_atlas.png",
     "far": "terms_far_plate.jpg",
     "skyline": "terms_skyline_v2.jpg"
   },
   "grid": {
     "skater": {
-      "cellW": 80,
-      "cellH": 94,
-      "columns": 8
+      "cellW": 128,
+      "cellH": 128,
+      "columns": 8,
+      "anchorX": 64,
+      "anchorY": 117,
+      "displayScale": 1
     },
     "hazards": {
       "cellW": 144,
