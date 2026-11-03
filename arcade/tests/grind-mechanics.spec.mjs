@@ -86,6 +86,8 @@ test('mobile game controls stay compact and leave the score visible',async({page
 
 
 test('share emits a score event and offers a browser fallback',async({page})=>{
+ // Prevent a native Web Share dialog from blocking mobile Chromium automation.
+ await page.addInitScript(()=>Object.defineProperty(navigator,'share',{configurable:true,value:async()=>{}}));
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');
  await game.locator('button[part=start]').click();
