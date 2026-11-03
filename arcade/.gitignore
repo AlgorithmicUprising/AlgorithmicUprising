@@ -1,0 +1,3 @@
+node_modules/
+games/*/dist/
+.DS_Store
