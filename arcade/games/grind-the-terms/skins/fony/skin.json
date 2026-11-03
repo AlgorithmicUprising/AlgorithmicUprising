@@ -1,0 +1,16 @@
+{
+  "id": "fony",
+  "game": "grind-the-terms",
+  "name": "Fony Sprock starter (art pending)",
+  "extends": "placeholder",
+  "render": {
+    "pixelated": true
+  },
+  "palette": {
+    "bg": "#0d0b12",
+    "accent": "#ff3d7f"
+  },
+  "strings": {
+    "title": "GRIND THE TERMS"
+  }
+}

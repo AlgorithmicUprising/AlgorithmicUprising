@@ -1,0 +1,16 @@
+{
+  "id": "fony",
+  "game": "tag-before-training",
+  "name": "Fony Sprock alley (art pending)",
+  "extends": "placeholder",
+  "render": {
+    "pixelated": true
+  },
+  "palette": {
+    "bg": "#121018",
+    "accent": "#ff3d7f"
+  },
+  "strings": {
+    "title": "TAG BEFORE TRAINING"
+  }
+}

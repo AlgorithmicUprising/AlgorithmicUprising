@@ -1,0 +1,10 @@
+{
+  "id": "au",
+  "game": "grind-the-terms",
+  "name": "Algorithmic Uprising (branding pending)",
+  "extends": "fony",
+  "palette": {
+    "bg": "#0b1010",
+    "accent": "#b8ff35"
+  }
+}
