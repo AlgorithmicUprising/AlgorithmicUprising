@@ -7,10 +7,13 @@
     "build": "node tools/build.mjs",
     "check": "npx tsc --noEmit && npm run build && npm run validate && node tools/check-size.mjs && node tools/check-hygiene.mjs",
     "test": "node --test tests/*.test.mjs",
-    "validate": "node tools/validate-skin.mjs"
+    "validate": "node tools/validate-skin.mjs",
+    "dev": "node tools/serve.mjs",
+    "e2e": "playwright test"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "@playwright/test": "^1.56.1"
   }
 }
