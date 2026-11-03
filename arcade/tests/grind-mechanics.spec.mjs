@@ -71,3 +71,15 @@ test('sound starts muted and can be toggled without a recording asset',async({pa
  await sound.click();
  await expect(sound).toHaveText('SOUND OFF');
 });
+
+
+test('mobile game controls stay compact and leave the score visible',async({page},testInfo)=>{
+ test.skip(!testInfo.project.name.startsWith('mobile'),'Only relevant to mobile viewports');
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ const sound=await game.locator('button[part=sound]').boundingBox();
+ const pause=await game.locator('button[part=pause]').boundingBox();
+ expect(sound).not.toBeNull();expect(pause).not.toBeNull();
+ expect(sound.width).toBeLessThan(110);
+ expect(pause.width).toBeLessThan(65);
+});
