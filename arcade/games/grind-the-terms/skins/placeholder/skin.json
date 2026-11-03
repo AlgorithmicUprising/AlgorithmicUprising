@@ -1,0 +1,11 @@
+{
+  "id": "placeholder",
+  "game": "grind-the-terms",
+  "procedural": true,
+  "render": {
+    "pixelated": true
+  },
+  "strings": {
+    "title": "GRIND THE TERMS"
+  }
+}
