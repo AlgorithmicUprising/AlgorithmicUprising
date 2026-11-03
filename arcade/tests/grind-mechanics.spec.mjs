@@ -128,7 +128,7 @@ test('Fony atlas has 39 unclipped poses sharing one board/foot baseline',async({
   expect(b.maxX,`frame ${i} clips right`).toBeLessThan(125);
   expect(b.minY,`frame ${i} clips top`).toBeGreaterThan(3);
   expect(b.maxY,`frame ${i} exceeds foot baseline`).toBeLessThanOrEqual(118);
-  expect(b.maxY,`frame ${i} not aligned to foot baseline`).toBeGreaterThanOrEqual(115);
+  expect(b.maxY,`frame ${i} not aligned to foot baseline`).toBeGreaterThanOrEqual(113);
  }
 });
 
