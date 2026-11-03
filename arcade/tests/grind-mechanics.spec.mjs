@@ -83,3 +83,14 @@ test('mobile game controls stay compact and leave the score visible',async({page
  expect(sound.width).toBeLessThan(110);
  expect(pause.width).toBeLessThan(65);
 });
+
+
+test('share emits a score event and offers a browser fallback',async({page})=>{
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ await game.locator('button[part=start]').click();
+ await game.evaluate(e=>{e.game.score=()=>44;e.game.over=()=>true});
+ await expect(game.locator('button[part=share]')).toBeVisible();
+ await game.locator('button[part=share]').click();
+ await expect(page.locator('#events')).toContainText('game:share');
+});
