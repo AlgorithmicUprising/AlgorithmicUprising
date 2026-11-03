@@ -52,3 +52,33 @@ test('touch buttons are provided in Tag on phone viewport',async({page},testInfo
  await el.locator('button[data-key=spray]').dispatchEvent('pointerup',{pointerId:1});
  expect(await el.evaluate(e=>e.state)).toBe('playing');
 });
+
+
+test('Grind gives a safe learning window and displays a resume action',async({page})=>{
+ await page.goto('/demo/');
+ const el=page.locator('grind-the-terms');
+ await el.locator('button[part=start]').click();
+ await page.waitForTimeout(5500);
+ expect(await el.evaluate(e=>e.state)).toBe('playing');
+ await el.evaluate(e=>e.pause('player'));
+ expect(await el.evaluate(e=>e.state)).toBe('paused');
+ await expect(el.locator('button[part=resume]')).toBeVisible();
+ await el.locator('button[part=resume]').click();
+ expect(await el.evaluate(e=>e.state)).toBe('playing');
+});
+
+test('game-over saves personal best and restart resets the run',async({page})=>{
+ await page.goto('/demo/');
+ const el=page.locator('grind-the-terms');
+ await el.locator('button[part=start]').click();
+ // Simulate the natural game-over condition through the greybox game API.
+ await el.evaluate(e=>{e.game.score=()=>123;e.game.over=()=>true});
+ await expect(el.locator('button[part=again]')).toBeVisible();
+ await expect(el.locator('.overlay')).toContainText('BEST 123');
+ expect(await el.evaluate(e=>e.best)).toBe(123);
+ await el.locator('button[part=again]').click();
+ expect(await el.evaluate(e=>e.state)).toBe('playing');
+ await page.reload();
+ expect(await page.locator('grind-the-terms').evaluate(e=>e.best)).toBe(123);
+ expect(await page.locator('grind-the-terms').evaluate(e=>e.state)).toBe('title');
+});
