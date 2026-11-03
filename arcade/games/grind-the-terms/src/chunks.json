@@ -1,0 +1,16 @@
+[
+  {"id":"intro-rails","tier":1,"width":740,"objects":[{"at":250,"kind":"rail","w":180}]},
+  {"id":"intro-accept","tier":1,"width":720,"objects":[{"at":260,"kind":"accept","w":62}]},
+  {"id":"easy-rail","tier":1,"width":780,"objects":[{"at":260,"kind":"rail","w":200}]},
+  {"id":"single-button","tier":1,"width":690,"objects":[{"at":240,"kind":"accept","w":60}]},
+  {"id":"popup-practice","tier":2,"width":810,"objects":[{"at":250,"kind":"popup","w":66}]},
+  {"id":"button-double","tier":2,"width":870,"objects":[{"at":200,"kind":"accept","w":55},{"at":500,"kind":"accept","w":55}]},
+  {"id":"grind-to-button","tier":2,"width":1050,"objects":[{"at":170,"kind":"rail","w":220},{"at":625,"kind":"accept","w":60}]},
+  {"id":"opt-out-bonus","tier":2,"width":790,"objects":[{"at":200,"kind":"token","w":26,"power":"shield"},{"at":450,"kind":"popup","w":66}]},
+  {"id":"gap-ahead","tier":3,"width":780,"objects":[{"at":255,"kind":"gap","w":100}]},
+  {"id":"airboost","tier":3,"width":910,"objects":[{"at":170,"kind":"token","w":26,"power":"airboost"},{"at":560,"kind":"popup","w":66}]},
+  {"id":"rail-gap","tier":3,"width":1020,"objects":[{"at":190,"kind":"rail","w":210},{"at":650,"kind":"gap","w":96}]},
+  {"id":"modal-terms","tier":4,"width":850,"objects":[{"at":280,"kind":"modal","w":68}]},
+  {"id":"mixed-clause","tier":4,"width":1100,"objects":[{"at":210,"kind":"popup","w":70},{"at":580,"kind":"rail","w":190}]},
+  {"id":"opt-out-final","tier":4,"width":1020,"objects":[{"at":220,"kind":"token","w":26,"power":"shield"},{"at":560,"kind":"modal","w":68}]}
+]

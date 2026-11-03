@@ -1,3 +1,44 @@
-# Grind the Terms
+# Grind the Terms · Fony Sprock (M1 mechanics + M2 art preview)
 
-M0 prototype: press Space or tap to jump, hold to grind rails. The game uses procedural placeholder shapes. Fony sprite art, full difficulty curve, tuned collisions, high scores, responsive UX and sample Fony/AU skins remain in M1–M2. Web Component tag: `<grind-the-terms>`. Core: `../../core/`.
+> Nobody reads them. Skate them.
+
+The side-scrolling browser runner for Punk Arcade's CH 05. This branch includes the user-approved **protected AU art preview**, the original Fony character model and paper backgrounds. Art is extracted from a concept sheet: sprites are usable in the game but still need human cleanup and performance testing before a v0.1 tagged release.
+
+## Controls
+
+| Move | Keyboard | Touch |
+| --- | --- | --- |
+| Ollie | Space / ↑ / W (tap) | Tap the canvas |
+| Catch rail grind | Keep holding jump while descending onto the rail | Keep finger down |
+| Pop off grind | Release jump while grinding | Release finger |
+| Double ollie | Find the AIR BOOST pickup, then tap again in the air | Second tap after pickup |
+| Pause / resume | P / Esc, pause button | Pause / Resume buttons |
+
+Jump physics: gravity 1800 logical px/s², ollie impulse -620 px/s, rail-pop impulse -380 px/s. Board landing uses a forgiving rail snap zone. Input buffering is 100 ms and ground coyote time is 80 ms. A double jump is deliberately *not* always available: it is an extra power-up, avoiding a mandatory second button.
+
+## Obstacles and scores
+
+- **Accept All**: low pill-shaped button, clears for +3.
+- **Consent popup**: floating modal with a tiny close control, +5.
+- **Agree & Continue**: tall wall introduced in tier 4, +10.
+- **Clause rails**: safe to skate below; land while holding jump to grind; +2 per 32px and double the distance-based clauses while grinding.
+- **Fine-print gaps**: jump the black pit (reward currently +8; balance candidate).
+- **Opt Out**: +10 and a one-hit shield.
+- **Air Boost**: +10 and one optional second ollie.
+
+A procedural seeded chunk scheduler reads `src/chunks.json`, starts with a guaranteed easy rail, and unlocks tiers at 20, 45 and 90 seconds. Hand-authored chunks deliberately leave recovery space; a more complete jump-arc fairness test and five-run human playtest remain required.
+
+## Build and embed
+
+From `arcade/`: `npm install && npm run check && npm run e2e`.
+
+```html
+<script type="module" src="./games/grind-the-terms/dist/grind-the-terms.js"></script>
+<grind-the-terms skin="./games/grind-the-terms/skins/au/skin.json"></grind-the-terms>
+```
+
+`skin` is optional. Without it, the game renders accessible procedural placeholders. Invalid or inaccessible skin assets trigger `game:error` and fall back to placeholders; change the attribute to swap skins without editing gameplay. `game:skin-loaded`, `game:power`, `game:grind-start`, `game:grind-end`, `game:near-miss`, `game:over`, and `game:share` are emitted as DOM events.
+
+**AU art is all rights reserved.** All skater and hazard frames in `skins/au/` are protected branded artwork. The open `skins/fony/` remains placeholder-only until clean, unbranded sprite art is available. Do not redistribute the AU skin under CC BY.
+
+See `GAP-ANALYSIS.md` for the gap-by-gap status, release blockers, and next QA steps.

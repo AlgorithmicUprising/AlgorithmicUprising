@@ -1,112 +1,261 @@
-import {defineArcade,type GameAPI} from '../../../core/src/engine';
+import { defineArcade, type GameAPI } from '../../../core/src/engine';
+import chunksData from './chunks.json';
 
-// Placeholder-first M0 runner. Keep game mechanics independent of future sprite art.
-type Kind='accept'|'popup'|'gap'|'rail';
-type Obstacle={x:number;kind:Kind;w:number;scored:boolean};
-defineArcade('grind-the-terms','GRIND THE TERMS',()=>{
-  const ground=270, playerX=135, gravity=1020, jumpVelocity=-500;
-  let y=ground, vy=0, elapsed=0, speed=180, distance=0, bonus=0;
-  let alive=true, held=false, spawnDistance=340, obstacleIndex=0;
-  let grinding=false, obstacles:Obstacle[]=[];
+// Grind the Terms v0.2 preview: mechanics separated from the AU-only skin assets.
+type HazardKind = 'accept' | 'popup' | 'modal' | 'gap' | 'rail' | 'token';
+type Power = 'shield' | 'airboost';
+type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power}> };
+type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; scored:boolean; collected:boolean };
+type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
+type Art = { images:Record<string,HTMLImageElement>; palette?:Record<string,string>; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
+const chunks = chunksData as Chunk[];
+const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
 
-  const score=()=>Math.floor(distance/48)+bonus;
-  const start=()=>{
-    y=ground;vy=0;elapsed=0;speed=180;distance=0;bonus=0;
-    alive=true;held=false;spawnDistance=340;obstacleIndex=0;
-    grinding=false;obstacles=[];
+// No global listeners: multiple embedded games are independent Web Components.
+defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
+  const ground = 300, playerX = 140, gravity = 1800, jumpVelocity = -620, railPopVelocity = -380;
+  const baseSpeed=180;
+  let boardY=ground, lastBoardY=ground, vy=0, elapsed=0, distance=0;
+  let bonus=0, extraClauses=0, grindDistance=0, totalGrindDistance=0, grindMs=0;
+  let alive=true, bailRemaining=0, cause='accept', held=false, grinding=false;
+  let jumpCount=0, airBoost=false, shield=false, shieldsUsed=0, hazardsCleared=0;
+  let bufferLeft=0, coyoteLeft=0, stateTime=0, landTimer=0;
+  let combo=0, longestCombo=0, lastSurface='ground';
+  let objects:Obstacle[]=[];
+  let nextChunk=0, lastChunkId='', firstChunk=true;
+  let art:Art|null=null,skinRequest=0;
+  let rngState=0x11b00c5;
+  let visualFlash=0;
+  let currentAnim:Anim='run';
+
+  const rng=()=>{rngState=(Math.imul(1664525,rngState)+1013904223)>>>0;return rngState/4294967296};
+  const tier=()=>elapsed<20?1:elapsed<45?2:elapsed<90?3:4;
+  const speed=()=>clamp(baseSpeed + elapsed*1.72,baseSpeed,420);
+  const score=()=>Math.floor(distance/48)+Math.floor(extraClauses)+Math.floor(totalGrindDistance/32)*2+Math.floor(bonus);
+  const state=(animation:Anim)=>{if(currentAnim!==animation){currentAnim=animation;stateTime=0}};
+  const reset=()=>{
+    boardY=ground;lastBoardY=ground;vy=0;elapsed=0;distance=0;bonus=0;extraClauses=0;
+    grindDistance=0;totalGrindDistance=0;grindMs=0;alive=true;bailRemaining=0;cause='accept';
+    held=false;grinding=false;jumpCount=0;airBoost=false;shield=false;shieldsUsed=0;
+    hazardsCleared=0;bufferLeft=0;coyoteLeft=.08;stateTime=0;landTimer=0;
+    combo=0;longestCombo=0;lastSurface='ground';objects=[];nextChunk=380;lastChunkId='';firstChunk=true;
+    rngState=(Number(host.getAttribute('seed'))||0x11b00c5)>>>0;visualFlash=0;currentAnim='run';
+  };
+  const land=()=>{
+    boardY=ground;vy=0;grinding=false;jumpCount=0;coyoteLeft=.08;
+    if(lastSurface!=='ground'){landTimer=.12;state('land')}
+    lastSurface='ground';combo=0;
+    if(bufferLeft>0){bufferLeft=0;ollie()}
+  };
+  const ollie=(secondary=false)=>{
+    if(!alive||bailRemaining>0)return;
+    if(secondary){if(!airBoost||jumpCount>=2)return;airBoost=false;jumpCount=2;vy=-520;state('double');emit('game:power',{power:'airboost',used:true})}
+    else{jumpCount=1;vy=jumpVelocity;state('ollie')}
+    grinding=false;landTimer=0;coyoteLeft=0;bufferLeft=0;lastSurface='air';
+  };
+  const railPop=()=>{
+    grinding=false;vy=railPopVelocity;boardY-=3;lastSurface='air';jumpCount=1;
+    state('railpop');emit('game:grind-end',{distancePx:Math.floor(grindDistance),grindMs:Math.floor(grindMs)});
   };
   const input=(key:string,down:boolean)=>{
     if(key!=='tap'&&key!=='up')return;
     if(down&&!held){
-      if(grinding){grinding=false;vy=jumpVelocity*.55;}
-      else if(y>=ground-2)vy=jumpVelocity;
+      if(grinding){railPop()}
+      else if(boardY>=ground-1||coyoteLeft>0){ollie()}
+      else if(airBoost&&jumpCount===1){ollie(true)}
+      else bufferLeft=.1;
     }
-    if(!down&&grinding){grinding=false;vy=jumpVelocity*.35;}
+    if(!down&&held&&grinding)railPop();
     held=down;
   };
-  const spawn=()=>{
-    // Safe rails establish the controls before consent boxes become lethal.
-    // The first dangerous hazard cannot spawn before 18 seconds.
-    const tier=elapsed<18?0:elapsed<40?1:elapsed<70?2:3;
-    const pool:Kind[]=tier===0?['rail']:tier===1?
-      ['rail','accept','rail','popup']:tier===2?
-      ['accept','rail','popup','accept','gap']:
-      ['popup','accept','gap','rail','popup','accept'];
-    const kind=pool[(obstacleIndex+Math.floor(Math.random()*pool.length))%pool.length];
-    obstacleIndex++;
-    obstacles.push({x:665,kind,w:kind==='rail'?105:kind==='gap'?66:kind==='popup'?48:40,scored:false});
-    spawnDistance=Math.max(350,530-elapsed*2.3);
+  const comboBonus=(base:number)=>{
+    const multiplier=combo>=3?3:combo===2?2:combo===1?1.5:1;
+    bonus+=base*multiplier;
+    combo++;longestCombo=Math.max(longestCombo,combo);
+  };
+  const handleCollision=(o:Obstacle)=>{
+    if(shield){shield=false;shieldsUsed++;o.collected=true;bonus+=1;emit('game:shield',{used:true});return}
+    alive=false;cause=o.kind;bailRemaining=.4;state('bail');
+    emit('game:bail',{cause,score:score()});
+  };
+  const collect=(o:Obstacle)=>{
+    if(o.collected)return;
+    o.collected=true;bonus+=10;
+    if(o.power==='airboost')airBoost=true;else shield=true;
+    emit('game:power',{power:o.power||'shield',collected:true});
+  };
+  const emitChunk=()=>{
+    const choices=chunks.filter(c=>c.tier<=tier()&&(!firstChunk||c.id==='intro-rails')&&c.id!==lastChunkId);
+    const list=choices.length?choices:chunks.filter(c=>c.tier<=tier()&&(!firstChunk||c.id==='intro-rails'));
+    const picked=list[Math.floor(rng()*list.length)];
+    if(!picked)return;
+    firstChunk=false;lastChunkId=picked.id;
+    for(const item of picked.objects){
+      objects.push({x:playerX+nextChunk+item.at-distance,w:item.w,kind:item.kind,power:item.power,scored:false,collected:false});
+    }
+    nextChunk+=picked.width;
   };
   const update=(dt:number)=>{
-    if(!alive)return;
-    elapsed+=dt;
-    const travelSpeed=Math.min(420,180+Math.max(0,elapsed-8)*2.35);
-    const moved=travelSpeed*dt;speed=travelSpeed;distance+=moved;
-    spawnDistance-=moved;
-    if(spawnDistance<=0)spawn();
-
-    if(!grinding){vy+=gravity*dt;y+=vy*dt;if(y>=ground){y=ground;vy=0}}
-    let onRail=false;
-    for(const o of obstacles){
+    if(!alive){bailRemaining=Math.max(0,bailRemaining-dt);stateTime+=dt;return}
+    dt=Math.min(dt,.05);elapsed+=dt;stateTime+=dt;landTimer=Math.max(0,landTimer-dt);
+    visualFlash=Math.max(0,visualFlash-dt);
+    bufferLeft=Math.max(0,bufferLeft-dt);
+    if(!grinding&&boardY>=ground-1)coyoteLeft=.08;
+    else coyoteLeft=Math.max(0,coyoteLeft-dt);
+    const moved=speed()*dt;
+    distance+=moved;
+    while(nextChunk<distance+790)emitChunk();
+    lastBoardY=boardY;
+    if(!grinding){boardY+=vy*dt;vy+=gravity*dt}
+    let touchingRail=false;
+    for(const o of objects){
       o.x-=moved;
-      if(!o.scored&&o.x+o.w<playerX-16){
-        o.scored=true;
-        bonus+=o.kind==='rail'?6:o.kind==='popup'?5:o.kind==='gap'?8:3;
-      }
-      if(o.x>=playerX+17||o.x+o.w<=playerX-16)continue;
+      const overlap=o.x<playerX+13&&o.x+o.w>playerX-13;
       if(o.kind==='rail'){
-        const descending=vy>=0;
-        if(held&&descending&&y>=ground-43&&y<=ground-17){
-          y=ground-22;vy=0;grinding=true;onRail=true;bonus+=dt*10;
-        }else if(grinding)onRail=true;
+        const railY=ground-28;
+        if(grinding&&overlap){touchingRail=true;boardY=railY;vy=0;grindMs+=dt*1000;
+          totalGrindDistance+=moved;grindDistance+=moved;extraClauses+=moved/48;
+        }else if(!grinding&&held&&overlap&&vy>=0&&lastBoardY<=railY+12&&boardY>=railY-12&&boardY<=railY+17){
+          boardY=railY;vy=0;grinding=true;touchingRail=true;lastSurface='rail';
+          state('grind');emit('game:grind-start',{score:score()});
+        }
         continue;
       }
+      if(o.kind==='token'){
+        if(overlap&&!o.collected&&Math.abs(boardY-(ground-58))<50)collect(o);
+        continue;
+      }
+      if(!overlap||o.collected||!alive)continue;
       if(o.kind==='gap'){
-        if(y>ground-24){alive=false;break}
-      }else if(y>ground-39){alive=false;break}
-    }
-    if(grinding&&!onRail){grinding=false;vy=0}
-    obstacles=obstacles.filter(o=>o.x+o.w>-30);
-  };
-  const draw=(ctx:CanvasRenderingContext2D,w:number,h:number)=>{
-    ctx.save();ctx.setTransform(w/640,0,0,h/360,0,0);
-    ctx.fillStyle='#171121';ctx.fillRect(0,0,640,360);
-    // Clause lines and legal margins form the placeholder environment.
-    ctx.strokeStyle='#2c263b';ctx.lineWidth=2;
-    for(let i=0;i<8;i++){
-      const x=(i*94-distance*.25%94+94)%940-94;
-      ctx.beginPath();ctx.moveTo(x,55);ctx.lineTo(x,268);ctx.stroke();
-    }
-    ctx.font='12px monospace';ctx.fillStyle='#70627f';
-    for(let i=0;i<9;i++){
-      ctx.fillText('§ '+(Math.floor(distance/220)+i+1)+'  TERMS AND CONDITIONS APPLY',12,84+i*23);
-    }
-    ctx.fillStyle='#ddd2df';ctx.fillRect(0,ground+4,640,6);
-    for(const o of obstacles){
-      if(o.kind==='rail'){
-        ctx.fillStyle='#c6ddec';ctx.fillRect(o.x,ground-22,o.w,7);
-        ctx.fillRect(o.x+8,ground-15,4,17);ctx.fillRect(o.x+o.w-12,ground-15,4,17);
-      }else if(o.kind==='gap'){
-        ctx.fillStyle='#0b0910';ctx.fillRect(o.x,ground-1,o.w,18);
+        if(boardY>ground-10)handleCollision(o);
       }else{
-        ctx.fillStyle=o.kind==='accept'?'#eacc62':'#eb779c';
-        ctx.fillRect(o.x,ground-36,o.w,36);
-        ctx.fillStyle='#160c17';ctx.font='9px monospace';
-        ctx.fillText(o.kind==='accept'?'ACCEPT':'AGREE?',o.x+2,ground-16);
+        const height=o.kind==='modal'?98:o.kind==='popup'?62:30;
+        if(boardY>ground-height+5)handleCollision(o);
       }
     }
-    ctx.fillStyle='#ff3d7f';ctx.fillRect(playerX-15,y-39,30,33);
-    ctx.fillStyle='#f0d2a4';ctx.fillRect(playerX-11,y-50,22,13);
-    ctx.fillStyle='#eaeaea';ctx.fillRect(playerX-19,y,38,5);
-    ctx.fillStyle='#111';ctx.fillRect(playerX-14,y+3,6,5);ctx.fillRect(playerX+9,y+3,6,5);
-    ctx.fillStyle='#f5f1eb';ctx.font='bold 18px monospace';
-    ctx.fillText('CLAUSES SKIPPED '+Math.floor(score()),12,25);
-    ctx.font='bold 11px monospace';ctx.fillStyle='#f8b3d1';
-    if(elapsed<18)ctx.fillText('PRACTICE RUN  •  SPACE / TAP TO OLLIE',12,44);
-    else ctx.fillText('FINE PRINT INCOMING  •  '+Math.round(speed)+' px/s',12,44);
-    if(grinding){ctx.fillStyle='#b8ff35';ctx.fillText('GRINDING THE FINE PRINT',200,65)}
+    if(grinding&&!touchingRail){
+      grinding=false;vy=0;lastSurface='air';
+      emit('game:grind-end',{distancePx:Math.floor(grindDistance),grindMs:Math.floor(grindMs)});
+    }
+    if(!grinding&&boardY>=ground){land()}
+    if(!grinding&&boardY<ground-1&&landTimer===0&&alive){
+      if(currentAnim!=='ollie'&&currentAnim!=='double'&&currentAnim!=='railpop')state('ollie');
+    }
+    if(!grinding&&boardY>=ground&&landTimer===0)state('run');
+    for(const o of objects){
+      if(o.kind==='token'||o.kind==='rail'||o.scored||o.collected)continue;
+      if(o.x+o.w<playerX-15){
+        o.scored=true;hazardsCleared++;
+        const base=o.kind==='modal'?10:o.kind==='popup'?5:o.kind==='gap'?8:3;
+        comboBonus(base);
+        const near=Math.abs(boardY-(ground-(o.kind==='modal'?98:o.kind==='popup'?62:30)))<10;
+        if(near){bonus+=1;emit('game:near-miss',{score:score()})}
+      }
+    }
+    objects=objects.filter(o=>o.x+o.w>-45);
+  };
+
+  async function setSkin(url:string|null){
+    const request=++skinRequest;
+    if(!url){art=null;emit('game:skin-loaded',{skin:'placeholder',usingPlaceholder:true});return}
+    try{
+      const skinUrl=new URL(url,document.baseURI);
+      const response=await fetch(skinUrl.toString(),{credentials:'omit'});
+      if(!response.ok)throw new Error('skin HTTP '+response.status);
+      const data=await response.json() as {game:string;name?:string;files?:Record<string,string>;palette?:Record<string,string>;anims?:Art['anims']};
+      if(data.game!=='grind-the-terms'||!data.files)throw new Error('Unsupported skin data');
+      const images:Record<string,HTMLImageElement>={};
+      await Promise.all(Object.entries(data.files).map(async ([key,path])=>{
+        const image=new Image();image.decoding='async';image.src=new URL(path,skinUrl).href;await image.decode();images[key]=image;
+      }));
+      if(request!==skinRequest)return;
+      art={images,name:data.name||'Fony',palette:data.palette,anims:data.anims};
+      emit('game:skin-loaded',{skin:'au',usingPlaceholder:false,assets:Object.keys(images)});
+    }catch(error){if(request!==skinRequest)return;art=null;emit('game:error',{code:'SKIN_LOAD_FAILED',message:String(error),usingPlaceholder:true})}
+  }
+
+  const drawSheet=(ctx:CanvasRenderingContext2D,key:string,col:number,row:number,x:number,y:number,w:number,h:number)=>{
+    const asset=art?.images[key];if(!asset)return false;
+    const isSkater=key==='skater',cellW=isSkater?80:144,cellH=isSkater?94:112;
+    ctx.drawImage(asset,col*cellW,row*cellH,cellW,cellH,x,y,w,h);return true;
+  };
+  const drawSkater=(ctx:CanvasRenderingContext2D)=>{
+    let animation=currentAnim;
+    if(!alive)animation='bail';else if(grinding)animation='grind';else if(boardY>=ground-1&&landTimer<=0)animation='run';
+    const map={run:[0,6,12],idle:[6,4,6],land:[10,2,16],ollie:[12,5,14],double:[17,4,12],bail:[21,6,12],grind:[27,4,10],railpop:[31,4,12],flip:[35,4,14]} as const;
+    const [start,frames,fps]=map[animation];
+    const looping=animation==='run'||animation==='idle'||animation==='grind';
+    const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
+    const idx=start+frame;
+    if(drawSheet(ctx,'skater',idx%8,Math.floor(idx/8),playerX-43,boardY-86,86,90))return;
+    // Procedural placeholder is required when art is absent or blocked.
+    ctx.fillStyle='#ff3d7f';ctx.fillRect(playerX-15,boardY-43,30,33);
+    ctx.fillStyle='#f0d2a4';ctx.fillRect(playerX-11,boardY-54,22,13);
+    ctx.fillStyle='#f9efe6';ctx.fillRect(playerX-21,boardY-5,42,5);
+    ctx.fillStyle='#131118';ctx.fillRect(playerX-17,boardY,6,5);ctx.fillRect(playerX+12,boardY,6,5);
+  };
+  const drawObstacle=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
+    if(o.collected)return;
+    const k=o.kind;
+    if(k==='gap'){
+      ctx.fillStyle='#141117';ctx.fillRect(o.x,ground-1,o.w,34);
+      ctx.strokeStyle='#D7FF00';ctx.lineWidth=2;
+      ctx.setLineDash([4,6]);ctx.strokeRect(o.x,ground-4,o.w,9);ctx.setLineDash([]);return;
+    }
+    if(k==='token'){
+      const id=o.power==='airboost'?5:4;
+      if(drawSheet(ctx,'hazards',id%4,Math.floor(id/4),o.x-8,ground-103,46,48))return;
+      ctx.fillStyle='#D7FF00';ctx.beginPath();ctx.arc(o.x+14,ground-65,15,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#141412';ctx.font='bold 18px monospace';ctx.fillText(o.power==='airboost'?'↑':'Ø',o.x+6,ground-58);return;
+    }
+    if(k==='rail'){
+      if(art?.images.hazards){
+        const sections=Math.ceil(o.w/95);
+        for(let i=0;i<sections;i++){const pw=Math.min(95,o.w-i*95);drawSheet(ctx,'hazards',3,1,o.x+i*95,ground-39,pw,40)}
+      }else{
+        ctx.fillStyle='#D7FF00';ctx.fillRect(o.x,ground-31,o.w,7);
+        ctx.fillStyle='#ddd';ctx.fillRect(o.x+8,ground-24,5,24);ctx.fillRect(o.x+o.w-12,ground-24,5,24);
+      }return;
+    }
+    const kindIndex={accept:0,popup:1,modal:2} as Record<string,number>;
+    const height=k==='accept'?42:k==='popup'?77:110;
+    if(drawSheet(ctx,'hazards',kindIndex[k],0,o.x-7,ground-height,o.w+14,height))return;
+    ctx.fillStyle=k==='accept'?'#D7FF00':k==='popup'?'#E0287A':'#efe4ca';ctx.fillRect(o.x,ground-height,o.w,height);
+    ctx.fillStyle='#141412';ctx.font='bold 10px monospace';ctx.fillText(k==='accept'?'ACCEPT':k==='popup'?'CONSENT?':'AGREE',o.x+3,ground-height+18);
+  };
+  const draw=(ctx:CanvasRenderingContext2D,w:number,h:number)=>{
+    // Letterbox 640×360 logical playfield rather than stretching art on portrait CRTs.
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0d0b12';ctx.fillRect(0,0,w,h);
+    const scale=Math.min(w/640,h/360),dx=(w-640*scale)/2,dy=(h-360*scale)/2;
+    ctx.setTransform(scale,0,0,scale,dx,dy);
+    const far=art?.images.far;
+    if(far){const offset=(distance*.2)%640;ctx.drawImage(far,-offset,0,640,360);ctx.drawImage(far,640-offset,0,640,360);ctx.fillStyle='rgba(15,9,24,.12)';ctx.fillRect(0,0,640,360)}
+    else{
+      ctx.fillStyle='#1a1521';ctx.fillRect(0,0,640,360);
+      ctx.fillStyle='#33283e';for(let i=0;i<15;i++)ctx.fillRect(((i*91-distance*.2)%730+730)%730-30,90,3,190);
+      ctx.font='14px monospace';ctx.fillStyle='#796987';
+      for(let i=0;i<9;i++)ctx.fillText('§ '+(Math.floor(distance/220)+i+1)+'  TERMS AND CONDITIONS APPLY',12,90+i*24);
+    }
+    const skyline=art?.images.skyline;
+    if(skyline){ctx.globalAlpha=.5;ctx.drawImage(skyline,-(distance*.12%640),202,640,76);ctx.drawImage(skyline,640-(distance*.12%640),202,640,76);ctx.globalAlpha=1}
+    ctx.fillStyle='#16151b';ctx.fillRect(0,ground,640,60);
+    ctx.fillStyle='#D7FF00';ctx.fillRect(0,ground,640,3);
+    for(const o of objects)drawObstacle(ctx,o);
+    drawSkater(ctx);
+    if(grinding){ctx.fillStyle='#E0287A';for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,boardY+2+(i%2)*3,5,2)}
+    ctx.fillStyle='rgba(17,12,20,.93)';ctx.fillRect(0,0,640,71);
+    ctx.fillStyle='#D7FF00';ctx.font='bold 18px monospace';ctx.fillText('CLAUSES SKIPPED  '+score(),14,27);
+    ctx.fillStyle='#F3EBDE';ctx.font='bold 12px monospace';ctx.fillText('TIER '+tier()+'   COMBO x'+(combo>=3?3:combo===2?2:combo===1?1.5:1),14,47);
+    ctx.fillStyle='#D7FF00';ctx.fillText('BEST '+(host as any).best,485,27);
+    ctx.fillText((shield?'[SHIELD] ':'')+(airBoost?'[AIR BOOST]':''),400,47);
+    ctx.fillStyle='#E0287A';ctx.font='bold 11px monospace';
+    if(elapsed<11)ctx.fillText('SPACE/TAP OLLIE   •   HOLD TO GRIND   •   RELEASE TO POP',12,65);
+    else if(grinding)ctx.fillText('GRINDING THE FINE PRINT — RELEASE TO POP!',170,65);
+    else ctx.fillText('NOBODY READS THEM. SKATE THEM.',12,65);
+    if(visualFlash>0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
     ctx.restore();
   };
-  start();
-  return {start,update,draw,input,score:()=>Math.floor(score()),over:()=>!alive} satisfies GameAPI;
+  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),longestCombo,shieldsUsed}});
+  reset();
+  return {start:reset,input,update,draw,score,over:()=>!alive&&bailRemaining===0,result,setSkin} satisfies GameAPI;
 });
