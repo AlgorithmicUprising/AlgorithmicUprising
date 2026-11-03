@@ -1,10 +1,94 @@
 {
   "id": "au",
   "game": "grind-the-terms",
-  "name": "Algorithmic Uprising (branding pending)",
+  "name": "Algorithmic Uprising — Fony Sprock approved punk art",
+  "version": "0.2.0-preview",
+  "license": "all-rights-reserved",
   "extends": "fony",
+  "render": {
+    "pixelated": true
+  },
   "palette": {
-    "bg": "#0b1010",
-    "accent": "#b8ff35"
+    "bg": "#171121",
+    "ink": "#141412",
+    "accent": "#D7FF00",
+    "magenta": "#E0287A",
+    "paper": "#EDEAE0"
+  },
+  "files": {
+    "skater": "fony_sprock_atlas.png",
+    "hazards": "terms_hazards_atlas.png",
+    "far": "terms_far_plate.jpg",
+    "skyline": "terms_skyline.jpg"
+  },
+  "grid": {
+    "skater": {
+      "cellW": 80,
+      "cellH": 94,
+      "columns": 8
+    },
+    "hazards": {
+      "cellW": 144,
+      "cellH": 112,
+      "columns": 4
+    }
+  },
+  "anims": {
+    "run": {
+      "start": 0,
+      "frames": 6,
+      "fps": 12,
+      "loop": true
+    },
+    "idle": {
+      "start": 6,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "land": {
+      "start": 10,
+      "frames": 2,
+      "fps": 16
+    },
+    "ollie": {
+      "start": 12,
+      "frames": 5,
+      "fps": 14
+    },
+    "double": {
+      "start": 17,
+      "frames": 4,
+      "fps": 12
+    },
+    "bail": {
+      "start": 21,
+      "frames": 6,
+      "fps": 12
+    },
+    "grind": {
+      "start": 27,
+      "frames": 4,
+      "fps": 10,
+      "loop": true
+    },
+    "railpop": {
+      "start": 31,
+      "frames": 4,
+      "fps": 12
+    },
+    "flip": {
+      "start": 35,
+      "frames": 4,
+      "fps": 14
+    }
+  },
+  "strings": {
+    "title": "GRIND THE TERMS",
+    "subtitle": "Nobody reads them. Skate them.",
+    "hud_score": "CLAUSES SKIPPED",
+    "grind_call": "GRINDING THE FINE PRINT",
+    "retry": "SKIM AGAIN",
+    "new_best": "NEW RECORD. STILL UNREAD."
   }
 }
