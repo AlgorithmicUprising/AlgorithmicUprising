@@ -58,3 +58,16 @@ test('correct score metadata and back-to-back starts',async({page})=>{
  await game.locator('button[part=start]').click();
  expect(await game.evaluate(el=>el.state)).toBe('playing');
 });
+
+
+test('sound starts muted and can be toggled without a recording asset',async({page})=>{
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ const sound=game.locator('button[part=sound]');
+ await expect(sound).toHaveText('SOUND OFF');
+ await sound.click();
+ await expect(sound).toHaveText('SOUND ON');
+ await expect(page.locator('#events')).toContainText('game:sound');
+ await sound.click();
+ await expect(sound).toHaveText('SOUND OFF');
+});

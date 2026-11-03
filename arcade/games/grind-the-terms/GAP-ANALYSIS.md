@@ -6,7 +6,7 @@ Reviewed: Punk Arcade Game 01 (Nov 3 v0.1), Shared Kit & Embed Spec, the new Fon
 |---|---|---|---|
 | Public game demo | Both greyboxes on one page | Unchanged, AU art now default for Grind | ZERO TV CH 05 still separate |
 | Game code | One monolithic greybox | Authored chunk data and richer game state | Further split source into player/spawner/hazards modules |
-| Fony art | Rectangle character | Cropped 39-frame AU sprite atlas (run, idle, land, ollie, double, bail, grind, railpop, flip), hazards, skyline, paper plate | Crop cleanup, precise 64×64 production sprite template, open-skin art |
+| Fony art | Rectangle character | Cropped 39-frame AU sprite atlas (run, idle, land, ollie, double, bail, grind, railpop, flip), hazards, cleaned skyline crop, paper plate | Crop cleanup, precise 64×64 production sprite template, open-skin art |
 | Asset loading | Skin files ignored | Async PNG/JPG loader, switchable `skin` attribute, procedural fallback, error events | Validator checks file existence but not frame completeness, anchors or contrast |
 | Ollie | -500 / 1020 physics | Spec -620 / 1800; 100ms buffer, 80ms coyote | Tuning, playtest and hold-input gamepad |
 | Grind | Narrow catch window | Descending catch with 12 px snap and hold-to-grind | More deterministic collision/animation regression cases |
@@ -17,8 +17,8 @@ Reviewed: Punk Arcade Game 01 (Nov 3 v0.1), Shared Kit & Embed Spec, the new Fon
 | Scoring | Bonuses overwritten by distance | Distance, grind bonuses, combo multiplier, token rewards, near-misses | Exact guide values for all animations / combo resets |
 | Game over | Generic message | Cause-specific lines, result statistics, local best | 0.4s bail verified in browser; complete sharing fallback |
 | Layout | Basic 16:9, stretched art | Letterboxed 640×360 playfield | Real 9:16 portrait arrangement, CRT interaction, 320px testing |
-| Accessibility | Basic keyboard / focus / pause | Keyboard/pointer, no flashes added, muted by default | Gamepad, full settings overlay, FlashGuard test, assistive text, reduced-motion effects |
-| Audio | Toggle only / no generated SFX | No song audio committed | Sound toggle and procedural SFX remain to implement |
+| Accessibility | Basic keyboard / focus / pause | Keyboard/pointer plus standard gamepad A input; no flashes added, muted by default | Full settings overlay, FlashGuard test, assistive text, reduced-motion effects |
+| Audio | Toggle only / no generated SFX | Muted-by-default procedural Web Audio SFX for grind/power/bail events, sound toggle persistence; no song audio | Safari/Android sound acceptance, richer art-driven SFX and user volume setting |
 | Packaging | CI+Pages demo | Public AU skin and browser regressions | Standalone game demo and iframe, release tag, jsDelivr test, band approval |
 
 ## Important constraints
@@ -34,6 +34,6 @@ Reviewed: Punk Arcade Game 01 (Nov 3 v0.1), Shared Kit & Embed Spec, the new Fon
 1. CI green with Chromium desktop/mobile tests including art and gameplay smoke, plus release bundle size.
 2. Visual QA: actual player animation, rails catch/pop, multiple scores, broken skin fallback, HUD on phone.
 3. Gameplay QA: 5 beginner 30–90s runs, every chunk clearable at its max speed, collision/hitbox fairness, balance.
-4. Add gamepad, portrait controls, settings, Sound SFX, FlashGuard, complete share fallback.
+4. Polish gamepad and portrait controls, settings, FlashGuard, full sound acceptance and share fallback.
 5. Finish clean unbranded Fony skin, frame validation, standalone embed, polished visual/sprite review.
 6. Band approval before merging `arcade` to `main` or publishing as a tagged v0.1 release; ZERO TV integration remains M3.
