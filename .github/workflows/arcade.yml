@@ -63,9 +63,11 @@ jobs:
         working-directory: arcade
       - run: npm run build
         working-directory: arcade
+      - run: npm run stage-pages
+        working-directory: arcade
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: arcade
+          path: arcade/.pages
       - id: deployment
         uses: actions/deploy-pages@v4
