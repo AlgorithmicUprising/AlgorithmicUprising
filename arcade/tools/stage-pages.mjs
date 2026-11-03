@@ -8,6 +8,7 @@ for(const game of ['grind-the-terms','tag-before-training']){
   await mkdir(join(root,'games',game),{recursive:true});
   await cp(join('games',game,'dist'),join(root,'games',game,'dist'),{recursive:true});
   await cp(join('games',game,'skins'),join(root,'games',game,'skins'),{recursive:true});
+  if(game==='grind-the-terms')await cp(join('games',game,'demo'),join(root,'games',game,'demo'),{recursive:true});
 }
 // GitHub Pages receives .pages/ as its site root. A root index is essential;
 // visitors should land on the arcade rather than the GitHub Pages 404 screen.
@@ -31,7 +32,7 @@ h1{color:#c0ff39}a{color:#ff5ea9}
 await writeFile(join(root,'index.html'),landing);
 await writeFile(join(root,'.nojekyll'),'');
 // Fail deployment before upload if a required entrypoint or game bundle is missing.
-for(const path of ['index.html','demo/index.html','games/grind-the-terms/dist/grind-the-terms.js','games/tag-before-training/dist/tag-before-training.js']){
+for(const path of ['index.html','demo/index.html','games/grind-the-terms/demo/index.html','games/grind-the-terms/demo/embed.html','games/grind-the-terms/dist/grind-the-terms.js','games/tag-before-training/dist/tag-before-training.js']){
   const file=join(root,path),s=await stat(file);
   if(!s.isFile()||s.size===0)throw new Error('Missing/empty Pages file: '+file);
 }
