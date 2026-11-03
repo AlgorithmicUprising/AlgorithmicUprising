@@ -72,10 +72,11 @@ test('game-over saves personal best and restart resets the run',async({page})=>{
  const el=page.locator('grind-the-terms');
  await el.locator('button[part=start]').click();
  // Simulate the natural game-over condition through the greybox game API.
- await el.evaluate(e=>{e.game.score=()=>123;e.game.over=()=>true});
+ await el.evaluate(e=>{e._originalScore=e.game.score;e._originalOver=e.game.over;e.game.score=()=>123;e.game.over=()=>true});
  await expect(el.locator('button[part=again]')).toBeVisible();
  await expect(el.locator('.overlay')).toContainText('BEST 123');
  expect(await el.evaluate(e=>e.best)).toBe(123);
+ await el.evaluate(e=>{e.game.score=e._originalScore;e.game.over=e._originalOver});
  await el.locator('button[part=again]').click();
  expect(await el.evaluate(e=>e.state)).toBe('playing');
  await page.reload();
