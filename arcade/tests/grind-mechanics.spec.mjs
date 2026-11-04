@@ -173,7 +173,7 @@ test('seamless rail cap top matches skater contact and end legs touch pavement',
   for(let i=0;i<100;i++){g.update(1/60);if(g.result().stats.grindMs>0){caught=true;break}}
   g.draw(ctx,canvas.width,canvas.height);
   const stats=g.result().stats;
-  const k=Math.min(canvas.width/640,canvas.height/360),dx=(canvas.width-640*k)/2,dy=(canvas.height-360*k)/2;
+  const portrait=canvas.width/canvas.height<1.05,k=portrait?canvas.width/450:Math.min(canvas.width/640,canvas.height/360),dx=portrait?-35*k:(canvas.width-640*k)/2,dy=portrait?canvas.height-340*k:(canvas.height-360*k)/2;
   const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
   const bar=stats.supportX!==null?sample(stats.supportX+stats.supportWidth*.72,stats.supportTop+4):null;
   g.input('tap',false);g.update(1/60);
@@ -218,7 +218,7 @@ test('clean ACCEPT ALL sprite body is grounded with no detached green guide',asy
   el.setAttribute('data-qa-accept','');
   const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
   el.game.start();el.game.draw(ctx,c.width,c.height);
-  const k=Math.min(c.width/640,c.height/360),dx=(c.width-640*k)/2,dy=(c.height-360*k)/2;
+  const portrait=c.width/c.height<1.05,k=portrait?c.width/450:Math.min(c.width/640,c.height/360),dx=portrait?-35*k:(c.width-640*k)/2,dy=portrait?c.height-340*k:(c.height-360*k)/2;
   const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
   return {button:sample(375,276),above:sample(375,264),floor:sample(375,299)};
  });
