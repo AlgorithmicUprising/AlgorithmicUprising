@@ -373,7 +373,7 @@ test('approved illustrated scenery is loaded as five distinct parallax layers',a
   if(i.key==='cloudsFar'||i.key==='cloudsNear')expect(result.seen).toContain('cached-cloud');
   else expect(result.seen,`missing rendered ${i.key}: ${i.assetName}`).toContain(i.assetName);
  }
- await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v9.png'});
+ await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v10.png'});
 });
 
 test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains smoothing',async({page})=>{
@@ -438,7 +438,7 @@ test('near and far cloud artwork has compact typography metadata and separate as
  expect(detail.type.largestRenderedTextPx).toBeLessThanOrEqual(10);
  expect(detail.type.heading).toBe('TERMS & CONDITIONS');
  expect(detail.near).not.toBe(detail.far);
- expect(detail.near).toContain('cloud_canopy_near_v9.svg');
+ expect(detail.near).toContain('cloudbank_near_v10.svg');
 });
 
 
@@ -546,4 +546,20 @@ test('parallax renderer only draws visible portions of large scenic tiles',async
  expect(result.filter(x=>x.kind==='raster-cloud').length).toBeGreaterThanOrEqual(2);
  expect(result.some(x=>x.kind==='city')).toBe(true);
  for(const x of result)expect(x.destWidth).toBeLessThanOrEqual(650);
+});
+
+test('phone paper clouds are vertically overlapping, not detached stripes',async({page})=>{
+ await page.goto('/demo/');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ const rectangles=await page.locator('grind-the-terms').evaluate(el=>{
+   const canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
+   const real=ctx.drawImage.bind(ctx),rows=[];
+   ctx.drawImage=(...args)=>{if(args.length===9&&args[0] instanceof HTMLCanvasElement&&args[0].width===1280&&args[0].height===190)
+     rows.push({y:args[6],h:args[8]});return real(...args);};
+   el.game.start();el.game.draw(ctx,canvas.width,canvas.height);ctx.drawImage=real;
+   return rows;
+ });
+ const rows=[...new Map(rectangles.map(r=>[Math.round(r.y),r])).values()].sort((a,b)=>a.y-b.y);
+ expect(rows.length).toBeGreaterThanOrEqual(2);
+ expect(rows[1].y).toBeLessThan(rows[0].y+rows[0].h*.9);
 });

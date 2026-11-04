@@ -483,31 +483,36 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       // Give each plane a meaningful silhouette and leave the factory visible.
       const cityFactor=.19;
       tileLayer(ctx,'dataCity',132,143,cityFactor,1);
-      const cloudNearY=portrait?topWorld+192:67;
-      const cloudNearH=portrait?112:96;
-      const cloudBottom=cloudNearY+cloudNearH*.83;
+      // Overlapping portrait cloudbanks replace the former two separated stripes.
+      const cloudFarY=portrait?topWorld+77:39;
+      const cloudFarH=portrait?207:115;
+      const cloudNearY=portrait?topWorld+148:76;
+      const cloudNearH=portrait?192:116;
       const cityShift=((distance*cityFactor)%1280+1280)%1280;
-      // Smoke is anchored to the same moving world as the painted stacks.
-      // Connected overlapping puffs meet the curved underside of the paper clouds.
+      // Layered cut-paper clouds: far and near overlap into ONE visible canopy.
+      // Both pre-rasterized once on skin load, then camera-cropped every frame.
+      tileLayer(ctx,'cloudsFar',cloudFarY,cloudFarH,.028,.86);
+      tileLayer(ctx,'cloudsNear',cloudNearY,cloudNearH,.068,.99);
+      // Plumes start at city chimney positions, follow city parallax and fade
+      // upward INTO the near-cloud silhouette instead of floating separately.
       ctx.save();
       for(let tile=-1280-cityShift;tile<1400;tile+=1280){
         for(const [i,stack] of [[44,174],[216,156],[484,163],[744,160],[1024,169]] as const){
-          const x=tile+i, start=stack, end=Math.min(start-17,cloudBottom-13);
-          for(let puff=0;puff<=8;puff++){
-            const t=puff/8, bend=Math.sin(t*6.1+i*.028+elapsed*.5)*6*t;
-            const cx=x+bend+t*11,cy=start+(end-start)*t;
-            const radius=3.2+t*6.6;
-            ctx.beginPath();ctx.ellipse(cx,cy,radius*1.2,radius,0,0,Math.PI*2);
-            ctx.fillStyle=`rgba(242,210,223,${.34+t*.38})`;ctx.fill();
+          const x=tile+i;
+          if(x<viewLeft-42||x>viewRight+42)continue;
+          const top=Math.min(stack-49,cloudNearY+cloudNearH*.8);
+          for(let puff=0;puff<10;puff++){
+            const t=puff/9,cy=stack+(top-stack)*t;
+            const cx=x+t*8+Math.sin(t*4.6+i*.037+elapsed*.62)*7*t;
+            const radius=2.6+t*6.8;
+            ctx.beginPath();ctx.ellipse(cx,cy,radius*1.04,radius,0,0,Math.PI*2);
+            ctx.fillStyle=`rgba(248,218,225,${(.7-t*.61).toFixed(3)})`;
+            ctx.fill();
           }
         }
       }
       ctx.restore();
-      // Scalloped paper-cut cloud strata: printed microtext is part of each cloud,
-      // with NO rectangular document boxes baked into the scenery.
-      tileLayer(ctx,'cloudsFar',portrait?topWorld+73:46,portrait?100:82,.03,.65);
-      tileLayer(ctx,'cloudsNear',cloudNearY,cloudNearH,.075,.95);
-      // Do not bake coins or obstacles into the scenery. Retaining wall is
+            // Do not bake coins or obstacles into the scenery. Retaining wall is
       // behind the actor, never on top of the skating surface.
       tileLayer(ctx,'graffitiWall',239,61,.32,.97);
       // Image holds the curb, textured sidewalk and distinct asphalt lanes.

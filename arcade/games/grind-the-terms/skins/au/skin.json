@@ -1,8 +1,8 @@
 {
   "id": "au",
   "game": "grind-the-terms",
-  "name": "Algorithmic Uprising — layered legal-smog cloud canopy and faster skate motion",
-  "version": "0.5.0-cloud-canopy",
+  "name": "Algorithmic Uprising — sculpted shaded fine-print paper clouds",
+  "version": "0.6.0-cloudbank-v10",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -20,8 +20,8 @@
     "hazards": "terms_hazards_atlas.png",
     "far": "terms_far_plate.jpg",
     "skyline": "terms_skyline_v2.jpg",
-    "cloudsFar": "terms_cloud_canopy_far_v9.svg",
-    "cloudsNear": "terms_cloud_canopy_near_v9.svg",
+    "cloudsFar": "terms_cloudbank_far_v10.svg",
+    "cloudsNear": "terms_cloudbank_near_v10.svg",
     "dataCity": "terms_illustrated_datacenter_city_v5.png",
     "graffitiWall": "terms_illustrated_graffiti_wall_v5.png",
     "road": "terms_illustrated_sidewalk_road_v5.png"
