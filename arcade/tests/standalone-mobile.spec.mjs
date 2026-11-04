@@ -183,3 +183,15 @@ test('portrait camera fills the tablet game screen without landscape letterboxin
  expect(measures.ratio).toBeGreaterThan(.70);
  expect(measures.top[3]).toBe(255);
 });
+
+test('real touchscreen tap on U still initiates an ollie in Chromium and WebKit',async({page},info)=>{
+ test.skip(!info.project.name.startsWith('mobile'),'Mobile touch only');
+ await page.goto(standalone);
+ const game=page.locator('grind-the-terms');
+ await game.locator('button[part=start]').click();
+ const before=await game.evaluate(el=>el.game.result().stats.boardY);
+ await game.locator('button[data-key=jump]').tap();
+ await game.evaluate(el=>el.game.update(.04));
+ const after=await game.evaluate(el=>el.game.result().stats.boardY);
+ expect(after).toBeLessThan(before-10);
+});
