@@ -1,8 +1,8 @@
 {
   "id": "au",
   "game": "grind-the-terms",
-  "name": "Algorithmic Uprising — illustrated Fony + layered punk data-center streets",
-  "version": "0.3.1-illustrated",
+  "name": "Algorithmic Uprising — sharp Fony ink art + fine-print cloud parallax",
+  "version": "0.3.2-crisp-legal-smog",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -16,24 +16,24 @@
     "paper": "#EDEAE0"
   },
   "files": {
-    "skater": "fony_punk_approved_v3.png",
+    "skater": "fony_punk_ink_hd_v6.png",
     "hazards": "terms_hazards_atlas.png",
     "far": "terms_far_plate.jpg",
     "skyline": "terms_skyline_v2.jpg",
-    "cloudsFar": "terms_illustrated_clouds_far_v5.png",
-    "cloudsNear": "terms_illustrated_clouds_near_v5.png",
+    "cloudsFar": "terms_dense_clouds_far_v6.png",
+    "cloudsNear": "terms_dense_clouds_near_v6.png",
     "dataCity": "terms_illustrated_datacenter_city_v5.png",
     "graffitiWall": "terms_illustrated_graffiti_wall_v5.png",
     "road": "terms_illustrated_sidewalk_road_v5.png"
   },
   "grid": {
     "skater": {
-      "cellW": 128,
-      "cellH": 128,
+      "cellW": 256,
+      "cellH": 256,
       "columns": 8,
-      "anchorX": 64,
-      "anchorY": 117,
-      "displayScale": 1
+      "anchorX": 128,
+      "anchorY": 234,
+      "displayScale": 0.5
     },
     "hazards": {
       "cellW": 144,
@@ -122,5 +122,11 @@
       "drawHeight": 130
     }
   },
-  "source": "User-approved Game 01 Fony Sprock sprite sheet and Nov 3 punk game mockup; separated into 39 character poses and six scrolling scenic layers."
+  "source": "User-approved Game 01 Fony Sprock sprite sheet and Nov 3 punk game mockup; separated into 39 character poses and six scrolling scenic layers.",
+  "cloudTypography": {
+    "largestRenderedTextPx": 12,
+    "heading": "TERMS & CONDITIONS",
+    "body": "Dense legal clauses, individual checkboxes, and short legal fragments, never billboard text",
+    "layers": 2
+  }
 }

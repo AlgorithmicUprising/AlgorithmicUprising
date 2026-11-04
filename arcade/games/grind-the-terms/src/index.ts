@@ -255,7 +255,15 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const isSkater=key==='skater',cfg=art?.grid?.[key],cellW=cfg?.cellW??(isSkater?80:144),cellH=cfg?.cellH??(isSkater?94:112);
     const sx=col*cellW,sy=row*cellH;
     if(sx<0||sy<0||sx+cellW>asset.naturalWidth||sy+cellH>asset.naturalHeight)return false;
-    ctx.drawImage(asset,sx,sy,cellW,cellH,x,y,w,h);return true;
+    // Fony is an inked sprite with intentional hard contour lines.
+    // Disable interpolation only for character source pixels; background
+    // textures remain smoothly resampled. Save/restore prevents global bleed.
+    if(isSkater){
+      ctx.save();ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(asset,sx,sy,cellW,cellH,x,y,w,h);
+      ctx.restore();
+    }else ctx.drawImage(asset,sx,sy,cellW,cellH,x,y,w,h);
+    return true;
   };
   const drawSkater=(ctx:CanvasRenderingContext2D)=>{
     let animation=currentAnim;
@@ -437,7 +445,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       tileLayer(ctx,'graffitiWall',239,61,.23,.97);
       // Image holds the curb, textured sidewalk and distinct asphalt lanes.
       // Everything sits at Y=300; no black line standing in for a floor.
-      tileLayer(ctx,'road',ground-5,90,.86,1);
+      // This is physical world geometry: sidewalk and attached obstacles
+      // MUST move in perfect lockstep. Never use parallax on the ground.
+      tileLayer(ctx,'road',ground-5,90,1,1);
       return;
     }
     // Safe fallback to the former clearly framed art; never a blank stage.
@@ -473,6 +483,10 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
     if(host.hasAttribute('data-qa-accept'))
       drawAccept(ctx,{kind:'accept',x:315,w:120,scored:false,collected:false,deflected:false});
+    // QA-only obstacle at a fixed WORLD position verifies the pavement
+    // and actual consent buttons scroll at exactly the same world velocity.
+    if(host.hasAttribute('data-qa-ground-scroll'))
+      drawAccept(ctx,{kind:'accept',x:980-distance,w:120,scored:false,collected:false,deflected:false});
     if(host.hasAttribute('data-qa-token'))
       drawToken(ctx,{kind:'token',power:'shield',x:310,w:26,scored:false,collected:false,deflected:false});
     if(host.hasAttribute('data-qa-loophole'))

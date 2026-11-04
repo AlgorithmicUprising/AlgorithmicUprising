@@ -72,3 +72,10 @@ Keyboard SPACE now toggles GO FASTER; ↑/W/U jump. Portrait mobile U jumps and 
 - [x] Reduced cloud height and visual dominance; skyline remains visible. Reduced pause veil opacity for visual QA.
 - [x] Preserved all functional progress: clean cap rails, grounded consent forms/ACCEPT, visible manhole holes and token art, 10% speed toggle, mobile U long-press suppression, portrait cabinet.
 - [ ] Actual physical-device art acceptance and balance tuning. No production ZERO TV deployment.
+
+## Nov 3 — User-requested crisp hero / small dense legal text / ground lock
+- [x] New 2× ink-enhanced Fony atlas with stronger contour and 39 preserved poses; image interpolation disabled only for sprite sampling. **Actual independently redrawn high-resolution poses remain an art follow-up.**
+- [x] Rebuilt near/far torn paper text clouds with dense smaller legal clauses, readable TERMS & CONDITIONS headings no larger than RESUME.
+- [x] Corrected roadside parallax from 0.86× to 1.0× so ACCEPT buttons and sidewalk share the exact same world motion.
+- [x] Added tests for atlas geometry, crisp sampling, heading size contract and road/ACCEPT on-screen displacement.
+- [ ] Manual art approval on desktop and real iPhone; proper individually redrawn high-resolution Fony poses.

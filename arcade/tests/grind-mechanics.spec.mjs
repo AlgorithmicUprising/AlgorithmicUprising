@@ -119,16 +119,16 @@ test('Fony atlas has 39 unclipped poses sharing one board/foot baseline',async({
   }
   return {grid,source:[asset.naturalWidth,asset.naturalHeight],boxes};
  });
- expect(poses.source).toEqual([1024,640]);
- expect(poses.grid.anchorX).toBe(64);expect(poses.grid.anchorY).toBe(117);
+ expect(poses.source).toEqual([2048,1280]);
+ expect(poses.grid.anchorX).toBe(128);expect(poses.grid.anchorY).toBe(234);expect(poses.grid.displayScale).toBe(.5);
  expect(poses.boxes).toHaveLength(39);
  for(const [i,b] of poses.boxes.entries()){
-  expect(b.pixels,`frame ${i} missing pixels`).toBeGreaterThan(250);
-  expect(b.minX,`frame ${i} clips left`).toBeGreaterThan(3);
-  expect(b.maxX,`frame ${i} clips right`).toBeLessThan(125);
+  expect(b.pixels,`frame ${i} missing pixels`).toBeGreaterThan(1000);
+  expect(b.minX,`frame ${i} clips left`).toBeGreaterThan(7);
+  expect(b.maxX,`frame ${i} clips right`).toBeLessThan(249);
   expect(b.minY,`frame ${i} clips top`).toBeGreaterThan(3);
-  expect(b.maxY,`frame ${i} exceeds foot baseline`).toBeLessThanOrEqual(118);
-  expect(b.maxY,`frame ${i} not aligned to foot baseline`).toBeGreaterThanOrEqual(113);
+  expect(b.maxY,`frame ${i} exceeds foot baseline`).toBeLessThanOrEqual(236);
+  expect(b.maxY,`frame ${i} not aligned to foot baseline`).toBeGreaterThanOrEqual(225);
  }
 });
 
@@ -139,7 +139,7 @@ test('running and bail animations use stable on-screen actor origin and never lo
  const result=await game.evaluate(el=>{
   const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
   const original=ctx.drawImage.bind(ctx),poses=[];
-  ctx.drawImage=(...args)=>{if(args.length===9&&args[0]?.naturalWidth===1024)poses.push({sx:args[1],sy:args[2],dx:args[5],dy:args[6],w:args[7],h:args[8]});return original(...args)};
+  ctx.drawImage=(...args)=>{if(args.length===9&&args[0]?.naturalWidth===2048)poses.push({sx:args[1],sy:args[2],dx:args[5],dy:args[6],w:args[7],h:args[8]});return original(...args)};
   g.start();
   for(let i=0;i<6;i++){g.update(.05);g.draw(ctx,canvas.width,canvas.height)}
   const run=poses.slice();
@@ -156,8 +156,8 @@ test('running and bail animations use stable on-screen actor origin and never lo
  for(const p of result.run){expect(p.dx).toBeCloseTo(76,0);expect(p.dy).toBeCloseTo(183,0);expect(p.w).toBe(128);expect(p.h).toBe(128)}
  expect(result.final.dx).toBeCloseTo(76,0);
  expect(result.final.dy).toBeCloseTo(183,0);
- expect(result.final.sx).toBe((26%8)*128);
- expect(result.final.sy).toBe(Math.floor(26/8)*128);
+ expect(result.final.sx).toBe((26%8)*256);
+ expect(result.final.sy).toBe(Math.floor(26/8)*256);
  expect(result.after).toEqual(result.final);
 });
 
@@ -364,4 +364,69 @@ test('approved illustrated scenery is loaded as five distinct parallax layers',a
  expect(result.images).toHaveLength(5);
  for(const i of result.images){expect(i.w).toBe(1280);expect(i.h).toBeGreaterThan(80);expect(result.seen.some(x=>x.includes('v5.png')&&x.includes(i.key==='dataCity'?'datacenter':i.key==='graffitiWall'?'graffiti':i.key==='road'?'sidewalk':i.key==='cloudsFar'?'clouds_far':'clouds_near'))).toBe(true);}
  await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v5.png'});
+});
+
+test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains smoothing',async({page})=>{
+ await page.goto('/demo/');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ const data=await page.locator('grind-the-terms').evaluate(el=>{
+   const game=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
+   const original=ctx.drawImage.bind(ctx),seen=[];
+   ctx.drawImage=(...args)=>{
+     if(args[0]?.naturalWidth===2048)seen.push({smooth:ctx.imageSmoothingEnabled,sourceW:args[3],destW:args[7]});
+     return original(...args);
+   };
+   game.start();game.draw(ctx,canvas.width,canvas.height);
+   ctx.drawImage=original;
+   return {seen,after:ctx.imageSmoothingEnabled};
+ });
+ expect(data.seen.length).toBeGreaterThan(0);
+ expect(data.seen.every(s=>s.smooth===false&&s.sourceW===256&&s.destW===128)).toBe(true);
+ expect(data.after).toBe(true);
+ await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/fony-crisp-legal-smog-v6.png'});
+});
+
+test('world-space ACCEPT and physical sidewalk scroll at identical speed',async({page})=>{
+ await page.goto('/demo/');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ const result=await page.locator('grind-the-terms').evaluate(el=>{
+   el.setAttribute('data-qa-ground-scroll','');
+   const game=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
+   const draw=ctx.drawImage.bind(ctx),fill=ctx.fillText.bind(ctx),scans=[];
+   let roadX=null,acceptX=null;
+   ctx.drawImage=(...args)=>{
+     if(args[0]?.src?.includes('terms_illustrated_sidewalk_road_v5.png')&&roadX===null)roadX=args[1];
+     return draw(...args);
+   };
+   ctx.fillText=(...args)=>{if(args[0]==='ACCEPT ALL')acceptX=args[1];return fill(...args)};
+   game.start();
+   for(const steps of [0,18,18]){
+     for(let i=0;i<steps;i++)game.update(.05);
+     roadX=null;acceptX=null;
+     game.draw(ctx,canvas.width,canvas.height);
+     scans.push({roadX,acceptX,d:game.result().stats.distancePx});
+   }
+   ctx.drawImage=draw;ctx.fillText=fill;
+   return scans;
+ });
+ expect(result).toHaveLength(3);
+ expect(result.every(s=>s.roadX!==null&&s.acceptX!==null)).toBe(true);
+ for(let i=1;i<result.length;i++){
+   const roadShift=result[i].roadX-result[i-1].roadX;
+   const acceptShift=result[i].acceptX-result[i-1].acceptX;
+   expect(Math.abs(roadShift-acceptShift)).toBeLessThan(.01);
+   expect(roadShift).toBeLessThan(-50);
+ }
+});
+
+test('near and far cloud artwork has compact typography metadata and separate assets',async({page})=>{
+ await page.goto('/demo/');
+ const detail=await page.evaluate(async()=>{
+  const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
+  const data=await(await fetch(url)).json();return {type:data.cloudTypography,far:data.files.cloudsFar,near:data.files.cloudsNear};
+ });
+ expect(detail.type.largestRenderedTextPx).toBeLessThanOrEqual(14);
+ expect(detail.type.heading).toBe('TERMS & CONDITIONS');
+ expect(detail.near).not.toBe(detail.far);
+ expect(detail.near).toContain('dense_clouds_near_v6');
 });
