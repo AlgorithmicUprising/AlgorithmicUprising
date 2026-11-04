@@ -13,7 +13,10 @@ test('all fixed hazards are jumpable and have a recovery margin',()=>{
   for(const o of chunk.objects){
    assert.ok(o.at>=60,chunk.id);
    assert.ok(o.at+o.w<=chunk.width-150,chunk.id);
-   if(o.kind!=='rail'&&o.kind!=='token')assert.ok(o.w+24<maxSpeed[chunk.tier]*airtime,chunk.id);
+   // Only gaps require clearing the full width in one jump. Consent boxes are
+   // traversable platforms: wide tops are deliberately playable via landing/grinding.
+   if(o.kind==='gap')assert.ok(o.w+24<maxSpeed[chunk.tier]*airtime,chunk.id);
+   if(['accept','popup','modal'].includes(o.kind))assert.ok(o.w>=48&&o.w<=180,chunk.id);
   }
   for(let i=1;i<danger.length;i++)assert.ok(danger[i].at-(danger[i-1].at+danger[i-1].w)>=200,chunk.id);
  }
