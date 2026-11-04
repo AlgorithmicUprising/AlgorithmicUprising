@@ -8,10 +8,12 @@ The side-scrolling browser runner for Punk Arcade's CH 05. This branch includes 
 
 | Move | Keyboard | Touch |
 | --- | --- | --- |
-| Ollie | Space / ↑ / W (tap) | Tap the canvas |
-| Catch rail grind | Keep holding jump while descending onto the rail | Keep finger down |
-| Pop off grind | Release jump while grinding | Release finger |
-| Double ollie | Find the AIR BOOST pickup, then tap again in the air | Second tap after pickup |
+| Ollie | ↑ / W / U (tap) | U cabinet button |
+| Catch rail grind | Keep holding ↑ / W / U while descending | Hold U |
+| Pop off grind | Release jump while grinding | Release U |
+| Double ollie | Find AIR BOOST, then tap jump again while airborne | Tap U again after pickup |
+| Go faster | SPACE or A toggles, 30% ramp | A toggles speed (pressed state) |
+| Future special | Not yet available | Large lightning-bolt Ø on left (reserved) |
 | Pause / resume | P / Esc, pause button | Pause / Resume buttons |
 | Gamepad | A = jump / hold to grind, release to pop | Standard controller |
 
@@ -57,3 +59,11 @@ Fony can land on, skate across, and ollie from ACCEPT, POPUP and MODAL boxes. **
 ## v0.2.4: obstacle artwork grounded to the floor
 
 Restored the original **ACCEPT ALL** sprite with no artificial floating lime coping line. The sprite's actual face is the grindable surface. ACCEPT, POPUP, and MODAL art now anchor their visible bottoms to the floor using source-cell measurements: ACCEPT surface 45/base 92/height 72, popup 24/105/94, modal 27/101/130 (source atlas cell height 112). Rail artwork is cropped to remove unrelated debris above its bar; its coping is source y=53, leg tips y=82, render scale height 77, so the legs meet floor Y=300 and the board meets the real bar near Y=280. Physics remains independent of skin loading: placeholder and AU share identical contact geometry.
+
+## November 3 — ZERO / ALGORITHMIC / UPRISING portrait arcade cabinet
+
+Phones in portrait show a width-scaled 16:9 gameplay viewport ABOVE a separate retro punk control deck inside the Web Component. The large lightning-bolt **Ø** on the left is reserved (no special move yet). Smaller A and U buttons sit on the lower-right for the right thumb: **A toggles GO FASTER**, **U is jump/hold-to-grind/release-to-pop**. The new keyboard map is **SPACE toggles speed**; ↑/W/U jump. Desktop gamepad A still jumps. The deck must be included in the component's measured height, not overlap the instructions, art picker, or other page content. The mobile portrait game screen remains 16:9 for correct pixels, not stretched to 9:16.
+
+Speed increases smoothly up to ~30% above normal over 0.45 s, returns over 0.35 s after toggling off. Grinds sustained for ~0.85 s grant a separate short 18% momentum bonus. This is an early tuning pass, not final balance. The speed state is displayed in the HUD and on the A button's pressed state.
+
+Still required before release: trim leftover transparent edges on hazard sprites, assemble variable-length rails with true left/center/right caps and legs, tune beginner run length, check real iPhone/Android interactions, verify 320px phone widths and mobile WebKit. The Ø special is expressly future work and must not perform gameplay yet.

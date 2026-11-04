@@ -41,3 +41,7 @@ Reviewed: Punk Arcade Game 01 (Nov 3 v0.1), Shared Kit & Embed Spec, the new Fon
 ## Playtest request: flat-top skating, November 3
 
 Implemented rideable/grindable ACCEPT, POPUP and MODAL boxes, with consistent foot/board contact, pop-off and an easier wide first box. The intro now teaches the new mechanic before later hazards. Vertical reward routes and airborne drones remain future work pending art and balance tests.
+
+## November 3 — portrait controls change order and speed
+
+Keyboard SPACE now toggles GO FASTER; ↑/W/U jump. Portrait mobile U jumps and holds/release grind; A toggles speed; large left lightning-Ø is reserved for future special. The new portrait cabinet must occupy layout height beneath a width-scaled 16:9 game screen; never overlap the art selectors or next page section. Speed ramps up/down smoothly and extended grinds award short momentum. Pending: hazard sprite transparency trim cleanup; long capped rail segments; phone interaction acceptance and balance testing.
