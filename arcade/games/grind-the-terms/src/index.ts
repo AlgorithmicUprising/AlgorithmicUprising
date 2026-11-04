@@ -379,9 +379,20 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
     const skyline=art?.images.skyline;
     if(skyline){ctx.globalAlpha=.5;ctx.drawImage(skyline,-(distance*.12%640),202,640,76);ctx.drawImage(skyline,640-(distance*.12%640),202,640,76);ctx.globalAlpha=1}
-    ctx.fillStyle='#16151b';ctx.fillRect(0,ground,640,60);
-    ctx.fillStyle='#D7FF00';ctx.fillRect(0,ground,640,3);
+    ctx.fillStyle='#2a2730';ctx.fillRect(0,ground,640,60);
+    ctx.fillStyle='#d7ff00';ctx.fillRect(0,ground,640,3);
+    ctx.fillStyle='#615768';ctx.fillRect(0,ground+10,640,2);
+    ctx.fillStyle='#1b1822';ctx.fillRect(0,ground+23,640,25);
+    ctx.fillStyle='#473e4c';
+    for(let x=-(distance*.8%62);x<640;x+=62)ctx.fillRect(x,ground+34,33,3);
     for(const o of objects)drawObstacle(ctx,o);
+    // This opt-in developer-only visual fixture uses the production renderer.
+    // It is not part of gameplay, and is never displayed without the QA attr.
+    if(host.hasAttribute('data-qa-consent')){
+      for(const [kind,x,width] of [['popup',225,116],['modal',405,120]] as const){
+        drawObstacle(ctx,{kind,x,w:width,scored:false,collected:false,deflected:false});
+      }
+    }
     drawSkater(ctx);
     if(grinding){ctx.fillStyle='#E0287A';const y=support?surfaceY(support):railSurfaceY();for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,y-2+(i%2)*3,5,2)}
     if(portrait){

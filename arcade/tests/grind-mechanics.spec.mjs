@@ -288,3 +288,28 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  await el.evaluate(x=>x.game.update(.05));
  expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBeLessThan(300);
 });
+
+test('consent forms are opaque, visible, grounded obstacles rather than translucent pickups',async({page},info)=>{
+ test.skip(info.project.name.startsWith('mobile'),'Exact pixel colors in desktop art fixture');
+ await page.goto('/demo/');
+ const el=page.locator('grind-the-terms');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ const colors=await el.evaluate(e=>{
+   e.setAttribute('data-qa-consent','');
+   const c=e.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
+   e.game.start();e.game.draw(ctx,c.width,c.height);
+   const sample=(x,y)=>{
+     const px=Math.floor(c.width*x/640),py=Math.floor(c.height*y/360);
+     return [...ctx.getImageData(px,py,1,1).data];
+   };
+   return {popup:sample(226,259),modal:sample(406,241)};
+ });
+ // The fully opaque paper fill is #f5eddd (245,237,221).
+ for(const color of [colors.popup,colors.modal]){
+   expect(color[0]).toBeGreaterThan(225);
+   expect(color[1]).toBeGreaterThan(212);
+   expect(color[2]).toBeGreaterThan(194);
+   expect(color[3]).toBe(255);
+ }
+ await el.locator('canvas').screenshot({path:'test-results/screenshots/consent-opaque-desktop.png'});
+});
