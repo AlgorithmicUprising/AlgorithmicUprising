@@ -2,7 +2,7 @@
   "id": "au",
   "game": "grind-the-terms",
   "name": "Algorithmic Uprising — Fony Sprock approved punk art",
-  "version": "0.2.1-preview",
+  "version": "0.2.2-preview",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -93,5 +93,10 @@
     "grind_call": "GRINDING THE FINE PRINT",
     "retry": "SKIM AGAIN",
     "new_best": "NEW RECORD. STILL UNREAD."
+  },
+  "rail": {
+    "drawTopFromGround": 39,
+    "drawHeight": 40,
+    "surfaceCellY": 53
   }
 }

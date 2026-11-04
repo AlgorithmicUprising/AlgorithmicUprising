@@ -8,7 +8,8 @@ type Chunk = { id: string; tier: number; width: number; objects: Array<{at:numbe
 type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; scored:boolean; collected:boolean };
 type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
 type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number};
-type Art = { images:Record<string,HTMLImageElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
+type RailVisual={drawTopFromGround:number;drawHeight:number;surfaceCellY:number};
+type Art = { images:Record<string,HTMLImageElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
 const chunks = chunksData as Chunk[];
 const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
 
@@ -33,6 +34,15 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const tier=()=>elapsed<20?1:elapsed<45?2:elapsed<90?3:4;
   const speed=()=>clamp(baseSpeed + elapsed*1.72,baseSpeed,420);
   const score=()=>Math.floor(distance/48)+Math.floor(extraClauses)+Math.floor(totalGrindDistance/32)*2+Math.floor(bonus);
+  // The board/truck world contact point uses the SAME geometry as the visible rail top.
+  // Source atlas: rail highlight at row 53 of a 112px cell, rendered 40px high
+  // at 39px above ground => y = 300 - 39 + 53/112*40 = 279.93.
+  const railSurfaceY=()=>{
+    const cfg=art?.rail,grid=art?.grid?.hazards;
+    return cfg&&grid&&art?.images.hazards?
+      ground-cfg.drawTopFromGround+cfg.drawHeight*(cfg.surfaceCellY/grid.cellH):
+      ground-20;
+  };
   const state=(animation:Anim)=>{if(currentAnim!==animation){currentAnim=animation;stateTime=0}};
   const reset=()=>{
     boardY=ground;lastBoardY=ground;vy=0;elapsed=0;distance=0;bonus=0;extraClauses=0;
@@ -113,7 +123,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       o.x-=moved;
       const overlap=o.x<playerX+13&&o.x+o.w>playerX-13;
       if(o.kind==='rail'){
-        const railY=ground-28;
+        const railY=railSurfaceY();
         if(grinding&&overlap){touchingRail=true;boardY=railY;vy=0;grindMs+=dt*1000;
           totalGrindDistance+=moved;grindDistance+=moved;extraClauses+=moved/48;
         }else if(!grinding&&held&&overlap&&vy>=0&&lastBoardY<=railY+12&&boardY>=railY-12&&boardY<=railY+17){
@@ -163,7 +173,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       const skinUrl=new URL(url,document.baseURI);
       const response=await fetch(skinUrl.toString(),{credentials:'omit'});
       if(!response.ok)throw new Error('skin HTTP '+response.status);
-      const data=await response.json() as {game:string;name?:string;files?:Record<string,string>;palette?:Record<string,string>;grid?:Art['grid'];anims?:Art['anims']};
+      const data=await response.json() as {game:string;name?:string;files?:Record<string,string>;palette?:Record<string,string>;grid?:Art['grid'];rail?:RailVisual;anims?:Art['anims']};
       if(data.game!=='grind-the-terms'||!data.files)throw new Error('Unsupported skin data');
       const images:Record<string,HTMLImageElement>={};
       await Promise.all(Object.entries(data.files).map(async ([key,path])=>{
@@ -171,7 +181,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       }));
       if(request!==skinRequest)return;
       if(data.grid?.skater){const g=data.grid.skater,image=images.skater;if(!image||!Number.isInteger(g.cellW)||!Number.isInteger(g.cellH)||!Number.isInteger(g.columns)||g.cellW<16||g.cellH<16||g.columns<1||image.naturalWidth<g.columns*g.cellW||image.naturalHeight<Math.ceil(39/g.columns)*g.cellH)throw new Error('Incomplete Fony sprite atlas grid')}
-      art={images,name:data.name||'Fony',palette:data.palette,grid:data.grid,anims:data.anims};
+      if(data.rail){const r=data.rail,g=data.grid?.hazards;if(!g||!Number.isFinite(r.drawTopFromGround)||!Number.isFinite(r.drawHeight)||!Number.isFinite(r.surfaceCellY)||r.drawHeight<=0||r.surfaceCellY<0||r.surfaceCellY>=g.cellH)throw new Error('Invalid rail surface metadata')}
+      art={images,name:data.name||'Fony',palette:data.palette,grid:data.grid,rail:data.rail,anims:data.anims};
       emit('game:skin-loaded',{skin:'au',usingPlaceholder:false,assets:Object.keys(images)});
     }catch(error){if(request!==skinRequest)return;art=null;emit('game:error',{code:'SKIN_LOAD_FAILED',message:String(error),usingPlaceholder:true})}
   }
@@ -221,11 +232,14 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
     if(k==='rail'){
       if(art?.images.hazards){
+        const box=art.rail;
+        const drawTop=ground-(box?.drawTopFromGround??39),drawHeight=box?.drawHeight??40;
         const sections=Math.ceil(o.w/95);
-        for(let i=0;i<sections;i++){const pw=Math.min(95,o.w-i*95);drawSheet(ctx,'hazards',3,1,o.x+i*95,ground-39,pw,40)}
+        for(let i=0;i<sections;i++){const pw=Math.min(95,o.w-i*95);drawSheet(ctx,'hazards',3,1,o.x+i*95,drawTop,pw,drawHeight)}
       }else{
-        ctx.fillStyle='#D7FF00';ctx.fillRect(o.x,ground-31,o.w,7);
-        ctx.fillStyle='#ddd';ctx.fillRect(o.x+8,ground-24,5,24);ctx.fillRect(o.x+o.w-12,ground-24,5,24);
+        const top=railSurfaceY();
+        ctx.fillStyle='#D7FF00';ctx.fillRect(o.x,top,o.w,6);
+        ctx.fillStyle='#ddd';ctx.fillRect(o.x+8,top+6,5,ground-top-6);ctx.fillRect(o.x+o.w-12,top+6,5,ground-top-6);
       }return;
     }
     const kindIndex={accept:0,popup:1,modal:2} as Record<string,number>;
@@ -253,7 +267,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     ctx.fillStyle='#D7FF00';ctx.fillRect(0,ground,640,3);
     for(const o of objects)drawObstacle(ctx,o);
     drawSkater(ctx);
-    if(grinding){ctx.fillStyle='#E0287A';for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,boardY+2+(i%2)*3,5,2)}
+    if(grinding){ctx.fillStyle='#E0287A';for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,railSurfaceY()-2+(i%2)*3,5,2)}
     ctx.fillStyle='rgba(17,12,20,.93)';ctx.fillRect(0,0,640,71);
     ctx.fillStyle='#D7FF00';ctx.font='bold 18px monospace';ctx.fillText('CLAUSES SKIPPED  '+score(),14,27);
     ctx.fillStyle='#F3EBDE';ctx.font='bold 12px monospace';ctx.fillText('TIER '+tier()+'   COMBO x'+(combo>=3?3:combo===2?2:combo===1?1.5:1),14,47);

@@ -160,3 +160,59 @@ test('running and bail animations use stable on-screen actor origin and never lo
  expect(result.final.sy).toBe(Math.floor(26/8)*128);
  expect(result.after).toEqual(result.final);
 });
+
+test('rail visual top, grind board contact and sparks share a single world Y',async({page})=>{
+  await page.goto('/demo/');
+  const game=page.locator('grind-the-terms');
+  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+  const result=await game.evaluate(async el=>{
+    const skinUrl=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
+    const skin=await(await fetch(skinUrl)).json();
+    const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
+    const originalImage=ctx.drawImage.bind(ctx);
+    const calls=[];
+    ctx.drawImage=(...args)=>{
+      if(args.length===9)calls.push({imageWidth:args[0]?.naturalWidth,sx:args[1],sy:args[2],dx:args[5],dy:args[6],w:args[7],h:args[8]});
+      return originalImage(...args);
+    };
+    g.start();
+    for(let i=0;i<170;i++)g.update(1/60);
+    g.input('tap',true);
+    let caught=false;
+    for(let i=0;i<100;i++){
+      g.update(1/60);
+      if(g.result().stats.grindMs>0){caught=true;break}
+    }
+    if(caught)g.draw(ctx,canvas.width,canvas.height);
+    const rail=calls.find(x=>x.imageWidth===576&&x.sx===432&&x.sy===112);
+    const fony=calls.find(x=>x.imageWidth===1024);
+    const railY=rail?rail.dy+rail.h*skin.rail.surfaceCellY/skin.grid.hazards.cellH:null;
+    const boardY=fony?fony.dy+skin.grid.skater.anchorY*skin.grid.skater.displayScale:null;
+    // Verify release-to-pop begins at the same rail position.
+    g.input('tap',false);
+    g.update(1/60);
+    calls.length=0;
+    g.draw(ctx,canvas.width,canvas.height);
+    const popped=calls.find(x=>x.imageWidth===1024);
+    const popY=popped?popped.dy+skin.grid.skater.anchorY:null;
+    ctx.drawImage=originalImage;
+    return {caught,railY,boardY,popY,hasRail:!!rail,hasFony:!!fony};
+  });
+  expect(result.caught).toBe(true);
+  expect(result.hasRail).toBe(true);
+  expect(result.hasFony).toBe(true);
+  expect(Math.abs(result.railY-result.boardY)).toBeLessThan(1);
+  expect(result.popY).toBeLessThan(result.railY); // leaves the visible surface upward
+});
+test('AU skin calibrates rail metadata against the actual atlas source row',async({page})=>{
+  await page.goto('/demo/');
+  const geometry=await page.evaluate(async()=>{
+    const skin=await(await fetch('../games/grind-the-terms/skins/au/skin.json')).json();
+    return {r:skin.rail,cellHeight:skin.grid.hazards.cellH};
+  });
+  expect(geometry.r).toEqual({drawTopFromGround:39,drawHeight:40,surfaceCellY:53});
+  expect(geometry.cellHeight).toBe(112);
+  const contactY=300-geometry.r.drawTopFromGround+geometry.r.drawHeight*geometry.r.surfaceCellY/geometry.cellHeight;
+  expect(contactY).toBeGreaterThan(279);
+  expect(contactY).toBeLessThan(281);
+});
