@@ -84,7 +84,12 @@ test('portrait phone cabinet is contained and does not cover artwork buttons',as
  await expect(deck).toBeVisible();
  const [host,display,panel,picker]=await Promise.all([game.boundingBox(),screen.boundingBox(),deck.boundingBox(),page.locator('#au').boundingBox()]);
  expect(host).not.toBeNull();expect(display).not.toBeNull();expect(panel).not.toBeNull();expect(picker).not.toBeNull();
- expect(Math.abs(display.width/display.height-16/9)).toBeLessThan(.06);
+ // The ENTIRE CRT tablet including the deck is 9:16; the upper screen is
+ // also portrait and the renderer must not letterbox a landscape playfield.
+ expect(Math.abs(host.width/host.height-9/16)).toBeLessThan(.025);
+ expect(display.width/display.height).toBeGreaterThan(.72);
+ expect(display.width/display.height).toBeLessThan(1.05);
+ expect(display.height).toBeGreaterThan(display.width);
  expect(panel.y).toBeGreaterThanOrEqual(display.y+display.height-2);
  expect(host.y+host.height).toBeGreaterThanOrEqual(panel.y+panel.height-2);
  expect(picker.y).toBeGreaterThanOrEqual(host.y+host.height-2);
@@ -138,4 +143,43 @@ test('mobile A toggles speed, U ollies, Ø special is reserved',async({page},inf
  await expect(zero).toHaveAttribute('aria-disabled','true');
  await zero.dispatchEvent('click');
  expect(await game.evaluate(el=>el.game.result().stats.speedEnabled)).toBe(false);
+});
+
+test('iPhone long U hold cannot select text or open a context menu',async({page},info)=>{
+ test.skip(!info.project.name.startsWith('mobile'),'Mobile long-press behavior');
+ await page.goto(standalone);
+ const game=page.locator('grind-the-terms');
+ const jump=game.locator('button[data-key=jump]');
+ const result=await jump.evaluate(el=>{
+   const style=getComputedStyle(el);
+   const select=el.dispatchEvent(new Event('selectstart',{bubbles:true,composed:true,cancelable:true}));
+   const context=el.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,composed:true,cancelable:true}));
+   const touch=el.dispatchEvent(new Event('touchstart',{bubbles:true,composed:true,cancelable:true}));
+   return {select,context,touch,userSelect:style.userSelect,touchAction:style.touchAction};
+ });
+ expect(result.select).toBe(false);
+ expect(result.context).toBe(false);
+ expect(result.touch).toBe(false);
+ expect(result.userSelect).toBe('none');
+ expect(result.touchAction).toBe('none');
+ await game.locator('button[part=start]').click();
+ await jump.dispatchEvent('pointerdown',{pointerId:7});
+ await game.evaluate(el=>{for(let i=0;i<10;i++)el.game.update(.05)});
+ await jump.dispatchEvent('pointerup',{pointerId:7});
+ expect(await game.evaluate(el=>el.game.result().stats.boardY)).toBeLessThanOrEqual(300);
+});
+
+test('portrait camera fills the tablet game screen without landscape letterboxing',async({page},info)=>{
+ test.skip(!info.project.name.startsWith('mobile'),'Portrait screen rendering');
+ await page.goto(standalone);
+ const game=page.locator('grind-the-terms');
+ await game.locator('button[part=start]').click();
+ const measures=await game.locator('canvas').evaluate(c=>{
+   const w=c.width,h=c.height,ctx=c.getContext('2d');
+   const top=ctx.getImageData(Math.floor(w*.25),Math.floor(h*.15),1,1).data;
+   return {ratio:w/h,top:Array.from(top)};
+ });
+ expect(measures.ratio).toBeLessThan(1.05);
+ expect(measures.ratio).toBeGreaterThan(.70);
+ expect(measures.top[3]).toBe(255);
 });
