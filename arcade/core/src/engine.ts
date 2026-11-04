@@ -9,17 +9,17 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
    this.tabIndex=0;const root=this.attachShadow({mode:'open'});
    root.innerHTML=`<style>:host{display:block;position:relative;aspect-ratio:16/9;min-height:220px;contain:content;background:#0d0b12;color:#f3f1eb;font:700 14px monospace;outline:none}:host(:focus-visible){outline:3px solid #ff3d7f}.screen{position:relative;width:100%;height:100%;overflow:hidden}canvas{display:block;width:100%;height:100%;touch-action:none;image-rendering:pixelated}button{background:#ff3d7f;color:#140b19;font:700 14px monospace;padding:12px;border:2px solid white;cursor:pointer;min-width:60px}.top{position:absolute;z-index:2;top:8px;right:8px;display:flex;gap:6px}.overlay{position:absolute;z-index:1;inset:0;background:#0b0b15d9;display:grid;place-content:center;text-align:center;gap:10px}.controls{position:absolute;bottom:8px;left:8px;display:flex;gap:8px}.controls button{opacity:.82;touch-action:none}.deck{display:none}
 @media(max-width:600px) and (pointer:coarse){
-:host{display:block;aspect-ratio:auto!important;min-height:0!important;height:auto!important;contain:layout style;overflow:visible!important}
-.screen{height:auto;aspect-ratio:16/9;min-height:0;flex:none}
-.deck{display:grid;grid-template-columns:43% 57%;align-items:center;gap:6px;box-sizing:border-box;min-height:208px;height:clamp(208px,29svh,262px);padding:14px 14px 18px;background:radial-gradient(circle at 15% 20%,#4c193b 0%,transparent 55%),repeating-linear-gradient(120deg,#1b1824,#1b1824 5px,#17121c 6px,#17121c 9px);border-top:5px solid #d7ff00;box-shadow:inset 0 6px #0b090e,inset 0 -7px #09090e}
+:host{display:grid!important;grid-template-rows:minmax(0,65fr) minmax(0,35fr);width:100%;aspect-ratio:9/16!important;min-height:0!important;height:auto!important;contain:layout style;overflow:hidden!important;user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none!important;touch-action:manipulation}:host([layout=portrait]){height:100%!important;aspect-ratio:auto!important}
+.screen{height:100%;aspect-ratio:auto;min-height:0;min-width:0;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.deck{display:grid;grid-template-columns:43% 57%;align-items:center;gap:6px;box-sizing:border-box;min-height:0;height:100%;min-width:0;padding:12px 12px max(14px,env(safe-area-inset-bottom));touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;background:radial-gradient(circle at 15% 20%,#4c193b 0%,transparent 55%),repeating-linear-gradient(120deg,#1b1824,#1b1824 5px,#17121c 6px,#17121c 9px);border-top:5px solid #d7ff00;box-shadow:inset 0 6px #0b090e,inset 0 -7px #09090e}
 .deck .zero-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}
 .deck .right-zone{display:flex;gap:12px;justify-content:flex-end;align-items:flex-end;padding-right:4px}
-.deck button{border-radius:50%;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;display:grid;place-items:center;gap:0;line-height:1;background:radial-gradient(circle at 30% 24%,#fa77bb,#dc297e 54%,#98205a 100%);border:4px solid #f4bce1;box-shadow:0 8px 0 #42102d,0 11px 0 #0b0710,inset 0 3px 2px #ffd4ea;color:#120d19}
+.deck button{border-radius:50%;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;display:grid;place-items:center;gap:0;line-height:1;background:radial-gradient(circle at 30% 24%,#fa77bb,#dc297e 54%,#98205a 100%);border:4px solid #f4bce1;box-shadow:0 8px 0 #42102d,0 11px 0 #0b0710,inset 0 3px 2px #ffd4ea;color:#120d19}
 .deck button:active{transform:translateY(5px);box-shadow:0 3px 0 #42102d,inset 0 2px 3px #53213c}
 .deck button:focus-visible{outline:3px solid #d7ff00;outline-offset:4px}
-.deck .zero{width:clamp(108px,30vw,142px);height:clamp(108px,30vw,142px);background:radial-gradient(circle at 26% 21%,#616273,#2b273b 64%,#14121c);border-color:#84908c;box-shadow:0 9px 0 #11101a,0 12px 0 #09090d,inset 0 3px 2px #999}
+.deck .zero{width:clamp(96px,29vw,136px);height:clamp(96px,29vw,136px);background:radial-gradient(circle at 26% 21%,#616273,#2b273b 64%,#14121c);border-color:#84908c;box-shadow:0 9px 0 #11101a,0 12px 0 #09090d,inset 0 3px 2px #999}
 .deck .zero svg{width:73%;height:73%}
-.deck .letter{width:clamp(66px,19vw,88px);height:clamp(66px,19vw,88px);font:bold clamp(29px,10vw,44px) monospace}
+.deck .letter{width:clamp(64px,19vw,85px);height:clamp(64px,19vw,85px);font:bold clamp(29px,10vw,44px) monospace}
 .deck .speed{align-self:flex-start;margin-bottom:24px}
 .deck .jump{align-self:flex-end;margin-top:24px;background:radial-gradient(circle at 28% 20%,#dfff6c,#a9f000 58%,#638600);border-color:#e6ffa7;box-shadow:0 8px 0 #3a5705,0 11px 0 #080b09,inset 0 3px 2px #f5ffd5}
 .deck .speed[aria-pressed=true]{background:radial-gradient(circle at 25% 18%,#eeffac,#b9ff35 70%,#75962c);border-color:#d7ff00;box-shadow:0 5px 0 #688910,0 7px 0 #13190a,inset 0 3px 3px #faffb8}
@@ -37,10 +37,15 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
    this.controls.innerHTML=tag==='tag-before-training'?'<button data-key="left" aria-label="Move left">◀</button><button data-key="up" aria-label="Move up">▲</button><button data-key="down" aria-label="Move down">▼</button><button data-key="right" aria-label="Move right">▶</button><button data-key="spray" aria-label="Spray">SPRAY</button>':'';
    this.controls.querySelectorAll('button').forEach(b=>{const k=(b as HTMLElement).dataset.key!;b.addEventListener('pointerdown',e=>{e.preventDefault();this.game.input(k,true)});for(const evt of ['pointerup','pointercancel','pointerleave'])b.addEventListener(evt,()=>this.game.input(k,false));});
    if(tag==='grind-the-terms'){
+    // iOS long-press selection/callout interrupts a continuous hold-to-grind.
+    // Block it only inside this game; regular page content stays selectable.
+    for(const name of ['contextmenu','selectstart','dragstart'])root.addEventListener(name,e=>e.preventDefault());
     const speed=root.querySelector('[data-key=speed]') as HTMLButtonElement|null;
     const jump=root.querySelector('[data-key=jump]') as HTMLButtonElement|null;
     const special=root.querySelector('[data-key=special]') as HTMLButtonElement|null;
     speed?.addEventListener('click',()=>{if(!this.active)this.start();else if(!this.paused)this.game.input('speed',true)});
+    jump?.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
+    jump?.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
     jump?.addEventListener('pointerdown',e=>{e.preventDefault();try{jump.setPointerCapture(e.pointerId)}catch{}if(!this.active)this.start();if(!this.paused)this.game.input('up',true)});
     for(const evt of ['pointerup','pointercancel','lostpointercapture'])jump?.addEventListener(evt,()=>this.game.input('up',false));
     jump?.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.repeat){e.preventDefault();if(!this.active)this.start();if(!this.paused)this.game.input('up',true)}});
