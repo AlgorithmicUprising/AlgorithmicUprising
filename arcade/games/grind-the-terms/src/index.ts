@@ -20,6 +20,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   let boardY=ground, lastBoardY=ground, vy=0, elapsed=0, distance=0;
   let bonus=0, extraClauses=0, grindDistance=0, totalGrindDistance=0, grindMs=0;
   let alive=true, bailRemaining=0, cause='accept', held=false, grinding=false;
+  // A supporting surface may be a rail or a flat-topped consent box.
+  let support:Obstacle|null=null,platformLandings=0,platformGrinds=0;
   let jumpCount=0, airBoost=false, shield=false, shieldsUsed=0, hazardsCleared=0;
   let bufferLeft=0, coyoteLeft=0, stateTime=0, landTimer=0;
   let combo=0, longestCombo=0, lastSurface='ground';
@@ -43,11 +45,16 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ground-cfg.drawTopFromGround+cfg.drawHeight*(cfg.surfaceCellY/grid.cellH):
       ground-20;
   };
+  // Flat-top collision heights are calibrated to the actual sprite tops.
+  // Physics stays consistent if an unbranded placeholder skin is selected.
+  const flatTopY=(kind:HazardKind)=>ground-(kind==='accept'?37:kind==='popup'?73:99);
+  const surfaceY=(o:Obstacle)=>o.kind==='rail'?railSurfaceY():flatTopY(o.kind);
+  const overlaps=(o:Obstacle)=>o.x<playerX+16&&o.x+o.w>playerX-16;
   const state=(animation:Anim)=>{if(currentAnim!==animation){currentAnim=animation;stateTime=0}};
   const reset=()=>{
     boardY=ground;lastBoardY=ground;vy=0;elapsed=0;distance=0;bonus=0;extraClauses=0;
     grindDistance=0;totalGrindDistance=0;grindMs=0;alive=true;bailRemaining=0;cause='accept';
-    held=false;grinding=false;jumpCount=0;airBoost=false;shield=false;shieldsUsed=0;
+    held=false;grinding=false;support=null;platformLandings=0;platformGrinds=0;jumpCount=0;airBoost=false;shield=false;shieldsUsed=0;
     hazardsCleared=0;bufferLeft=0;coyoteLeft=.08;stateTime=0;landTimer=0;
     combo=0;longestCombo=0;lastSurface='ground';objects=[];nextChunk=380;lastChunkId='';firstChunk=true;
     rngState=(Number(host.getAttribute('seed'))||0x11b00c5)>>>0;visualFlash=0;currentAnim='run';
@@ -62,17 +69,18 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(!alive||bailRemaining>0)return;
     if(secondary){if(!airBoost||jumpCount>=2)return;airBoost=false;jumpCount=2;vy=-520;state('double');emit('game:power',{power:'airboost',used:true})}
     else{jumpCount=1;vy=jumpVelocity;state('ollie')}
-    grinding=false;landTimer=0;coyoteLeft=0;bufferLeft=0;lastSurface='air';
+    support=null;grinding=false;landTimer=0;coyoteLeft=0;bufferLeft=0;lastSurface='air';
   };
   const railPop=()=>{
-    grinding=false;vy=railPopVelocity;boardY-=3;lastSurface='air';jumpCount=1;
-    state('railpop');emit('game:grind-end',{distancePx:Math.floor(grindDistance),grindMs:Math.floor(grindMs)});
+    const from=support?.kind||'rail';support=null;grinding=false;
+    vy=railPopVelocity;boardY-=3;lastSurface='air';jumpCount=1;
+    state('railpop');emit('game:grind-end',{surface:from,distancePx:Math.floor(grindDistance),grindMs:Math.floor(grindMs)});
   };
   const input=(key:string,down:boolean)=>{
     if(key!=='tap'&&key!=='up')return;
     if(down&&!held){
       if(grinding){railPop()}
-      else if(boardY>=ground-1||coyoteLeft>0){ollie()}
+      else if(support||boardY>=ground-1||coyoteLeft>0){ollie()}
       else if(airBoost&&jumpCount===1){ollie(true)}
       else bufferLeft=.1;
     }
@@ -98,7 +106,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const emitChunk=()=>{
     const choices=chunks.filter(c=>c.tier<=tier()&&(!firstChunk||c.id==='intro-rails')&&c.id!==lastChunkId);
     const list=choices.length?choices:chunks.filter(c=>c.tier<=tier()&&(!firstChunk||c.id==='intro-rails'));
-    const picked=list[Math.floor(rng()*list.length)];
+    // A wide first consent box always follows the opening practice rail.
+    const picked=lastChunkId==='intro-rails'?(chunks.find(c=>c.id==='intro-accept')||list[0]):list[Math.floor(rng()*list.length)];
     if(!picked)return;
     firstChunk=false;lastChunkId=picked.id;
     for(const item of picked.objects){
@@ -116,19 +125,33 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const moved=speed()*dt;
     distance+=moved;
     while(nextChunk<distance+790)emitChunk();
+    // Move obstacle geometry once, before resolving support or collisions.
+    for(const o of objects)o.x-=moved;
     lastBoardY=boardY;
-    if(!grinding){boardY+=vy*dt;vy+=gravity*dt}
-    let touchingRail=false;
+    if(support&&!overlaps(support)){
+      const previous=support;support=null;
+      if(grinding){
+        grinding=false;
+        emit('game:grind-end',{surface:previous.kind,distancePx:Math.floor(grindDistance),grindMs:Math.floor(grindMs)});
+      }
+      vy=0;coyoteLeft=.1;lastSurface='air';
+    }
+    if(support){
+      boardY=surfaceY(support);vy=0;
+      if(grinding){
+        grindMs+=dt*1000;totalGrindDistance+=moved;grindDistance+=moved;
+        extraClauses+=moved/48;
+      }
+    }else{
+      boardY+=vy*dt;vy+=gravity*dt;
+    }
     for(const o of objects){
-      o.x-=moved;
-      const overlap=o.x<playerX+13&&o.x+o.w>playerX-13;
+      const overlap=overlaps(o);
       if(o.kind==='rail'){
-        const railY=railSurfaceY();
-        if(grinding&&overlap){touchingRail=true;boardY=railY;vy=0;grindMs+=dt*1000;
-          totalGrindDistance+=moved;grindDistance+=moved;extraClauses+=moved/48;
-        }else if(!grinding&&held&&overlap&&vy>=0&&lastBoardY<=railY+12&&boardY>=railY-12&&boardY<=railY+17){
-          boardY=railY;vy=0;grinding=true;touchingRail=true;lastSurface='rail';
-          state('grind');emit('game:grind-start',{score:score()});
+        const top=railSurfaceY();
+        if(!support&&held&&overlap&&vy>=0&&lastBoardY<=top+15&&boardY>=top-16&&boardY<=top+20){
+          support=o;boardY=top;vy=0;grinding=true;lastSurface='rail';
+          state('grind');emit('game:grind-start',{surface:'rail',score:score()});
         }
         continue;
       }
@@ -136,23 +159,34 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         if(overlap&&!o.collected&&Math.abs(boardY-(ground-58))<50)collect(o);
         continue;
       }
-      if(!overlap||o.collected||!alive)continue;
+      if(!overlap||o.collected||!alive||o===support)continue;
       if(o.kind==='gap'){
         if(boardY>ground-10)handleCollision(o);
-      }else{
-        const height=o.kind==='modal'?98:o.kind==='popup'?62:30;
-        if(boardY>ground-height+5)handleCollision(o);
+        continue;
       }
+      // ACCEPT, POPUP and MODAL all have flat, skatable tops.
+      // Catch descending from above; hitting the vertical side still bails.
+      const top=flatTopY(o.kind);
+      if(!support&&vy>=0&&lastBoardY<=top+12&&boardY>=top-18&&boardY<=top+18){
+        support=o;boardY=top;vy=0;lastSurface=o.kind;
+        jumpCount=0;coyoteLeft=.08;landTimer=.12;platformLandings++;
+        if(held){
+          grinding=true;platformGrinds++;state('grind');
+          emit('game:grind-start',{surface:o.kind,score:score()});
+        }else{
+          grinding=false;state('land');
+          emit('game:platform-land',{surface:o.kind,score:score()});
+        }
+        continue;
+      }
+      if(boardY>top+10)handleCollision(o);
     }
-    if(grinding&&!touchingRail){
-      grinding=false;vy=0;lastSurface='air';
-      emit('game:grind-end',{distancePx:Math.floor(grindDistance),grindMs:Math.floor(grindMs)});
-    }
-    if(!grinding&&boardY>=ground){land()}
-    if(!grinding&&boardY<ground-1&&landTimer===0&&alive){
+    if(!support&&boardY>=ground){land()}
+    if(!support&&boardY<ground-1&&landTimer===0&&alive){
       if(currentAnim!=='ollie'&&currentAnim!=='double'&&currentAnim!=='railpop')state('ollie');
     }
-    if(!grinding&&boardY>=ground&&landTimer===0)state('run');
+    if(!support&&boardY>=ground&&landTimer===0)state('run');
+    if(support&&!grinding&&landTimer===0)state('run');
     for(const o of objects){
       if(o.kind==='token'||o.kind==='rail'||o.scored||o.collected)continue;
       if(o.x+o.w<playerX-15){
@@ -196,7 +230,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const drawSkater=(ctx:CanvasRenderingContext2D)=>{
     let animation=currentAnim;
-    if(!alive)animation='bail';else if(grinding)animation='grind';else if(boardY>=ground-1&&landTimer<=0)animation='run';
+    if(!alive)animation='bail';else if(grinding)animation='grind';else if((support||boardY>=ground-1)&&landTimer<=0)animation='run';
     const map={run:[0,6,12],idle:[6,4,6],land:[10,2,16],ollie:[12,5,14],double:[17,4,12],bail:[21,6,12],grind:[27,4,10],railpop:[31,4,12],flip:[35,4,14]} as const;
     const [start,frames,fps]=map[animation];
     const looping=animation==='run'||animation==='idle'||animation==='grind';
@@ -244,8 +278,11 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
     const kindIndex={accept:0,popup:1,modal:2} as Record<string,number>;
     const height=k==='accept'?42:k==='popup'?77:110;
-    if(drawSheet(ctx,'hazards',kindIndex[k],0,o.x-7,ground-height,o.w+14,height))return;
-    ctx.fillStyle=k==='accept'?'#D7FF00':k==='popup'?'#E0287A':'#efe4ca';ctx.fillRect(o.x,ground-height,o.w,height);
+    if(drawSheet(ctx,'hazards',kindIndex[k],0,o.x-7,ground-height,o.w+14,height)){
+      ctx.fillStyle='#D7FF00';ctx.fillRect(o.x+4,flatTopY(k)-1,Math.max(12,o.w-8),3);
+      return;
+    }
+    ctx.fillStyle=k==='accept'?'#D7FF00':k==='popup'?'#E0287A':'#efe4ca';ctx.fillRect(o.x,flatTopY(k),o.w,ground-flatTopY(k));
     ctx.fillStyle='#141412';ctx.font='bold 10px monospace';ctx.fillText(k==='accept'?'ACCEPT':k==='popup'?'CONSENT?':'AGREE',o.x+3,ground-height+18);
   };
   const draw=(ctx:CanvasRenderingContext2D,w:number,h:number)=>{
@@ -267,7 +304,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     ctx.fillStyle='#D7FF00';ctx.fillRect(0,ground,640,3);
     for(const o of objects)drawObstacle(ctx,o);
     drawSkater(ctx);
-    if(grinding){ctx.fillStyle='#E0287A';for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,railSurfaceY()-2+(i%2)*3,5,2)}
+    if(grinding){ctx.fillStyle='#E0287A';const y=support?surfaceY(support):railSurfaceY();for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,y-2+(i%2)*3,5,2)}
     ctx.fillStyle='rgba(17,12,20,.93)';ctx.fillRect(0,0,640,71);
     ctx.fillStyle='#D7FF00';ctx.font='bold 18px monospace';ctx.fillText('CLAUSES SKIPPED  '+score(),14,27);
     ctx.fillStyle='#F3EBDE';ctx.font='bold 12px monospace';ctx.fillText('TIER '+tier()+'   COMBO x'+(combo>=3?3:combo===2?2:combo===1?1.5:1),14,47);
@@ -280,7 +317,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(visualFlash>0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
     ctx.restore();
   };
-  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),longestCombo,shieldsUsed}});
+  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,longestCombo,shieldsUsed}});
   reset();
   return {start:reset,input,update,draw,score,over:()=>!alive&&bailRemaining===0,result,setSkin} satisfies GameAPI;
 });

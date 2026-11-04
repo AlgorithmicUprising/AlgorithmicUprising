@@ -216,3 +216,39 @@ test('AU skin calibrates rail metadata against the actual atlas source row',asyn
   expect(contactY).toBeGreaterThan(279);
   expect(contactY).toBeLessThan(281);
 });
+
+test('the first flat-topped consent box can be ground and popped from',async({page})=>{
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ const attempts=await game.evaluate(el=>{
+   const g=el.game,viable=[];
+   for(let frame=350;frame<=465;frame+=5){
+     g.start();
+     for(let i=0;i<frame;i++)g.update(1/60);
+     if(g.over())continue;
+     g.input('tap',true);
+     for(let i=0;i<110;i++)g.update(1/60);
+     const stats=g.result().stats;
+     if(stats.platformGrinds>0){
+       g.input('tap',false);
+       for(let j=0;j<8;j++)g.update(1/60);
+       viable.push({frame,landings:stats.platformLandings,grinds:stats.platformGrinds,ms:g.result().stats.grindMs});
+     }
+   }
+   return viable;
+ });
+ expect(attempts.length).toBeGreaterThan(0);
+ expect(attempts[0].grinds).toBeGreaterThan(0);
+ expect(attempts[0].ms).toBeGreaterThan(0);
+});
+test('new flat-top counters are exposed for both skins',async({page})=>{
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ const data=await game.evaluate(el=>{
+   const g=el.game;g.start();
+   for(let i=0;i<100;i++)g.update(1/60);
+   return g.result().stats;
+ });
+ expect(data).toHaveProperty('platformLandings',0);
+ expect(data).toHaveProperty('platformGrinds',0);
+});

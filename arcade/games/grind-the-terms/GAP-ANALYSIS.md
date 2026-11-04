@@ -37,3 +37,7 @@ Reviewed: Punk Arcade Game 01 (Nov 3 v0.1), Shared Kit & Embed Spec, the new Fon
 4. Polish gamepad and portrait controls, settings, FlashGuard, full sound acceptance and share fallback.
 5. Finish clean unbranded Fony skin, frame validation, standalone embed, polished visual/sprite review.
 6. Band approval before merging `arcade` to `main` or publishing as a tagged v0.1 release; ZERO TV integration remains M3.
+
+## Playtest request: flat-top skating, November 3
+
+Implemented rideable/grindable ACCEPT, POPUP and MODAL boxes, with consistent foot/board contact, pop-off and an easier wide first box. The intro now teaches the new mechanic before later hazards. Vertical reward routes and airborne drones remain future work pending art and balance tests.
