@@ -443,10 +443,20 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // This opt-in developer-only visual fixture uses the production renderer.
     // It is not part of gameplay, and is never displayed without the QA attr.
     if(host.hasAttribute('data-qa-consent')){
-      for(const [kind,x,width] of [['popup',225,116],['modal',405,120]] as const){
+      for(const [kind,x,width] of [['popup',225,116],['modal',405,120]] as const)
         drawObstacle(ctx,{kind,x,w:width,scored:false,collected:false,deflected:false});
-      }
     }
+    // QA fixtures exercise production geometry (not simplified test drawings).
+    if(host.hasAttribute('data-qa-rail-size')){
+      const w=Number(host.getAttribute('data-qa-rail-size'))||70;
+      drawRail(ctx,{kind:'rail',x:280,w,scored:false,collected:false,deflected:false});
+    }
+    if(host.hasAttribute('data-qa-accept'))
+      drawAccept(ctx,{kind:'accept',x:315,w:120,scored:false,collected:false,deflected:false});
+    if(host.hasAttribute('data-qa-token'))
+      drawToken(ctx,{kind:'token',power:'shield',x:310,w:26,scored:false,collected:false,deflected:false});
+    if(host.hasAttribute('data-qa-loophole'))
+      drawLoophole(ctx,{kind:'gap',x:270,w:100,scored:false,collected:false,deflected:false});
     drawSkater(ctx);
     if(grinding){ctx.fillStyle='#E0287A';const y=support?surfaceY(support):railSurfaceY();for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,y-2+(i%2)*3,5,2)}
     if(portrait){
@@ -478,7 +488,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(visualFlash>0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
     ctx.restore();
   };
-  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,longestCombo,shieldsUsed,speedEnabled,acceleration:Math.round(acceleration*100)/100,runSpeed:Math.round(speed()),grindBoostLeft:Math.round(grindBoostLeft*100)/100,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding}});
+  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,longestCombo,shieldsUsed,speedEnabled,acceleration:Math.round(acceleration*100)/100,runSpeed:Math.round(speed()),grindBoostLeft:Math.round(grindBoostLeft*100)/100,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null}});
   reset();
   return {start:reset,input,update,draw,score,over:()=>!alive&&bailRemaining===0,result,setSkin} satisfies GameAPI;
 });
