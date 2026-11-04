@@ -112,3 +112,30 @@ test('320px phone width keeps the Ø A U controls usable',async({page},info)=>{
   expect(box.x+box.width).toBeLessThanOrEqual(320);
  }
 });
+
+test('mobile A toggles speed, U ollies, Ø special is reserved',async({page},info)=>{
+ test.skip(!info.project.name.startsWith('mobile'),'Mobile cabinet only');
+ await page.goto(standalone);
+ const game=page.locator('grind-the-terms');
+ await game.locator('button[part=start]').click();
+ const a=game.locator('button[data-key=speed]'),u=game.locator('button[data-key=jump]'),zero=game.locator('button[data-key=special]');
+ await expect(a).toHaveAttribute('aria-pressed','false');
+ await a.click();
+ await expect(a).toHaveAttribute('aria-pressed','true');
+ expect(await game.evaluate(el=>el.game.result().stats.speedEnabled)).toBe(true);
+ await game.evaluate(el=>el.game.update(.5));
+ expect(await game.evaluate(el=>el.game.result().stats.acceleration)).toBeGreaterThan(0);
+ await a.click();
+ await expect(a).toHaveAttribute('aria-pressed','false');
+ await game.evaluate(el=>el.game.update(.4));
+ expect(await game.evaluate(el=>el.game.result().stats.acceleration)).toBeLessThan(.1);
+ const before=await game.evaluate(el=>el.game.result().stats.boardY);
+ await u.dispatchEvent('pointerdown',{pointerId:2});
+ await game.evaluate(el=>el.game.update(.05));
+ const jumped=await game.evaluate(el=>el.game.result().stats.boardY);
+ expect(jumped).toBeLessThan(before-10);
+ await u.dispatchEvent('pointerup',{pointerId:2});
+ await expect(zero).toHaveAttribute('aria-disabled','true');
+ await zero.dispatchEvent('click');
+ expect(await game.evaluate(el=>el.game.result().stats.speedEnabled)).toBe(false);
+});
