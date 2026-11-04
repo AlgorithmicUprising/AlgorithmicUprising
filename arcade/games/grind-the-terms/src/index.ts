@@ -37,7 +37,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const tier=()=>elapsed<20?1:elapsed<45?2:elapsed<90?3:4;
   // SPACE (keyboard) / A (cabinet) is a TOGGLE, not a jump input.
   // A modest +10% speed toggle; earned long-grind momentum contributes +7% briefly.
-  const speed=()=>clamp((baseSpeed + elapsed*1.72)*(1+.10*acceleration+(grindBoostLeft>0?.07:0)),baseSpeed,460);
+  const normalSpeed=()=>clamp(baseSpeed+elapsed*1.72,baseSpeed,460);
+  // The toggle ramps to exactly 2x the current baseline. Grind momentum remains independent.
+  const speed=()=>normalSpeed()*(1+acceleration)*(grindBoostLeft>0?1.07:1);
   const score=()=>Math.floor(distance/48)+Math.floor(extraClauses)+Math.floor(totalGrindDistance/32)*2+Math.floor(bonus);
   // Grounding contract (source atlas cells are 144x112).
   // Each obstacle is drawn relative to its *visible* feet / button base,
@@ -83,7 +85,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const ollie=(secondary=false)=>{
     if(!alive||bailRemaining>0)return;
-    if(secondary){if(!airBoost||jumpCount>=2)return;airBoost=false;jumpCount=2;vy=-520;state('double');emit('game:power',{power:'airboost',used:true})}
+    if(secondary){if(jumpCount>=2)return;jumpCount=2;vy=-520;state('double');emit('game:double-jump',{alwaysAvailable:true})}
     else{jumpCount=1;vy=jumpVelocity;state('ollie')}
     support=null;grinding=false;landTimer=0;coyoteLeft=0;bufferLeft=0;lastSurface='air';
   };
@@ -102,7 +104,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(down&&!held){
       if(grinding){railPop()}
       else if(support||boardY>=ground-1||coyoteLeft>0){ollie()}
-      else if(airBoost&&jumpCount===1){ollie(true)}
+      else if(jumpCount===1){ollie(true)}
       else bufferLeft=.1;
     }
     if(!down&&held&&grinding)railPop();
@@ -125,7 +127,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const collect=(o:Obstacle)=>{
     if(o.collected)return;
     o.collected=true;bonus+=10;
-    if(o.power==='airboost')airBoost=true;else shield=true;
+    // Double jump is permanently unlocked; older AIR BOOST tokens now grant protection.
+    shield=true;airBoost=false;
     emit('game:power',{power:o.power||'shield',collected:true});
   };
   const emitChunk=()=>{
@@ -214,8 +217,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(!support&&boardY<ground-1&&landTimer===0&&alive){
       if(currentAnim!=='ollie'&&currentAnim!=='double'&&currentAnim!=='railpop')state('ollie');
     }
-    if(!support&&boardY>=ground&&landTimer===0)state('run');
-    if(support&&!grinding&&landTimer===0)state('run');
+    if(!support&&boardY>=ground&&landTimer===0)state('idle');
+    if(support&&!grinding&&landTimer===0)state('idle');
     for(const o of objects){
       if(o.kind==='token'||o.kind==='rail'||o.scored||o.collected)continue;
       if(o.x+o.w<playerX-15){
@@ -267,12 +270,15 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const drawSkater=(ctx:CanvasRenderingContext2D)=>{
     let animation=currentAnim;
-    if(!alive)animation='bail';else if(grinding)animation='grind';else if((support||boardY>=ground-1)&&landTimer<=0)animation='run';
+    if(!alive)animation='bail';else if(grinding)animation='grind';else if((support||boardY>=ground-1)&&landTimer<=0)animation='idle';
     const map={run:[0,6,12],idle:[6,4,6],land:[10,2,16],ollie:[12,5,14],double:[17,4,12],bail:[21,6,12],grind:[27,4,10],railpop:[31,4,12],flip:[35,4,14]} as const;
     const [start,frames,fps]=map[animation];
     const looping=animation==='run'||animation==='idle'||animation==='grind';
     const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
-    const idx=start+frame;
+    // The old run sprites are leg-running poses. Ground travel now uses the
+    // stable onboard Fony stance from the approved pose atlas; no sprint loop.
+    const rolling=alive&&!grinding&&(animation==='run'||animation==='idle'||animation==='land');
+    const idx=rolling&&art?.images.skater?29:start+frame;
     const cfg=art?.grid?.skater;
     const width=cfg?.cellW??80,height=cfg?.cellH??94,columns=cfg?.columns??8;
     const anchorX=cfg?.anchorX??width/2,anchorY=cfg?.anchorY??height-4;
@@ -283,7 +289,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // The approved source sheet's RUN poses are running silhouettes without
     // a deck. Put a proper board under those poses so Fony visibly SKATES.
     // Grind and flip artwork already includes the original green deck.
-    if(alive&&(animation==='run'||animation==='idle'||animation==='land')&&art?.images.skater){
+    if(alive&&(animation==='run'||animation==='land')&&art?.images.skater){
       ctx.save();
       ctx.fillStyle='#121019';ctx.beginPath();ctx.roundRect(playerX-27,poseY-6,54,6,3);ctx.fill();
       ctx.fillStyle='#e0287a';ctx.fillRect(playerX-20,poseY-5,40,3);
@@ -293,6 +299,13 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         ctx.beginPath();ctx.arc(x,poseY+2,4,0,Math.PI*2);ctx.fill();
         ctx.fillStyle='#f4eee1';ctx.fillRect(x-1,poseY+1,2,2);ctx.fillStyle='#121019';
       }
+      ctx.restore();
+    }
+    if(rolling&&art?.images.skater){
+      // Motion is expressed by environment streaks, not missing-board limb frames.
+      ctx.save();ctx.strokeStyle='rgba(238,40,122,.7)';ctx.lineWidth=1.5;
+      for(let i=0;i<3;i++){const offset=(elapsed*speed()*.5+i*19)%55;
+        ctx.beginPath();ctx.moveTo(playerX-38-offset,poseY-7+i*3);ctx.lineTo(playerX-19-offset,poseY-7+i*3);ctx.stroke()}
       ctx.restore();
     }
     if(drawSheet(ctx,'skater',idx%columns,Math.floor(idx/columns),playerX-anchorX*zoom,poseY-anchorY*zoom,width*zoom,height*zoom))return;
@@ -436,6 +449,22 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(art?.images.cloudsNear&&art?.images.dataCity){
       // The data-center chimneys and skyline are exposed below the torn paper clouds.
       tileLayer(ctx,'dataCity',132,143,.13,1);
+      // Connect chimney mouths and legal-paper clouds with wisps that share
+      // the CITY parallax offset. Render beneath the paper-cloud silhouettes.
+      const cloudBottom=(portrait?topWorld+171:75)+(portrait?94:86);
+      const cityShift=((distance*.13)%1280+1280)%1280;
+      ctx.save();ctx.lineCap='round';
+      for(let tile=-1280-cityShift;tile<1350;tile+=1280){
+        for(const [i,px] of [40,214,490,736,1038].entries()){
+          const x=tile+px,stackY=180+(i%3)*8,targetY=Math.min(stackY-14,cloudBottom-7);
+          const flutter=Math.sin(elapsed*.7+i*1.8)*6;
+          ctx.beginPath();ctx.moveTo(x,stackY);
+          ctx.bezierCurveTo(x-16+flutter,stackY-30,x+16+flutter,targetY+29,x+flutter,targetY);
+          ctx.strokeStyle='rgba(255,221,222,.66)';ctx.lineWidth=9;ctx.stroke();
+          ctx.strokeStyle='rgba(245,185,204,.55)';ctx.lineWidth=3;ctx.stroke();
+        }
+      }
+      ctx.restore();
       // These are two *separate* moving cloud layers. Distant paperwork is
       // atmospheric only; the nearer high-detail inked cloud stays compact.
       tileLayer(ctx,'cloudsFar',portrait?topWorld+35:69,portrait?97:80,.028,.28);
@@ -501,11 +530,11 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#f3ebde';ctx.font='bold 12px monospace';
       ctx.fillText('TIER '+tier()+'   BEST '+(host as any).best,48,t+51);
       ctx.fillStyle=speedEnabled?'#d7ff00':'#e4cbd7';
-      ctx.fillText('SPEED '+Math.round(speed())+(speedEnabled?'  FAST +10%':''),48,t+72);
+      ctx.fillText('SPEED '+Math.round(speed())+(speedEnabled?'  FAST x2':''),48,t+72);
       ctx.fillStyle='#e0287a';ctx.font='bold 11px monospace';
       ctx.fillText(grinding?'GRIND! RELEASE U TO POP':'CONSENT = LAND / GRIND   •   Ø TOKENS = PICKUPS',48,t+91);
       ctx.fillStyle='#b8aaba';ctx.font='bold 12px monospace';
-      ctx.fillText((shield?'SHIELD  ':'')+(airBoost?'AIR BOOST READY':''),48,t+150);
+      ctx.fillText((shield?'SHIELD  ':'')+'DOUBLE JUMP ON',48,t+150);
     }else{
       ctx.fillStyle='rgba(17,12,20,.93)';ctx.fillRect(0,0,640,71);
       ctx.fillStyle='#D7FF00';ctx.font='bold 18px monospace';ctx.fillText('CLAUSES SKIPPED  '+score(),14,27);
@@ -513,16 +542,16 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#D7FF00';ctx.fillText('BEST '+(host as any).best,485,27);
       ctx.fillStyle=speedEnabled||grindBoostLeft>0?'#D7FF00':'#aaa1b3';
       ctx.fillText('SPD '+Math.round(speed()),307,47);
-      ctx.fillText((shield?'[SHIELD] ':'')+(airBoost?'[AIR BOOST]':''),400,47);
+      ctx.fillText((shield?'[SHIELD] ':'')+'[DOUBLE JUMP ON]',400,47);
       ctx.fillStyle='#E0287A';ctx.font='bold 11px monospace';
-      if(elapsed<11)ctx.fillText('U / ↑: JUMP & HOLD GRIND  •  SPACE / A: +10% FAST',12,65);
+      if(elapsed<11)ctx.fillText('U / ↑: JUMP & HOLD GRIND  •  SPACE / A: 2x FAST',12,65);
       else if(grinding)ctx.fillText('GRINDING THE FINE PRINT — RELEASE TO POP!',170,65);
       else ctx.fillText('CONSENT FORMS = OBSTACLES  •  TOKENS = PICKUPS',12,65);
     }
     if(visualFlash>0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
     ctx.restore();
   };
-  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,longestCombo,shieldsUsed,speedEnabled,acceleration:Math.round(acceleration*100)/100,runSpeed:Math.round(speed()),grindBoostLeft:Math.round(grindBoostLeft*100)/100,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null}});
+  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,longestCombo,shieldsUsed,speedEnabled,acceleration:Math.round(acceleration*100)/100,runSpeed:Math.round(speed()),normalSpeed:Math.round(normalSpeed()),doubleJumpAlwaysOn:true,grindBoostLeft:Math.round(grindBoostLeft*100)/100,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null}});
   reset();
   return {start:reset,input,update,draw,score,over:()=>!alive&&bailRemaining===0,result,setSkin} satisfies GameAPI;
 });
