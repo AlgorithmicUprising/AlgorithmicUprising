@@ -464,7 +464,7 @@ test('speed toggle exactly doubles baseline after the ramp',async({page})=>{
  expect(stats.runSpeed/stats.normalSpeed).toBeLessThan(2.01);
 });
 
-test('ground motion uses an onboard Fony pose and never the running cell',async({page})=>{
+test('ground motion uses low stable Fony pose with persistent board',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
  const result=await page.locator('grind-the-terms').evaluate(el=>{
@@ -476,6 +476,6 @@ test('ground motion uses an onboard Fony pose and never the running cell',async(
   return seen;
  });
  expect(result.length).toBeGreaterThan(3);
- // Sprite #29 lives at cell (5,3) on the 8-column atlas.
- for(const frame of result)expect(frame).toEqual({sx:1280,sy:768});
+ // Sprite #10 is the crouched grounded cell (2,1) on the 8-column atlas.
+ for(const frame of result)expect(frame).toEqual({sx:512,sy:256});
 });
