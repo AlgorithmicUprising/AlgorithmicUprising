@@ -77,3 +77,19 @@ The approved ZERO TV mobile frame is **1080×1920 with a transparent screen wind
 **Consent forms are hazards, not pickups.** Pink POPUP and tall MODAL are now **solid, opaque paper windows** painted by the game with dark outlines and title bars; grounded, flat-topped, skateable/grindable. The original yellow ACCEPT ALL sprite is intentionally unchanged. Descend from above onto the visible top to ride/grind, or avoid/jump over the form. A side impact bails without a shield. If a shield absorbs the hit, the form stays present (marked DENIED) and Fony bounces clear; it is not silently removed. Only floating circular tokens are collectible. Landing checks now sweep the crossing from the previous frame for fairer phone framerates.
 
 **Accept:** zero scrolling/text-selection on a 1–2s held U; correct 9:16 full-cabinet ratio at 320px/390px, upper screen visibly portrait; no cropped buttons/sprites; same rules inside a CH05 iframe at the Zero TV tablet size; no translucent forms, no mystery disappearances; novice player can deliberately land on the flat top and exit with U release. Visual sign-off remains required on physical iOS/Android.
+
+## Art direction v0.3 — Approved Punk Arcade mockup (Nov 3)
+
+The November 3 generated game mockup is the visual target: magenta/night-sky data-center city, layered parchment **Terms & Conditions** clouds (smoke from server stacks), tagged concrete retaining wall, cracked sidewalk, lane-marked road, real manhole/loophole, acid-lime rail and real skate poses from the user's **Fony Sprock** art sheet. The actual game **does not display the mockup as a static image**. It composes the following independently scrolling AU-only background layers loaded from `skin.json`:
+
+- `terms_clouds_far_v4.png`: legal-text torn paper cloud shapes, far parallax 0.045×.
+- `terms_clouds_near_v4.png`: closer legal clouds, parallax 0.077×.
+- `terms_datacenter_city_v4.png`: data centers, server windows, smoke stacks, antenna skyline, 0.16×.
+- `terms_smoke_plumes_v4.png`: paper smoke from data-center ventilation chimneys, 0.16×.
+- `terms_graffiti_wall_v4.png`: concrete legal-graffiti wall, 0.28×.
+- `terms_sidewalk_road_v4.png`: grounded sidewalk slabs, curb, manholes and lane-marked street, 1×.
+- `fony_punk_approved_v3.png`: 39 normalized, board-anchored animation cells (128×128) extracted from user-approved Nov 3 pink-mohawk Fony Sprock character sheet. Previous Fony prototype remains archived.
+
+Hazard rendering is now procedural and clean: consent cards are opaque inked paper windows; ACCEPT ALL is a clean yellow/black grounded button; shield and air-boost pickups are independent centered coins; gaps are legible broken manholes. Rails are composed from exact-length colored left/right caps, an unbroken middle strip and support posts, so a 75/150/225/300px rail is never truncated. Collision world heights continue to match the drawn caps. Old dirty `terms_hazards_atlas.png` is retained for reference only, not rendered.
+
+**Release notes:** Assets are in the protected `au` skin only; the open CC starter remains free of band art. The generated new scenic plates are faithful interpretation, not a literal crop of the approved game screenshot. Before final art sign-off, a human should compare the mockup, accepted pose sheet, parallax spacing, sidewalk lane depth and performance on the actual ZERO TV tablet.

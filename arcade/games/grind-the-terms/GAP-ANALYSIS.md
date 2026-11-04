@@ -55,3 +55,13 @@ Keyboard SPACE now toggles GO FASTER; ↑/W/U jump. Portrait mobile U jumps and 
 - [ ] Compare the prototype in the *actual* live CH05 Zero TV tablet rather than only the standalone test page; include embedded/resized host acceptance.
 - [ ] Clean remaining sprite trim artifacts and build seamless multi-length rails with end caps and legs.
 - [ ] Human visual and gameplay sign-off on actual iPhone and Android, novice difficulty and accessibility.
+
+## Nov 3 approved visual rebuild — implemented preview, human acceptance pending
+
+- [x] New Fony atlas from attached hot-pink hair/goggle character sheet (39 normalized poses); no use of the previous Fony/Zero graphic for gameplay.
+- [x] Fully distinct scrolling backgrounds: torn parchment terms clouds in two depths, three branded data centers with smoke, neon city, graffiti wall, sidewalk, curbed road.
+- [x] Sidewalk and lane-marked street take the place of a thin dark ground line; manhole/loophole now has a clear circular hole, moved cover and warning label.
+- [x] Hazard atlas is not sampled at runtime: dynamic rails have clean end caps/legs at arbitrary width; original ACCEPT styling recreated without stray transparent edging; coins/shield/boost are clean vector tokens; consent panels are opaque.
+- [x] Desktop 640×360 and mobile portrait camera share collision geometry and layered parallax.
+- [ ] Artist to inspect pose silhouettes manually at 1× and 2× for any residual detached component from the original raster sheet (automatic extraction is not perfect).
+- [ ] Physical iPhone and Zero TV CH05 tablet playtest, clouds/data-center smoke visual consistency, token pickup collision acceptance, and beginner difficulty/balance.
