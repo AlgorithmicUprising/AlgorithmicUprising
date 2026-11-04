@@ -29,7 +29,7 @@ jobs:
           name: punk-arcade-browser-results
           path: |
             arcade/test-results/screenshots/
-            arcade/test-results/report/
+            arcade/playwright-report/
             arcade/test-results/**/*.zip
           if-no-files-found: warn
           retention-days: 14
