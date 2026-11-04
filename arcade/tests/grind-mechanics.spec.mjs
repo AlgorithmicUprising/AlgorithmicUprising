@@ -161,7 +161,7 @@ test('running and bail animations use stable on-screen actor origin and never lo
  expect(result.after).toEqual(result.final);
 });
 
-test('rail visual top, grind board contact and sparks share a single world Y',async({page})=>{
+test('visible rail and Fony board share the grind surface; legs touch ground',async({page})=>{
   await page.goto('/demo/');
   const game=page.locator('grind-the-terms');
   await expect(page.locator('#events')).toContainText('game:skin-loaded');
@@ -169,54 +169,70 @@ test('rail visual top, grind board contact and sparks share a single world Y',as
     const skinUrl=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
     const skin=await(await fetch(skinUrl)).json();
     const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
-    const originalImage=ctx.drawImage.bind(ctx);
-    const calls=[];
+    const original=ctx.drawImage.bind(ctx),calls=[];
     ctx.drawImage=(...args)=>{
-      if(args.length===9)calls.push({imageWidth:args[0]?.naturalWidth,sx:args[1],sy:args[2],dx:args[5],dy:args[6],w:args[7],h:args[8]});
-      return originalImage(...args);
+      if(args.length===9)calls.push({width:args[0]?.naturalWidth,sx:args[1],sy:args[2],sh:args[4],dx:args[5],dy:args[6],w:args[7],h:args[8]});
+      return original(...args);
     };
     g.start();
     for(let i=0;i<170;i++)g.update(1/60);
     g.input('tap',true);
     let caught=false;
-    for(let i=0;i<100;i++){
-      g.update(1/60);
-      if(g.result().stats.grindMs>0){caught=true;break}
-    }
+    for(let i=0;i<100;i++){g.update(1/60);if(g.result().stats.grindMs>0){caught=true;break}}
     if(caught)g.draw(ctx,canvas.width,canvas.height);
-    const rail=calls.find(x=>x.imageWidth===576&&x.sx===432&&x.sy===112);
-    const fony=calls.find(x=>x.imageWidth===1024);
-    const railY=rail?rail.dy+rail.h*skin.rail.surfaceCellY/skin.grid.hazards.cellH:null;
+    const rail=calls.find(x=>x.width===576&&x.sx===432&&x.sy===112+skin.rail.clipTopCellY);
+    const fony=calls.find(x=>x.width===1024);
+    const railY=rail?rail.dy+rail.h*(skin.rail.surfaceCellY-skin.rail.clipTopCellY)/rail.sh:null;
+    const legY=rail?rail.dy+rail.h:null;
     const boardY=fony?fony.dy+skin.grid.skater.anchorY*skin.grid.skater.displayScale:null;
-    // Verify release-to-pop begins at the same rail position.
-    g.input('tap',false);
-    g.update(1/60);
-    calls.length=0;
-    g.draw(ctx,canvas.width,canvas.height);
-    const popped=calls.find(x=>x.imageWidth===1024);
+    g.input('tap',false);g.update(1/60);calls.length=0;g.draw(ctx,canvas.width,canvas.height);
+    const popped=calls.find(x=>x.width===1024);
     const popY=popped?popped.dy+skin.grid.skater.anchorY:null;
-    ctx.drawImage=originalImage;
-    return {caught,railY,boardY,popY,hasRail:!!rail,hasFony:!!fony};
+    ctx.drawImage=original;
+    return {caught,railY,legY,boardY,popY};
   });
   expect(result.caught).toBe(true);
-  expect(result.hasRail).toBe(true);
-  expect(result.hasFony).toBe(true);
+  expect(result.legY).toBeCloseTo(300,5);
   expect(Math.abs(result.railY-result.boardY)).toBeLessThan(1);
-  expect(result.popY).toBeLessThan(result.railY); // leaves the visible surface upward
-});
-test('AU skin calibrates rail metadata against the actual atlas source row',async({page})=>{
-  await page.goto('/demo/');
-  const geometry=await page.evaluate(async()=>{
-    const skin=await(await fetch('../games/grind-the-terms/skins/au/skin.json')).json();
-    return {r:skin.rail,cellHeight:skin.grid.hazards.cellH};
-  });
-  expect(geometry.r).toEqual({drawTopFromGround:39,drawHeight:40,surfaceCellY:53});
-  expect(geometry.cellHeight).toBe(112);
-  const contactY=300-geometry.r.drawTopFromGround+geometry.r.drawHeight*geometry.r.surfaceCellY/geometry.cellHeight;
-  expect(contactY).toBeGreaterThan(279);
-  expect(contactY).toBeLessThan(281);
+  expect(result.popY).toBeLessThan(result.railY);
 });
 
+test('all original hazard art bottoms align with floor and surface matches sprite top',async({page})=>{
+  await page.goto('/demo/');
+  const data=await page.evaluate(async()=>{
+    const url='../games/grind-the-terms/skins/au/skin.json';
+    const skin=await(await fetch(url)).json();
+    const cell=skin.grid.hazards.cellH;
+    const geom={rail:skin.rail,...skin.surfaces};
+    return Object.fromEntries(Object.entries(geom).map(([kind,g])=>{
+      const drawTop=300-g.groundCellY/cell*g.drawHeight;
+      const visibleTop=drawTop+g.surfaceCellY/cell*g.drawHeight;
+      const visibleBottom=drawTop+g.groundCellY/cell*g.drawHeight;
+      return [kind,{visibleTop,visibleBottom}];
+    }));
+  });
+  for(const kind of ['rail','accept','popup','modal']){
+    expect(data[kind].visibleBottom).toBeCloseTo(300,5);
+    expect(data[kind].visibleTop).toBeLessThan(300);
+  }
+  expect(data.rail.visibleTop).toBeGreaterThan(278);
+  expect(data.rail.visibleTop).toBeLessThan(282);
+  expect(data.accept.visibleTop).toBeGreaterThan(265);
+  expect(data.accept.visibleTop).toBeLessThan(275);
+});
+test('original ACCEPT art renders without a floating green highlight',async({page})=>{
+  await page.goto('/demo/');
+  const game=page.locator('grind-the-terms');
+  const geometry=await game.evaluate(el=>{
+    const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
+    const original=ctx.drawImage.bind(ctx),ops=[];
+    ctx.drawImage=(...args)=>{if(args.length===9&&args[0]?.naturalWidth===576&&args[1]===0&&args[2]===0)ops.push({y:args[6],height:args[8]});return original(...args)};
+    g.start();for(let i=0;i<270;i++)g.update(1/60);
+    g.draw(ctx,canvas.width,canvas.height);ctx.drawImage=original;return ops;
+  });
+  expect(geometry.length).toBeGreaterThan(0);
+  expect(geometry[0].y+92/112*geometry[0].height).toBeCloseTo(300,4);
+});
 test('the first flat-topped consent box can be ground and popped from',async({page})=>{
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');

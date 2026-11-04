@@ -53,3 +53,7 @@ The AU skin declares `rail.drawTopFromGround=39`, `rail.drawHeight=40`, and `rai
 ## Flat-topped obstacles (v0.2.3)
 
 Fony can land on, skate across, and ollie from ACCEPT, POPUP and MODAL boxes. **Hold** while landing for a grind; **release** to pop off. If the jump is released before landing, the box acts as a rideable platform and the next tap triggers a new ollie. Running into its side still causes a bail. The first consent obstacle is a 126px-wide platform introduced immediately after the practice rail. The physical contact edge is visibly highlighted on the art. Taller drone hazards and elevated rewards are future encounter work, not yet shipped.
+
+## v0.2.4: obstacle artwork grounded to the floor
+
+Restored the original **ACCEPT ALL** sprite with no artificial floating lime coping line. The sprite's actual face is the grindable surface. ACCEPT, POPUP, and MODAL art now anchor their visible bottoms to the floor using source-cell measurements: ACCEPT surface 45/base 92/height 72, popup 24/105/94, modal 27/101/130 (source atlas cell height 112). Rail artwork is cropped to remove unrelated debris above its bar; its coping is source y=53, leg tips y=82, render scale height 77, so the legs meet floor Y=300 and the board meets the real bar near Y=280. Physics remains independent of skin loading: placeholder and AU share identical contact geometry.

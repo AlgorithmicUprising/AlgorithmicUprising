@@ -8,7 +8,7 @@ type Chunk = { id: string; tier: number; width: number; objects: Array<{at:numbe
 type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; scored:boolean; collected:boolean };
 type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
 type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number};
-type RailVisual={drawTopFromGround:number;drawHeight:number;surfaceCellY:number};
+type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
 type Art = { images:Record<string,HTMLImageElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
 const chunks = chunksData as Chunk[];
 const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
@@ -36,18 +36,30 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const tier=()=>elapsed<20?1:elapsed<45?2:elapsed<90?3:4;
   const speed=()=>clamp(baseSpeed + elapsed*1.72,baseSpeed,420);
   const score=()=>Math.floor(distance/48)+Math.floor(extraClauses)+Math.floor(totalGrindDistance/32)*2+Math.floor(bonus);
-  // The board/truck world contact point uses the SAME geometry as the visible rail top.
-  // Source atlas: rail highlight at row 53 of a 112px cell, rendered 40px high
-  // at 39px above ground => y = 300 - 39 + 53/112*40 = 279.93.
-  const railSurfaceY=()=>{
-    const cfg=art?.rail,grid=art?.grid?.hazards;
-    return cfg&&grid&&art?.images.hazards?
-      ground-cfg.drawTopFromGround+cfg.drawHeight*(cfg.surfaceCellY/grid.cellH):
-      ground-20;
+  // Grounding contract (source atlas cells are 144x112).
+  // Each obstacle is drawn relative to its *visible* feet / button base,
+  // not the transparent cell edge. Top collision = actual artwork top.
+  // Keep geometry independent of skin selection to avoid mid-run physics jumps.
+  const sourceCellHeight=112;
+  const surfaces={
+    rail:   {top:53,bottom:82,height:77},   // metal coping / feet
+    accept: {top:45,bottom:92,height:72},   // original yellow ACCEPT ALL body
+    popup:  {top:24,bottom:105,height:94},  // pink window frame / bottom
+    modal:  {top:27,bottom:101,height:130}  // tall agreement panel / bottom
+  } as const;
+  type SurfaceKind=keyof typeof surfaces;
+  const surfaceSpec=(kind:SurfaceKind)=>surfaces[kind];
+  const imageTopY=(kind:SurfaceKind)=>{
+    const spec=surfaceSpec(kind);
+    return ground-spec.bottom/sourceCellHeight*spec.height;
   };
-  // Flat-top collision heights are calibrated to the actual sprite tops.
-  // Physics stays consistent if an unbranded placeholder skin is selected.
-  const flatTopY=(kind:HazardKind)=>ground-(kind==='accept'?37:kind==='popup'?73:99);
+  const surfaceTopY=(kind:SurfaceKind)=>{
+    const spec=surfaceSpec(kind);
+    return imageTopY(kind)+spec.top/sourceCellHeight*spec.height;
+  };
+  const railSurfaceY=()=>surfaceTopY('rail');
+  const flatTopY=(kind:HazardKind)=>
+    kind==='accept'||kind==='popup'||kind==='modal'?surfaceTopY(kind):ground;
   const surfaceY=(o:Obstacle)=>o.kind==='rail'?railSurfaceY():flatTopY(o.kind);
   const overlaps=(o:Obstacle)=>o.x<playerX+16&&o.x+o.w>playerX-16;
   const state=(animation:Anim)=>{if(currentAnim!==animation){currentAnim=animation;stateTime=0}};
@@ -215,7 +227,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       }));
       if(request!==skinRequest)return;
       if(data.grid?.skater){const g=data.grid.skater,image=images.skater;if(!image||!Number.isInteger(g.cellW)||!Number.isInteger(g.cellH)||!Number.isInteger(g.columns)||g.cellW<16||g.cellH<16||g.columns<1||image.naturalWidth<g.columns*g.cellW||image.naturalHeight<Math.ceil(39/g.columns)*g.cellH)throw new Error('Incomplete Fony sprite atlas grid')}
-      if(data.rail){const r=data.rail,g=data.grid?.hazards;if(!g||!Number.isFinite(r.drawTopFromGround)||!Number.isFinite(r.drawHeight)||!Number.isFinite(r.surfaceCellY)||r.drawHeight<=0||r.surfaceCellY<0||r.surfaceCellY>=g.cellH)throw new Error('Invalid rail surface metadata')}
+      if(data.rail){const r=data.rail,g=data.grid?.hazards; if(!g||!Number.isFinite(r.groundCellY)||!Number.isFinite(r.drawHeight)||!Number.isFinite(r.surfaceCellY)||!Number.isFinite(r.clipTopCellY)||r.drawHeight<=0||r.clipTopCellY<0||r.clipTopCellY>=r.surfaceCellY||r.surfaceCellY>=r.groundCellY||r.groundCellY>g.cellH)throw new Error('Invalid rail surface metadata')}
       art={images,name:data.name||'Fony',palette:data.palette,grid:data.grid,rail:data.rail,anims:data.anims};
       emit('game:skin-loaded',{skin:'au',usingPlaceholder:false,assets:Object.keys(images)});
     }catch(error){if(request!==skinRequest)return;art=null;emit('game:error',{code:'SKIN_LOAD_FAILED',message:String(error),usingPlaceholder:true})}
@@ -265,25 +277,39 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#141412';ctx.font='bold 18px monospace';ctx.fillText(o.power==='airboost'?'↑':'Ø',o.x+6,ground-58);return;
     }
     if(k==='rail'){
-      if(art?.images.hazards){
-        const box=art.rail;
-        const drawTop=ground-(box?.drawTopFromGround??39),drawHeight=box?.drawHeight??40;
+      const spec=surfaceSpec('rail'),image=art?.images.hazards;
+      if(image){
+        // The source cell has unrelated sheet scraps ABOVE the actual rail.
+        // Crop only those upper scraps, preserving the original rail artwork.
+        // Bottom of both legs lands exactly at ground, at every screen scale.
+        const cropStart=art?.rail?.clipTopCellY??48;
+        const top=imageTopY('rail')+cropStart/sourceCellHeight*spec.height;
+        const destHeight=(spec.bottom-cropStart)/sourceCellHeight*spec.height;
         const sections=Math.ceil(o.w/95);
-        for(let i=0;i<sections;i++){const pw=Math.min(95,o.w-i*95);drawSheet(ctx,'hazards',3,1,o.x+i*95,drawTop,pw,drawHeight)}
+        for(let i=0;i<sections;i++){
+          const pw=Math.min(95,o.w-i*95);
+          ctx.drawImage(image,3*144,112+cropStart,144,spec.bottom-cropStart,
+                        o.x+i*95,top,pw,destHeight);
+        }
       }else{
         const top=railSurfaceY();
         ctx.fillStyle='#D7FF00';ctx.fillRect(o.x,top,o.w,6);
-        ctx.fillStyle='#ddd';ctx.fillRect(o.x+8,top+6,5,ground-top-6);ctx.fillRect(o.x+o.w-12,top+6,5,ground-top-6);
-      }return;
-    }
-    const kindIndex={accept:0,popup:1,modal:2} as Record<string,number>;
-    const height=k==='accept'?42:k==='popup'?77:110;
-    if(drawSheet(ctx,'hazards',kindIndex[k],0,o.x-7,ground-height,o.w+14,height)){
-      ctx.fillStyle='#D7FF00';ctx.fillRect(o.x+4,flatTopY(k)-1,Math.max(12,o.w-8),3);
+        ctx.fillStyle='#ddd';ctx.fillRect(o.x+8,top+6,5,ground-top-6);
+        ctx.fillRect(o.x+o.w-12,top+6,5,ground-top-6);
+      }
       return;
     }
-    ctx.fillStyle=k==='accept'?'#D7FF00':k==='popup'?'#E0287A':'#efe4ca';ctx.fillRect(o.x,flatTopY(k),o.w,ground-flatTopY(k));
-    ctx.fillStyle='#141412';ctx.font='bold 10px monospace';ctx.fillText(k==='accept'?'ACCEPT':k==='popup'?'CONSENT?':'AGREE',o.x+3,ground-height+18);
+    const kindIndex={accept:0,popup:1,modal:2} as Record<string,number>;
+    const kind=k as 'accept'|'popup'|'modal';
+    const spec=surfaceSpec(kind);
+    // Restore the original ACCEPT artwork: NO artificial green coping line.
+    // All three visible box bases now rest on the ground.
+    if(drawSheet(ctx,'hazards',kindIndex[k],0,o.x-7,imageTopY(kind),o.w+14,spec.height))return;
+    const top=flatTopY(kind);
+    ctx.fillStyle=k==='accept'?'#D7FF00':k==='popup'?'#E0287A':'#efe4ca';
+    ctx.fillRect(o.x,top,o.w,ground-top);
+    ctx.fillStyle='#141412';ctx.font='bold 10px monospace';
+    ctx.fillText(k==='accept'?'ACCEPT':k==='popup'?'CONSENT?':'AGREE',o.x+3,top+18);
   };
   const draw=(ctx:CanvasRenderingContext2D,w:number,h:number)=>{
     // Letterbox 640×360 logical playfield rather than stretching art on portrait CRTs.
