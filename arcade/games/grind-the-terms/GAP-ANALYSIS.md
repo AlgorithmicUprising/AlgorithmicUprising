@@ -45,3 +45,13 @@ Implemented rideable/grindable ACCEPT, POPUP and MODAL boxes, with consistent fo
 ## November 3 — portrait controls change order and speed
 
 Keyboard SPACE now toggles GO FASTER; ↑/W/U jump. Portrait mobile U jumps and holds/release grind; A toggles speed; large left lightning-Ø is reserved for future special. The new portrait cabinet must occupy layout height beneath a width-scaled 16:9 game screen; never overlap the art selectors or next page section. Speed ramps up/down smoothly and extended grinds award short momentum. Pending: hazard sprite transparency trim cleanup; long capped rail segments; phone interaction acceptance and balance testing.
+
+## Zero TV tablet layout / consent form feedback (Nov 3)
+
+- [x] Changed speed toggle from +30% to +10%; long-grind bonus from +18% to +7%.
+- [x] Replaced short 16:9 landscape mobile screen with 9:16 overall tablet cabinet, portrait camera in top 65% and Ø/A/U deck below. Target: approved ZTV mobile screen art 1008×1728 and shared 360×640 portrait requirement.
+- [x] Disabled iOS selection/context callout during held U within the game, without affecting document text outside it.
+- [x] Pink consent forms use opaque, grounded rendered panels, clearly distinct from floating collectible tokens; original yellow ACCEPT stays. Shield impacts keep form visible with DENIED mark. Increased landing tolerance for low-framerate descent.
+- [ ] Compare the prototype in the *actual* live CH05 Zero TV tablet rather than only the standalone test page; include embedded/resized host acceptance.
+- [ ] Clean remaining sprite trim artifacts and build seamless multi-length rails with end caps and legs.
+- [ ] Human visual and gameplay sign-off on actual iPhone and Android, novice difficulty and accessibility.
