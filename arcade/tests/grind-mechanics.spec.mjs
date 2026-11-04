@@ -30,7 +30,7 @@ test('rail catch and pop increase grind time in deterministic first chunk',async
  const game=page.locator('grind-the-terms');
  const result=await game.evaluate(el=>{
   const g=el.game;g.start();
-  for(let i=0;i<105;i++)g.update(1/60);
+  for(let i=0;i<170;i++)g.update(1/60);
   g.input('tap',true);
   for(let i=0;i<68;i++)g.update(1/60);
   const afterHold=g.result().stats.grindMs;
@@ -167,7 +167,7 @@ test('seamless rail cap top matches skater contact and end legs touch pavement',
  const result=await game.evaluate(el=>{
   const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
   g.start();
-  for(let i=0;i<105;i++)g.update(1/60);
+  for(let i=0;i<170;i++)g.update(1/60);
   g.input('tap',true);
   let caught=false;
   for(let i=0;i<100;i++){g.update(1/60);if(g.result().stats.grindMs>0){caught=true;break}}
@@ -270,7 +270,7 @@ test('the first flat-topped consent box can be ground and popped from',async({pa
  const game=page.locator('grind-the-terms');
  const attempts=await game.evaluate(el=>{
    const g=el.game,viable=[];
-   for(let frame=255;frame<=335;frame+=5){
+   for(let frame=350;frame<=465;frame+=5){
      g.start();
      for(let i=0;i<frame;i++)g.update(1/60);
      if(g.over())continue;
@@ -312,8 +312,8 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBe(300);
  await el.evaluate(x=>{for(let i=0;i<10;i++)x.game.update(.05)});
  const measured=await el.evaluate(x=>x.game.result().stats.runSpeed);
- expect(measured).toBeGreaterThan(510);
- expect(measured).toBeLessThan(555);
+ expect(measured).toBeGreaterThan(345);
+ expect(measured).toBeLessThan(380);
  await page.keyboard.press('Space');
  expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(false);
  await page.keyboard.press('ArrowUp');
@@ -356,7 +356,11 @@ test('approved illustrated scenery is loaded as five distinct parallax layers',a
   const images=await Promise.all(keys.map(async key=>{const i=new Image();i.src=new URL(skin.files[key],url).href;await i.decode();return {key,assetName:skin.files[key],w:i.naturalWidth,h:i.naturalHeight}}));
   const canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
   const original=ctx.drawImage.bind(ctx),seen=[];
-  ctx.drawImage=(...args)=>{if(args[0] instanceof HTMLImageElement)seen.push(args[0].src.split('/').pop());return original(...args)};
+  ctx.drawImage=(...args)=>{
+    if(args[0] instanceof HTMLImageElement)seen.push(args[0].src.split('/').pop());
+    if(args[0] instanceof HTMLCanvasElement&&args[0].width===1280&&args[0].height===190)seen.push('cached-cloud');
+    return original(...args);
+  };
   el.game.start();el.game.draw(ctx,canvas.width,canvas.height);
   ctx.drawImage=original;
   return {images,seen};
@@ -366,7 +370,8 @@ test('approved illustrated scenery is loaded as five distinct parallax layers',a
   expect(i.w).toBe(1280);
   expect(i.h).toBeGreaterThan(80);
   // Compare the drawn asset to its declared skin path, regardless of asset version or extension.
-  expect(result.seen,`missing rendered ${i.key}: ${i.assetName}`).toContain(i.assetName);
+  if(i.key==='cloudsFar'||i.key==='cloudsNear')expect(result.seen).toContain('cached-cloud');
+  else expect(result.seen,`missing rendered ${i.key}: ${i.assetName}`).toContain(i.assetName);
  }
  await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v9.png'});
 });
@@ -400,7 +405,7 @@ test('world-space ACCEPT and physical sidewalk scroll at identical speed',async(
    const draw=ctx.drawImage.bind(ctx),fill=ctx.fillText.bind(ctx),scans=[];
    let roadX=null,acceptX=null;
    ctx.drawImage=(...args)=>{
-     if(args[0]?.src?.includes('terms_illustrated_sidewalk_road_v5.png')&&roadX===null)roadX=args[1];
+     if(args[0]?.src?.includes('terms_illustrated_sidewalk_road_v5.png')&&roadX===null)roadX=args.length===9?args[5]-args[1]:args[1];
      return draw(...args);
    };
    ctx.fillText=(...args)=>{if(args[0]==='ACCEPT ALL')acceptX=args[1];return fill(...args)};
@@ -519,4 +524,26 @@ test('normal cruising is brisk and speed toggle doubles it',async({page})=>{
  expect(stat.fast.normalSpeed).toBeGreaterThanOrEqual(stat.normal);
  expect(stat.fast.runSpeed/stat.fast.normalSpeed).toBeGreaterThan(1.99);
  expect(stat.fast.runSpeed/stat.fast.normalSpeed).toBeLessThan(2.01);
+});
+
+
+test('parallax renderer only draws visible portions of large scenic tiles',async({page})=>{
+ await page.goto('/demo/');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ const result=await page.locator('grind-the-terms').evaluate(el=>{
+   const g=el.game,c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
+   const original=ctx.drawImage.bind(ctx),drawn=[];
+   ctx.drawImage=(...args)=>{
+     if(args.length===9&&args[0]?.width===1280&&args[0]?.height===190)
+       drawn.push({kind:'raster-cloud',sourceWidth:args[3],destWidth:args[7]});
+     if(args.length===9&&args[0]?.src?.includes('terms_illustrated_datacenter_city'))
+       drawn.push({kind:'city',sourceWidth:args[3],destWidth:args[7]});
+     return original(...args);
+   };
+   g.start();g.draw(ctx,c.width,c.height);ctx.drawImage=original;
+   return drawn;
+ });
+ expect(result.filter(x=>x.kind==='raster-cloud').length).toBeGreaterThanOrEqual(2);
+ expect(result.some(x=>x.kind==='city')).toBe(true);
+ for(const x of result)expect(x.destWidth).toBeLessThanOrEqual(650);
 });

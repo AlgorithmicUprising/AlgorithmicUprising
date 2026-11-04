@@ -9,14 +9,15 @@ type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; scored:bool
 type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
 type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number};
 type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
-type Art = { images:Record<string,HTMLImageElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
+type Art = { images:Record<string,HTMLImageElement>; cloudRaster:Record<string,HTMLCanvasElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
 const chunks = chunksData as Chunk[];
 const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
 
 // No global listeners: multiple embedded games are independent Web Components.
 defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const ground = 300, playerX = 140, gravity = 1800, jumpVelocity = -620, railPopVelocity = -380;
-  const baseSpeed=260; // Cruising pace: physically faster world scroll, independent of the A speed toggle.
+  const baseSpeed=180; // Gameplay travel is independent of render FPS; do not change it to fix stutter.
+  let viewLeft=0,viewRight=640; // Current world-space camera bounds for parallax cropping.
   let boardY=ground, lastBoardY=ground, vy=0, elapsed=0, distance=0;
   let bonus=0, extraClauses=0, grindDistance=0, totalGrindDistance=0, grindMs=0;
   let alive=true, bailRemaining=0, cause='accept', held=false, grinding=false;
@@ -37,7 +38,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const tier=()=>elapsed<20?1:elapsed<45?2:elapsed<90?3:4;
   // SPACE (keyboard) / A (cabinet) is a TOGGLE, not a jump input.
   // The cabinet A / SPACE toggle doubles an already brisk normal skating pace.
-  const normalSpeed=()=>clamp(baseSpeed+elapsed*2.2,baseSpeed,480);
+  const normalSpeed=()=>clamp(baseSpeed+elapsed*1.72,baseSpeed,460);
   // The toggle ramps to exactly 2x the current baseline. Grind momentum remains independent.
   const speed=()=>normalSpeed()*(1+acceleration)*(grindBoostLeft>0?1.07:1);
   const score=()=>Math.floor(distance/48)+Math.floor(extraClauses)+Math.floor(totalGrindDistance/32)*2+Math.floor(bonus);
@@ -248,7 +249,16 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       if(request!==skinRequest)return;
       if(data.grid?.skater){const g=data.grid.skater,image=images.skater;if(!image||!Number.isInteger(g.cellW)||!Number.isInteger(g.cellH)||!Number.isInteger(g.columns)||g.cellW<16||g.cellH<16||g.columns<1||image.naturalWidth<g.columns*g.cellW||image.naturalHeight<Math.ceil(39/g.columns)*g.cellH)throw new Error('Incomplete Fony sprite atlas grid')}
       if(data.rail){const r=data.rail,g=data.grid?.hazards; if(!g||!Number.isFinite(r.groundCellY)||!Number.isFinite(r.drawHeight)||!Number.isFinite(r.surfaceCellY)||!Number.isFinite(r.clipTopCellY)||r.drawHeight<=0||r.clipTopCellY<0||r.clipTopCellY>=r.surfaceCellY||r.surfaceCellY>=r.groundCellY||r.groundCellY>g.cellH)throw new Error('Invalid rail surface metadata')}
-      art={images,name:data.name||'Fony',palette:data.palette,grid:data.grid,rail:data.rail,anims:data.anims};
+      // SVG text and gradients are rasterized ONCE, not on every animation frame.
+      // Retain the original HTMLImageElement sources for skin inspection/testing.
+      const cloudRaster:Record<string,HTMLCanvasElement>={};
+      for(const key of ['cloudsFar','cloudsNear']){
+        const source=images[key];if(!source)continue;
+        const cache=document.createElement('canvas');cache.width=1280;cache.height=190;
+        const cc=cache.getContext('2d',{alpha:true});
+        if(cc){cc.drawImage(source,0,0,cache.width,cache.height);cloudRaster[key]=cache}
+      }
+      art={images,cloudRaster,name:data.name||'Fony',palette:data.palette,grid:data.grid,rail:data.rail,anims:data.anims};
       emit('game:skin-loaded',{skin:'au',usingPlaceholder:false,assets:Object.keys(images)});
     }catch(error){if(request!==skinRequest)return;art=null;emit('game:error',{code:'SKIN_LOAD_FAILED',message:String(error),usingPlaceholder:true})}
   }
@@ -447,10 +457,18 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
   };
   const tileLayer=(ctx:CanvasRenderingContext2D,key:string,y:number,height:number,parallax:number,opacity=1)=>{
-    const img=art?.images[key];if(!img)return false;
+    // Pre-rasterized clouds and clipped source rectangles keep rendering within
+    // the visible camera instead of drawing 3+ full 1280px tiles per layer.
+    const img=art?.cloudRaster[key]??art?.images[key];if(!img)return false;
     const width=1280,shift=((distance*parallax)%width+width)%width;
     ctx.save();ctx.globalAlpha=opacity;
-    for(let x=-width-shift;x<1400;x+=width)ctx.drawImage(img,x,y,width,height);
+    const first=Math.floor((viewLeft+shift)/width),last=Math.floor((viewRight+shift-.0001)/width);
+    for(let tile=first;tile<=last;tile++){
+      const tileX=tile*width-shift;
+      const from=Math.max(viewLeft,tileX),to=Math.min(viewRight,tileX+width);
+      const span=to-from;
+      if(span>0)ctx.drawImage(img,from-tileX,0,span,img.height,from,y,span,height);
+    }
     ctx.restore();
     return true;
   };
@@ -517,6 +535,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const dx=portrait?-35*scale:(w-640*scale)/2;
     const dy=portrait?h-(ground+40)*scale:(h-360*scale)/2;
     ctx.setTransform(scale,0,0,scale,dx,dy);
+    viewLeft=-dx/scale;viewRight=(w-dx)/scale;
     drawBackdrop(ctx,portrait,-dy/scale);
     for(const o of objects)drawObstacle(ctx,o);
     // This opt-in developer-only visual fixture uses the production renderer.
