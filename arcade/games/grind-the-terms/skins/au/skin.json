@@ -1,8 +1,8 @@
 {
   "id": "au",
   "game": "grind-the-terms",
-  "name": "Algorithmic Uprising — Fony Sprock approved punk art",
-  "version": "0.2.4-preview",
+  "name": "Algorithmic Uprising — Fony Sprock (pink-mohawk approved character sheet)",
+  "version": "0.3.0-art-preview",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -16,10 +16,16 @@
     "paper": "#EDEAE0"
   },
   "files": {
-    "skater": "fony_sprock_aligned_v2.png",
+    "skater": "fony_punk_approved_v3.png",
     "hazards": "terms_hazards_atlas.png",
     "far": "terms_far_plate.jpg",
-    "skyline": "terms_skyline_v2.jpg"
+    "skyline": "terms_skyline_v2.jpg",
+    "cloudsFar": "terms_clouds_far_v4.png",
+    "cloudsNear": "terms_clouds_near_v4.png",
+    "dataCity": "terms_datacenter_city_v4.png",
+    "dataSmoke": "terms_smoke_plumes_v4.png",
+    "graffitiWall": "terms_graffiti_wall_v4.png",
+    "road": "terms_sidewalk_road_v4.png"
   },
   "grid": {
     "skater": {
@@ -116,5 +122,6 @@
       "groundCellY": 101,
       "drawHeight": 130
     }
-  }
+  },
+  "source": "User-approved Game 01 Fony Sprock sprite sheet and Nov 3 punk game mockup; separated into 39 character poses and six scrolling scenic layers."
 }
