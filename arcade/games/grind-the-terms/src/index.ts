@@ -419,29 +419,34 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     return true;
   };
   const drawBackdrop=(ctx:CanvasRenderingContext2D,portrait:boolean,topWorld:number)=>{
+    // Illustrated 2.5-D scene extracted from the approved punk-art mockup.
+    // Keep the playable sidewalk at ground Y=300; no enlarged paper wallpaper.
     const sky=ctx.createLinearGradient(0,topWorld,0,ground);
-    sky.addColorStop(0,'#17101c');sky.addColorStop(.55,'#5b204f');
-    sky.addColorStop(.9,'#d52b7c');sky.addColorStop(1,'#242132');
-    ctx.fillStyle=sky;ctx.fillRect(-700,topWorld,2250,ground-topWorld+1);
-    if(art?.images.cloudsFar){
-      tileLayer(ctx,'cloudsFar',portrait?topWorld+25:4,portrait?190:148,.045,.88);
-      tileLayer(ctx,'dataCity',116,183,.16,1);
-      tileLayer(ctx,'dataSmoke',112,184,.16,.82);
-      tileLayer(ctx,'cloudsNear',portrait?topWorld+175:62,portrait?153:108,.077,.9);
-      tileLayer(ctx,'graffitiWall',239,61,.28,1);
-      tileLayer(ctx,'road',ground-2,91,1,1);
-      // A second paper band fills the upper portrait tablet without shrinking
-      // the actual 2-D platforming stage at the bottom.
-      if(portrait&&topWorld<-180)
-        tileLayer(ctx,'cloudsFar',topWorld+6,125,.02,.62);
+    sky.addColorStop(0,'#170d19');sky.addColorStop(.47,'#46203e');
+    sky.addColorStop(.76,'#d92a82');sky.addColorStop(1,'#2d1b36');
+    ctx.fillStyle=sky;ctx.fillRect(-1400,topWorld,3200,ground-topWorld+90);
+    if(art?.images.cloudsNear&&art?.images.dataCity){
+      // The data-center chimneys and skyline are exposed below the torn paper clouds.
+      tileLayer(ctx,'dataCity',132,143,.13,1);
+      // These are two *separate* moving cloud layers. Distant paperwork is
+      // atmospheric only; the nearer high-detail inked cloud stays compact.
+      tileLayer(ctx,'cloudsFar',portrait?topWorld+35:69,portrait?97:80,.028,.28);
+      tileLayer(ctx,'cloudsNear',portrait?topWorld+171:75,portrait?109:97,.065,.96);
+      // Do not bake coins or obstacles into the scenery. Retaining wall is
+      // behind the actor, never on top of the skating surface.
+      tileLayer(ctx,'graffitiWall',239,61,.23,.97);
+      // Image holds the curb, textured sidewalk and distinct asphalt lanes.
+      // Everything sits at Y=300; no black line standing in for a floor.
+      tileLayer(ctx,'road',ground-5,90,.86,1);
       return;
     }
-    // Unbranded fallback if any image fails to load.
-    const old=art?.images.far;
-    if(old){const offset=(distance*.2)%640;ctx.drawImage(old,-offset,0,640,360);ctx.drawImage(old,640-offset,0,640,360)}
-    ctx.fillStyle='#4e3a53';ctx.fillRect(-50,ground-60,780,60);
-    ctx.fillStyle='#25202a';ctx.fillRect(-50,ground,780,80);
-    ctx.fillStyle='#dad0bd';ctx.fillRect(-50,ground,780,7);
+    // Safe fallback to the former clearly framed art; never a blank stage.
+    const far=art?.images.far;
+    if(far){const offset=(distance*.2)%640;ctx.drawImage(far,-offset,0,640,360);ctx.drawImage(far,640-offset,0,640,360)}
+    const skyline=art?.images.skyline;
+    if(skyline){const offset=(distance*.12)%640;ctx.drawImage(skyline,-offset,200,640,76);ctx.drawImage(skyline,640-offset,200,640,76)}
+    ctx.fillStyle='#39333b';ctx.fillRect(-300,ground,1500,80);
+    ctx.fillStyle='#d9d3c5';ctx.fillRect(-300,ground,1500,4);
   };
   const draw=(ctx:CanvasRenderingContext2D,w:number,h:number)=>{
     // Landscape remains 640x360; tablet mode is an actual portrait camera,

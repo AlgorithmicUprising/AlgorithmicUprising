@@ -1,8 +1,8 @@
 {
   "id": "au",
   "game": "grind-the-terms",
-  "name": "Algorithmic Uprising — Fony Sprock (pink-mohawk approved character sheet)",
-  "version": "0.3.0-art-preview",
+  "name": "Algorithmic Uprising — illustrated Fony + layered punk data-center streets",
+  "version": "0.3.1-illustrated",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -20,12 +20,11 @@
     "hazards": "terms_hazards_atlas.png",
     "far": "terms_far_plate.jpg",
     "skyline": "terms_skyline_v2.jpg",
-    "cloudsFar": "terms_clouds_far_v4.png",
-    "cloudsNear": "terms_clouds_near_v4.png",
-    "dataCity": "terms_datacenter_city_v4.png",
-    "dataSmoke": "terms_smoke_plumes_v4.png",
-    "graffitiWall": "terms_graffiti_wall_v4.png",
-    "road": "terms_sidewalk_road_v4.png"
+    "cloudsFar": "terms_illustrated_clouds_far_v5.png",
+    "cloudsNear": "terms_illustrated_clouds_near_v5.png",
+    "dataCity": "terms_illustrated_datacenter_city_v5.png",
+    "graffitiWall": "terms_illustrated_graffiti_wall_v5.png",
+    "road": "terms_illustrated_sidewalk_road_v5.png"
   },
   "grid": {
     "skater": {

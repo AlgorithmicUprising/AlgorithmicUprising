@@ -65,3 +65,10 @@ Keyboard SPACE now toggles GO FASTER; ↑/W/U jump. Portrait mobile U jumps and 
 - [x] Desktop 640×360 and mobile portrait camera share collision geometry and layered parallax.
 - [ ] Artist to inspect pose silhouettes manually at 1× and 2× for any residual detached component from the original raster sheet (automatic extraction is not perfect).
 - [ ] Physical iPhone and Zero TV CH05 tablet playtest, clouds/data-center smoke visual consistency, token pickup collision acceptance, and beginner difficulty/balance.
+
+## Nov 4 — rejected V4 artwork and corrective V5
+
+- [x] Replaced low-detail flat V4 backgrounds with detailed user-approved mockup-derived scenic layers (far/near paper clouds, data-center city, graffiti wall, street). No static gameplay screenshot compositing and no baked collectible coins.
+- [x] Reduced cloud height and visual dominance; skyline remains visible. Reduced pause veil opacity for visual QA.
+- [x] Preserved all functional progress: clean cap rails, grounded consent forms/ACCEPT, visible manhole holes and token art, 10% speed toggle, mobile U long-press suppression, portrait cabinet.
+- [ ] Actual physical-device art acceptance and balance tuning. No production ZERO TV deployment.

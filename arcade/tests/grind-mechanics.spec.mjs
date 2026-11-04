@@ -345,3 +345,23 @@ test('consent forms are opaque, visible, grounded obstacles rather than transluc
  }
  await el.locator('canvas').screenshot({path:'test-results/screenshots/consent-opaque-desktop.png'});
 });
+
+test('approved illustrated scenery is loaded as five distinct parallax layers',async({page})=>{
+ await page.goto('/demo/');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ const result=await page.locator('grind-the-terms').evaluate(async el=>{
+  const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
+  const skin=await(await fetch(url)).json();
+  const keys=['cloudsFar','cloudsNear','dataCity','graffitiWall','road'];
+  const images=await Promise.all(keys.map(async key=>{const i=new Image();i.src=new URL(skin.files[key],url).href;await i.decode();return {key,w:i.naturalWidth,h:i.naturalHeight}}));
+  const canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
+  const original=ctx.drawImage.bind(ctx),seen=[];
+  ctx.drawImage=(...args)=>{if(args[0] instanceof HTMLImageElement)seen.push(args[0].src.split('/').pop());return original(...args)};
+  el.game.start();el.game.draw(ctx,canvas.width,canvas.height);
+  ctx.drawImage=original;
+  return {images,seen};
+ });
+ expect(result.images).toHaveLength(5);
+ for(const i of result.images){expect(i.w).toBe(1280);expect(i.h).toBeGreaterThan(80);expect(result.seen.some(x=>x.includes('v5.png')&&x.includes(i.key==='dataCity'?'datacenter':i.key==='graffitiWall'?'graffiti':i.key==='road'?'sidewalk':i.key==='cloudsFar'?'clouds_far':'clouds_near'))).toBe(true);}
+ await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v5.png'});
+});
