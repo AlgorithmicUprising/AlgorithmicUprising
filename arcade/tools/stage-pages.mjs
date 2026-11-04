@@ -38,4 +38,10 @@ for(const path of ['index.html','demo/index.html','games/grind-the-terms/demo/in
 }
 const demo=await readFile(join(root,'demo/index.html'),'utf8');
 if(!demo.includes('../games/grind-the-terms/dist/grind-the-terms.js')||!demo.includes('../games/tag-before-training/dist/tag-before-training.js'))throw new Error('Demo entrypoint references unexpected bundle locations');
+for(const page of ['games/grind-the-terms/demo/index.html','games/grind-the-terms/demo/embed.html']){
+ const content=await readFile(join(root,page),'utf8');
+ for(const expected of ['src="../dist/grind-the-terms.js"','skin="../skins/au/skin.json"']){
+  if(!content.includes(expected))throw Error('Standalone resource path invalid in '+page+': '+expected);
+ }
+}
 console.log('Pages staged and validated. Root redirects to ./demo/; both game bundles present.');
