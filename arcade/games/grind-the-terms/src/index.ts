@@ -272,6 +272,21 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // The world point is Fony's skateboard contact, never the changing sprite top-left.
     // Bail frames anchor at the impact position and stop at the final frame (no looping).
     const poseY=alive?boardY:ground;
+    // The approved source sheet's RUN poses are running silhouettes without
+    // a deck. Put a proper board under those poses so Fony visibly SKATES.
+    // Grind and flip artwork already includes the original green deck.
+    if(alive&&(animation==='run'||animation==='idle'||animation==='land')&&art?.images.skater){
+      ctx.save();
+      ctx.fillStyle='#121019';ctx.beginPath();ctx.roundRect(playerX-27,poseY-6,54,6,3);ctx.fill();
+      ctx.fillStyle='#e0287a';ctx.fillRect(playerX-20,poseY-5,40,3);
+      ctx.fillStyle='#d7ff00';ctx.fillRect(playerX-10,poseY-5,20,2);
+      ctx.fillStyle='#121019';
+      for(const x of [playerX-17,playerX+16]){
+        ctx.beginPath();ctx.arc(x,poseY+2,4,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#f4eee1';ctx.fillRect(x-1,poseY+1,2,2);ctx.fillStyle='#121019';
+      }
+      ctx.restore();
+    }
     if(drawSheet(ctx,'skater',idx%columns,Math.floor(idx/columns),playerX-anchorX*zoom,poseY-anchorY*zoom,width*zoom,height*zoom))return;
     // Procedural placeholder is required when art is absent or blocked.
     ctx.fillStyle='#ff3d7f';ctx.fillRect(playerX-15,boardY-43,30,33);
@@ -409,10 +424,10 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     sky.addColorStop(.9,'#d52b7c');sky.addColorStop(1,'#242132');
     ctx.fillStyle=sky;ctx.fillRect(-700,topWorld,2250,ground-topWorld+1);
     if(art?.images.cloudsFar){
-      tileLayer(ctx,'cloudsFar',portrait?topWorld+25:4,portrait?190:170,.045,.88);
+      tileLayer(ctx,'cloudsFar',portrait?topWorld+25:4,portrait?190:148,.045,.88);
       tileLayer(ctx,'dataCity',116,183,.16,1);
       tileLayer(ctx,'dataSmoke',112,184,.16,.82);
-      tileLayer(ctx,'cloudsNear',portrait?topWorld+175:62,portrait?153:142,.077,.9);
+      tileLayer(ctx,'cloudsNear',portrait?topWorld+175:62,portrait?153:108,.077,.9);
       tileLayer(ctx,'graffitiWall',239,61,.28,1);
       tileLayer(ctx,'road',ground-2,91,1,1);
       // A second paper band fills the upper portrait tablet without shrinking
