@@ -1,8 +1,8 @@
 {
   "id": "au",
   "game": "grind-the-terms",
-  "name": "Algorithmic Uprising — sculpted shaded fine-print paper clouds",
-  "version": "0.6.1-denser-cloudbank",
+  "name": "Algorithmic Uprising — approved textured opaque paper-cut PNG cloudbank",
+  "version": "0.7.0-approved-png-cloudbank",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -20,8 +20,7 @@
     "hazards": "terms_hazards_atlas.png",
     "far": "terms_far_plate.jpg",
     "skyline": "terms_skyline_v2.jpg",
-    "cloudsFar": "terms_cloudbank_far_v10.svg",
-    "cloudsNear": "terms_cloudbank_near_v11.svg",
+    "cloudsNear": "terms_papercut_cloudbank_v12.png",
     "dataCity": "terms_illustrated_datacenter_city_v5.png",
     "graffitiWall": "terms_illustrated_graffiti_wall_v5.png",
     "road": "terms_illustrated_sidewalk_road_v5.png"
@@ -126,7 +125,7 @@
   "cloudTypography": {
     "largestRenderedTextPx": 5,
     "heading": "TERMS & CONDITIONS",
-    "body": "Tiny legal microprint clipped into overlapping scalloped paper-cloud layers; no rectangular document cards",
+    "body": "Subtle 3.2px legal microtext printed once into an opaque, layered PNG paper-cut cloudbank",
     "layers": 3
   }
 }

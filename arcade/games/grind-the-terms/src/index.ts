@@ -249,14 +249,29 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       if(request!==skinRequest)return;
       if(data.grid?.skater){const g=data.grid.skater,image=images.skater;if(!image||!Number.isInteger(g.cellW)||!Number.isInteger(g.cellH)||!Number.isInteger(g.columns)||g.cellW<16||g.cellH<16||g.columns<1||image.naturalWidth<g.columns*g.cellW||image.naturalHeight<Math.ceil(39/g.columns)*g.cellH)throw new Error('Incomplete Fony sprite atlas grid')}
       if(data.rail){const r=data.rail,g=data.grid?.hazards; if(!g||!Number.isFinite(r.groundCellY)||!Number.isFinite(r.drawHeight)||!Number.isFinite(r.surfaceCellY)||!Number.isFinite(r.clipTopCellY)||r.drawHeight<=0||r.clipTopCellY<0||r.clipTopCellY>=r.surfaceCellY||r.surfaceCellY>=r.groundCellY||r.groundCellY>g.cellH)throw new Error('Invalid rail surface metadata')}
-      // SVG text and gradients are rasterized ONCE, not on every animation frame.
-      // Retain the original HTMLImageElement sources for skin inspection/testing.
+      // The approved PNG is an internally layered paper-cut cloudbank.
+      // Cache it once at its NATIVE dimensions; no costly SVG gradients/text
+      // or full-frame resampling in the requestAnimationFrame loop.
       const cloudRaster:Record<string,HTMLCanvasElement>={};
-      for(const key of ['cloudsFar','cloudsNear']){
-        const source=images[key];if(!source)continue;
-        const cache=document.createElement('canvas');cache.width=1280;cache.height=190;
+      const source=images.cloudsNear;
+      if(source){
+        const cache=document.createElement('canvas');
+        cache.width=source.naturalWidth;cache.height=source.naturalHeight;
         const cc=cache.getContext('2d',{alpha:true});
-        if(cc){cc.drawImage(source,0,0,cache.width,cache.height);cloudRaster[key]=cache}
+        if(cc){
+          cc.drawImage(source,0,0);
+          // Almost-illegible legal fine print is printed into the cloud artwork,
+          // clipped automatically to the PNG's already-opaque paper shapes.
+          cc.save();cc.globalCompositeOperation='source-atop';
+          cc.fillStyle='rgba(48,31,51,.16)';cc.font='3.2px monospace';
+          const clauses=['TERMS AND CONDITIONS SUBJECT TO CHANGE','DATA RETENTION MAY CONTINUE WITHOUT NOTICE','SECTION 14.2 CONSENT TO PROCESSING','YOUR INFORMATION MAY BE REVIEWED'];
+          for(let y=38;y<cache.height-12;y+=11){
+            for(let x=15;x<cache.width-60;x+=209){
+              cc.fillText(clauses[(Math.floor(y/11)+Math.floor(x/209))%clauses.length],x,y,182);
+            }
+          }
+          cc.restore();cloudRaster.cloudsNear=cache;
+        }
       }
       art={images,cloudRaster,name:data.name||'Fony',palette:data.palette,grid:data.grid,rail:data.rail,anims:data.anims};
       emit('game:skin-loaded',{skin:'au',usingPlaceholder:false,assets:Object.keys(images)});
@@ -461,13 +476,16 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // the visible camera instead of drawing 3+ full 1280px tiles per layer.
     const img=art?.cloudRaster[key]??art?.images[key];if(!img)return false;
     const width=1280,shift=((distance*parallax)%width+width)%width;
+    const srcScale=img.width/width;
     ctx.save();ctx.globalAlpha=opacity;
     const first=Math.floor((viewLeft+shift)/width),last=Math.floor((viewRight+shift-.0001)/width);
     for(let tile=first;tile<=last;tile++){
       const tileX=tile*width-shift;
       const from=Math.max(viewLeft,tileX),to=Math.min(viewRight,tileX+width);
       const span=to-from;
-      if(span>0)ctx.drawImage(img,from-tileX,0,span,img.height,from,y,span,height);
+      // Source is a 1024px PNG, scenery is 1280 logical world units wide.
+      // Crop in source pixels, then draw only the visible logical-world span.
+      if(span>0)ctx.drawImage(img,(from-tileX)*srcScale,0,span*srcScale,img.height,from,y,span,height);
     }
     ctx.restore();
     return true;
@@ -483,22 +501,17 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       // Give each plane a meaningful silhouette and leave the factory visible.
       const cityFactor=.19;
       tileLayer(ctx,'dataCity',132,143,cityFactor,1);
-      // Overlapping portrait cloudbanks replace the former two separated stripes.
-      const cloudFarY=portrait?topWorld+77:39;
-      const cloudFarH=portrait?207:115;
-      // The front canopy begins behind the opaque HUD. Its upper scallop contour
-      // is fully concealed, while its rounded underside remains over the skyline.
-      // v11 front SVG top contour ends at source y=36 of 190:
-      // portrait: 43 + (36/190)*262 < HUD bottom 98
-      // landscape: 27 + (36/190)*145 < HUD bottom 71
-      const cloudNearY=portrait?topWorld+43:27;
-      const cloudNearH=portrait?262:145;
+      // The new opaque PNG already contains layered paper-cut clouds.
+      // Its highest top silhouette is source y=69/253. These positions hide
+      // that contour BEHIND the HUD in both portrait and landscape:
+      // portrait: topWorld+2+310*(69/253) < topWorld+98 HUD bottom
+      // landscape: -10+190*(69/253) < 71 HUD bottom.
+      // Only the deep rounded underside hangs over the city's upper skyline.
+      const cloudNearY=portrait?topWorld+2:-10;
+      const cloudNearH=portrait?310:190;
       const cityShift=((distance*cityFactor)%1280+1280)%1280;
-      // Layered cut-paper clouds: far and near overlap into ONE visible canopy.
-      // Both pre-rasterized once on skin load, then camera-cropped every frame.
-      tileLayer(ctx,'cloudsFar',cloudFarY,cloudFarH,.028,.93);
       tileLayer(ctx,'cloudsNear',cloudNearY,cloudNearH,.068,1);
-      // Plumes start at city chimney positions, follow city parallax and fade
+            // Plumes start at city chimney positions, follow city parallax and fade
       // upward INTO the near-cloud silhouette instead of floating separately.
       ctx.save();
       for(let tile=-1280-cityShift;tile<1400;tile+=1280){

@@ -346,34 +346,35 @@ test('consent forms are opaque, visible, grounded obstacles rather than transluc
  await el.locator('canvas').screenshot({path:'test-results/screenshots/consent-opaque-desktop.png'});
 });
 
-test('approved illustrated scenery is loaded as five distinct parallax layers',async({page})=>{
+test('approved PNG cloudbank is cached with the illustrated city, wall and road',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
  const result=await page.locator('grind-the-terms').evaluate(async el=>{
-  const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
-  const skin=await(await fetch(url)).json();
-  const keys=['cloudsFar','cloudsNear','dataCity','graffitiWall','road'];
-  const images=await Promise.all(keys.map(async key=>{const i=new Image();i.src=new URL(skin.files[key],url).href;await i.decode();return {key,assetName:skin.files[key],w:i.naturalWidth,h:i.naturalHeight}}));
-  const canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
-  const original=ctx.drawImage.bind(ctx),seen=[];
-  ctx.drawImage=(...args)=>{
-    if(args[0] instanceof HTMLImageElement)seen.push(args[0].src.split('/').pop());
-    if(args[0] instanceof HTMLCanvasElement&&args[0].width===1280&&args[0].height===190)seen.push('cached-cloud');
-    return original(...args);
-  };
-  el.game.start();el.game.draw(ctx,canvas.width,canvas.height);
-  ctx.drawImage=original;
-  return {images,seen};
+   const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
+   const skin=await(await fetch(url)).json();
+   const keys=['cloudsNear','dataCity','graffitiWall','road'];
+   const images=await Promise.all(keys.map(async key=>{const img=new Image();img.src=new URL(skin.files[key],url).href;await img.decode();return {key,assetName:skin.files[key],w:img.naturalWidth,h:img.naturalHeight}}));
+   const canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d'),original=ctx.drawImage.bind(ctx),seen=[];
+   ctx.drawImage=(...args)=>{
+     if(args[0] instanceof HTMLImageElement)seen.push(args[0].src.split('/').pop());
+     if(args[0] instanceof HTMLCanvasElement&&args[0].width===1024&&args[0].height===253)seen.push('cached-cloud');
+     return original(...args);
+   };
+   el.game.start();el.game.draw(ctx,canvas.width,canvas.height);ctx.drawImage=original;
+   return {images,seen,hasFar:Object.hasOwn(skin.files,'cloudsFar')};
  });
- expect(result.images).toHaveLength(5);
- for(const i of result.images){
-  expect(i.w).toBe(1280);
-  expect(i.h).toBeGreaterThan(80);
-  // Compare the drawn asset to its declared skin path, regardless of asset version or extension.
-  if(i.key==='cloudsFar'||i.key==='cloudsNear')expect(result.seen).toContain('cached-cloud');
-  else expect(result.seen,`missing rendered ${i.key}: ${i.assetName}`).toContain(i.assetName);
+ expect(result.hasFar).toBe(false);
+ expect(result.images).toHaveLength(4);
+ for(const img of result.images){
+   if(img.key==='cloudsNear'){
+     expect([img.w,img.h]).toEqual([1024,253]);
+     expect(result.seen).toContain('cached-cloud');
+   }else{
+     expect(img.w).toBe(1280);expect(img.h).toBeGreaterThan(80);
+     expect(result.seen,`Missing rendered asset: ${img.assetName}`).toContain(img.assetName);
+   }
  }
- await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v11.png'});
+ await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v12.png'});
 });
 
 test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains smoothing',async({page})=>{
@@ -429,18 +430,18 @@ test('world-space ACCEPT and physical sidewalk scroll at identical speed',async(
  }
 });
 
-test('near and far cloud artwork has compact typography metadata and separate assets',async({page})=>{
+test('cloud skin references the approved opaque PNG, not the translucent SVGs',async({page})=>{
  await page.goto('/demo/');
  const detail=await page.evaluate(async()=>{
-  const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
-  const data=await(await fetch(url)).json();return {type:data.cloudTypography,far:data.files.cloudsFar,near:data.files.cloudsNear};
+   const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
+   const data=await(await fetch(url)).json();
+   return {type:data.cloudTypography,far:data.files.cloudsFar,near:data.files.cloudsNear};
  });
  expect(detail.type.largestRenderedTextPx).toBeLessThanOrEqual(10);
  expect(detail.type.heading).toBe('TERMS & CONDITIONS');
- expect(detail.near).not.toBe(detail.far);
- expect(detail.near).toContain('cloudbank_near_v11.svg');
+ expect(detail.far).toBeUndefined();
+ expect(detail.near).toBe('terms_papercut_cloudbank_v12.png');
 });
-
 
 test('double ollie is always available without AIR BOOST pickup',async({page})=>{
  await page.goto('/demo/');
@@ -491,22 +492,24 @@ test('ground motion uses low stable Fony pose with persistent board',async({page
 });
 
 
-test('the legal-smog canopy uses no rigid paper cards and keeps tiny text',async({page})=>{
+test('the approved cloud asset has PNG bytes and opaque paper with transparent scallop edges',async({page})=>{
  await page.goto('/demo/');
- const content=await page.evaluate(async()=>{
-  const jsonUrl=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
-  const skin=await(await fetch(jsonUrl)).json();
-  const layers=await Promise.all(['cloudsFar','cloudsNear'].map(async key=>(await fetch(new URL(skin.files[key],jsonUrl))).text()));
-  return {layers,print:skin.cloudTypography};
+ const detail=await page.evaluate(async()=>{
+   const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
+   const skin=await(await fetch(url)).json();
+   const response=await fetch(new URL(skin.files.cloudsNear,url));
+   const bytes=new Uint8Array(await response.arrayBuffer());
+   const img=new Image();img.src=new URL(skin.files.cloudsNear,url).href;await img.decode();
+   const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
+   const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+   return {signature:[...bytes.slice(0,8)],w:c.width,h:c.height,
+     paperAlpha:ctx.getImageData(500,110,1,1).data[3],
+     skyAlpha:ctx.getImageData(500,0,1,1).data[3]};
  });
- expect(content.layers).toHaveLength(2);
- for(const svg of content.layers){
-   expect(svg).toContain('<clipPath');
-   expect(svg).toContain('Q'); // rounded cloud lobes rather than rectangular type cards
-   expect(svg).not.toContain('<rect');
-   expect(svg).toContain('font-size="3.');
- }
- expect(content.print.layers).toBe(3);
+ expect(detail.signature).toEqual([137,80,78,71,13,10,26,10]);
+ expect([detail.w,detail.h]).toEqual([1024,253]);
+ expect(detail.paperAlpha).toBe(255);
+ expect(detail.skyAlpha).toBe(0);
 });
 
 test('normal cruising remains stable and speed toggle doubles it',async({page})=>{
@@ -527,64 +530,45 @@ test('normal cruising remains stable and speed toggle doubles it',async({page})=
 });
 
 
-test('parallax renderer only draws visible portions of large scenic tiles',async({page})=>{
+test('PNG cloud and city parallax draw only the visible world-camera region',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
  const result=await page.locator('grind-the-terms').evaluate(el=>{
-   const g=el.game,c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
-   const original=ctx.drawImage.bind(ctx),drawn=[];
+   const g=el.game,c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d'),original=ctx.drawImage.bind(ctx),drawn=[];
    ctx.drawImage=(...args)=>{
-     if(args.length===9&&args[0]?.width===1280&&args[0]?.height===190)
-       drawn.push({kind:'raster-cloud',sourceWidth:args[3],destWidth:args[7]});
+     if(args.length===9&&args[0]?.width===1024&&args[0]?.height===253)
+       drawn.push({kind:'raster-cloud',sourceWidth:args[3],destWidth:args[7],y:args[6],h:args[8]});
      if(args.length===9&&args[0]?.src?.includes('terms_illustrated_datacenter_city'))
        drawn.push({kind:'city',sourceWidth:args[3],destWidth:args[7]});
      return original(...args);
    };
-   g.start();g.draw(ctx,c.width,c.height);ctx.drawImage=original;
-   return drawn;
+   g.start();g.draw(ctx,c.width,c.height);ctx.drawImage=original;return drawn;
  });
- expect(result.filter(x=>x.kind==='raster-cloud').length).toBeGreaterThanOrEqual(2);
+ expect(result.some(x=>x.kind==='raster-cloud')).toBe(true);
  expect(result.some(x=>x.kind==='city')).toBe(true);
- for(const x of result)expect(x.destWidth).toBeLessThanOrEqual(650);
+ for(const item of result)expect(item.destWidth).toBeLessThanOrEqual(650);
 });
 
-test('phone paper clouds are vertically overlapping, not detached stripes',async({page})=>{
- await page.goto('/demo/');
- await expect(page.locator('#events')).toContainText('game:skin-loaded');
- const rectangles=await page.locator('grind-the-terms').evaluate(el=>{
-   const canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
-   const real=ctx.drawImage.bind(ctx),rows=[];
-   ctx.drawImage=(...args)=>{if(args.length===9&&args[0] instanceof HTMLCanvasElement&&args[0].width===1280&&args[0].height===190)
-     rows.push({y:args[6],h:args[8]});return real(...args);};
-   el.game.start();el.game.draw(ctx,canvas.width,canvas.height);ctx.drawImage=real;
-   return rows;
- });
- const rows=[...new Map(rectangles.map(r=>[Math.round(r.y),r])).values()].sort((a,b)=>a.y-b.y);
- expect(rows.length).toBeGreaterThanOrEqual(2);
- expect(rows[1].y).toBeLessThan(rows[0].y+rows[0].h*.9);
-});
-test('front cloud top scallops stay behind HUD on every viewport and retain a deep underside',async({page})=>{
+test('PNG cloud top contour is hidden behind HUD in mobile and desktop camera',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
  const dimensions=await page.locator('grind-the-terms').evaluate(el=>{
-   const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
-   const draw=ctx.drawImage.bind(ctx),rows=[];
+   const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d'),real=ctx.drawImage.bind(ctx),rows=[];
    ctx.drawImage=(...args)=>{
-     if(args.length===9 && args[0] instanceof HTMLCanvasElement && args[0].width===1280 && args[0].height===190)
+     if(args.length===9&&args[0] instanceof HTMLCanvasElement&&args[0].width===1024&&args[0].height===253)
        rows.push({y:args[6],h:args[8]});
-     return draw(...args);
+     return real(...args);
    };
-   el.game.start();el.game.draw(ctx,c.width,c.height);ctx.drawImage=draw;
+   el.game.start();el.game.draw(ctx,c.width,c.height);ctx.drawImage=real;
    const portrait=c.width/c.height<1.05;
    const scale=portrait?c.width/450:Math.min(c.width/640,c.height/360);
    const dy=portrait?c.height-340*scale:(c.height-360*scale)/2;
    return {rows,portrait,hudBottom:portrait?-dy/scale+98:71};
  });
- expect(dimensions.rows.length).toBeGreaterThanOrEqual(2);
- // Foreground is taller than the distance layer in both phone/desktop layouts.
- const front=dimensions.rows.reduce((a,b)=>!a||b.h>a.h?b:a,null);
- expect(front).not.toBeNull();
- const topContour=front.y+front.h*36/190; // highest lower lip of upper lobes
- expect(topContour).toBeLessThanOrEqual(dimensions.hudBottom-2);
- expect(front.y+front.h).toBeGreaterThan(dimensions.hudBottom+60);
+ expect(dimensions.rows.length).toBeGreaterThan(0);
+ const cloud=dimensions.rows[0];
+ // Maximum source top-alpha y across all 1024 columns of the reviewed PNG.
+ const uppermostVisibleContour=cloud.y+cloud.h*69/253;
+ expect(uppermostVisibleContour).toBeLessThan(dimensions.hudBottom-2);
+ expect(cloud.y+cloud.h).toBeGreaterThan(dimensions.hudBottom+60);
 });
