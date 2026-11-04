@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tag Before Training - Punk Arcade</title>
+<meta name="description" content="Skate the alley, spray your tag and defend it from scraper drones. A Punk Arcade artwork preview.">
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#15111d;color:#f4eddd;font:15px/1.5 system-ui,sans-serif}main{max-width:1160px;margin:auto;padding:20px}header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}h1{font:italic 900 clamp(18px,3vw,30px)/1.1 sans-serif;margin:0}a{color:#d3ed16}header a{font-size:12px}p{margin:8px 0;color:#ccbfcc}.game-shell{width:100%;aspect-ratio:16/9;border:2px solid #ff2889;border-radius:8px;overflow:hidden;background:#100d16}tag-before-training{width:100%;height:100%;aspect-ratio:auto;min-height:0}.toolbar{display:flex;gap:12px;justify-content:space-between;align-items:center;padding-top:10px}.toolbar label{font-size:12px}select,button{background:#24192e;color:#f4eddd;border:1px solid #f4eddd;padding:7px;font:12px monospace;border-radius:5px;min-height:36px}.instructions{font-size:12px;max-width:90ch}.events{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+@media(pointer:coarse){main{padding:8px max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}header{margin-bottom:7px}header h1{font-size:18px}.game-shell{height:calc(100svh - 152px);min-height:450px;max-height:850px;aspect-ratio:auto}.toolbar{padding-top:6px}.instructions{font-size:11px;margin:6px 0}.toolbar button{min-height:36px}}
+@media(pointer:coarse) and (orientation:landscape){header{display:none}.game-shell{height:calc(100svh - 60px);min-height:240px;max-height:none}.instructions{display:none}.toolbar{padding-top:4px}}
+.game-shell:fullscreen{width:100vw;height:100dvh;max-height:none;border:0;border-radius:0;aspect-ratio:auto}.game-shell:fullscreen tag-before-training{height:100%!important}
+</style>
+</head>
+<body><main>
+<header><h1>TAG BEFORE TRAINING</h1><a href="../../../demo/">PUNK ARCADE ↗</a></header>
+<div class="game-shell" id="shell"><tag-before-training skin="../skins/au/skin.json?v=0.3.0" seed="1471" aria-label="Tag Before Training skate and spray game"></tag-before-training></div>
+<div class="toolbar"><label>Skin <select id="skin"><option value="au">FONY / AU ART</option><option value="placeholder">PLACEHOLDER</option></select></label><button id="fullscreen" type="button">FULLSCREEN</button></div>
+<p class="instructions">WASD / arrows to skate. Hold SPACE to spray in your facing direction. Spray drones to stop their photos. Collect paint cans. Touch: drag the stick and hold SPRAY. P pauses; M toggles sound; ⚙ sets your own tag.</p>
+<pre id="events" class="events" aria-live="polite"></pre>
+</main>
+<script type="module" src="../dist/tag-before-training.js?v=0.3.0"></script>
+<script>
+const game=document.querySelector('tag-before-training'),shell=document.querySelector('#shell');
+function layout(){game.setAttribute('layout',matchMedia('(pointer:coarse)').matches?'portrait':'landscape')}
+layout();window.addEventListener('resize',layout);
+document.querySelector('#skin').addEventListener('change',e=>{if(e.target.value==='placeholder')game.removeAttribute('skin');else game.setAttribute('skin','../skins/au/skin.json?v=0.3.0')});
+document.querySelector('#fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(shell.requestFullscreen)await shell.requestFullscreen();else shell.classList.toggle('expanded')}catch{}});
+for(const name of ['game:ready','game:skin-loaded','game:start','game:tag','game:drone-tagged','game:scraped','game:over','game:error'])document.addEventListener(name,e=>{document.querySelector('#events').textContent=(name+' '+JSON.stringify(e.detail)+'\n'+document.querySelector('#events').textContent).slice(0,3000)});
+</script>
+</body></html>

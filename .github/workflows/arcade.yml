@@ -44,10 +44,12 @@ jobs:
           path: |
             arcade/demo/
             arcade/games/*/dist/
+            arcade/games/*/skins/
+            arcade/games/*/demo/
           if-no-files-found: error
           retention-days: 14
   deploy-preview:
-    name: Publish browser-tested greybox preview
+    name: Publish browser-tested arcade preview
     needs: build-and-browser-test
     if: github.ref == 'refs/heads/arcade' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -75,3 +77,4 @@ jobs:
           path: arcade/.pages
       - id: deployment
         uses: actions/deploy-pages@v4
+

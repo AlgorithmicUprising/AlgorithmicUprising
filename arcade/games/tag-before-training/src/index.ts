@@ -1,11 +1,53 @@
 import {defineArcade,type GameAPI} from '../../../core/src/engine';
-// M0: keyboard/touch top-down wall tagging and working training meter.
-type Tag={x:number;y:number;fill:number;scraped:boolean;cooldown:number};type Drone={x:number;y:number;target:number;lock:number};
-defineArcade('tag-before-training','TAG BEFORE TRAINING',()=>{
- let x=480,y=320,score=0,meter=0,alive=true,wave=1,elapsed=0,paint=100;const keys=new Set<string>();let tags:Tag[]=[],drones:Drone[]=[];
- const start=()=>{x=480;y=320;score=0;meter=0;alive=true;wave=1;elapsed=0;paint=100;keys.clear();tags=Array.from({length:12},(_,i)=>({x:88+i%6*148,y:i<6?105:535,fill:0,scraped:false,cooldown:0}));drones=[{x:200,y:70,target:0,lock:2.5}]};
- const input=(key:string,down:boolean)=>{const k=key==='tap'?'spray':key;if(down)keys.add(k);else keys.delete(k)};
- const update=(dt:number)=>{if(!alive)return;elapsed+=dt;let dx=Number(keys.has('right'))-Number(keys.has('left')),dy=Number(keys.has('down'))-Number(keys.has('up'));const len=Math.hypot(dx,dy)||1;const sp=keys.has('spray')?125:220;x=Math.max(35,Math.min(925,x+dx/len*sp*dt));y=Math.max(145,Math.min(495,y+dy/len*sp*dt));for(const t of tags){t.cooldown=Math.max(0,t.cooldown-dt);if(keys.has('spray')&&paint>0&&t.cooldown===0&&Math.hypot(x-t.x,y-t.y)<80){paint=Math.max(0,paint-25*dt);t.fill=Math.min(1,t.fill+dt/0.9);if(t.fill===1&&!t.scraped){t.scraped=true;score+=100}}}for(const d of drones){const t=tags[d.target];if(!t||t.fill<1){d.target=tags.findIndex(t=>t.fill>=1);d.lock=2.5;continue;}d.x+=(t.x-d.x)*Math.min(1,dt*.7);d.y+=(t.y-d.y)*Math.min(1,dt*.7);if(Math.hypot(d.x-t.x,d.y-t.y)<26){d.lock-=dt;if(keys.has('spray')&&Math.hypot(x-d.x,y-d.y)<95){score+=Math.floor(250*dt/.6);d.lock=2.5;meter=Math.max(0,meter-5*dt/.6)}if(d.lock<=0){t.fill=0;t.scraped=false;t.cooldown=3;meter+=10;d.lock=Math.max(1.2,2.5-wave*.1);d.target=-1;}}}if(paint<20&&elapsed%8<dt)paint=Math.min(100,paint+50);if(elapsed>wave*18){wave++;drones.push({x:80+Math.random()*800,y:50,target:-1,lock:2.2});score+=tags.filter(t=>t.fill===1).length*50}if(meter>=100)alive=false;};
- const draw=(ctx:CanvasRenderingContext2D,w:number,h:number)=>{ctx.save();ctx.setTransform(w/960,0,0,h/640,0,0);ctx.fillStyle='#1b1622';ctx.fillRect(0,0,960,640);ctx.strokeStyle='#352d3d';for(let i=0;i<960;i+=32){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,640);ctx.stroke()}for(let i=0;i<640;i+=32){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(960,i);ctx.stroke()}ctx.fillStyle='#66525c';ctx.fillRect(0,80,960,60);ctx.fillRect(0,510,960,60);for(const t of tags){ctx.fillStyle='#302b35';ctx.fillRect(t.x-35,t.y-14,70,28);if(t.fill){ctx.fillStyle='#ff3d7f';ctx.fillRect(t.x-32,t.y-11,64*t.fill,22);ctx.fillStyle='#fff';ctx.font='bold 13px monospace';ctx.fillText('Ø',t.x-6,t.y+6)}}for(const d of drones){ctx.fillStyle='#f9e179';ctx.beginPath();ctx.arc(d.x,d.y,15,0,Math.PI*2);ctx.fill();ctx.fillStyle='#101010';ctx.fillRect(d.x-4,d.y-4,8,8)}ctx.fillStyle='#5ee0af';ctx.fillRect(x-18,y-18,36,36);ctx.fillStyle='#090909';ctx.fillRect(x-11,y-10,22,8);ctx.fillStyle='#fafafa';ctx.font='bold 20px monospace';ctx.fillText('STYLE '+Math.floor(score)+'  WAVE '+wave,18,30);ctx.fillText('TRAINING DATA '+Math.floor(meter)+'%',18,58);ctx.fillText('PAINT '+Math.floor(paint),760,30);ctx.restore()};
- start();return {start,update,draw,input,score:()=>Math.floor(score),over:()=>!alive} satisfies GameAPI;
+import {TagGame} from './game';
+import {TagArt} from './art';
+import {TagRenderer} from './render';
+type Settings={motion:'auto'|'on'|'off';left:boolean;text:string;image:string};
+defineArcade('tag-before-training','TAG BEFORE TRAINING',(emit,host)=>{
+ const seed=Number(host.getAttribute('seed'))||1471,world=new TagGame(seed,emit),art=new TagArt(host,emit),renderer=new TagRenderer(art);
+ const settings:Settings={motion:'auto',left:false,text:'',image:''};let accumulator=0;let dialog:HTMLDialogElement|null=null;
+ try{Object.assign(settings,JSON.parse(localStorage.getItem('au-arcade:v1:tag-before-training:settings')||'{}'))}catch{}
+ const save=()=>{try{localStorage.setItem('au-arcade:v1:tag-before-training:settings',JSON.stringify(settings))}catch{}};
+ const apply=()=>{
+  renderer.reducedMotion=settings.motion==='on'||settings.motion==='auto'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  renderer.customText=settings.text;host.toggleAttribute('data-left-handed',settings.left);
+  if(settings.image){const im=new Image();im.onload=()=>{renderer.customTag=im};im.src=settings.image}else renderer.customTag=null;
+ };
+ apply();
+ const root=host.shadowRoot!;
+ const gear=document.createElement('button');gear.part.add('settings');gear.type='button';gear.textContent='⚙';gear.setAttribute('aria-label','Tag settings and My Tag');root.querySelector('.top')?.append(gear);
+ gear.addEventListener('click',()=>{
+  if(dialog?.open)return;
+  const api=host as HTMLElement&{state:string;pause(reason:string):void;resume():void},resume=api.state==='playing';api.pause('settings');
+  dialog=document.createElement('dialog');dialog.className='tag-settings';dialog.innerHTML='<form method="dialog"><h2>MY TAG + SETTINGS</h2><label>Your tag <input name="tag" maxlength="8" placeholder="Default Ø" autocomplete="off"></label><label>Import a tag image <input name="image" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"></label><p class="tag-local">Saved on this device. Images never leave your browser.</p><label>Reduced motion <select name="motion"><option value="auto">Auto</option><option value="on">On</option><option value="off">Off</option></select></label><label><input name="left" type="checkbox"> Left-handed controls</label><p class="tag-error" aria-live="polite"></p><div><button type="button" name="clear">CLEAR TAG</button><button value="save">SAVE / RESUME</button></div></form>';
+  root.append(dialog);const form=dialog.querySelector('form')!,text=form.elements.namedItem('tag') as HTMLInputElement,motion=form.elements.namedItem('motion') as HTMLSelectElement,left=form.elements.namedItem('left') as HTMLInputElement;
+  text.value=settings.text;motion.value=settings.motion;left.checked=settings.left;
+  form.querySelector('[name=clear]')!.addEventListener('click',()=>{text.value='';settings.text='';settings.image='';renderer.customTag=null;save();apply()});
+  form.querySelector('[name=image]')!.addEventListener('change',async event=>{
+   const input=event.target as HTMLInputElement,file=input.files?.[0],error=form.querySelector('.tag-error')!;if(!file)return;
+   try{
+    if(file.size>8*1024*1024)throw Error('Choose an image under 8 MB.');
+    let blob:Blob=file;
+    if(file.type==='image/svg+xml'){
+     const svg=await file.text();if(/<script|<foreignObject|\bon\w+\s*=|(?:href\s*=\s*["']\s*(?:https?:|\/\/))|url\s*\(/i.test(svg))throw Error('Use a self-contained SVG without scripts or external resources.');blob=new Blob([svg],{type:'image/svg+xml'});
+    }
+    const data=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error('Image could not be read.'));reader.readAsDataURL(blob)});
+    const image=new Image();await new Promise<void>((resolve,reject)=>{image.onload=()=>resolve();image.onerror=()=>reject(Error('Image could not be opened.'));image.src=data});
+    const c=document.createElement('canvas');c.width=128;c.height=64;const ctx=c.getContext('2d')!,scale=Math.min(128/image.width,64/image.height),w=image.width*scale,h=image.height*scale;ctx.drawImage(image,(128-w)/2,(64-h)/2,w,h);settings.image=c.toDataURL('image/png');settings.text='';text.value='';error.textContent='Image ready.';apply();save();
+   }catch(e){error.textContent=e instanceof Error?e.message:'Image could not be imported.'}
+  });
+  dialog.addEventListener('close',()=>{settings.motion=motion.value as Settings['motion'];settings.left=left.checked;if(text.value.trim()){settings.text=text.value.trim().slice(0,8);settings.image=''}save();apply();dialog?.remove();dialog=null;if(resume)api.resume()},{once:true});dialog.showModal();
+ });
+ const api={
+  world,
+  start(){world.reset();renderer.reset();accumulator=0;apply()},
+  update(dt:number){accumulator=Math.min(accumulator+dt,5/60);while(accumulator>=1/60){world.step(1/60);accumulator-=1/60}},
+  draw(ctx:CanvasRenderingContext2D,w:number,h:number){renderer.render(ctx,w,h,world)},
+  input(key:string,down:boolean){world.input(key,down)},
+  setMoveAxis(x:number,y:number){world.moveAxis(x,y)},
+  releaseInput(){world.release()},
+  setSkin(url:string|null){void art.load(url)},
+  score:()=>Math.floor(world.score),over:()=>!world.alive,result:()=>world.result()
+ } satisfies GameAPI&{world:TagGame};
+ return api;
 });

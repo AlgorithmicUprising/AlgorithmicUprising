@@ -10,11 +10,13 @@
     "validate": "node tools/validate-skin.mjs",
     "dev": "node tools/serve.mjs",
     "e2e": "playwright test",
-    "stage-pages": "node tools/stage-pages.mjs"
+    "stage-pages": "node tools/stage-pages.mjs",
+    "prepare-tag-art": "node tools/prepare-tag-art.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
     "typescript": "^5.8.0",
-    "@playwright/test": "^1.56.1"
+    "@playwright/test": "^1.56.1",
+    "sharp": "^0.34.5"
   }
 }

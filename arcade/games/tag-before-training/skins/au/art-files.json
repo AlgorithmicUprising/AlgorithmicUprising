@@ -1,0 +1,23 @@
+{
+  "skater": "skater.png",
+  "scout": "scout.png",
+  "swarm": "swarm.png",
+  "hoover": "hoover.png",
+  "marker": "marker.png",
+  "props": "props.png",
+  "effects": "effects.png",
+  "background": "background.png",
+  "tiles": "tiles.png",
+  "title": "title.png",
+  "stick": "stick.png",
+  "knob": "knob.png",
+  "spray": "spray.png",
+  "sprayPressed": "sprayPressed.png",
+  "soundOn": "soundOn.png",
+  "soundOff": "soundOff.png",
+  "pause": "pause.png",
+  "share": "share.png",
+  "settings": "settings.png",
+  "watermark0": "watermark0.png",
+  "watermark1": "watermark1.png"
+}
