@@ -112,3 +112,12 @@ The original v5 layers and v3 Fony atlas remain in the protected AU skin as arch
 
 ### Fine-print size correction (v0.3.3)
 Visual screenshot inspection found that the V6 cloud headings still appeared larger than the screenshot's RESUME control. V7 reduces cloud display headings again (native 13px letterforms on the near cloud, typically under 9 logical pixels at a 97/160 game-layer scale), retaining the dense tiny paragraphs and original torn contours. The previous v6 files remain archived; only V7 is loaded.
+
+
+## November 4 — v0.4 paper-smog and skating revision
+
+- The approved fine-print cloud treatment is now two independent SVG parallax layers (`terms_paper_smoke_cloud_far_v8.svg` / `terms_paper_smoke_cloud_near_v8.svg`), with scalloped cloud silhouettes, parchment paper stacks and tiny legal clauses. Both stay independent of the city, hazards and player. City-parallax smoke curves connect chimney positions to the foreground paper-cloud bank; final physical-phone art alignment remains to be signed off.
+- Fony's regular ground movement now displays a stable, low skateboard pose (approved atlas frame 29) with scrolling streaks instead of cycling through the sprite sheet's **running-on-foot** poses. Air / grind / bail poses retain their dedicated animations. The original source atlas is unchanged; a future full board-accurate redraw will still improve expression and continuity.
+- Double ollie is **always on**: release and tap U again while airborne. An additional jump consumes the second jump for the current airtime; landing resets it. Existing AIR BOOST pickups are treated as defensive pickups so they cannot gate double jump.
+- GO FASTER ramps to exactly **2× the current normal movement speed** (0.45 seconds), while sustained-grind momentum remains an independent +7% factor. Desktop SPACE and mobile A remain toggle controls. The mobile Ø/A/U deck styling and positions are unchanged.
+- New Playwright coverage asserts 2× baseline, permanent airborne double-ollie, ground sprite selection and SVG cloud selection. These checks require CI execution and real-device visual verification before release sign-off.
