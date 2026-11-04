@@ -438,29 +438,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const dx=portrait?-35*scale:(w-640*scale)/2;
     const dy=portrait?h-(ground+40)*scale:(h-360*scale)/2;
     ctx.setTransform(scale,0,0,scale,dx,dy);
-    if(portrait){
-      const topWorld=-dy/scale;
-      ctx.fillStyle='#17111f';ctx.fillRect(35,topWorld,450,Math.max(0,-topWorld+10));
-      ctx.fillStyle='#281c2c';ctx.fillRect(35,topWorld+98,450,3);
-      ctx.fillStyle='#514054';ctx.font='11px monospace';
-      ctx.fillText('TERMS / CONDITIONS / CONSENT ENGINE  •  AU',47,topWorld+126);
-    }
-    const far=art?.images.far;
-    if(far){const offset=(distance*.2)%640;ctx.drawImage(far,-offset,0,640,360);ctx.drawImage(far,640-offset,0,640,360);ctx.fillStyle='rgba(15,9,24,.12)';ctx.fillRect(0,0,640,360)}
-    else{
-      ctx.fillStyle='#1a1521';ctx.fillRect(0,0,640,360);
-      ctx.fillStyle='#33283e';for(let i=0;i<15;i++)ctx.fillRect(((i*91-distance*.2)%730+730)%730-30,90,3,190);
-      ctx.font='14px monospace';ctx.fillStyle='#796987';
-      for(let i=0;i<9;i++)ctx.fillText('§ '+(Math.floor(distance/220)+i+1)+'  TERMS AND CONDITIONS APPLY',12,90+i*24);
-    }
-    const skyline=art?.images.skyline;
-    if(skyline){ctx.globalAlpha=.5;ctx.drawImage(skyline,-(distance*.12%640),202,640,76);ctx.drawImage(skyline,640-(distance*.12%640),202,640,76);ctx.globalAlpha=1}
-    ctx.fillStyle='#2a2730';ctx.fillRect(0,ground,640,60);
-    ctx.fillStyle='#d7ff00';ctx.fillRect(0,ground,640,3);
-    ctx.fillStyle='#615768';ctx.fillRect(0,ground+10,640,2);
-    ctx.fillStyle='#1b1822';ctx.fillRect(0,ground+23,640,25);
-    ctx.fillStyle='#473e4c';
-    for(let x=-(distance*.8%62);x<640;x+=62)ctx.fillRect(x,ground+34,33,3);
+    drawBackdrop(ctx,portrait,-dy/scale);
     for(const o of objects)drawObstacle(ctx,o);
     // This opt-in developer-only visual fixture uses the production renderer.
     // It is not part of gameplay, and is never displayed without the QA attr.
