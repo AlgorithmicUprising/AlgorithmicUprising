@@ -7,6 +7,11 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+# Keep only the newest push per branch when GitHub is backlogged.
+# Cancel outdated builds rather than enqueue one full Pages deploy per commit.
+concurrency:
+  group: punk-arcade-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build-and-browser-test:
     runs-on: ubuntu-latest
@@ -45,7 +50,6 @@ jobs:
     name: Publish browser-tested greybox preview
     needs: build-and-browser-test
     if: github.ref == 'refs/heads/arcade' && github.event_name != 'pull_request'
-    continue-on-error: true # Pages source may require one-time admin enablement
     runs-on: ubuntu-latest
     environment:
       name: github-pages
