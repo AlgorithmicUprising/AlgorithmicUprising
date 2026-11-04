@@ -316,23 +316,59 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       }
       return;
     }
-    const kindIndex={accept:0,popup:1,modal:2} as Record<string,number>;
     const kind=k as 'accept'|'popup'|'modal';
-    const spec=surfaceSpec(kind);
-    // Restore the original ACCEPT artwork: NO artificial green coping line.
-    // All three visible box bases now rest on the ground.
-    if(drawSheet(ctx,'hazards',kindIndex[k],0,o.x-7,imageTopY(kind),o.w+14,spec.height))return;
-    const top=flatTopY(kind);
-    ctx.fillStyle=k==='accept'?'#D7FF00':k==='popup'?'#E0287A':'#efe4ca';
-    ctx.fillRect(o.x,top,o.w,ground-top);
-    ctx.fillStyle='#141412';ctx.font='bold 10px monospace';
-    ctx.fillText(k==='accept'?'ACCEPT':k==='popup'?'CONSENT?':'AGREE',o.x+3,top+18);
+    const spec=surfaceSpec(kind),top=flatTopY(kind);
+    if(kind==='accept'){
+      // Preserve the original opaque yellow ACCEPT ALL animation as requested.
+      if(!drawSheet(ctx,'hazards',0,0,o.x-7,imageTopY(kind),o.w+14,spec.height)){
+        ctx.fillStyle='#D7FF00';ctx.fillRect(o.x,top,o.w,ground-top);
+        ctx.fillStyle='#141412';ctx.font='bold 11px monospace';ctx.fillText('ACCEPT ALL',o.x+6,top+19);
+      }
+    }else{
+      // The original composite's modal cells are mostly transparent line art,
+      // which revealed the skyline and made the consent hazard look collectible.
+      // Draw a completely opaque, grounded paper-window obstacle instead.
+      const x=o.x-5,width=o.w+10,height=ground-top;
+      ctx.fillStyle='#08070d';ctx.fillRect(x-3,top-4,width+6,height+4);
+      ctx.fillStyle='#f5eddd';ctx.fillRect(x,top,width,height);
+      ctx.fillStyle='#e0287a';ctx.fillRect(x,top,width,22);
+      ctx.fillStyle='#100c18';ctx.font='bold 11px monospace';
+      ctx.fillText(kind==='popup'?'CONSENT':'TERMS / DATA',x+6,top+15);
+      ctx.fillStyle='#34283b';ctx.font='9px monospace';
+      const rows=kind==='popup'?2:4;
+      for(let i=0;i<rows;i++){
+        const y=top+32+i*13;
+        if(y>=ground-20)break;
+        ctx.fillRect(x+7,y,Math.max(12,width-25-(i%2)*14),2);
+      }
+      ctx.fillStyle='#e0287a';ctx.fillRect(x+10,ground-21,Math.max(26,width-20),14);
+      ctx.fillStyle='#120d19';ctx.font='bold 9px monospace';
+      ctx.fillText('I AGREE',x+16,ground-11);
+      ctx.strokeStyle='#1d1726';ctx.lineWidth=2;ctx.strokeRect(x,top,width,height);
+    }
+    if(o.deflected){
+      ctx.fillStyle='#101016';ctx.fillRect(o.x-3,top+23,Math.min(o.w+6,102),20);
+      ctx.fillStyle='#d7ff00';ctx.font='bold 12px monospace';
+      ctx.fillText('DENIED!',o.x+4,top+37);
+    }
   };
   const draw=(ctx:CanvasRenderingContext2D,w:number,h:number)=>{
-    // Letterbox 640×360 logical playfield rather than stretching art on portrait CRTs.
+    // Landscape remains 640x360; tablet mode is an actual portrait camera,
+    // not a letterboxed landscape canvas. The sidescroller still uses the
+    // same physics coordinates and a 450-unit horizontal reaction window.
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0d0b12';ctx.fillRect(0,0,w,h);
-    const scale=Math.min(w/640,h/360),dx=(w-640*scale)/2,dy=(h-360*scale)/2;
+    const portrait=w/h<1.05;
+    const scale=portrait?w/450:Math.min(w/640,h/360);
+    const dx=portrait?-35*scale:(w-640*scale)/2;
+    const dy=portrait?h-(ground+40)*scale:(h-360*scale)/2;
     ctx.setTransform(scale,0,0,scale,dx,dy);
+    if(portrait){
+      const topWorld=-dy/scale;
+      ctx.fillStyle='#17111f';ctx.fillRect(35,topWorld,450,Math.max(0,-topWorld+10));
+      ctx.fillStyle='#281c2c';ctx.fillRect(35,topWorld+98,450,3);
+      ctx.fillStyle='#514054';ctx.font='11px monospace';
+      ctx.fillText('TERMS / CONDITIONS / CONSENT ENGINE  •  AU',47,topWorld+126);
+    }
     const far=art?.images.far;
     if(far){const offset=(distance*.2)%640;ctx.drawImage(far,-offset,0,640,360);ctx.drawImage(far,640-offset,0,640,360);ctx.fillStyle='rgba(15,9,24,.12)';ctx.fillRect(0,0,640,360)}
     else{
@@ -348,17 +384,32 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     for(const o of objects)drawObstacle(ctx,o);
     drawSkater(ctx);
     if(grinding){ctx.fillStyle='#E0287A';const y=support?surfaceY(support):railSurfaceY();for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,y-2+(i%2)*3,5,2)}
-    ctx.fillStyle='rgba(17,12,20,.93)';ctx.fillRect(0,0,640,71);
-    ctx.fillStyle='#D7FF00';ctx.font='bold 18px monospace';ctx.fillText('CLAUSES SKIPPED  '+score(),14,27);
-    ctx.fillStyle='#F3EBDE';ctx.font='bold 12px monospace';ctx.fillText('TIER '+tier()+'   COMBO x'+(combo>=3?3:combo===2?2:combo===1?1.5:1),14,47);
-    ctx.fillStyle='#D7FF00';ctx.fillText('BEST '+(host as any).best,485,27);
-    ctx.fillStyle=speedEnabled||grindBoostLeft>0?'#D7FF00':'#aaa1b3';
-    ctx.fillText('SPD '+Math.round(speed()),307,47);
-    ctx.fillText((shield?'[SHIELD] ':'')+(airBoost?'[AIR BOOST]':''),400,47);
-    ctx.fillStyle='#E0287A';ctx.font='bold 11px monospace';
-    if(elapsed<11)ctx.fillText('U / ↑: JUMP & HOLD GRIND  •  SPACE / A: TOGGLE FAST',12,65);
-    else if(grinding)ctx.fillText('GRINDING THE FINE PRINT — RELEASE TO POP!',170,65);
-    else ctx.fillText('NOBODY READS THEM. SKATE THEM.',12,65);
+    if(portrait){
+      const t=-dy/scale;
+      ctx.fillStyle='rgba(17,12,20,.97)';ctx.fillRect(35,t,450,98);
+      ctx.fillStyle='#d7ff00';ctx.font='bold 19px monospace';
+      ctx.fillText('CLAUSES  '+score(),48,t+29);
+      ctx.fillStyle='#f3ebde';ctx.font='bold 12px monospace';
+      ctx.fillText('TIER '+tier()+'   BEST '+(host as any).best,48,t+51);
+      ctx.fillStyle=speedEnabled?'#d7ff00':'#e4cbd7';
+      ctx.fillText('SPEED '+Math.round(speed())+(speedEnabled?'  FAST +10%':''),48,t+72);
+      ctx.fillStyle='#e0287a';ctx.font='bold 11px monospace';
+      ctx.fillText(grinding?'GRIND! RELEASE U TO POP':'CONSENT = LAND / GRIND   •   Ø TOKENS = PICKUPS',48,t+91);
+      ctx.fillStyle='#b8aaba';ctx.font='bold 12px monospace';
+      ctx.fillText((shield?'SHIELD  ':'')+(airBoost?'AIR BOOST READY':''),48,t+150);
+    }else{
+      ctx.fillStyle='rgba(17,12,20,.93)';ctx.fillRect(0,0,640,71);
+      ctx.fillStyle='#D7FF00';ctx.font='bold 18px monospace';ctx.fillText('CLAUSES SKIPPED  '+score(),14,27);
+      ctx.fillStyle='#F3EBDE';ctx.font='bold 12px monospace';ctx.fillText('TIER '+tier()+'   COMBO x'+(combo>=3?3:combo===2?2:combo===1?1.5:1),14,47);
+      ctx.fillStyle='#D7FF00';ctx.fillText('BEST '+(host as any).best,485,27);
+      ctx.fillStyle=speedEnabled||grindBoostLeft>0?'#D7FF00':'#aaa1b3';
+      ctx.fillText('SPD '+Math.round(speed()),307,47);
+      ctx.fillText((shield?'[SHIELD] ':'')+(airBoost?'[AIR BOOST]':''),400,47);
+      ctx.fillStyle='#E0287A';ctx.font='bold 11px monospace';
+      if(elapsed<11)ctx.fillText('U / ↑: JUMP & HOLD GRIND  •  SPACE / A: +10% FAST',12,65);
+      else if(grinding)ctx.fillText('GRINDING THE FINE PRINT — RELEASE TO POP!',170,65);
+      else ctx.fillText('CONSENT FORMS = OBSTACLES  •  TOKENS = PICKUPS',12,65);
+    }
     if(visualFlash>0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
     ctx.restore();
   };
