@@ -123,11 +123,11 @@ test('mobile A toggles speed, U ollies, Ø special is reserved',async({page},inf
  await a.click();
  await expect(a).toHaveAttribute('aria-pressed','true');
  expect(await game.evaluate(el=>el.game.result().stats.speedEnabled)).toBe(true);
- await game.evaluate(el=>el.game.update(.5));
+ await game.evaluate(el=>{for(let i=0;i<10;i++)el.game.update(.05)});
  expect(await game.evaluate(el=>el.game.result().stats.acceleration)).toBeGreaterThan(0);
  await a.click();
  await expect(a).toHaveAttribute('aria-pressed','false');
- await game.evaluate(el=>el.game.update(.4));
+ await game.evaluate(el=>{for(let i=0;i<8;i++)el.game.update(.05)});
  expect(await game.evaluate(el=>el.game.result().stats.acceleration)).toBeLessThan(.1);
  const before=await game.evaluate(el=>el.game.result().stats.boardY);
  await u.dispatchEvent('pointerdown',{pointerId:2});

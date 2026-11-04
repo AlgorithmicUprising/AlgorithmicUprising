@@ -278,7 +278,7 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  await page.keyboard.press('Space');
  expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(true);
  expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBe(300);
- await el.evaluate(x=>x.game.update(.5));
+ await el.evaluate(x=>{for(let i=0;i<10;i++)x.game.update(.05)});
  expect(await el.evaluate(x=>x.game.result().stats.runSpeed)).toBeGreaterThan(215);
  await page.keyboard.press('Space');
  expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(false);
