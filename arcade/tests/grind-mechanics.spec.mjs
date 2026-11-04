@@ -268,3 +268,21 @@ test('new flat-top counters are exposed for both skins',async({page})=>{
  expect(data).toHaveProperty('platformLandings',0);
  expect(data).toHaveProperty('platformGrinds',0);
 });
+
+
+test('space changes speed without causing an ollie',async({page},info)=>{
+ test.skip(info.project.name.startsWith('mobile'),'Desktop keyboard only');
+ await page.goto('/demo/');
+ const el=page.locator('grind-the-terms');
+ await el.locator('button[part=start]').click();
+ await page.keyboard.press('Space');
+ expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(true);
+ expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBe(300);
+ await el.evaluate(x=>x.game.update(.5));
+ expect(await el.evaluate(x=>x.game.result().stats.runSpeed)).toBeGreaterThan(215);
+ await page.keyboard.press('Space');
+ expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(false);
+ await page.keyboard.press('ArrowUp');
+ await el.evaluate(x=>x.game.update(.05));
+ expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBeLessThan(300);
+});
