@@ -76,3 +76,39 @@ test('iframe embed loads game bundle and Fony art',async({page})=>{
   await expect(game).toHaveJSProperty('state','playing');
   expect(broken).toEqual([]);
 });
+
+test('portrait phone cabinet is contained and does not cover artwork buttons',async({page},info)=>{
+ test.skip(!info.project.name.startsWith('mobile'),'Phone portrait only');
+ await page.goto(standalone);
+ const game=page.locator('grind-the-terms'),deck=game.locator('.deck'),screen=game.locator('.screen');
+ await expect(deck).toBeVisible();
+ const [host,display,panel,picker]=await Promise.all([game.boundingBox(),screen.boundingBox(),deck.boundingBox(),page.locator('#au').boundingBox()]);
+ expect(host).not.toBeNull();expect(display).not.toBeNull();expect(panel).not.toBeNull();expect(picker).not.toBeNull();
+ expect(Math.abs(display.width/display.height-16/9)).toBeLessThan(.06);
+ expect(panel.y).toBeGreaterThanOrEqual(display.y+display.height-2);
+ expect(host.y+host.height).toBeGreaterThanOrEqual(panel.y+panel.height-2);
+ expect(picker.y).toBeGreaterThanOrEqual(host.y+host.height-2);
+ const controls=await game.locator('.deck button').evaluateAll(nodes=>nodes.map(n=>({key:n.dataset.key,w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,x:n.getBoundingClientRect().x})));
+ expect(controls).toHaveLength(3);
+ for(const b of controls)expect(b.h).toBeGreaterThanOrEqual(44);
+ expect(controls.find(b=>b.key==='special').w).toBeGreaterThan(controls.find(b=>b.key==='speed').w);
+ expect(controls.find(b=>b.key==='special').x).toBeLessThan(controls.find(b=>b.key==='speed').x);
+});
+
+test('320px phone width keeps the Ø A U controls usable',async({page},info)=>{
+ test.skip(!info.project.name.startsWith('mobile'),'Phone portrait only');
+ await page.setViewportSize({width:320,height:740});
+ await page.goto(standalone);
+ const game=page.locator('grind-the-terms');
+ const host=await game.boundingBox();
+ const deck=await game.locator('.deck').boundingBox();
+ expect(host).not.toBeNull();expect(deck).not.toBeNull();
+ expect(host.width).toBeLessThanOrEqual(320);
+ expect(host.y+host.height).toBeGreaterThanOrEqual(deck.y+deck.height-2);
+ for(const key of ['special','speed','jump']){
+  const button=game.locator('button[data-key='+key+']'),box=await button.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box.width).toBeGreaterThanOrEqual(44);
+  expect(box.x+box.width).toBeLessThanOrEqual(320);
+ }
+});
