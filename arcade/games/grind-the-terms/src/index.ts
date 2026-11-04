@@ -276,9 +276,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const looping=animation==='run'||animation==='idle'||animation==='grind';
     const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
     // The old run sprites are leg-running poses. Ground travel now uses the
-    // stable onboard Fony stance from the approved pose atlas; no sprint loop.
+    // stable low, board-contact Fony stance from the approved pose atlas; no sprint loop.
     const rolling=alive&&!grinding&&(animation==='run'||animation==='idle'||animation==='land');
-    const idx=rolling&&art?.images.skater?29:start+frame;
+    const idx=rolling&&art?.images.skater?10:start+frame;
     const cfg=art?.grid?.skater;
     const width=cfg?.cellW??80,height=cfg?.cellH??94,columns=cfg?.columns??8;
     const anchorX=cfg?.anchorX??width/2,anchorY=cfg?.anchorY??height-4;
@@ -289,7 +289,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // The approved source sheet's RUN poses are running silhouettes without
     // a deck. Put a proper board under those poses so Fony visibly SKATES.
     // Grind and flip artwork already includes the original green deck.
-    if(alive&&(animation==='run'||animation==='land')&&art?.images.skater){
+    if(alive&&(rolling||animation==='run'||animation==='land')&&art?.images.skater){
       ctx.save();
       ctx.fillStyle='#121019';ctx.beginPath();ctx.roundRect(playerX-27,poseY-6,54,6,3);ctx.fill();
       ctx.fillStyle='#e0287a';ctx.fillRect(playerX-20,poseY-5,40,3);
