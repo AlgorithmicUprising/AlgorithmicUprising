@@ -425,8 +425,8 @@ test('near and far cloud artwork has compact typography metadata and separate as
   const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
   const data=await(await fetch(url)).json();return {type:data.cloudTypography,far:data.files.cloudsFar,near:data.files.cloudsNear};
  });
- expect(detail.type.largestRenderedTextPx).toBeLessThanOrEqual(14);
+ expect(detail.type.largestRenderedTextPx).toBeLessThanOrEqual(10);
  expect(detail.type.heading).toBe('TERMS & CONDITIONS');
  expect(detail.near).not.toBe(detail.far);
- expect(detail.near).toContain('dense_clouds_near_v6');
+ expect(detail.near).toContain('dense_clouds_near_v7');
 });

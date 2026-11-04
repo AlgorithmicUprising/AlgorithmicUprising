@@ -109,3 +109,6 @@ Acceptance: screenshots must have readable Fony and foreground obstacles, distin
 **Accept/sidewalk sync:** The physical road + sidewalk sprite now scrolls at the SAME factor `1.0×` as ACCEPT and other world obstacles, not the old `0.86×`. A real world-space debug fixture plus a browser regression test compare the actual road-image draw positions to an ACCEPT button's render text position frame by frame. Rails, buttons and collisions still share their original physics geometry.
 
 The original v5 layers and v3 Fony atlas remain in the protected AU skin as archived revisions. Only the three new v6 assets are selected by `skin.json`.
+
+### Fine-print size correction (v0.3.3)
+Visual screenshot inspection found that the V6 cloud headings still appeared larger than the screenshot's RESUME control. V7 reduces cloud display headings again (native 13px letterforms on the near cloud, typically under 9 logical pixels at a 97/160 game-layer scale), retaining the dense tiny paragraphs and original torn contours. The previous v6 files remain archived; only V7 is loaded.

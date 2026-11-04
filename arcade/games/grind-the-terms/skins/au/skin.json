@@ -2,7 +2,7 @@
   "id": "au",
   "game": "grind-the-terms",
   "name": "Algorithmic Uprising — sharp Fony ink art + fine-print cloud parallax",
-  "version": "0.3.2-crisp-legal-smog",
+  "version": "0.3.3-fineprint",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -20,8 +20,8 @@
     "hazards": "terms_hazards_atlas.png",
     "far": "terms_far_plate.jpg",
     "skyline": "terms_skyline_v2.jpg",
-    "cloudsFar": "terms_dense_clouds_far_v6.png",
-    "cloudsNear": "terms_dense_clouds_near_v6.png",
+    "cloudsFar": "terms_dense_clouds_far_v7.png",
+    "cloudsNear": "terms_dense_clouds_near_v7.png",
     "dataCity": "terms_illustrated_datacenter_city_v5.png",
     "graffitiWall": "terms_illustrated_graffiti_wall_v5.png",
     "road": "terms_illustrated_sidewalk_road_v5.png"
@@ -124,7 +124,7 @@
   },
   "source": "User-approved Game 01 Fony Sprock sprite sheet and Nov 3 punk game mockup; separated into 39 character poses and six scrolling scenic layers.",
   "cloudTypography": {
-    "largestRenderedTextPx": 12,
+    "largestRenderedTextPx": 9,
     "heading": "TERMS & CONDITIONS",
     "body": "Dense legal clauses, individual checkboxes, and short legal fragments, never billboard text",
     "layers": 2
