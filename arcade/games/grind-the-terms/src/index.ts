@@ -279,78 +279,154 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     ctx.fillStyle='#f9efe6';ctx.fillRect(playerX-21,boardY-5,42,5);
     ctx.fillStyle='#131118';ctx.fillRect(playerX-17,boardY,6,5);ctx.fillRect(playerX+12,boardY,6,5);
   };
+  // All obstacle artwork is drawn from clean geometry. The old hazard composite
+  // remains archived but is never sampled: its alpha trim included stray borders.
+  const railLength=(o:Obstacle)=>Math.max(28,o.w);
+  const drawRail=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
+    const x=o.x,w=railLength(o),y=railSurfaceY();
+    ctx.save();
+    // Three-part assembly: round left cap / uninterrupted center / round right cap.
+    // Rail length is exact, so no partial bitmap can be clipped at the right end.
+    ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.fillStyle='#130e18';ctx.beginPath();ctx.roundRect(x-2,y-2,w+4,12,5);ctx.fill();
+    ctx.fillStyle='#d7ff00';ctx.beginPath();ctx.roundRect(x,y,w,7,4);ctx.fill();
+    ctx.fillStyle='#eefc72';ctx.fillRect(x+10,y+1,Math.max(0,w-20),2);
+    ctx.fillStyle='#e0287a';ctx.fillRect(x+3,y+7,Math.max(0,w-6),2);
+    // A leg under each cap, and evenly distributed supports on longer rails.
+    const legs=[x+13,x+w-18];
+    for(let p=x+115;p<x+w-50;p+=115)legs.push(p);
+    for(const leg of legs){
+      ctx.fillStyle='#130f19';ctx.fillRect(leg-3,y+9,11,ground-y-7);
+      ctx.fillStyle='#c0d52d';ctx.fillRect(leg,y+10,5,ground-y-12);
+      ctx.fillStyle='#15111a';ctx.fillRect(leg-9,ground-3,23,3);
+    }
+    // Two end caps with distinct bolts and edge outlines.
+    for(const cx of [x+7,x+w-8]){
+      ctx.fillStyle='#101018';ctx.beginPath();ctx.arc(cx,y+3.5,2.1,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#eee6d9';ctx.fillRect(cx-.7,y+3,.9,.9);
+    }
+    ctx.restore();
+  };
+  const drawAccept=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
+    const top=flatTopY('accept'),x=o.x,w=o.w,h=ground-top;
+    ctx.save();ctx.lineJoin='round';
+    // Clean, opaque remake of the original ACCEPT ALL button silhouette.
+    ctx.fillStyle='#0c0a11';ctx.beginPath();ctx.roundRect(x-3,top-2,w+6,h+3,10);ctx.fill();
+    ctx.fillStyle='#627f0e';ctx.beginPath();ctx.roundRect(x+1,top+4,w-2,h-6,8);ctx.fill();
+    const g=ctx.createLinearGradient(0,top,0,ground);
+    g.addColorStop(0,'#eeff72');g.addColorStop(.43,'#d7ff00');g.addColorStop(1,'#9eae14');
+    ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x+2,top+1,w-4,h-6,7);ctx.fill();
+    ctx.strokeStyle='#283019';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#fafdc3';ctx.fillRect(x+12,top+4,Math.max(8,w-24),2);
+    ctx.fillStyle='#151216';ctx.font='bold 13px monospace';
+    ctx.textBaseline='middle';ctx.textAlign='center';
+    ctx.fillText('ACCEPT ALL',x+w/2,top+(h-6)/2+1,Math.max(32,w-12));
+    ctx.fillStyle='#17121b';ctx.fillRect(x+12,ground-5,10,5);ctx.fillRect(x+w-23,ground-5,10,5);
+    ctx.restore();
+  };
+  const drawConsent=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
+    const modal=o.kind==='modal',top=flatTopY(o.kind),x=o.x,w=o.w,h=ground-top;
+    ctx.save();
+    ctx.fillStyle='#0e0b14';ctx.fillRect(x-4,top-3,w+8,h+3);
+    ctx.fillStyle='#f6efe2';ctx.fillRect(x,top,w,h);
+    ctx.fillStyle='#d72c80';ctx.fillRect(x,top,w,22);
+    ctx.fillStyle='#15111b';ctx.font='bold 11px monospace';
+    ctx.fillText(modal?'TERMS / DATA':'CONSENT?',x+7,top+15);
+    ctx.fillStyle='#1a1621';ctx.fillRect(x+w-17,top+4,12,13);
+    ctx.fillStyle='#f7e7ef';ctx.font='bold 10px monospace';ctx.fillText('×',x+w-15,top+14);
+    ctx.font='9px monospace';ctx.fillStyle='#231b2c';
+    for(let i=0;i<(modal?4:2);i++){
+      const rowY=top+34+i*15;
+      if(rowY>ground-29)break;
+      ctx.strokeStyle='#221a26';ctx.lineWidth=1.6;ctx.strokeRect(x+8,rowY-8,9,9);
+      ctx.fillText(['Share my data','Track activity','Personalize ads','Agree to all'][i],x+22,rowY,Math.max(20,w-27));
+    }
+    ctx.fillStyle='#1d1728';ctx.fillRect(x+7,ground-22,w-14,17);
+    ctx.fillStyle='#e0287a';ctx.fillRect(x+9,ground-20,w-18,13);
+    ctx.fillStyle='#130d1b';ctx.font='bold 9px monospace';
+    ctx.textAlign='center';ctx.fillText('I AGREE',x+w/2,ground-11);
+    ctx.strokeStyle='#15121a';ctx.lineWidth=2;ctx.strokeRect(x,top,w,h);
+    if(o.deflected){
+      ctx.fillStyle='#171119';ctx.fillRect(x+3,top+25,w-6,19);
+      ctx.fillStyle='#d7ff00';ctx.font='bold 12px monospace';ctx.fillText('DENIED!',x+w/2,top+39);
+    }
+    ctx.restore();
+  };
+  const drawToken=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
+    // This is a collectible, never a consent form. Stable center and collision size.
+    const x=o.x+o.w/2,cy=ground-66;
+    const wobble=1+Math.sin(elapsed*7+o.x*.018)*.045;
+    ctx.save();ctx.translate(x,cy);ctx.scale(wobble,1);
+    ctx.fillStyle='rgba(215,255,0,.2)';ctx.beginPath();ctx.arc(0,0,22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#0c0a13';ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#d7ff00';ctx.beginPath();ctx.arc(0,0,15,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#f4ffae';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,11.5,0,Math.PI*2);ctx.stroke();
+    if(o.power==='shield'){
+      ctx.strokeStyle='#16121e';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(0,0,7.5,8.7,0,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(-10,11);ctx.lineTo(10,-11);ctx.stroke();
+    }else{
+      ctx.fillStyle='#16121e';ctx.beginPath();
+      ctx.moveTo(2,-12);ctx.lineTo(-7,2);ctx.lineTo(0,2);ctx.lineTo(-3,12);
+      ctx.lineTo(10,-4);ctx.lineTo(3,-4);ctx.lineTo(6,-12);ctx.closePath();ctx.fill();
+    }
+    ctx.restore();
+  };
+  const drawLoophole=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
+    const x=o.x,w=o.w,cx=x+w/2,y=ground+6;
+    ctx.save();
+    // A broken manhole and torn paper-rim make the gap legible.
+    ctx.fillStyle='#c8bbac';ctx.beginPath();ctx.ellipse(cx,y+3,w*.54,13,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#0a0810';ctx.beginPath();ctx.ellipse(cx,y,w*.49,11,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#e0287a';ctx.lineWidth=3;ctx.stroke();
+    ctx.fillStyle='#302b37';ctx.beginPath();ctx.ellipse(x+19,ground-1,23,9,-.3,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#e8d8c2';ctx.lineWidth=2;ctx.stroke();
+    ctx.strokeStyle='#d7ff00';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+12,ground-4);ctx.lineTo(x+23,ground-8);ctx.stroke();
+    ctx.fillStyle='#f7e8ce';ctx.font='bold 10px monospace';
+    ctx.fillText('LOOPHOLE',cx-w*.38,ground+27,Math.max(36,w-13));
+    ctx.restore();
+  };
   const drawObstacle=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
     if(o.collected)return;
-    const k=o.kind;
-    if(k==='gap'){
-      ctx.fillStyle='#141117';ctx.fillRect(o.x,ground-1,o.w,34);
-      ctx.strokeStyle='#D7FF00';ctx.lineWidth=2;
-      ctx.setLineDash([4,6]);ctx.strokeRect(o.x,ground-4,o.w,9);ctx.setLineDash([]);return;
+    switch(o.kind){
+      case 'rail':drawRail(ctx,o);break;
+      case 'accept':drawAccept(ctx,o);break;
+      case 'popup':case 'modal':drawConsent(ctx,o);break;
+      case 'token':drawToken(ctx,o);break;
+      case 'gap':drawLoophole(ctx,o);break;
     }
-    if(k==='token'){
-      const id=o.power==='airboost'?5:4;
-      if(drawSheet(ctx,'hazards',id%4,Math.floor(id/4),o.x-8,ground-103,46,48))return;
-      ctx.fillStyle='#D7FF00';ctx.beginPath();ctx.arc(o.x+14,ground-65,15,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='#141412';ctx.font='bold 18px monospace';ctx.fillText(o.power==='airboost'?'↑':'Ø',o.x+6,ground-58);return;
-    }
-    if(k==='rail'){
-      const spec=surfaceSpec('rail'),image=art?.images.hazards;
-      if(image){
-        // The source cell has unrelated sheet scraps ABOVE the actual rail.
-        // Crop only those upper scraps, preserving the original rail artwork.
-        // Bottom of both legs lands exactly at ground, at every screen scale.
-        const cropStart=art?.rail?.clipTopCellY??48;
-        const top=imageTopY('rail')+cropStart/sourceCellHeight*spec.height;
-        const destHeight=(spec.bottom-cropStart)/sourceCellHeight*spec.height;
-        const sections=Math.ceil(o.w/95);
-        for(let i=0;i<sections;i++){
-          const pw=Math.min(95,o.w-i*95);
-          ctx.drawImage(image,3*144,112+cropStart,144,spec.bottom-cropStart,
-                        o.x+i*95,top,pw,destHeight);
-        }
-      }else{
-        const top=railSurfaceY();
-        ctx.fillStyle='#D7FF00';ctx.fillRect(o.x,top,o.w,6);
-        ctx.fillStyle='#ddd';ctx.fillRect(o.x+8,top+6,5,ground-top-6);
-        ctx.fillRect(o.x+o.w-12,top+6,5,ground-top-6);
-      }
+  };
+  const tileLayer=(ctx:CanvasRenderingContext2D,key:string,y:number,height:number,parallax:number,opacity=1)=>{
+    const img=art?.images[key];if(!img)return false;
+    const width=1280,shift=((distance*parallax)%width+width)%width;
+    ctx.save();ctx.globalAlpha=opacity;
+    for(let x=-width-shift;x<1400;x+=width)ctx.drawImage(img,x,y,width,height);
+    ctx.restore();
+    return true;
+  };
+  const drawBackdrop=(ctx:CanvasRenderingContext2D,portrait:boolean,topWorld:number)=>{
+    const sky=ctx.createLinearGradient(0,topWorld,0,ground);
+    sky.addColorStop(0,'#17101c');sky.addColorStop(.55,'#5b204f');
+    sky.addColorStop(.9,'#d52b7c');sky.addColorStop(1,'#242132');
+    ctx.fillStyle=sky;ctx.fillRect(-700,topWorld,2250,ground-topWorld+1);
+    if(art?.images.cloudsFar){
+      tileLayer(ctx,'cloudsFar',portrait?topWorld+25:4,portrait?190:170,.045,.88);
+      tileLayer(ctx,'dataCity',116,183,.16,1);
+      tileLayer(ctx,'dataSmoke',112,184,.16,.82);
+      tileLayer(ctx,'cloudsNear',portrait?topWorld+175:62,portrait?153:142,.077,.9);
+      tileLayer(ctx,'graffitiWall',239,61,.28,1);
+      tileLayer(ctx,'road',ground-2,91,1,1);
+      // A second paper band fills the upper portrait tablet without shrinking
+      // the actual 2-D platforming stage at the bottom.
+      if(portrait&&topWorld<-180)
+        tileLayer(ctx,'cloudsFar',topWorld+6,125,.02,.62);
       return;
     }
-    const kind=k as 'accept'|'popup'|'modal';
-    const spec=surfaceSpec(kind),top=flatTopY(kind);
-    if(kind==='accept'){
-      // Preserve the original opaque yellow ACCEPT ALL animation as requested.
-      if(!drawSheet(ctx,'hazards',0,0,o.x-7,imageTopY(kind),o.w+14,spec.height)){
-        ctx.fillStyle='#D7FF00';ctx.fillRect(o.x,top,o.w,ground-top);
-        ctx.fillStyle='#141412';ctx.font='bold 11px monospace';ctx.fillText('ACCEPT ALL',o.x+6,top+19);
-      }
-    }else{
-      // The original composite's modal cells are mostly transparent line art,
-      // which revealed the skyline and made the consent hazard look collectible.
-      // Draw a completely opaque, grounded paper-window obstacle instead.
-      const x=o.x-5,width=o.w+10,height=ground-top;
-      ctx.fillStyle='#08070d';ctx.fillRect(x-3,top-4,width+6,height+4);
-      ctx.fillStyle='#f5eddd';ctx.fillRect(x,top,width,height);
-      ctx.fillStyle='#e0287a';ctx.fillRect(x,top,width,22);
-      ctx.fillStyle='#100c18';ctx.font='bold 11px monospace';
-      ctx.fillText(kind==='popup'?'CONSENT':'TERMS / DATA',x+6,top+15);
-      ctx.fillStyle='#34283b';ctx.font='9px monospace';
-      const rows=kind==='popup'?2:4;
-      for(let i=0;i<rows;i++){
-        const y=top+32+i*13;
-        if(y>=ground-20)break;
-        ctx.fillRect(x+7,y,Math.max(12,width-25-(i%2)*14),2);
-      }
-      ctx.fillStyle='#e0287a';ctx.fillRect(x+10,ground-21,Math.max(26,width-20),14);
-      ctx.fillStyle='#120d19';ctx.font='bold 9px monospace';
-      ctx.fillText('I AGREE',x+16,ground-11);
-      ctx.strokeStyle='#1d1726';ctx.lineWidth=2;ctx.strokeRect(x,top,width,height);
-    }
-    if(o.deflected){
-      ctx.fillStyle='#101016';ctx.fillRect(o.x-3,top+23,Math.min(o.w+6,102),20);
-      ctx.fillStyle='#d7ff00';ctx.font='bold 12px monospace';
-      ctx.fillText('DENIED!',o.x+4,top+37);
-    }
+    // Unbranded fallback if any image fails to load.
+    const old=art?.images.far;
+    if(old){const offset=(distance*.2)%640;ctx.drawImage(old,-offset,0,640,360);ctx.drawImage(old,640-offset,0,640,360)}
+    ctx.fillStyle='#4e3a53';ctx.fillRect(-50,ground-60,780,60);
+    ctx.fillStyle='#25202a';ctx.fillRect(-50,ground,780,80);
+    ctx.fillStyle='#dad0bd';ctx.fillRect(-50,ground,780,7);
   };
   const draw=(ctx:CanvasRenderingContext2D,w:number,h:number)=>{
     // Landscape remains 640x360; tablet mode is an actual portrait camera,
