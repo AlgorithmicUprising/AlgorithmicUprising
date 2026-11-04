@@ -312,8 +312,8 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBe(300);
  await el.evaluate(x=>{for(let i=0;i<10;i++)x.game.update(.05)});
  const measured=await el.evaluate(x=>x.game.result().stats.runSpeed);
- expect(measured).toBeGreaterThan(190);
- expect(measured).toBeLessThan(215);
+ expect(measured).toBeGreaterThan(345);
+ expect(measured).toBeLessThan(380);
  await page.keyboard.press('Space');
  expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(false);
  await page.keyboard.press('ArrowUp');
@@ -428,5 +428,54 @@ test('near and far cloud artwork has compact typography metadata and separate as
  expect(detail.type.largestRenderedTextPx).toBeLessThanOrEqual(10);
  expect(detail.type.heading).toBe('TERMS & CONDITIONS');
  expect(detail.near).not.toBe(detail.far);
- expect(detail.near).toContain('dense_clouds_near_v7');
+ expect(detail.near).toContain('paper_smoke_cloud_near_v8.svg');
+});
+
+
+test('double ollie is always available without AIR BOOST pickup',async({page})=>{
+ await page.goto('/demo/');
+ const result=await page.locator('grind-the-terms').evaluate(el=>{
+  const g=el.game;g.start();
+  g.input('up',true);g.update(1/60);g.input('up',false);
+  for(let i=0;i<8;i++)g.update(1/60);
+  const first=g.result().stats;
+  g.input('up',true);g.update(1/60);g.input('up',false);
+  const second=g.result().stats;
+  g.input('up',true);g.update(1/60);g.input('up',false);
+  return {first,second,third:g.result().stats};
+ });
+ expect(result.first.jumpCount).toBe(1);
+ expect(result.second.jumpCount).toBe(2);
+ expect(result.second.boardY).toBeLessThan(result.first.boardY);
+ expect(result.second.doubleJumpAlwaysOn).toBe(true);
+ expect(result.third.jumpCount).toBe(2);
+});
+
+test('speed toggle exactly doubles baseline after the ramp',async({page})=>{
+ await page.goto('/demo/');
+ const stats=await page.locator('grind-the-terms').evaluate(el=>{
+  const g=el.game;g.start();g.input('speed',true);
+  for(let i=0;i<10;i++)g.update(.05);
+  return g.result().stats;
+ });
+ expect(stats.speedEnabled).toBe(true);
+ expect(stats.acceleration).toBe(1);
+ expect(stats.runSpeed/stats.normalSpeed).toBeGreaterThan(1.99);
+ expect(stats.runSpeed/stats.normalSpeed).toBeLessThan(2.01);
+});
+
+test('ground motion uses an onboard Fony pose and never the running cell',async({page})=>{
+ await page.goto('/demo/');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ const result=await page.locator('grind-the-terms').evaluate(el=>{
+  const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
+  const seen=[],draw=ctx.drawImage.bind(ctx);g.start();
+  ctx.drawImage=(...args)=>{if(args.length===9&&args[3]===256&&args[4]===256)seen.push({sx:args[1],sy:args[2]});return draw(...args)};
+  for(let frame=0;frame<6;frame++){g.update(.05);g.draw(ctx,canvas.width,canvas.height)}
+  ctx.drawImage=draw;
+  return seen;
+ });
+ expect(result.length).toBeGreaterThan(3);
+ // Sprite #29 lives at cell (5,3) on the 8-column atlas.
+ for(const frame of result)expect(frame).toEqual({sx:1280,sy:768});
 });
