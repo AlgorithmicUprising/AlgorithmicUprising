@@ -13,17 +13,17 @@
 </head>
 <body><main>
 <header><h1>TAG BEFORE TRAINING</h1><a href="../../../demo/">PUNK ARCADE ↗</a></header>
-<div class="game-shell" id="shell"><tag-before-training skin="../skins/au/skin.json?v=0.3.1" seed="1471" aria-label="Tag Before Training skate and spray game"></tag-before-training></div>
+<div class="game-shell" id="shell"><tag-before-training skin="../skins/au/skin.json?v=0.3.2" seed="1471" aria-label="Tag Before Training skate and spray game"></tag-before-training></div>
 <div class="toolbar"><label>Skin <select id="skin"><option value="au">FONY / AU ART</option><option value="placeholder">PLACEHOLDER</option></select></label><button id="fullscreen" type="button">FULLSCREEN</button></div>
 <p class="instructions">WASD / arrows to skate. Hold SPACE to spray in your facing direction. Spray drones to stop their photos. Collect paint cans. Touch: drag the stick and hold SPRAY. P pauses; M toggles sound; ⚙ sets your own tag.</p>
 <pre id="events" class="events" aria-live="polite"></pre>
 </main>
-<script type="module" src="../dist/tag-before-training.js?v=0.3.1"></script>
+<script type="module" src="../dist/tag-before-training.js?v=0.3.2"></script>
 <script>
 const game=document.querySelector('tag-before-training'),shell=document.querySelector('#shell');
 function layout(){game.setAttribute('layout',matchMedia('(pointer:coarse)').matches?'portrait':'landscape')}
 layout();window.addEventListener('resize',layout);
-document.querySelector('#skin').addEventListener('change',e=>{if(e.target.value==='placeholder')game.removeAttribute('skin');else game.setAttribute('skin','../skins/au/skin.json?v=0.3.1')});
+document.querySelector('#skin').addEventListener('change',e=>{if(e.target.value==='placeholder')game.removeAttribute('skin');else game.setAttribute('skin','../skins/au/skin.json?v=0.3.2')});
 document.querySelector('#fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(shell.requestFullscreen)await shell.requestFullscreen();else{const expanded=shell.classList.toggle('expanded');document.querySelector('#fullscreen').textContent=expanded?'EXIT FULLSCREEN':'FULLSCREEN'}}catch{}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&shell.classList.contains('expanded')){shell.classList.remove('expanded');document.querySelector('#fullscreen').textContent='FULLSCREEN'}});
 for(const name of ['game:ready','game:skin-loaded','game:start','game:tag','game:drone-tagged','game:scraped','game:over','game:error'])document.addEventListener(name,e=>{document.querySelector('#events').textContent=(name+' '+JSON.stringify(e.detail)+'\n'+document.querySelector('#events').textContent).slice(0,3000)});

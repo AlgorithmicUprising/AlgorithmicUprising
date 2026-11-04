@@ -39,7 +39,7 @@ export class TagRenderer{
    if(t.scraped){
     // A faint ghost of the scraped tag remains visible under its copyright stamp.
     this.sprite(ctx,'tag_au',t.x,t.y,65,35,0,.22);
-    if(!this.art.image(ctx,'watermark'+t.id%2,t.x-32,t.y-16,64,32,.95)){ctx.fillStyle='#bdb9bd';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillText('©DATASET',t.x,t.y+4)}
+    this.watermark(ctx,t.x,t.y);
     if(t.cooldown>3){ctx.fillStyle='#efecd9';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.fillText('LOCK '+Math.ceil(t.cooldown),t.x,t.y+25)}
    }
   }
@@ -73,13 +73,25 @@ export class TagRenderer{
     ctx.save();ctx.translate(g.x,g.y);ctx.rotate(g.facing);ctx.fillStyle='#ff288999';ctx.beginPath();ctx.moveTo(15,0);ctx.lineTo(48,-10);ctx.lineTo(48,10);ctx.closePath();ctx.fill();ctx.restore();
    }
   }
-  if(g.shutter>0){const hit=g.tags.find(t=>t.scraped&&t.cooldown>2.75);if(hit)this.sprite(ctx,'fx_shutter',hit.x,hit.y,23,23)}
+  if(g.shutter>0){const hit=g.tags.find(t=>t.scraped&&t.cooldown>2.75);if(hit)this.sprite(ctx,'fx_shutter',hit.x,hit.y+(hit.id<12?28:-28),20,20)}
   ctx.restore();
   // Locking drones that leave the camera remain visible as a directional marker.
   for(const d of g.drones)if(d.phase==='lock'){
    const sx=d.x-this.camX,sy=d.y-this.camY;if(sx<12||sx>viewW-12||sy<50||sy>viewH-12){const ax=Math.max(14,Math.min(viewW-14,sx)),ay=Math.max(62,Math.min(viewH-14,sy)),angle=Math.atan2(sy-viewH/2,sx-viewW/2);ctx.save();ctx.translate(ax,ay);ctx.rotate(angle);ctx.fillStyle='#f4ead8';ctx.strokeStyle='#1c1322';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(9,0);ctx.lineTo(-6,-7);ctx.lineTo(-6,7);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
   }
   this.hud(ctx,viewW,g,portrait);ctx.restore();
+ }
+ private watermark(ctx:CanvasRenderingContext2D,x:number,y:number){
+  ctx.save();ctx.translate(x,y);
+  ctx.fillStyle='#f4eddc';ctx.fillRect(-34,-14,68,28);
+  ctx.strokeStyle='#211627';ctx.lineWidth=1.5;ctx.strokeRect(-34,-14,68,28);
+  ctx.save();ctx.beginPath();ctx.rect(-33,-13,66,26);ctx.clip();ctx.lineWidth=3;
+  for(let edge=-38;edge<38;edge+=9){ctx.beginPath();ctx.moveTo(edge,-14);ctx.lineTo(edge+5,-10);ctx.moveTo(edge,10);ctx.lineTo(edge+5,14);ctx.stroke()}
+  ctx.restore();
+  // Keep the lettering as crisp runtime text; the distressed raster stamp
+  // becomes unreadable when reduced onto a phone-sized wall panel.
+  ctx.fillStyle='#160e1d';ctx.font='900 12px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('©DATASET',0,1,62);
+  ctx.restore();
  }
  private fallbackCan(ctx:CanvasRenderingContext2D,x:number,y:number){ctx.fillStyle='#ff2889';ctx.fillRect(x-7,y-10,14,22);ctx.fillStyle='#f4ead8';ctx.fillRect(x-5,y-15,10,5)}
  private hud(ctx:CanvasRenderingContext2D,w:number,g:TagGame,portrait:boolean){

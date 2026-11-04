@@ -11,3 +11,5 @@ Reproduce from the approved numbered PNG sheets with `npm run prepare-tag-art --
 The default pink slashed-zero tag and AU / Zero X Humans patch treatments are branded artwork. This skin is all rights reserved under its LICENSE, not part of the open Fony placeholder skin. Do not distribute the AU assets under the repository's code license.
 
 The neutral starter skin and missing-art fallback remain procedural. Live HUD values and menus are real text and controls rather than baked screenshot images. The final 24 gameplay wall bays are drawn as modular wall pieces over the background, so visual positions match spray and collision geometry.
+
+Scraped wall labels now use a light paper backing and bold canvas lettering. The generated stamp treatments remain in the source pack, while the in-game label prioritizes reading clearly at phone size.

@@ -8,6 +8,7 @@ type Point={x:number;y:number};
 const TAU=Math.PI*2;
 export const WORLD={w:960,h:640};
 export const SPRAY_RANGE=48;
+export const PAINT_PICKUP_RADIUS=42;
 const duration:Record<DroneKind,number>={scout:.6,swarm:.3,hoover:1.2,marker:.6};
 const speeds:Record<DroneKind,number>={scout:80,swarm:116,hoover:52,marker:66};
 const spots=[{x:270,y:335},{x:690,y:360},{x:480,y:445},{x:135,y:375},{x:810,y:265}];
@@ -40,6 +41,22 @@ export class TagGame{
  private add(points:number,label:string){this.combo=this.chainTime>0?Math.min(4,this.combo+1):1;this.chainTime=3;const multiplier=[1,1,1.5,2,3][this.combo];this.score+=Math.round(points*multiplier);this.emit('game:score',{score:this.score,points:Math.round(points*multiplier),label})}
  private blocked(x:number,y:number){if(x<25||x>935||y<181||y>488)return true;return this.props.some(p=>Math.hypot(x-Math.max(p.x-p.w/2,Math.min(p.x+p.w/2,x)),y-Math.max(p.y-p.h/2,Math.min(p.y+p.h/2,y)))<10)}
  canSpray(x:number,y:number){const dx=x-this.x,dy=y-this.y,d=Math.hypot(dx,dy);return d<=SPRAY_RANGE&&(d<14||(dx*Math.cos(this.facing)+dy*Math.sin(this.facing))/d>=Math.cos(Math.PI/9))}
+ private canSprayWall(t:Segment){
+  // Spray the visible 64x32 panel, rather than requiring its center to fall
+  // inside the narrow cone. This also makes diagonal approaches work.
+  const left=t.x-32,right=t.x+32,top=t.y-16,bottom=t.y+16;
+  if(this.canSpray(Math.max(left,Math.min(right,this.x)),Math.max(top,Math.min(bottom,this.y))))return true;
+  if(this.canSpray(left,top)||this.canSpray(right,top)||this.canSpray(left,bottom)||this.canSpray(right,bottom))return true;
+  const rayHits=(angle:number)=>{
+   const dx=Math.cos(angle),dy=Math.sin(angle);let near=0,far=SPRAY_RANGE;
+   if(Math.abs(dx)<.000001){if(this.x<left||this.x>right)return false}
+   else{const a=(left-this.x)/dx,b=(right-this.x)/dx;near=Math.max(near,Math.min(a,b));far=Math.min(far,Math.max(a,b))}
+   if(Math.abs(dy)<.000001){if(this.y<top||this.y>bottom)return false}
+   else{const a=(top-this.y)/dy,b=(bottom-this.y)/dy;near=Math.max(near,Math.min(a,b));far=Math.min(far,Math.max(a,b))}
+   return near<=far;
+  };
+  return rayHits(this.facing)||rayHits(this.facing-Math.PI/9)||rayHits(this.facing+Math.PI/9);
+ }
  private targetFor(d:Drone){const targets=this.tags.filter(t=>d.kind==='marker'?t.scraped:t.fill>=1&&!t.scraped);if(!targets.length)return -1;return targets[Math.floor(this.rng()*targets.length)].id}
  private spawn(kind:DroneKind){const edge=this.rng();this.drones.push({id:++this.droneId,kind,x:edge<.5?-25:985,y:190+this.rng()*290,target:-1,phase:'fly',timer:0,lockTime:2.5,paint:0,photos:0,age:0,spin:0,touchCooldown:0})}
  step(dt:number){
@@ -58,13 +75,13 @@ export class TagGame{
   const nx=this.x+this.vx*dt,ny=this.y+this.vy*dt;if(!this.blocked(nx,this.y))this.x=nx;else this.vx=0;if(!this.blocked(this.x,ny))this.y=ny;else this.vy=0;
   if(this.spraying){
    this.paint=Math.max(0,this.paint-25*dt);
-   const wall=this.tags.filter(t=>t.fill<1&&t.cooldown===0&&this.canSpray(t.x,t.y)).sort((a,b)=>Math.hypot(a.x-this.x,a.y-this.y)-Math.hypot(b.x-this.x,b.y-this.y))[0];
+   const wall=this.tags.filter(t=>t.fill<1&&t.cooldown===0&&this.canSprayWall(t)).sort((a,b)=>Math.hypot(a.x-this.x,a.y-this.y)-Math.hypot(b.x-this.x,b.y-this.y))[0];
    if(wall){wall.fill=Math.min(1,wall.fill+dt/.9);if(wall.fill>=1){const repeated=wall.ever;wall.scraped=false;wall.ever=true;this.stats.tagsSprayed++;this.add(repeated?50:100,'tag');this.say(repeated?'RECLAIMED.':'FRESH PAINT.',1.1);this.emit('game:tag',{segment:wall.id,repeated});}}
    if(this.paint===0){this.say("CAN'S DRY");this.emit('game:paint-empty')}
   }
   this.pickupTime+=dt;
   if(this.pickupTime>=8){this.pickupTime-=8;if(this.pickups.length<2){const options=spots.filter(p=>!this.pickups.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<30));if(options.length)this.pickups.push({...options[Math.floor(this.rng()*options.length)],phase:this.elapsed})}}
-  for(let i=this.pickups.length-1;i>=0;i--){const p=this.pickups[i];if(this.paint<100&&Math.hypot(this.x-p.x,this.y-p.y)<24){this.paint=Math.min(100,this.paint+50);this.pickups.splice(i,1);this.say('PAINT +50',1);this.emit('game:paint-pickup')}}
+  for(let i=this.pickups.length-1;i>=0;i--){const p=this.pickups[i];if(this.paint<100&&Math.hypot(this.x-p.x,this.y-p.y)<=PAINT_PICKUP_RADIUS){this.paint=Math.min(100,this.paint+50);this.pickups.splice(i,1);this.say('PAINT +50',1);this.emit('game:paint-pickup')}}
   if(this.breather>0){this.breather-=dt;if(this.breather<=0){this.wave++;this.stats.wave=this.wave;this.beginWave();this.say('WAVE '+this.wave+': THEY BROUGHT FRIENDS',2.5)}return}
   this.waveElapsed+=dt;
   const spacing=this.queue.length>1?10/(this.queue.length-1):1;

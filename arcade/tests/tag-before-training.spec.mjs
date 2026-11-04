@@ -2,11 +2,16 @@ import {test,expect} from '@playwright/test';
 const url='/games/tag-before-training/demo/';
 const start=async page=>{await page.goto(url);const el=page.locator('tag-before-training');await expect(el).toHaveAttribute('data-art-ready','true');await el.locator('[part=start]').click();return el};
 
-test('Tag standalone loads the approved art without missing assets',async({page},info)=>{
+test('Tag art loads and both wall rows accept off-center spray',async({page},info)=>{
  const failures=[];page.on('response',r=>{if(r.status()>=400&&r.url().includes('/tag-before-training/'))failures.push(r.url())});page.on('pageerror',e=>failures.push(e.message));
  const el=await start(page);await expect(page.locator('#events')).toContainText('usingPlaceholder":false');
- await el.evaluate(e=>{const g=e.game.world;g.x=484;g.y=190;g.facing=-Math.PI/2});await page.keyboard.down(' ');await expect.poll(()=>el.evaluate(e=>e.game.world.stats.tagsSprayed),{timeout:8000}).toBe(1);await page.keyboard.up(' ');
- expect(await el.evaluate(e=>e.game.world.stats.tagsSprayed)).toBe(1);expect(await el.evaluate(e=>e.game.world.score)).toBeGreaterThanOrEqual(100);
+ await el.evaluate(e=>{const g=e.game.world;g.x=520;g.y=198;g.facing=-Math.PI/2});await page.keyboard.down(' ');await expect.poll(()=>el.evaluate(e=>e.game.world.stats.tagsSprayed),{timeout:8000,intervals:[50]}).toBeGreaterThanOrEqual(1);await page.keyboard.up(' ');
+ expect(await el.evaluate(e=>e.game.world.stats.tagsSprayed)).toBeGreaterThanOrEqual(1);expect(await el.evaluate(e=>e.game.world.score)).toBeGreaterThanOrEqual(100);
+ await el.screenshot({path:`test-results/screenshots/tag-upper-${info.project.name}.png`});
+ const upperCount=await el.evaluate(e=>e.game.world.stats.tagsSprayed);
+ await el.evaluate(e=>{const g=e.game.world;g.x=520;g.y=480;g.vx=g.vy=0;g.facing=Math.PI/2});await page.keyboard.down(' ');await expect.poll(()=>el.evaluate(e=>e.game.world.stats.tagsSprayed),{timeout:8000,intervals:[50]}).toBeGreaterThan(upperCount);await page.keyboard.up(' ');
+ await el.evaluate(e=>{const g=e.game.world,t=g.tags.find(t=>t.id>=12&&t.fill>=1);g.drones=[{id:99,kind:'scout',x:t.x,y:t.y-26,target:t.id,phase:'lock',timer:.001,lockTime:2.5,paint:0,photos:0,age:0,spin:0,touchCooldown:0}]});
+ await expect.poll(()=>el.evaluate(e=>e.game.world.stats.tagsScraped)).toBeGreaterThan(0);
  await el.screenshot({path:`test-results/screenshots/tag-art-${info.project.name}.png`});expect(failures).toEqual([]);
 });
 test('Tag touch deck leaves the play area clear and supports drag plus spray',async({page},info)=>{
