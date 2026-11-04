@@ -19,6 +19,7 @@ test('Tag touch deck leaves the play area clear and supports drag plus spray',as
  expect(await el.evaluate(e=>e.game.world.x)).toBeGreaterThan(before+20);expect(await el.evaluate(e=>e.game.world.paint)).toBeLessThan(100);
  await zone.dispatchEvent('pointerup',{pointerId:77,pointerType:'touch'});await el.locator('[data-key=spray]').dispatchEvent('pointerup',{pointerId:78,pointerType:'touch'});
  await page.setViewportSize({width:320,height:760});await page.waitForTimeout(100);expect(await el.evaluate(e=>e.state)).toBe('playing');await el.screenshot({path:`test-results/screenshots/tag-small-${info.project.name}.png`});
+ await page.evaluate(()=>{document.querySelector('#shell').requestFullscreen=undefined});await page.locator('#fullscreen').click();await expect(page.locator('#shell')).toHaveClass('game-shell expanded');await expect(page.locator('#fullscreen')).toHaveText('EXIT FULLSCREEN');await page.locator('#fullscreen').click();await expect(page.locator('#shell')).toHaveClass('game-shell');
 });
 test('Tag custom text, left-handed controls and placeholder mode persist safely',async({page})=>{
  const posted=[];page.on('request',r=>{if(r.method()==='POST')posted.push(r.url())});const el=await start(page);
