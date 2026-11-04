@@ -140,3 +140,8 @@ The user clarified **browser animation was stuttering**, not that world-speed wa
 ## Nov 4 — V10 shaded paper cloudbank
 
 Art revised against the user-supplied rounded paper-cut white cloud concept. Both cached 1280x190 SVG layers now have substantial body mass, irregular large lower lobes, cream-to-mauve shaded depth, local soft puffs, fine paper grain, and microprinted legal clauses clipped to cloud silhouettes. Portrait far/near placement overlaps by >100 world units to remove the previous empty gap. Smoke is attached to the city parallax and fades as it enters the near cloud; skip offscreen plumes for performance. No change to movement speed, controls, or Fony mechanics. Visual review and Pages success are pending CI.
+
+
+## November 4 — v0.6.1 denser foreground cloud tuning
+
+User approved the overall cloud silhouette, then requested slightly greater density and no visible top contour on the nearest/outermost layer. Front bank is raised and vertically expanded so the source y=36 top-lobe boundary sits entirely behind the opaque HUD (both portrait and landscape). Its cream/mauve fill stays fully opaque, inner puff layers are more solid, and faint fine-print texture is modestly stronger; the underlying skyline remains visible below the rounded lower edge. Far cloud opacity rises from .86 to .93. All cached rasterization/camera clipping, controls, speed, physics, and Fony frames are unchanged. A new browser regression asserts the top outline is concealed across viewport profiles.

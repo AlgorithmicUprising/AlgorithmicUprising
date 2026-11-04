@@ -486,13 +486,18 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       // Overlapping portrait cloudbanks replace the former two separated stripes.
       const cloudFarY=portrait?topWorld+77:39;
       const cloudFarH=portrait?207:115;
-      const cloudNearY=portrait?topWorld+148:76;
-      const cloudNearH=portrait?192:116;
+      // The front canopy begins behind the opaque HUD. Its upper scallop contour
+      // is fully concealed, while its rounded underside remains over the skyline.
+      // v11 front SVG top contour ends at source y=36 of 190:
+      // portrait: 43 + (36/190)*262 < HUD bottom 98
+      // landscape: 27 + (36/190)*145 < HUD bottom 71
+      const cloudNearY=portrait?topWorld+43:27;
+      const cloudNearH=portrait?262:145;
       const cityShift=((distance*cityFactor)%1280+1280)%1280;
       // Layered cut-paper clouds: far and near overlap into ONE visible canopy.
       // Both pre-rasterized once on skin load, then camera-cropped every frame.
-      tileLayer(ctx,'cloudsFar',cloudFarY,cloudFarH,.028,.86);
-      tileLayer(ctx,'cloudsNear',cloudNearY,cloudNearH,.068,.99);
+      tileLayer(ctx,'cloudsFar',cloudFarY,cloudFarH,.028,.93);
+      tileLayer(ctx,'cloudsNear',cloudNearY,cloudNearH,.068,1);
       // Plumes start at city chimney positions, follow city parallax and fade
       // upward INTO the near-cloud silhouette instead of floating separately.
       ctx.save();

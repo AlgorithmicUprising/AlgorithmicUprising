@@ -373,7 +373,7 @@ test('approved illustrated scenery is loaded as five distinct parallax layers',a
   if(i.key==='cloudsFar'||i.key==='cloudsNear')expect(result.seen).toContain('cached-cloud');
   else expect(result.seen,`missing rendered ${i.key}: ${i.assetName}`).toContain(i.assetName);
  }
- await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v10.png'});
+ await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v11.png'});
 });
 
 test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains smoothing',async({page})=>{
@@ -438,7 +438,7 @@ test('near and far cloud artwork has compact typography metadata and separate as
  expect(detail.type.largestRenderedTextPx).toBeLessThanOrEqual(10);
  expect(detail.type.heading).toBe('TERMS & CONDITIONS');
  expect(detail.near).not.toBe(detail.far);
- expect(detail.near).toContain('cloudbank_near_v10.svg');
+ expect(detail.near).toContain('cloudbank_near_v11.svg');
 });
 
 
@@ -562,4 +562,29 @@ test('phone paper clouds are vertically overlapping, not detached stripes',async
  const rows=[...new Map(rectangles.map(r=>[Math.round(r.y),r])).values()].sort((a,b)=>a.y-b.y);
  expect(rows.length).toBeGreaterThanOrEqual(2);
  expect(rows[1].y).toBeLessThan(rows[0].y+rows[0].h*.9);
+});
+test('front cloud top scallops stay behind HUD on every viewport and retain a deep underside',async({page})=>{
+ await page.goto('/demo/');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ const dimensions=await page.locator('grind-the-terms').evaluate(el=>{
+   const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
+   const draw=ctx.drawImage.bind(ctx),rows=[];
+   ctx.drawImage=(...args)=>{
+     if(args.length===9 && args[0] instanceof HTMLCanvasElement && args[0].width===1280 && args[0].height===190)
+       rows.push({y:args[6],h:args[8]});
+     return draw(...args);
+   };
+   el.game.start();el.game.draw(ctx,c.width,c.height);ctx.drawImage=draw;
+   const portrait=c.width/c.height<1.05;
+   const scale=portrait?c.width/450:Math.min(c.width/640,c.height/360);
+   const dy=portrait?c.height-340*scale:(c.height-360*scale)/2;
+   return {rows,portrait,hudBottom:portrait?-dy/scale+98:71};
+ });
+ expect(dimensions.rows.length).toBeGreaterThanOrEqual(2);
+ // Foreground is taller than the distance layer in both phone/desktop layouts.
+ const front=dimensions.rows.reduce((a,b)=>!a||b.h>a.h?b:a,null);
+ expect(front).not.toBeNull();
+ const topContour=front.y+front.h*36/190; // highest lower lip of upper lobes
+ expect(topContour).toBeLessThanOrEqual(dimensions.hudBottom-2);
+ expect(front.y+front.h).toBeGreaterThan(dimensions.hudBottom+60);
 });
