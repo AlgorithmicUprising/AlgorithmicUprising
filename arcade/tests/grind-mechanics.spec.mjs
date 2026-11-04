@@ -30,7 +30,7 @@ test('rail catch and pop increase grind time in deterministic first chunk',async
  const game=page.locator('grind-the-terms');
  const result=await game.evaluate(el=>{
   const g=el.game;g.start();
-  for(let i=0;i<170;i++)g.update(1/60);
+  for(let i=0;i<105;i++)g.update(1/60);
   g.input('tap',true);
   for(let i=0;i<68;i++)g.update(1/60);
   const afterHold=g.result().stats.grindMs;
@@ -167,7 +167,7 @@ test('seamless rail cap top matches skater contact and end legs touch pavement',
  const result=await game.evaluate(el=>{
   const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
   g.start();
-  for(let i=0;i<170;i++)g.update(1/60);
+  for(let i=0;i<105;i++)g.update(1/60);
   g.input('tap',true);
   let caught=false;
   for(let i=0;i<100;i++){g.update(1/60);if(g.result().stats.grindMs>0){caught=true;break}}
@@ -270,7 +270,7 @@ test('the first flat-topped consent box can be ground and popped from',async({pa
  const game=page.locator('grind-the-terms');
  const attempts=await game.evaluate(el=>{
    const g=el.game,viable=[];
-   for(let frame=350;frame<=465;frame+=5){
+   for(let frame=255;frame<=335;frame+=5){
      g.start();
      for(let i=0;i<frame;i++)g.update(1/60);
      if(g.over())continue;
@@ -312,8 +312,8 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBe(300);
  await el.evaluate(x=>{for(let i=0;i<10;i++)x.game.update(.05)});
  const measured=await el.evaluate(x=>x.game.result().stats.runSpeed);
- expect(measured).toBeGreaterThan(345);
- expect(measured).toBeLessThan(380);
+ expect(measured).toBeGreaterThan(510);
+ expect(measured).toBeLessThan(555);
  await page.keyboard.press('Space');
  expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(false);
  await page.keyboard.press('ArrowUp');
@@ -368,7 +368,7 @@ test('approved illustrated scenery is loaded as five distinct parallax layers',a
   // Compare the drawn asset to its declared skin path, regardless of asset version or extension.
   expect(result.seen,`missing rendered ${i.key}: ${i.assetName}`).toContain(i.assetName);
  }
- await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v8.png'});
+ await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v9.png'});
 });
 
 test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains smoothing',async({page})=>{
@@ -433,7 +433,7 @@ test('near and far cloud artwork has compact typography metadata and separate as
  expect(detail.type.largestRenderedTextPx).toBeLessThanOrEqual(10);
  expect(detail.type.heading).toBe('TERMS & CONDITIONS');
  expect(detail.near).not.toBe(detail.far);
- expect(detail.near).toContain('paper_smoke_cloud_near_v8.svg');
+ expect(detail.near).toContain('cloud_canopy_near_v9.svg');
 });
 
 
@@ -481,6 +481,42 @@ test('ground motion uses low stable Fony pose with persistent board',async({page
   return seen;
  });
  expect(result.length).toBeGreaterThan(3);
- // Sprite #10 is the crouched grounded cell (2,1) on the 8-column atlas.
- for(const frame of result)expect(frame).toEqual({sx:512,sy:256});
+ // Two approved crouch/recovery cells alternate, both safely on the board baseline.
+ for(const frame of result){expect(frame.sy).toBe(256);expect([512,768]).toContain(frame.sx)}
+});
+
+
+test('the legal-smog canopy uses no rigid paper cards and keeps tiny text',async({page})=>{
+ await page.goto('/demo/');
+ const content=await page.evaluate(async()=>{
+  const jsonUrl=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
+  const skin=await(await fetch(jsonUrl)).json();
+  const layers=await Promise.all(['cloudsFar','cloudsNear'].map(async key=>(await fetch(new URL(skin.files[key],jsonUrl))).text()));
+  return {layers,print:skin.cloudTypography};
+ });
+ expect(content.layers).toHaveLength(2);
+ for(const svg of content.layers){
+   expect(svg).toContain('<clipPath');
+   expect(svg).toContain('Q'); // rounded cloud lobes rather than rectangular type cards
+   expect(svg).not.toContain('<rect');
+   expect(svg).toContain('font-size="3.');
+ }
+ expect(content.print.layers).toBe(3);
+});
+
+test('normal cruising is brisk and speed toggle doubles it',async({page})=>{
+ await page.goto('/demo/');
+ const stat=await page.locator('grind-the-terms').evaluate(el=>{
+   const g=el.game;g.start();
+   for(let i=0;i<20;i++)g.update(1/60);
+   const normal=g.result().stats.normalSpeed;
+   g.input('speed',true);
+   for(let i=0;i<40;i++)g.update(1/60);
+   const fast=g.result().stats;
+   return {normal,fast};
+ });
+ expect(stat.normal).toBeGreaterThanOrEqual(260);
+ expect(stat.fast.normalSpeed).toBeGreaterThanOrEqual(stat.normal);
+ expect(stat.fast.runSpeed/stat.fast.normalSpeed).toBeGreaterThan(1.99);
+ expect(stat.fast.runSpeed/stat.fast.normalSpeed).toBeLessThan(2.01);
 });

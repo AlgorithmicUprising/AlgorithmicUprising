@@ -16,7 +16,7 @@ const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
 // No global listeners: multiple embedded games are independent Web Components.
 defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const ground = 300, playerX = 140, gravity = 1800, jumpVelocity = -620, railPopVelocity = -380;
-  const baseSpeed=180;
+  const baseSpeed=260; // Cruising pace: physically faster world scroll, independent of the A speed toggle.
   let boardY=ground, lastBoardY=ground, vy=0, elapsed=0, distance=0;
   let bonus=0, extraClauses=0, grindDistance=0, totalGrindDistance=0, grindMs=0;
   let alive=true, bailRemaining=0, cause='accept', held=false, grinding=false;
@@ -36,8 +36,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const rng=()=>{rngState=(Math.imul(1664525,rngState)+1013904223)>>>0;return rngState/4294967296};
   const tier=()=>elapsed<20?1:elapsed<45?2:elapsed<90?3:4;
   // SPACE (keyboard) / A (cabinet) is a TOGGLE, not a jump input.
-  // A modest +10% speed toggle; earned long-grind momentum contributes +7% briefly.
-  const normalSpeed=()=>clamp(baseSpeed+elapsed*1.72,baseSpeed,460);
+  // The cabinet A / SPACE toggle doubles an already brisk normal skating pace.
+  const normalSpeed=()=>clamp(baseSpeed+elapsed*2.2,baseSpeed,480);
   // The toggle ramps to exactly 2x the current baseline. Grind momentum remains independent.
   const speed=()=>normalSpeed()*(1+acceleration)*(grindBoostLeft>0?1.07:1);
   const score=()=>Math.floor(distance/48)+Math.floor(extraClauses)+Math.floor(totalGrindDistance/32)*2+Math.floor(bonus);
@@ -278,7 +278,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // The old run sprites are leg-running poses. Ground travel now uses the
     // stable low, board-contact Fony stance from the approved pose atlas; no sprint loop.
     const rolling=alive&&!grinding&&(animation==='run'||animation==='idle'||animation==='land');
-    const idx=rolling&&art?.images.skater?10:start+frame;
+    // Alternate two real crouch/recovery cells, never the six leg-running cells.
+    const rollFrame=Math.floor(elapsed*2.4)%6;
+    const idx=rolling&&art?.images.skater?(rollFrame===0||rollFrame===4?11:10):start+frame;
     const cfg=art?.grid?.skater;
     const width=cfg?.cellW??80,height=cfg?.cellH??94,columns=cfg?.columns??8;
     const anchorX=cfg?.anchorX??width/2,anchorY=cfg?.anchorY??height-4;
@@ -286,18 +288,15 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // The world point is Fony's skateboard contact, never the changing sprite top-left.
     // Bail frames anchor at the impact position and stop at the final frame (no looping).
     const poseY=alive?boardY:ground;
-    // The approved source sheet's RUN poses are running silhouettes without
-    // a deck. Put a proper board under those poses so Fony visibly SKATES.
-    // Grind and flip artwork already includes the original green deck.
-    if(alive&&(rolling||animation==='run'||animation==='land')&&art?.images.skater){
-      ctx.save();
-      ctx.fillStyle='#121019';ctx.beginPath();ctx.roundRect(playerX-27,poseY-6,54,6,3);ctx.fill();
-      ctx.fillStyle='#e0287a';ctx.fillRect(playerX-20,poseY-5,40,3);
-      ctx.fillStyle='#d7ff00';ctx.fillRect(playerX-10,poseY-5,20,2);
-      ctx.fillStyle='#121019';
-      for(const x of [playerX-17,playerX+16]){
-        ctx.beginPath();ctx.arc(x,poseY+2,4,0,Math.PI*2);ctx.fill();
-        ctx.fillStyle='#f4eee1';ctx.fillRect(x-1,poseY+1,2,2);ctx.fillStyle='#121019';
+    // The complete skateboard is drawn independently of Fony's source frame.
+    // That prevents a disappearing board, even if some original poses lack it.
+    const boardVisible=alive&&rolling&&Boolean(art?.images.skater);
+    if(boardVisible){
+      ctx.save();ctx.fillStyle='#14101a';
+      for(let n=0;n<5;n++){
+        const shift=(distance*.92+n*31)%135;
+        ctx.globalAlpha=.17+n*.07;
+        ctx.fillRect(playerX-24-shift,poseY+6+n%2*5,19+n*3,1.3);
       }
       ctx.restore();
     }
@@ -308,7 +307,23 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         ctx.beginPath();ctx.moveTo(playerX-38-offset,poseY-7+i*3);ctx.lineTo(playerX-19-offset,poseY-7+i*3);ctx.stroke()}
       ctx.restore();
     }
-    if(drawSheet(ctx,'skater',idx%columns,Math.floor(idx/columns),playerX-anchorX*zoom,poseY-anchorY*zoom,width*zoom,height*zoom))return;
+    const usedAtlas=drawSheet(ctx,'skater',idx%columns,Math.floor(idx/columns),playerX-anchorX*zoom,poseY-anchorY*zoom,width*zoom,height*zoom);
+    if(boardVisible){
+      // Draw board ON TOP of any stray source-cell foot fragments, at the board baseline.
+      ctx.save();
+      ctx.fillStyle='#17121b';ctx.beginPath();ctx.roundRect(playerX-32,poseY-7,64,7,3.5);ctx.fill();
+      ctx.fillStyle='#e0287a';ctx.beginPath();ctx.roundRect(playerX-29,poseY-6,58,4,2);ctx.fill();
+      ctx.fillStyle='#d7ff00';ctx.fillRect(playerX-15,poseY-6,30,1.8);
+      for(const wheelX of [playerX-20,playerX+20]){
+        ctx.fillStyle='#100e17';ctx.beginPath();ctx.arc(wheelX,poseY+3,5,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#efe9da';ctx.beginPath();ctx.arc(wheelX,poseY+3,2.5,0,Math.PI*2);ctx.fill();
+        const theta=distance*.15;
+        ctx.strokeStyle='#e0287a';ctx.lineWidth=1.25;
+        ctx.beginPath();ctx.moveTo(wheelX,poseY+3);ctx.lineTo(wheelX+Math.cos(theta)*2.3,poseY+3+Math.sin(theta)*2.3);ctx.stroke();
+      }
+      ctx.restore();
+    }
+    if(usedAtlas)return;
     // Procedural placeholder is required when art is absent or blocked.
     ctx.fillStyle='#ff3d7f';ctx.fillRect(playerX-15,boardY-43,30,33);
     ctx.fillStyle='#f0d2a4';ctx.fillRect(playerX-11,boardY-54,22,13);
@@ -440,38 +455,43 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     return true;
   };
   const drawBackdrop=(ctx:CanvasRenderingContext2D,portrait:boolean,topWorld:number)=>{
-    // Illustrated 2.5-D scene extracted from the approved punk-art mockup.
+    // Illustrated 2.5-D city plus paper-cut cloud canopy; foreground remains independent.
     // Keep the playable sidewalk at ground Y=300; no enlarged paper wallpaper.
     const sky=ctx.createLinearGradient(0,topWorld,0,ground);
     sky.addColorStop(0,'#170d19');sky.addColorStop(.47,'#46203e');
     sky.addColorStop(.76,'#d92a82');sky.addColorStop(1,'#2d1b36');
     ctx.fillStyle=sky;ctx.fillRect(-1400,topWorld,3200,ground-topWorld+90);
     if(art?.images.cloudsNear&&art?.images.dataCity){
-      // The data-center chimneys and skyline are exposed below the torn paper clouds.
-      tileLayer(ctx,'dataCity',132,143,.13,1);
-      // Connect chimney mouths and legal-paper clouds with wisps that share
-      // the CITY parallax offset. Render beneath the paper-cloud silhouettes.
-      const cloudBottom=(portrait?topWorld+171:75)+(portrait?94:86);
-      const cityShift=((distance*.13)%1280+1280)%1280;
-      ctx.save();ctx.lineCap='round';
-      for(let tile=-1280-cityShift;tile<1350;tile+=1280){
-        for(const [i,px] of [40,214,490,736,1038].entries()){
-          const x=tile+px,stackY=180+(i%3)*8,targetY=Math.min(stackY-14,cloudBottom-7);
-          const flutter=Math.sin(elapsed*.7+i*1.8)*6;
-          ctx.beginPath();ctx.moveTo(x,stackY);
-          ctx.bezierCurveTo(x-16+flutter,stackY-30,x+16+flutter,targetY+29,x+flutter,targetY);
-          ctx.strokeStyle='rgba(255,221,222,.66)';ctx.lineWidth=9;ctx.stroke();
-          ctx.strokeStyle='rgba(245,185,204,.55)';ctx.lineWidth=3;ctx.stroke();
+      // Give each plane a meaningful silhouette and leave the factory visible.
+      const cityFactor=.19;
+      tileLayer(ctx,'dataCity',132,143,cityFactor,1);
+      const cloudNearY=portrait?topWorld+192:67;
+      const cloudNearH=portrait?112:96;
+      const cloudBottom=cloudNearY+cloudNearH*.83;
+      const cityShift=((distance*cityFactor)%1280+1280)%1280;
+      // Smoke is anchored to the same moving world as the painted stacks.
+      // Connected overlapping puffs meet the curved underside of the paper clouds.
+      ctx.save();
+      for(let tile=-1280-cityShift;tile<1400;tile+=1280){
+        for(const [i,stack] of [[44,174],[216,156],[484,163],[744,160],[1024,169]] as const){
+          const x=tile+i, start=stack, end=Math.min(start-17,cloudBottom-13);
+          for(let puff=0;puff<=8;puff++){
+            const t=puff/8, bend=Math.sin(t*6.1+i*.028+elapsed*.5)*6*t;
+            const cx=x+bend+t*11,cy=start+(end-start)*t;
+            const radius=3.2+t*6.6;
+            ctx.beginPath();ctx.ellipse(cx,cy,radius*1.2,radius,0,0,Math.PI*2);
+            ctx.fillStyle=`rgba(242,210,223,${.34+t*.38})`;ctx.fill();
+          }
         }
       }
       ctx.restore();
-      // These are two *separate* moving cloud layers. Distant paperwork is
-      // atmospheric only; the nearer high-detail inked cloud stays compact.
-      tileLayer(ctx,'cloudsFar',portrait?topWorld+35:69,portrait?97:80,.028,.28);
-      tileLayer(ctx,'cloudsNear',portrait?topWorld+171:75,portrait?109:97,.065,.96);
+      // Scalloped paper-cut cloud strata: printed microtext is part of each cloud,
+      // with NO rectangular document boxes baked into the scenery.
+      tileLayer(ctx,'cloudsFar',portrait?topWorld+73:46,portrait?100:82,.03,.65);
+      tileLayer(ctx,'cloudsNear',cloudNearY,cloudNearH,.075,.95);
       // Do not bake coins or obstacles into the scenery. Retaining wall is
       // behind the actor, never on top of the skating surface.
-      tileLayer(ctx,'graffitiWall',239,61,.23,.97);
+      tileLayer(ctx,'graffitiWall',239,61,.32,.97);
       // Image holds the curb, textured sidewalk and distinct asphalt lanes.
       // Everything sits at Y=300; no black line standing in for a floor.
       // This is physical world geometry: sidewalk and attached obstacles

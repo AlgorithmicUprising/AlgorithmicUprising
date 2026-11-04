@@ -121,3 +121,12 @@ Visual screenshot inspection found that the V6 cloud headings still appeared lar
 - Double ollie is **always on**: release and tap U again while airborne. An additional jump consumes the second jump for the current airtime; landing resets it. Existing AIR BOOST pickups are treated as defensive pickups so they cannot gate double jump.
 - GO FASTER ramps to exactly **2× the current normal movement speed** (0.45 seconds), while sustained-grind momentum remains an independent +7% factor. Desktop SPACE and mobile A remain toggle controls. The mobile Ø/A/U deck styling and positions are unchanged.
 - New Playwright coverage asserts 2× baseline, permanent airborne double-ollie, ground sprite selection and SVG cloud selection. These checks require CI execution and real-device visual verification before release sign-off.
+
+
+## November 4 — v0.5 paper-cloud canopy and pace correction
+
+User playtests rejected the previous V8 cloud strip and 180 px/s cruise speed. V9 replaces the actual cloud assets, not their labels: the two tiled SVG images each contain three organic scalloped cut-paper strata, soft mauve/cream shadows, and nearly microscopic clause text clipped to cloud silhouettes. No rectangular policy cards are drawn. The cloud art stays independent of the data-center city. Connected circular smoke wisps now share the city parallax factor and rise from the city stacks into the underside of the cloud canopy. Foreground wall parallax increased modestly to communicate motion. Previous V8 assets are archived, not active.
+
+Ground speed starts at **260 logical px/s**, ramps gradually with time, and remains entirely separate from the optional **2× GO FASTER** toggle. U's default double jump and all original cabinet buttons remain unchanged. Normal ground movement now alternates two low crouch/recovery poses (not running poses) with an always-visible skateboard composited at the shared board anchor, visibly rotating wheel spokes and speed-dependent motion streaks. Source pose cleanup for a full professional 39-frame sheet remains unfinished.
+
+Playwright assertions have been updated for the new relative speed, deterministic first rail, two safe roll cells, and new cloud file selection. Real-device visual approval and beginner balance remain required before a final release.
