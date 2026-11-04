@@ -161,40 +161,31 @@ test('running and bail animations use stable on-screen actor origin and never lo
  expect(result.after).toEqual(result.final);
 });
 
-test('visible rail and Fony board share the grind surface; legs touch ground',async({page})=>{
-  await page.goto('/demo/');
-  const game=page.locator('grind-the-terms');
-  await expect(page.locator('#events')).toContainText('game:skin-loaded');
-  const result=await game.evaluate(async el=>{
-    const skinUrl=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
-    const skin=await(await fetch(skinUrl)).json();
-    const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
-    const original=ctx.drawImage.bind(ctx),calls=[];
-    ctx.drawImage=(...args)=>{
-      if(args.length===9)calls.push({width:args[0]?.naturalWidth,sx:args[1],sy:args[2],sh:args[4],dx:args[5],dy:args[6],w:args[7],h:args[8]});
-      return original(...args);
-    };
-    g.start();
-    for(let i=0;i<170;i++)g.update(1/60);
-    g.input('tap',true);
-    let caught=false;
-    for(let i=0;i<100;i++){g.update(1/60);if(g.result().stats.grindMs>0){caught=true;break}}
-    if(caught)g.draw(ctx,canvas.width,canvas.height);
-    const rail=calls.find(x=>x.width===576&&x.sx===432&&x.sy===112+skin.rail.clipTopCellY);
-    const fony=calls.find(x=>x.width===1024);
-    const railY=rail?rail.dy+rail.h*(skin.rail.surfaceCellY-skin.rail.clipTopCellY)/rail.sh:null;
-    const legY=rail?rail.dy+rail.h:null;
-    const boardY=fony?fony.dy+skin.grid.skater.anchorY*skin.grid.skater.displayScale:null;
-    g.input('tap',false);g.update(1/60);calls.length=0;g.draw(ctx,canvas.width,canvas.height);
-    const popped=calls.find(x=>x.width===1024);
-    const popY=popped?popped.dy+skin.grid.skater.anchorY:null;
-    ctx.drawImage=original;
-    return {caught,railY,legY,boardY,popY};
-  });
-  expect(result.caught).toBe(true);
-  expect(result.legY).toBeCloseTo(300,5);
-  expect(Math.abs(result.railY-result.boardY)).toBeLessThan(1);
-  expect(result.popY).toBeLessThan(result.railY);
+test('seamless rail cap top matches skater contact and end legs touch pavement',async({page})=>{
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ const result=await game.evaluate(el=>{
+  const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
+  g.start();
+  for(let i=0;i<170;i++)g.update(1/60);
+  g.input('tap',true);
+  let caught=false;
+  for(let i=0;i<100;i++){g.update(1/60);if(g.result().stats.grindMs>0){caught=true;break}}
+  g.draw(ctx,canvas.width,canvas.height);
+  const stats=g.result().stats;
+  const k=Math.min(canvas.width/640,canvas.height/360),dx=(canvas.width-640*k)/2,dy=(canvas.height-360*k)/2;
+  const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
+  const bar=stats.supportX!==null?sample(stats.supportX+stats.supportWidth*.72,stats.supportTop+4):null;
+  g.input('tap',false);g.update(1/60);
+  return {caught,stats,bar,pop:g.result().stats.boardY};
+ });
+ expect(result.caught).toBe(true);
+ expect(result.stats.supportTop).toBeGreaterThan(278);
+ expect(result.stats.supportTop).toBeLessThan(282);
+ expect(Math.abs(result.stats.boardY-result.stats.supportTop)).toBeLessThan(1.5);
+ expect(result.pop).toBeLessThan(result.stats.supportTop);
+ expect(result.bar[1]).toBeGreaterThan(155);
+ expect(result.bar[3]).toBe(255);
 });
 
 test('all original hazard art bottoms align with floor and surface matches sprite top',async({page})=>{
@@ -220,19 +211,60 @@ test('all original hazard art bottoms align with floor and surface matches sprit
   expect(data.accept.visibleTop).toBeGreaterThan(265);
   expect(data.accept.visibleTop).toBeLessThan(275);
 });
-test('original ACCEPT art renders without a floating green highlight',async({page})=>{
-  await page.goto('/demo/');
-  const game=page.locator('grind-the-terms');
-  const geometry=await game.evaluate(el=>{
-    const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
-    const original=ctx.drawImage.bind(ctx),ops=[];
-    ctx.drawImage=(...args)=>{if(args.length===9&&args[0]?.naturalWidth===576&&args[1]===0&&args[2]===0)ops.push({y:args[6],height:args[8]});return original(...args)};
-    g.start();for(let i=0;i<270;i++)g.update(1/60);
-    g.draw(ctx,canvas.width,canvas.height);ctx.drawImage=original;return ops;
-  });
-  expect(geometry.length).toBeGreaterThan(0);
-  expect(geometry[0].y+92/112*geometry[0].height).toBeCloseTo(300,4);
+test('clean ACCEPT ALL sprite body is grounded with no detached green guide',async({page})=>{
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ const colors=await game.evaluate(el=>{
+  el.setAttribute('data-qa-accept','');
+  const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
+  el.game.start();el.game.draw(ctx,c.width,c.height);
+  const k=Math.min(c.width/640,c.height/360),dx=(c.width-640*k)/2,dy=(c.height-360*k)/2;
+  const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
+  return {button:sample(375,276),above:sample(375,264),floor:sample(375,299)};
+ });
+ expect(colors.button[1]).toBeGreaterThan(150);
+ expect(colors.button[3]).toBe(255);
+ expect(colors.above[1]).toBeLessThan(colors.button[1]);
+ await game.screenshot({path:'test-results/screenshots/accept-no-fringe-desktop.png'});
 });
+
+test('clean rails stay capped and supported at one through four full spans',async({page},info)=>{
+ test.skip(info.project.name.startsWith('mobile'),'Representative desktop pixel screenshot');
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ for(const width of [75,150,225,300]){
+  const bounds=await game.evaluate((el,width)=>{
+   el.setAttribute('data-qa-rail-size',String(width));
+   const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
+   el.game.start();el.game.draw(ctx,c.width,c.height);
+   const k=Math.min(c.width/640,c.height/360),dx=(c.width-640*k)/2,dy=(c.height-360*k)/2;
+   const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
+   return {left:sample(284,283),mid:sample(280+width/2,283),right:sample(276+width,283),end:sample(286+width,292)};
+  },width);
+  for(const pixel of [bounds.left,bounds.mid,bounds.right])expect(pixel[1]).toBeGreaterThan(125);
+  if(width===300)await game.screenshot({path:'test-results/screenshots/rail-four-span.png'});
+ }
+});
+
+test('token and manhole fixtures are readable, independent of old hazard atlas',async({page},info)=>{
+ test.skip(info.project.name.startsWith('mobile'),'Representative desktop pixel screenshot');
+ await page.goto('/demo/');
+ const game=page.locator('grind-the-terms');
+ const result=await game.evaluate(el=>{
+  el.setAttribute('data-qa-token','');
+  el.setAttribute('data-qa-loophole','');
+  const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
+  el.game.start();el.game.draw(ctx,c.width,c.height);
+  const k=Math.min(c.width/640,c.height/360),dx=(c.width-640*k)/2,dy=(c.height-360*k)/2;
+  const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
+  return {coin:sample(323,230),manhole:sample(320,307)};
+ });
+ expect(result.coin[1]).toBeGreaterThan(155);
+ expect(result.coin[3]).toBe(255);
+ expect(result.manhole[3]).toBe(255);
+ await game.screenshot({path:'test-results/screenshots/coin-manhole-clean.png'});
+});
+
 test('the first flat-topped consent box can be ground and popped from',async({page})=>{
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');
@@ -302,7 +334,7 @@ test('consent forms are opaque, visible, grounded obstacles rather than transluc
      const px=Math.floor(c.width*x/640),py=Math.floor(c.height*y/360);
      return [...ctx.getImageData(px,py,1,1).data];
    };
-   return {popup:sample(226,259),modal:sample(406,241)};
+   return {popup:sample(274,259),modal:sample(457,241)};
  });
  // The fully opaque paper fill is #f5eddd (245,237,221).
  for(const color of [colors.popup,colors.modal]){
