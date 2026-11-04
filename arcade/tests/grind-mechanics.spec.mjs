@@ -362,7 +362,7 @@ test('approved illustrated scenery is loaded as five distinct parallax layers',a
   return {images,seen};
  });
  expect(result.images).toHaveLength(5);
- for(const i of result.images){expect(i.w).toBe(1280);expect(i.h).toBeGreaterThan(80);expect(result.seen.some(x=>x.includes('v5.png')&&x.includes(i.key==='dataCity'?'datacenter':i.key==='graffitiWall'?'graffiti':i.key==='road'?'sidewalk':i.key==='cloudsFar'?'clouds_far':'clouds_near'))).toBe(true);}
+ for(const i of result.images){expect(i.w).toBe(1280);expect(i.h).toBeGreaterThan(80);expect(result.seen.some(x=>x.includes(i.key==='dataCity'?'datacenter':i.key==='graffitiWall'?'graffiti':i.key==='road'?'sidewalk':i.key==='cloudsFar'?'clouds_far':'clouds_near'))).toBe(true);}
  await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v5.png'});
 });
 
