@@ -22,5 +22,5 @@ test('all fixed hazards are jumpable and have a recovery margin',()=>{
  }
 });
 test('all powerups in chunks have a recognized type',()=>{
- for(const c of chunks)for(const o of c.objects)if(o.kind==='token')assert.ok(['shield','airboost'].includes(o.power),c.id);
+ for(const c of chunks)for(const o of c.objects)if(o.kind==='token')assert.ok(['shield','airboost','coin'].includes(o.power),c.id);
 });

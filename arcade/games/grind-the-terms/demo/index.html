@@ -37,7 +37,7 @@
   <grind-the-terms skin="../skins/au/skin.json">
     <p class="fallback">Loading Fony… If the game stays blank, <a href="../../../demo/">open Arcade Lab</a>.</p>
   </grind-the-terms>
-  <p class="note">U / ↑ / W jumps. Hold U to grind, release to pop. A / SPACE toggles GO FASTER. The lightning Ø is reserved for a future special. Double jump is always available; use U again in the air. GO FASTER ramps to 2× normal speed.</p>
+  <p class="note">U / ↑ / W ollies. Hold during descent to grind, release to pop. SPACE / A performs one aerial trick; at 80 clauses collect the combo token to unlock a second trick. Roll through coins and powerups to collect them. R / Ø spends a spray can for 2× speed for 1.25 seconds; carry up to three.</p>
   <div class="controls" aria-label="Artwork selection">
     <button type="button" id="au" aria-label="Use Fony artwork">Fony Art</button>
     <button type="button" id="placeholder" aria-label="Use placeholder artwork">Placeholder</button>
@@ -48,7 +48,7 @@
 <!-- The assets live ONE folder above demo/, not two. Works under GitHub Pages' project subpath. -->
 <script type="module" src="../dist/grind-the-terms.js"></script>
 <script>
-  for(const event of ['game:ready','game:skin-loaded','game:error','game:start','game:over','game:grind-start','game:grind-end','game:power']){
+  for(const event of ['game:ready','game:skin-loaded','game:error','game:start','game:over','game:grind-start','game:grind-end','game:power','game:trick','game:boost']){
     document.addEventListener(event,e=>{
       const panel=document.querySelector('#events');
       panel.textContent=(e.type+' '+JSON.stringify(e.detail)+'\n'+panel.textContent).slice(0,2500);

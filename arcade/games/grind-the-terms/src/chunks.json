@@ -16,7 +16,7 @@
         "power": "coin"
       },
       {
-        "at": 590,
+        "at": 560,
         "kind": "token",
         "w": 26,
         "power": "coin"
@@ -34,13 +34,13 @@
         "w": 160
       },
       {
-        "at": 540,
+        "at": 500,
         "kind": "token",
         "w": 26,
         "power": "coin"
       },
       {
-        "at": 620,
+        "at": 580,
         "kind": "token",
         "w": 26,
         "power": "coin"
@@ -95,7 +95,7 @@
         "power": "coin"
       },
       {
-        "at": 570,
+        "at": 550,
         "kind": "token",
         "w": 26,
         "power": "coin"
@@ -137,12 +137,12 @@
         "w": 160
       },
       {
-        "at": 500,
+        "at": 560,
         "kind": "accept",
         "w": 160
       },
       {
-        "at": 730,
+        "at": 700,
         "kind": "token",
         "w": 26,
         "power": "coin"
@@ -189,7 +189,7 @@
         "w": 144
       },
       {
-        "at": 680,
+        "at": 660,
         "kind": "token",
         "w": 26,
         "power": "coin"
@@ -237,7 +237,7 @@
         "w": 144
       },
       {
-        "at": 780,
+        "at": 760,
         "kind": "token",
         "w": 26,
         "power": "coin"
@@ -351,7 +351,7 @@
         "power": "coin"
       },
       {
-        "at": 920,
+        "at": 880,
         "kind": "token",
         "w": 26,
         "power": "coin"
