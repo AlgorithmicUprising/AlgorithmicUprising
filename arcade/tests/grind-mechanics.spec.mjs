@@ -340,7 +340,7 @@ test('consent forms render the approved illustrated panels as grounded obstacles
    e.game.start();e.game.draw(ctx,c.width,c.height);ctx.drawImage=draw;
    return seen;
  });
- expect(sources).toContain('terms_consent_popup_v1.webp');
+ expect(sources).toContain('terms_consent_barrier_v2.webp');
  expect(sources).toContain('terms_consent_modal_v1.webp');
  await el.locator('canvas').screenshot({path:'test-results/screenshots/consent-illustrations-desktop.png'});
 });

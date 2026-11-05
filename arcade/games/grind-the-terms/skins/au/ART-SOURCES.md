@@ -31,3 +31,8 @@ The active AU skin now uses the approved Fony and punk-comic pack saved in the P
 - `terms_mobile_control_deck_v1.jpg`: the existing 9:16 mobile control area only. It skins the game controls inside the established tablet layout; it does not replace the ZERO GAME THING outer frame.
 
 The skin is all rights reserved. Keep it under `skins/au/`; do not copy these assets into the open `fony/` starter or label them CC BY 4.0. The generated action sheet supplies the visible poses; screen-size, actual iPhone/Android and ZERO GAME THING tablet review remains pending.
+
+
+## November 5 — Short Consent barrier and movement poses
+
+`terms_consent_barrier_v2.webp` is the wide, squat transparent Consent obstacle sprite, sized for a 52-unit gameplay surface. It remains distinct from the 42-unit ACCEPT curb; the separate full Terms modal stays 102 units tall. The HUD does not paint a duplicate heading or form over the artwork. The grind loop now holds frame 29 (both feet on the board), and rail-pop ends at frame 33 to avoid frame 34's rail embedded in the sprite.

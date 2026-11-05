@@ -54,7 +54,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const surfaces={
     rail:   {top:53,bottom:82,height:77},   // metal coping / feet
     accept: {top:0,bottom:112,height:42},   // low, standalone ACCEPT block sprite
-    popup:  {top:0,bottom:112,height:82},   // taller consent form
+    popup:  {top:0,bottom:112,height:52},   // short consent barrier, still above the ACCEPT curb
     modal:  {top:0,bottom:112,height:102}  // tallest consent form
   } as const;
   type SurfaceKind=keyof typeof surfaces;
@@ -356,7 +356,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const drawSkater=(ctx:CanvasRenderingContext2D)=>{
     let animation=currentAnim;
     if(!alive)animation='bail';else if(grinding)animation='grind';else if((support||boardY>=ground-1)&&landTimer<=0)animation='idle';
-    const map={run:[0,6,12],idle:[6,4,6],land:[10,2,16],ollie:[12,5,14],double:[17,4,12],bail:[21,6,12],grind:[27,4,10],railpop:[31,4,12],flip:[35,4,14]} as const;
+    // Pose 29 keeps both feet on the deck; pop before pose 34, which has a rail baked into its art.\n    const map={run:[0,6,12],idle:[6,4,6],land:[10,2,16],ollie:[12,5,14],double:[17,4,12],bail:[21,6,12],grind:[29,1,10],railpop:[31,3,12],flip:[35,4,14]} as const;
     const [start,frames,fps]=map[animation];
     const looping=animation==='run'||animation==='idle'||animation==='grind';
     const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
@@ -474,20 +474,23 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#f6efe2';ctx.beginPath();ctx.roundRect(x,top,w,h,3);ctx.fill();
       ctx.fillStyle='#d72c80';ctx.fillRect(x,top,w,22);
     }
-    ctx.fillStyle=panel?'#f6efe2':'#15111b';ctx.font='bold 11px monospace';
-    ctx.textBaseline='alphabetic';ctx.textAlign='left';
-    ctx.fillText(modal?'TERMS / DATA':'CONSENT TO ALL',x+7,top+15,Math.max(34,w-14));
-    if(!panel){
-      ctx.fillStyle='#1a1621';ctx.fillRect(x+w-17,top+4,12,13);
-      ctx.fillStyle='#f7e7ef';ctx.font='bold 10px monospace';ctx.fillText('×',x+w-15,top+14);
-    }
-    ctx.font='9px monospace';ctx.fillStyle='#231b2c';
-    const rows=modal?4:2;
-    for(let i=0;i<rows;i++){
-      const rowY=top+32+i*(modal?15:18);
-      if(rowY>ground-10)break;
-      ctx.strokeStyle='#221a26';ctx.lineWidth=1.6;ctx.strokeRect(x+8,rowY-8,9,9);
-      ctx.fillText(['Share my data','Track activity','Personalize ads','Agree to all'][i],x+22,rowY,Math.max(20,w-27));
+    // The short Consent barrier has its own lettering; keep the full form overlay on the separate modal.
+    if(!panel||modal){
+      ctx.fillStyle=panel?'#f6efe2':'#15111b';ctx.font='bold 11px monospace';
+      ctx.textBaseline='alphabetic';ctx.textAlign='left';
+      ctx.fillText(modal?'TERMS / DATA':'CONSENT TO ALL',x+7,top+15,Math.max(34,w-14));
+      if(!panel){
+        ctx.fillStyle='#1a1621';ctx.fillRect(x+w-17,top+4,12,13);
+        ctx.fillStyle='#f7e7ef';ctx.font='bold 10px monospace';ctx.fillText('×',x+w-15,top+14);
+      }
+      ctx.font='9px monospace';ctx.fillStyle='#231b2c';
+      const rows=modal?4:2;
+      for(let i=0;i<rows;i++){
+        const rowY=top+32+i*(modal?15:18);
+        if(rowY>ground-10)break;
+        ctx.strokeStyle='#221a26';ctx.lineWidth=1.6;ctx.strokeRect(x+8,rowY-8,9,9);
+        ctx.fillText(['Share my data','Track activity','Personalize ads','Agree to all'][i],x+22,rowY,Math.max(20,w-27));
+      }
     }
     if(!panel){ctx.strokeStyle='#15121a';ctx.lineWidth=2;ctx.strokeRect(x,top,w,h)}
     if(o.deflected){

@@ -1,4 +1,4 @@
-# Grind the Terms · Fony Sprock (v0.9 tricks, rocket boosts + art)
+# Grind the Terms · Fony Sprock (v0.9.2 Consent barrier + grind poses)
 
 > Nobody reads them. Skate them.
 
@@ -14,7 +14,7 @@ The side-scrolling browser runner for Punk Arcade's CH 05. The `arcade` branch u
 | Spray-can rocket | R | Ø button | X |
 | Pause / resume | P / Esc or pause button | Pause / Resume buttons | — |
 
-**Grind:** Press U / ↑ / W for one ollie. Hold it as Fony descends to catch a rail or the flat top of an obstacle—the low ACCEPT curb or a taller consent form—and keep grinding. Releasing jump pops off. A tap on the game canvas does not jump, and jump input never triggers a double jump.
+**Grind:** Press U / ↑ / W for one ollie. Hold it as Fony descends to catch a rail or obstacle top, then release to pop off. During the grind, both feet stay on the board. The pop animation ends before atlas pose 34, which has a rail embedded in its art. A tap on the game canvas does not jump, and jump input never triggers a double jump.
 
 **Tricks:** SPACE / desktop A / tablet A performs one trick during an airtime, including after an ollie or a grind pop. It cannot be used while supported or grinding. Trick height is fixed so tricks do not replace the ollie. Score improves the trick name and points: Kickflip (+2), Heelflip (+4) from 50 clauses, and 360 Flip (+6) from 125 clauses. At 80 clauses a glowing trick token appears; collecting it unlocks one extra trick before the next landing. That second combo has a more complex animation and doubles the trick points. Landing resets the airtime trick count; the upgrade stays unlocked for the run.
 
@@ -25,7 +25,7 @@ The side-scrolling browser runner for Punk Arcade's CH 05. The `arcade` branch u
 ## Obstacles and scores
 
 - **ACCEPT ALL obstacle:** A low, standalone button curb appears on the beginner route. It has no consent heading, checkbox form, or terms copy; its flat top can be ridden or ground across, and a side impact causes a bail.
-- **Consent popup / terms modal:** Separate, taller paper-form hazards appear from tiers 2 and 4. Their “CONSENT TO ALL” / “TERMS / DATA” headers and checkbox rows have no Accept or Agree button. Their flat tops can also be ridden or ground.
+- **Consent popup / terms modal:** Separate hazards appear from tiers 2 and 4. The squat POPUP uses the wide CONSENT barrier art (52 units high); the distinct MODAL remains a tall paper form (102 units high). Neither is the standalone ACCEPT ALL curb, and both have rideable tops.
 - **Clause rails:** Fewer rails appear in the route; the first is a safe practice rail, with another later for continued grind practice.
 - **Fine-print gaps:** Jump the black pit (reward currently +8; balance candidate).
 - **Opt Out / Air Boost:** +10 and one-hit protection. They are defensive tokens, not extra jumps.
@@ -162,4 +162,4 @@ The chunk set places more ordinary coins and reduces the rail count to two inten
 
 ## November 5 — Separate ACCEPT and consent obstacles
 
-ACCEPT ALL is now a standalone 42-unit-high button curb introduced at tier 1. It contains only the acceptance button. Consent POPUP and MODAL forms are separate hazards, 82 and 102 units tall, appearing from tiers 2 and 4. They show their own consent/terms headings and checkbox rows, without an Accept or Agree button. Each obstacle stays grounded and keeps a rideable, grindable top.
+ACCEPT ALL is now a standalone 42-unit-high button curb introduced at tier 1. It contains only the acceptance button. Consent POPUP and MODAL forms remain separate hazards, 52 and 102 units tall, appearing from tiers 2 and 4. The short POPUP uses its own wide CONSENT barrier artwork; the MODAL keeps the separate terms heading and checkbox rows. Neither uses the ACCEPT ALL button art. Each obstacle stays grounded and keeps a rideable, grindable top.

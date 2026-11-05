@@ -141,7 +141,7 @@
         "kind": "token",
         "w": 26,
         "power": "coin",
-        "pickupY": 228
+        "pickupY": 258
       },
       {
         "at": 510,
@@ -359,7 +359,7 @@
         "kind": "token",
         "w": 26,
         "power": "coin",
-        "pickupY": 228
+        "pickupY": 258
       },
       {
         "at": 540,

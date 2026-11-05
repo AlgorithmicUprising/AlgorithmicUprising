@@ -2,7 +2,7 @@
   "id": "au",
   "game": "grind-the-terms",
   "name": "Algorithmic Uprising — approved punk-comic gameplay art",
-  "version": "0.9.1-tricks-rocket-accept",
+  "version": "0.9.2-consent-barrier-grind-poses",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -25,7 +25,7 @@
     "graffitiWall": "terms_graffiti_wall_v6.webp",
     "road": "terms_sidewalk_road_v6.webp",
     "acceptButton": "terms_accept_button_v2.webp",
-    "consentPopup": "terms_consent_popup_v1.webp",
+    "consentPopup": "terms_consent_barrier_v2.webp",
     "consentModal": "terms_consent_modal_v1.webp",
     "optOutToken": "terms_opt_out_token_v1.webp",
     "titleCard": "terms_title_card_v1.jpg",
@@ -124,7 +124,7 @@
     "popup": {
       "surfaceCellY": 0,
       "groundCellY": 112,
-      "drawHeight": 82
+      "drawHeight": 52
     },
     "modal": {
       "surfaceCellY": 0,
