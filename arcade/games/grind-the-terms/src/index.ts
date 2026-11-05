@@ -562,10 +562,11 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // not a letterboxed landscape canvas. The sidescroller still uses the
     // same physics coordinates and a 450-unit horizontal reaction window.
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0d0b12';ctx.fillRect(0,0,w,h);
-    const portrait=w/h<1.05;
-    const scale=portrait?w/450:Math.min(w/640,h/360);
-    const dx=portrait?-35*scale:(w-640*scale)/2;
-    const dy=portrait?h-(ground+40)*scale:(h-360*scale)/2;
+    const portrait=(host.getAttribute('layout')==='portrait'&&matchMedia('(pointer:coarse)').matches)||w/h<1.05;
+    const portraitHeight=ground+40;
+    const scale=portrait?Math.min(w/450,h/portraitHeight):Math.min(w/640,h/360);
+    const dx=portrait?(w-450*scale)/2-35*scale:(w-640*scale)/2;
+    const dy=portrait?h-portraitHeight*scale:(h-360*scale)/2;
     ctx.setTransform(scale,0,0,scale,dx,dy);
     viewLeft=-dx/scale;viewRight=(w-dx)/scale;
     drawBackdrop(ctx,portrait,-dy/scale);
