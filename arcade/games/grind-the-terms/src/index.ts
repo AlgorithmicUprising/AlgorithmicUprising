@@ -53,7 +53,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const sourceCellHeight=112;
   const surfaces={
     rail:   {top:53,bottom:82,height:77},   // metal coping / feet
-    accept: {top:0,bottom:112,height:53},   // low, standalone ACCEPT block sprite
+    accept: {top:0,bottom:112,height:42},   // low, standalone ACCEPT block sprite
     popup:  {top:0,bottom:112,height:82},   // taller consent form
     modal:  {top:0,bottom:112,height:102}  // tallest consent form
   } as const;
@@ -446,8 +446,11 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     ctx.save();ctx.lineJoin='round';
     ctx.fillStyle='rgba(10,8,16,.55)';ctx.beginPath();ctx.ellipse(x+w/2,ground-1,w*.48,4,0,0,Math.PI*2);ctx.fill();
     if(sprite){
-      // The standalone low ACCEPT ALL curb art is its own sprite, separate from consent forms.
-      ctx.drawImage(sprite,x,top,w,h);
+      // The separate ACCEPT ALL curb art stays low and grounded; consent forms keep their own surfaces.
+      ctx.drawImage(sprite,53,172,2064,461,x,top,w,h);
+      // Retain a crisp canvas label over the distressed lettering at small tablet scale.
+      ctx.fillStyle='#141412';ctx.font='900 13px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('ACCEPT ALL',x+w*.58,top+h*.52,w*.52);
     }else{
       ctx.fillStyle='#0c0a11';ctx.beginPath();ctx.roundRect(x-3,top-2,w+6,h+4,7);ctx.fill();
       ctx.fillStyle='#81766c';ctx.beginPath();ctx.roundRect(x,top,w,h,4);ctx.fill();
