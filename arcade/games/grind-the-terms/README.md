@@ -56,7 +56,7 @@ The AU skin declares `rail.drawTopFromGround=39`, `rail.drawHeight=40`, and `rai
 
 ## Flat-topped obstacles (v0.2.3)
 
-Fony can land on, skate across, and ollie from ACCEPT, POPUP and MODAL boxes. **Hold** while landing for a grind; **release** to pop off. If the jump is released before landing, the box acts as a rideable platform and the next tap triggers a new ollie. Running into its side still causes a bail. The first consent obstacle is a 126px-wide platform introduced immediately after the practice rail. The physical contact edge is visibly highlighted on the art. Taller drone hazards and elevated rewards are future encounter work, not yet shipped.
+Fony can land on, skate across, and ollie from ACCEPT, POPUP and MODAL boxes. **Hold** while landing for a grind; **release** to pop off. If the jump is released before landing, the box acts as a rideable platform and the next tap triggers a new ollie. Running into its side still causes a bail. The short Consent popup is a 144-unit platform introduced in tier 2 after the beginner practice rail. The physical contact edge is visibly highlighted on the art. Taller drone hazards and elevated rewards are future encounter work, not yet shipped.
 
 ## v0.2.4: obstacle artwork grounded to the floor
 
