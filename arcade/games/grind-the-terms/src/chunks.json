@@ -319,14 +319,14 @@
     ]
   },
   {
-    "id": "modal-terms",
+    "id": "consent-barrier",
     "tier": 4,
     "width": 900,
     "objects": [
       {
         "at": 280,
-        "kind": "modal",
-        "w": 154
+        "kind": "popup",
+        "w": 144
       },
       {
         "at": 610,
@@ -398,8 +398,8 @@
       },
       {
         "at": 560,
-        "kind": "modal",
-        "w": 154
+        "kind": "popup",
+        "w": 144
       },
       {
         "at": 840,

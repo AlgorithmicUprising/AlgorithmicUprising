@@ -12,7 +12,7 @@ Reviewed: Punk Arcade Game 01 (Nov 3 v0.1), Shared Kit & Embed Spec, the new Fon
 | Grind | Narrow catch window | Descending catch with 12 px snap and hold-to-grind | More deterministic collision/animation regression cases |
 | Grind pop | Inconsistent | Release-to-pop at -380 | Air control feel and combo transitions |
 | Double jump | Missing | Optional after AIR BOOST pickup; generated sheet double animation | Power-up gameplay validation |
-| Obstacles | Random accept/popup/rail/gap | Authored 4-tier chunks including modal, token and rail-gaps | Collision calibration against every tier's maximum speed |
+| Obstacles | Random accept/popup/rail/gap | Authored 4-tier chunks with the single Consent barrier, tokens and rail-gaps | Collision calibration against every tier's maximum speed |
 | Difficulty | Random density | Seeded selection, first guaranteed safe rail, 4-tier speed/density | Five beginner runs averaging 30–90s |
 | Scoring | Bonuses overwritten by distance | Distance, grind bonuses, combo multiplier, token rewards, near-misses | Exact guide values for all animations / combo resets |
 | Game over | Generic message | Cause-specific lines, result statistics, local best | 0.4s bail verified in browser; complete sharing fallback |
@@ -40,7 +40,7 @@ Reviewed: Punk Arcade Game 01 (Nov 3 v0.1), Shared Kit & Embed Spec, the new Fon
 
 ## Playtest request: flat-top skating, November 3
 
-Implemented rideable/grindable ACCEPT, POPUP and MODAL boxes, with consistent foot/board contact, pop-off and an easier wide first box. The intro now teaches the new mechanic before later hazards. Vertical reward routes and airborne drones remain future work pending art and balance tests.
+Implemented rideable/grindable ACCEPT and Consent barriers, with consistent foot/board contact and pop-off. The former separate Terms window has been retired; the single 100-unit Consent barrier also occupies its former high-tier slots. Vertical reward routes and airborne drones remain future work pending art and balance tests.
 
 ## November 3 — portrait controls change order and speed
 

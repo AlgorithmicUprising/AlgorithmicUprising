@@ -1,4 +1,4 @@
-# Grind the Terms · Fony Sprock (v0.9.2 Consent barrier + grind poses)
+# Grind the Terms · Fony Sprock (v0.9.3 single Consent barrier)
 
 > Nobody reads them. Skate them.
 
@@ -25,7 +25,7 @@ The side-scrolling browser runner for Punk Arcade's CH 05. The `arcade` branch u
 ## Obstacles and scores
 
 - **ACCEPT ALL obstacle:** A low, standalone button curb appears on the beginner route. It has no consent heading, checkbox form, or terms copy; its flat top can be ridden or ground across, and a side impact causes a bail.
-- **Consent popup / terms modal:** Separate hazards appear from tiers 2 and 4. The squat POPUP uses the wide CONSENT barrier art (52 units high); the distinct MODAL remains a tall paper form (102 units high). Neither is the standalone ACCEPT ALL curb, and both have rideable tops.
+- **Consent barrier:** One 100-unit-high obstacle appears across tiers 2–4. The former Terms window is removed; former high-tier spawn slots now use the same Consent barrier. It is separate from the low ACCEPT ALL curb and has a rideable top.
 - **Clause rails:** Fewer rails appear in the route; the first is a safe practice rail, with another later for continued grind practice.
 - **Fine-print gaps:** Jump the black pit (reward currently +8; balance candidate).
 - **Opt Out / Air Boost:** +10 and one-hit protection. They are defensive tokens, not extra jumps.
@@ -56,11 +56,11 @@ The AU skin declares `rail.drawTopFromGround=39`, `rail.drawHeight=40`, and `rai
 
 ## Flat-topped obstacles (v0.2.3)
 
-Fony can land on, skate across, and ollie from ACCEPT, POPUP and MODAL boxes. **Hold** while landing for a grind; **release** to pop off. If the jump is released before landing, the box acts as a rideable platform and the next tap triggers a new ollie. Running into its side still causes a bail. The short Consent popup is a 144-unit platform introduced in tier 2 after the beginner practice rail. The physical contact edge is visibly highlighted on the art. Taller drone hazards and elevated rewards are future encounter work, not yet shipped.
+Fony can land on, skate across, and ollie from ACCEPT and Consent barrier boxes. **Hold** while landing for a grind; **release** to pop off. If the jump is released before landing, the box acts as a rideable platform and the next tap triggers a new ollie. Running into its side still causes a bail. The short Consent popup is a 144-unit platform introduced in tier 2 after the beginner practice rail. The physical contact edge is visibly highlighted on the art. Taller drone hazards and elevated rewards are future encounter work, not yet shipped.
 
 ## v0.2.4: obstacle artwork grounded to the floor
 
-Restored the original **ACCEPT ALL** sprite with no artificial floating lime coping line. The sprite's actual face is the grindable surface. ACCEPT, POPUP, and MODAL art now anchor their visible bottoms to the floor using source-cell measurements: ACCEPT surface 45/base 92/height 72, popup 24/105/94, modal 27/101/130 (source atlas cell height 112). Rail artwork is cropped to remove unrelated debris above its bar; its coping is source y=53, leg tips y=82, render scale height 77, so the legs meet floor Y=300 and the board meets the real bar near Y=280. Physics remains independent of skin loading: placeholder and AU share identical contact geometry.
+Restored the original **ACCEPT ALL** sprite with no artificial floating lime coping line. The sprite's actual face is the grindable surface. Current active obstacle heights are 42 units for ACCEPT and 100 for Consent; both art layers anchor to the sidewalk floor and share their tops with collision geometry. Earlier source-atlas measurements in this log are historical; live geometry is controlled by the active skin. Rail artwork keeps its coping at source y=53 and leg tips at y=82 so its feet meet the sidewalk.
 
 ## November 3 — ZERO / ALGORITHMIC / UPRISING portrait arcade cabinet
 
@@ -76,7 +76,7 @@ The approved ZERO TV mobile frame is **1080×1920 with a transparent screen wind
 
 **GO FASTER is +10% only** (ramped, on/off via SPACE / cabinet A); a long grind earns a separate brief **+7%**. These replace the prior +30%/+18% preview values. The real-game upper camera shows clear consent-versus-token guidance. Phone U uses pointer capture, explicit iOS long-touch default cancellation and shadow-root selection/context-menu prevention so holding U does not select instructions or interrupt a grind. Scope that behavior to the game only; users can still select the rest of the page.
 
-**Consent forms are hazards, not pickups.** Pink POPUP and tall MODAL are now **solid, opaque paper windows** painted by the game with dark outlines and title bars; grounded, flat-topped, skateable/grindable. The original yellow ACCEPT ALL sprite is intentionally unchanged. Descend from above onto the visible top to ride/grind, or avoid/jump over the form. A side impact bails without a shield. If a shield absorbs the hit, the form stays present (marked DENIED) and Fony bounces clear; it is not silently removed. Only floating circular tokens are collectible. Landing checks now sweep the crossing from the previous frame for fairer phone framerates.
+**The Consent barrier is a hazard, not a pickup.** The active 100-unit punk-comic barrier is grounded, flat-topped, and skateable/grindable. The original yellow ACCEPT ALL sprite is intentionally unchanged. Descend from above onto the visible top to ride/grind, or avoid/jump over the form. A side impact bails without a shield. If a shield absorbs the hit, the form stays present (marked DENIED) and Fony bounces clear; it is not silently removed. Only floating circular tokens are collectible. Landing checks now sweep the crossing from the previous frame for fairer phone framerates.
 
 **Accept:** zero scrolling/text-selection on a 1–2s held U; correct 9:16 full-cabinet ratio at 320px/390px, upper screen visibly portrait; no cropped buttons/sprites; same rules inside a CH05 iframe at the Zero TV tablet size; no translucent forms, no mystery disappearances; novice player can deliberately land on the flat top and exit with U release. Visual sign-off remains required on physical iOS/Android.
 
@@ -162,4 +162,4 @@ The chunk set places more ordinary coins and reduces the rail count to two inten
 
 ## November 5 — Separate ACCEPT and consent obstacles
 
-ACCEPT ALL is now a standalone 42-unit-high button curb introduced at tier 1. It contains only the acceptance button. Consent POPUP and MODAL forms remain separate hazards, 52 and 102 units tall, appearing from tiers 2 and 4. The short POPUP uses its own wide CONSENT barrier artwork; the MODAL keeps the separate terms heading and checkbox rows. Neither uses the ACCEPT ALL button art. Each obstacle stays grounded and keeps a rideable, grindable top.
+ACCEPT ALL is a standalone 42-unit-high button curb introduced at tier 1. The single Consent barrier is 100 units tall and appears from tier 2 onward, including at the former high-tier Terms locations. No separate Terms obstacle remains. The two obstacle types keep distinct artwork, grounded collision tops, and rideable/grindable surfaces.

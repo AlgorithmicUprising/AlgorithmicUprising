@@ -191,7 +191,7 @@ test('seamless rail cap top matches skater contact and end legs touch pavement',
  expect(result.bar[3]).toBe(255);
 });
 
-test('all original hazard art bottoms align with floor and surface matches sprite top',async({page})=>{
+test('active obstacle art aligns with floor and surface height',async({page})=>{
   await page.goto('/demo/');
   const data=await page.evaluate(async()=>{
     const url='../games/grind-the-terms/skins/au/skin.json';
@@ -205,7 +205,7 @@ test('all original hazard art bottoms align with floor and surface matches sprit
       return [kind,{visibleTop,visibleBottom}];
     }));
   });
-  for(const kind of ['rail','accept','popup','modal']){
+  for(const kind of ['rail','accept','popup']){
     expect(data[kind].visibleBottom).toBeCloseTo(310,5);
     expect(data[kind].visibleTop).toBeLessThan(310);
   }
@@ -213,6 +213,7 @@ test('all original hazard art bottoms align with floor and surface matches sprit
   expect(data.rail.visibleTop).toBeLessThan(292);
   expect(data.accept.visibleTop).toBeGreaterThan(267);
   expect(data.accept.visibleTop).toBeLessThan(269);
+  expect(data.popup.visibleTop).toBeCloseTo(210,0);
 });
 test('clean ACCEPT ALL sprite body is grounded with no detached green guide',async({page})=>{
  await page.goto('/demo/');
@@ -327,7 +328,7 @@ test('desktop SPACE performs an aerial trick without changing ground speed',asyn
  expect(result.trick.runSpeed).toBe(result.trick.normalSpeed);
 });
 
-test('consent forms render the approved illustrated panels as grounded obstacles',async({page},info)=>{
+test('the 100-unit Consent barrier renders its approved artwork',async({page},info)=>{
  test.skip(info.project.name.startsWith('mobile'),'Representative desktop art fixture');
  await page.goto('/demo/');
  const el=page.locator('grind-the-terms');
@@ -340,9 +341,8 @@ test('consent forms render the approved illustrated panels as grounded obstacles
    e.game.start();e.game.draw(ctx,c.width,c.height);ctx.drawImage=draw;
    return seen;
  });
- expect(sources).toContain('terms_consent_barrier_v2.webp');
- expect(sources).toContain('terms_consent_modal_v1.webp');
- await el.locator('canvas').screenshot({path:'test-results/screenshots/consent-illustrations-desktop.png'});
+ expect(sources).toContain('terms_consent_barrier_v3.webp');
+ await el.locator('canvas').screenshot({path:'test-results/screenshots/consent-barrier-desktop.png'});
 });
 
 test('approved layered WebP scenery is cached and rendered across the scene',async({page})=>{

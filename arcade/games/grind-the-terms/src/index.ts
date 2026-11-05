@@ -2,7 +2,7 @@ import { defineArcade, type GameAPI } from '../../../core/src/engine';
 import chunksData from './chunks.json';
 
 // Grind the Terms v0.2 preview: mechanics separated from the AU-only skin assets.
-type HazardKind = 'accept' | 'popup' | 'modal' | 'gap' | 'rail' | 'token';
+type HazardKind = 'accept' | 'popup' | 'gap' | 'rail' | 'token';
 type Power = 'coin' | 'shield' | 'airboost' | 'trick2' | 'rocket';
 type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power;pickupY?:number}> };
 type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; pickupY?:number; scored:boolean; collected:boolean; deflected:boolean };
@@ -54,8 +54,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const surfaces={
     rail:   {top:53,bottom:82,height:77},   // metal coping / feet
     accept: {top:0,bottom:112,height:42},   // low, standalone ACCEPT block sprite
-    popup:  {top:0,bottom:112,height:52},   // short consent barrier, still above the ACCEPT curb
-    modal:  {top:0,bottom:112,height:102}  // tallest consent form
+    popup:  {top:0,bottom:112,height:100}  // single 100-unit Consent barrier
   } as const;
   type SurfaceKind=keyof typeof surfaces;
   const surfaceSpec=(kind:SurfaceKind)=>surfaces[kind];
@@ -69,7 +68,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const railSurfaceY=()=>surfaceTopY('rail');
   const flatTopY=(kind:HazardKind)=>
-    kind==='accept'||kind==='popup'||kind==='modal'?surfaceTopY(kind):ground;
+    kind==='accept'||kind==='popup'?surfaceTopY(kind):ground;
   const surfaceY=(o:Obstacle)=>o.kind==='rail'?railSurfaceY():flatTopY(o.kind);
   const overlaps=(o:Obstacle)=>o.x<playerX+16&&o.x+o.w>playerX-16;
   const state=(animation:Anim)=>{if(currentAnim!==animation){currentAnim=animation;stateTime=0}};
@@ -255,7 +254,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         if(boardY>ground-10)handleCollision(o);
         continue;
       }
-      // ACCEPT, POPUP and MODAL all have flat, skatable tops.
+      // ACCEPT and Consent barriers have flat, skatable tops.
       // Catch descending from above; hitting the vertical side still bails.
       const top=flatTopY(o.kind);
       if(!support&&vy>=0&&lastBoardY<=top+12&&boardY>=top-10&&boardY<=top+Math.max(26,Math.abs(vy)*dt+12)){
@@ -282,7 +281,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       if(o.kind==='token'||o.kind==='rail'||o.scored||o.collected)continue;
       if(o.x+o.w<playerX-15){
         o.scored=true;hazardsCleared++;
-        const base=o.kind==='modal'?10:o.kind==='popup'?5:o.kind==='gap'?8:3;
+        const base=o.kind==='popup'?5:o.kind==='gap'?8:3;
         comboBonus(base);
         const nearTarget=o.kind==='gap'?ground-30:surfaceY(o);
         const near=Math.abs(boardY-nearTarget)<10;
@@ -466,34 +465,24 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     ctx.restore();
   };
   const drawConsent=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
-    const modal=o.kind==='modal',top=flatTopY(o.kind),x=o.x,w=o.w,h=ground-top;
-    const panel=art?.images[modal?'consentModal':'consentPopup'];
+    const top=flatTopY(o.kind),x=o.x,w=o.w,h=ground-top;
+    const panel=art?.images.consentPopup;
     ctx.save();ctx.lineJoin='round';
     if(panel)ctx.drawImage(panel,x-4,top-3,w+8,h+3);
     else{
       ctx.fillStyle='#0e0b14';ctx.beginPath();ctx.roundRect(x-4,top-3,w+8,h+3,6);ctx.fill();
       ctx.fillStyle='#f6efe2';ctx.beginPath();ctx.roundRect(x,top,w,h,3);ctx.fill();
       ctx.fillStyle='#d72c80';ctx.fillRect(x,top,w,22);
-    }
-    // The short Consent barrier has its own lettering; keep the full form overlay on the separate modal.
-    if(!panel||modal){
-      ctx.fillStyle=panel?'#f6efe2':'#15111b';ctx.font='bold 11px monospace';
-      ctx.textBaseline='alphabetic';ctx.textAlign='left';
-      ctx.fillText(modal?'TERMS / DATA':'CONSENT TO ALL',x+7,top+15,Math.max(34,w-14));
-      if(!panel){
-        ctx.fillStyle='#1a1621';ctx.fillRect(x+w-17,top+4,12,13);
-        ctx.fillStyle='#f7e7ef';ctx.font='bold 10px monospace';ctx.fillText('×',x+w-15,top+14);
-      }
+      ctx.fillStyle='#15111b';ctx.font='bold 11px monospace';
+      ctx.textBaseline='alphabetic';ctx.textAlign='left';ctx.fillText('CONSENT',x+7,top+15,Math.max(34,w-14));
       ctx.font='9px monospace';ctx.fillStyle='#231b2c';
-      const rows=modal?4:2;
-      for(let i=0;i<rows;i++){
-        const rowY=top+32+i*(modal?15:18);
-        if(rowY>ground-10)break;
+      for(let i=0;i<2;i++){
+        const rowY=top+32+i*18;
         ctx.strokeStyle='#221a26';ctx.lineWidth=1.6;ctx.strokeRect(x+8,rowY-8,9,9);
-        ctx.fillText(['Share my data','Track activity','Personalize ads','Agree to all'][i],x+22,rowY,Math.max(20,w-27));
+        ctx.fillText(['Share my data','Track activity'][i],x+22,rowY,Math.max(20,w-27));
       }
+      ctx.strokeStyle='#15121a';ctx.lineWidth=2;ctx.strokeRect(x,top,w,h);
     }
-    if(!panel){ctx.strokeStyle='#15121a';ctx.lineWidth=2;ctx.strokeRect(x,top,w,h)}
     if(o.deflected){
       ctx.fillStyle='#171119';ctx.fillRect(x+3,top+25,w-6,19);
       ctx.fillStyle='#d7ff00';ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.fillText('DENIED!',x+w/2,top+39);
@@ -551,7 +540,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     switch(o.kind){
       case 'rail':drawRail(ctx,o);break;
       case 'accept':drawAccept(ctx,o);break;
-      case 'popup':case 'modal':drawConsent(ctx,o);break;
+      case 'popup':drawConsent(ctx,o);break;
       case 'token':drawToken(ctx,o);break;
       case 'gap':drawLoophole(ctx,o);break;
     }
@@ -648,10 +637,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     for(const o of objects)drawObstacle(ctx,o);
     // This opt-in developer-only visual fixture uses the production renderer.
     // It is not part of gameplay, and is never displayed without the QA attr.
-    if(host.hasAttribute('data-qa-consent')){
-      for(const [kind,x,width] of [['popup',225,144],['modal',405,154]] as const)
-        drawObstacle(ctx,{kind,x,w:width,scored:false,collected:false,deflected:false});
-    }
+    if(host.hasAttribute('data-qa-consent'))
+      drawObstacle(ctx,{kind:'popup',x:225,w:144,scored:false,collected:false,deflected:false});
     // QA fixtures exercise production geometry (not simplified test drawings).
     if(host.hasAttribute('data-qa-rail-size')){
       const w=Number(host.getAttribute('data-qa-rail-size'))||70;
@@ -704,7 +691,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(visualFlash>0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
     ctx.restore();
   };
-  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,longestCombo,shieldsUsed,runSpeed:Math.round(speed()),normalSpeed:Math.round(normalSpeed()),speedMultiplier:rocketBoostLeft>0?2:1,tricksUsed,trickLimit:trickLimit(),trick2Unlocked,trickAvailable:!support&&!grinding&&lastSurface==='air'&&boardY<ground-1&&tricksUsed<trickLimit(),sprayCans,rocketBoostLeft:Math.round(rocketBoostLeft*100)/100,grindBoostLeft:Math.round(grindBoostLeft*100)/100,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null}});
+  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,longestCombo,shieldsUsed,runSpeed:Math.round(speed()),normalSpeed:Math.round(normalSpeed()),speedMultiplier:rocketBoostLeft>0?2:1,tricksUsed,trickLimit:trickLimit(),trick2Unlocked,trickAvailable:!support&&!grinding&&lastSurface==='air'&&boardY<ground-1&&tricksUsed<trickLimit(),sprayCans,rocketBoostLeft:Math.round(rocketBoostLeft*100)/100,grindBoostLeft:Math.round(grindBoostLeft*100)/100,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null}});
   reset();
   return {start:reset,input,update,draw,score,over:()=>!alive&&bailRemaining===0,result,setSkin} satisfies GameAPI;
 });
