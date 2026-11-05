@@ -310,6 +310,8 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  await page.goto('/demo/');
  const el=page.locator('grind-the-terms');
  await el.locator('button[part=start]').click();
+ await el.focus();
+ await expect(el).toBeFocused();
  await page.keyboard.press('Space');
  expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(true);
  expect(await el.evaluate(x=>x.game.result().stats.jumpCount)).toBe(0);
