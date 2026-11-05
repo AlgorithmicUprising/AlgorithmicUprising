@@ -692,7 +692,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#D7FF00';ctx.fillText('BEST '+(host as any).best,485,27);
       ctx.fillStyle=rocketBoostLeft>0||grindBoostLeft>0?'#D7FF00':'#aaa1b3';
       ctx.fillText('TRICK '+tricksUsed+'/'+trickLimit()+'  CANS '+sprayCans+(rocketBoostLeft>0?'  x2':'') ,307,47);
-      ctx.fillText((shield?'[SHIELD] ':'')+(trick2Unlocked?'[COMBO +1]':'[TRICK UPGRADE 80]'),430,47);
+      ctx.font='bold 9px monospace';
+      ctx.fillText((shield?'[SHIELD] ':'')+(trick2Unlocked?'[COMBO +1]':'[UPGRADE 80]'),508,47);
       ctx.fillStyle='#E0287A';ctx.font='bold 10px monospace';
       if(grinding)ctx.fillText('GRINDING THE FINE PRINT — RELEASE U TO POP!',170,65);
       else ctx.fillText('U / ↑: OLLIE + HOLD GRIND  •  SPACE / A: TRICK  •  R: ROCKET',12,65);
