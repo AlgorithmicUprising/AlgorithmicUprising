@@ -9,7 +9,7 @@ export class TagRenderer{
  private sprite(ctx:CanvasRenderingContext2D,name:string,x:number,y:number,w:number,h=w,rotation=0,alpha=1){return this.art.draw(ctx,name,x,y,w,h,rotation,alpha)}
  render(ctx:CanvasRenderingContext2D,w:number,h:number,g:TagGame){
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#100d16';ctx.fillRect(0,0,w,h);
-  const portrait=w/h<1,viewW=portrait?360:640,viewH=portrait?520:360,scale=Math.min(w/viewW,h/viewH),ox=(w-viewW*scale)/2,oy=(h-viewH*scale)/2;
+  const portrait=w/h<1,viewH=portrait?520:360,viewW=portrait?viewH*w/h:640,scale=portrait?h/viewH:Math.min(w/viewW,h/viewH),ox=portrait?0:(w-viewW*scale)/2,oy=portrait?0:(h-viewH*scale)/2;
   const desiredX=Math.max(0,Math.min(WORLD.w-viewW,g.x-viewW/2)),desiredY=Math.max(0,Math.min(WORLD.h-viewH,g.y-viewH/2));
   if(!Number.isFinite(this.camX)){this.camX=desiredX;this.camY=desiredY}
   // A small dead zone keeps the skater stable without hiding nearby wall faces.
