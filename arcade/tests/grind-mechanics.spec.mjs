@@ -222,7 +222,7 @@ test('clean ACCEPT ALL sprite body is grounded with no detached green guide',asy
   el.setAttribute('data-qa-accept','');
   const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
   el.game.start();el.game.draw(ctx,c.width,c.height);
-  const portrait=c.width/c.height<1.05,k=portrait?c.width/450:Math.min(c.width/640,c.height/360),dx=portrait?-35*k:(c.width-640*k)/2,dy=portrait?c.height-350*k:(c.height-360*k)/2;
+  const portrait=c.width/c.height<1.05,k=portrait?Math.min(c.width/450,c.height/350):Math.min(c.width/640,c.height/360),dx=portrait?(c.width-450*k)/2-35*k:(c.width-640*k)/2,dy=portrait?c.height-350*k:(c.height-360*k)/2;
   const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
   const buttonX=portrait?379:344;
   return {button:sample(buttonX,280),above:sample(buttonX,252),floor:sample(buttonX,299)};
