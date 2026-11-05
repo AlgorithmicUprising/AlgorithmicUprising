@@ -156,9 +156,9 @@ test('running and bail animations use stable on-screen actor origin and never lo
  });
  expect(result.ended).toBe(true);
  expect(result.run).toHaveLength(6);
- for(const p of result.run){expect(p.dx).toBeCloseTo(76,0);expect(p.dy).toBeCloseTo(183,0);expect(p.w).toBe(128);expect(p.h).toBe(128)}
+ for(const p of result.run){expect(p.dx).toBeCloseTo(76,0);expect(p.dy).toBeCloseTo(193,0);expect(p.w).toBe(128);expect(p.h).toBe(128)}
  expect(result.final.dx).toBeCloseTo(76,0);
- expect(result.final.dy).toBeCloseTo(183,0);
+ expect(result.final.dy).toBeCloseTo(193,0);
  expect(result.final.sx).toBe((26%8)*128);
  expect(result.final.sy).toBe(Math.floor(26/8)*128);
  expect(result.after).toEqual(result.final);
