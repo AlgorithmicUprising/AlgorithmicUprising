@@ -118,7 +118,7 @@ test('320px phone width keeps the Ø A U controls usable',async({page},info)=>{
  }
 });
 
-test('mobile A performs an aerial trick and Ø spends a collected spray can',async({page},info)=>{
+test('mobile A performs an aerial trick and Ø boosts while held',async({page},info)=>{
  test.skip(!info.project.name.startsWith('mobile'),'Mobile cabinet only');
  await page.goto(standalone);
  const game=page.locator('grind-the-terms');
@@ -135,11 +135,18 @@ test('mobile A performs an aerial trick and Ø spends a collected spray can',asy
  expect(trick.tricksUsed).toBe(1);
  expect(trick.speedMultiplier).toBe(1);
  expect(trick.runSpeed).toBe(trick.normalSpeed);
- await zero.click();
- const rocket=await game.evaluate(el=>el.game.result().stats);
- expect(rocket.sprayCans).toBe(0);
- expect(rocket.speedMultiplier).toBe(2);
- expect(rocket.rocketBoostLeft).toBeGreaterThan(1.1);
+ const charge=trick.sprayGauge;
+ await zero.dispatchEvent('pointerdown',{pointerId:3});
+ await game.evaluate(el=>el.game.update(.1));
+ const boosted=await game.evaluate(el=>el.game.result().stats);
+ expect(boosted.boostHeld).toBe(true);
+ expect(boosted.boostActive).toBe(true);
+ expect(boosted.speedMultiplier).toBe(2);
+ expect(boosted.sprayGauge).toBeLessThan(charge);
+ await zero.dispatchEvent('pointerup',{pointerId:3});
+ const released=await game.evaluate(el=>el.game.result().stats);
+ expect(released.boostActive).toBe(false);
+ expect(released.speedMultiplier).toBe(1);
 });
 
 test('iPhone long U hold cannot select text or open a context menu',async({page},info)=>{
