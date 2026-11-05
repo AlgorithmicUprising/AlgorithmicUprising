@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-and-browser-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: arcade
@@ -27,7 +27,7 @@ jobs:
       - run: npm run check
       - run: npm test
       - name: Install test browsers
-        timeout-minutes: 10
+        timeout-minutes: 20
         run: npx playwright install --with-deps chromium webkit
       - run: npm run e2e
       - uses: actions/upload-artifact@v4
@@ -79,4 +79,3 @@ jobs:
           path: arcade/.pages
       - id: deployment
         uses: actions/deploy-pages@v4
-
