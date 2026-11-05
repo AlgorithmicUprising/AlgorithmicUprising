@@ -1,35 +1,38 @@
-# Grind the Terms · Fony Sprock (v0.9.3 single Consent barrier)
+# Grind the Terms · Fony Sprock (v0.10 · held boost + courier combo)
 
 > Nobody reads them. Skate them.
 
-The side-scrolling browser runner for Punk Arcade's CH 05. The `arcade` branch uses the approved Fony atlas and punk-comic city art, with a standalone low ACCEPT ALL curb and separate taller consent-form hazards. Desktop stays 16:9; mobile keeps the portrait tablet layout for the ZERO GAME THING player. Gameplay and collision rules remain independent of the image layers.
+The side-scrolling runner for Punk Arcade's CH 05. The `arcade` branch uses the approved Fony atlas and punk-comic city art. Desktop uses a 16:9 playfield; mobile runs inside the Zero Game Thing tablet layout with independent touch controls.
 
-## Current controls and rules (v0.9)
+## Current controls and rules
 
-| Move | Desktop | ZERO GAME THING tablet / touch | Gamepad |
+| Move | Desktop | Zero Game Thing tablet / touch | Gamepad |
 | --- | --- | --- | --- |
 | Ollie / hold to grind | ↑ / W / U | Hold U | A |
 | Pop off a grind | Release ↑ / W / U | Release U | Release A |
 | Trick | SPACE or A | A button | B |
-| Spray-can rocket | R | Ø button | X |
+| Spray boost | Hold R | Hold Ø | Hold X |
 | Pause / resume | P / Esc or pause button | Pause / Resume buttons | — |
 
-**Grind:** Press U / ↑ / W for one ollie. Hold it as Fony descends to catch a rail or obstacle top, then release to pop off. During the grind, both feet stay on the board. The pop animation ends before atlas pose 34, which has a rail embedded in its art. A tap on the game canvas does not jump, and jump input never triggers a double jump.
+**Grind:** Press U / ↑ / W for one ollie. Hold it as Fony descends to catch a rail, obstacle top, or delivery-drone deck; release to pop. Both feet stay on the board while grinding.
 
-**Tricks:** SPACE / desktop A / tablet A performs one trick during an airtime, including after an ollie or a grind pop. It cannot be used while supported or grinding. Trick height is fixed so tricks do not replace the ollie. Score improves the trick name and points: Kickflip (+2), Heelflip (+4) from 50 clauses, and 360 Flip (+6) from 125 clauses. At 80 clauses a glowing trick token appears; collecting it unlocks one extra trick before the next landing. That second combo has a more complex animation and doubles the trick points. Landing resets the airtime trick count; the upgrade stays unlocked for the run.
+**Boost gauge:** The three-segment spray gauge replaces the can counter. A full gauge equals three current cans: 11.25 seconds at 2× speed if no charge is earned while boosting. Hold R / Ø / X to drain it; release to pause the drain. Boost works during jumps, grinds, and tricks. Grinding adds 0.6% per second; successful tricks add 1.5–2.5% based on chain length. While boost is held, those gains are quarter-rate so the gauge still drains. A collected spray-can pickup adds one segment. When empty, release and press again after recharging; it will not restart by itself.
 
-**Coins and upgrades:** Ground pickups can be collected by rolling through them. Other coins and powerups sit in jump arcs, and a few align with obstacle tops to reward deliberate platform landings. High lines require an ollie. Coins add 10 points. The 80-clause trick token adds the second trick. Spray-can pickups begin at 160 clauses and recur at 120-clause intervals, up to three cans carried.
+**Tricks and combo:** A successful jump starts a chain at x1. Each successful trick, grind attach, and controlled grind pop advances it once. The action's points use the new xN multiplier; simply passing a hazard does not increase the chain. A chain expires after 1.5 seconds without an action, stays alive during a grind, and banks/reset on landing on the sidewalk or bailing. The 80-clause trick token unlocks a second trick per airtime; it stays unlocked for the run. A successful delivery-drone grind and pop resets the used-trick count to the full unlocked allowance without breaking the combo. For example, after the upgrade: **Jump x1 → Trick x2 → Trick x3 → Grind x4 → Drone pop x5 → Trick x6 → Trick x7.** Stationary rails extend the chain but do not refresh tricks.
 
-**Spray-can rocket:** R / Ø uses one collected can for exactly 2× the current normal speed for 3.75 seconds. Each additional can adds another 3.75 seconds, up to 11.25 seconds total with three cans. Rocket boost cannot be activated during a grind; a can stays in inventory until used. A long grind still builds a separate brief +7% momentum bonus.
+**Delivery drones:** Drones enter the route only after Fony has safely cleared each stationary family in the current run: rail, ACCEPT, Consent barrier, and gap. The first arrives beyond the next chunk boundary, without a hazard stacked beside it. Each courier carries a separate glowing coin that can be collected by passing through it. Its top deck is a moving grind lane; a side impact uses the usual obstacle response. Once introduced, couriers recur at spaced intervals.
+
+**Coins and upgrades:** Ground pickups can be collected by rolling through them. Other coins and powerups sit in jump arcs, and a few align with obstacle tops to reward deliberate platform landings. Coins add 10 points. The 80-clause trick token adds the second trick. Spray-can pickups add one gauge segment.
 
 ## Obstacles and scores
 
-- **ACCEPT ALL obstacle:** A low, standalone button curb appears on the beginner route. It has no consent heading, checkbox form, or terms copy; its flat top can be ridden or ground across, and a side impact causes a bail.
-- **Consent barrier:** One 100-unit-high obstacle appears across tiers 2–4. The former Terms window is removed; former high-tier spawn slots now use the same Consent barrier. It is separate from the low ACCEPT ALL curb and has a rideable top.
-- **Clause rails:** Fewer rails appear in the route; the first is a safe practice rail, with another later for continued grind practice.
+- **ACCEPT ALL obstacle:** A low, standalone button curb; no consent heading, checkbox form, or Terms copy. Its top is rideable/grindable, and a side impact causes a bail.
+- **Consent barrier:** One 100-unit-high obstacle. It is separate from the low ACCEPT curb and has a rideable top.
+- **Clause rails:** Two intentional practice rails.
+- **Delivery drone:** A moving obstacle with a visible grind deck and a separate pickup coin. Its arrival is gated on clearing the four stationary obstacle families.
 - **Fine-print gaps:** Jump the black pit (reward currently +8; balance candidate).
 - **Opt Out / Air Boost:** +10 and one-hit protection. They are defensive tokens, not extra jumps.
-- **Ordinary coins:** Bright sidewalk-height pickups are placed in trails and gaps between hazards to reward rolling through the line.
+- **Ordinary coins:** Sidewalk and airborne lines reward different routes through the hazards.
 
 ## Build and embed
 
@@ -56,7 +59,7 @@ The AU skin declares `rail.drawTopFromGround=39`, `rail.drawHeight=40`, and `rai
 
 ## Flat-topped obstacles (v0.2.3)
 
-Fony can land on, skate across, and ollie from ACCEPT and Consent barrier boxes. **Hold** while landing for a grind; **release** to pop off. If the jump is released before landing, the box acts as a rideable platform and the next tap triggers a new ollie. Running into its side still causes a bail. The short Consent popup is a 144-unit platform introduced in tier 2 after the beginner practice rail. The physical contact edge is visibly highlighted on the art. Taller drone hazards and elevated rewards are future encounter work, not yet shipped.
+Fony can land on, skate across, and ollie from ACCEPT and Consent barrier boxes. **Hold** while landing for a grind; **release** to pop off. If the jump is released before landing, the box acts as a rideable platform and the next tap triggers a new ollie. Running into its side still causes a bail. The short Consent popup is a 144-unit platform introduced in tier 2 after the beginner practice rail. The physical contact edge is visibly highlighted on the art. That earlier note predates the v0.10 delivery drone and no longer describes the current route.
 
 ## v0.2.4: obstacle artwork grounded to the floor
 
@@ -154,11 +157,11 @@ User approved the overall cloud silhouette, then requested slightly greater dens
 The user approved the cream/mauve cut-paper PNG created from the existing background cloud style. The game now uses the actual approved artwork, resized and quantized to a lightweight 1024×253 indexed-alpha PNG (`terms_papercut_cloudbank_v12.png`), rather than the old translucent SVG strips. The asset includes its own three-dimensional paper-cut shadow layers. Legal microtext is stamped into the cloud raster once at load using `source-atop`, not drawn per frame. The cloud draws at full opacity, in one parallax plane, and the source-to-world scaling supports 1024-pixel assets in the existing 1280-unit tiler. On phones the nearest upper cloud contour is geometrically hidden behind the 98-unit opaque HUD; desktop contour is likewise hidden behind the 71-unit HUD. The lower scalloped cloud bank remains above the data-center skyline, with chimney smoke retained. Road, skater, controls, and speeds are unchanged.
 
 
-## November 5 — v0.9 tricks, pickups, and consent readability
+## November 5 — v0.10 held boost, action combos, and delivery drones
 
-The 2× input is now a trick button; it no longer changes ground speed. U / ↑ / W remains a single ollie and hold-to-grind input. Score tiers improve trick names and points, and the 80-clause upgrade token unlocks a second combo trick. Spray-can pickups power a separate R / Ø rocket burst at exactly 2× speed. Ground-lane pickup collisions now allow coins and upgrades to be collected by skating through them without a jump.
+The spray-can inventory is now a three-segment hold-to-boost gauge. Full capacity remains equal to three prior cans (11.25 seconds at 2× before recharge). Grind time and successful tricks refill it gradually; can pickups add one segment. Independent input sources let Ø stay held while U and A are used on the Zero Game Thing tablet.
 
-The chunk set places more ordinary coins and reduces the rail count to two intentional practice rails. An earlier v0.9 pass combined ACCEPT with a broad “CONSENT TO ALL” block; the Nov 5 obstacle separation below supersedes that presentation. Fony, pickup centers, obstacles, and the board baseline share the sidewalk lane.
+Combos now advance on jumps, tricks, grind attaches, and controlled pops. Hazard passage can score against the active multiplier without incrementing it. A delivery drone carries a pass-through coin and a grindable deck. Its successful grind-pop resets the available tricks while preserving the combo. Drones stay locked until the run safely clears rails, ACCEPT, Consent, and a gap.
 
 ## November 5 — Separate ACCEPT and consent obstacles
 
