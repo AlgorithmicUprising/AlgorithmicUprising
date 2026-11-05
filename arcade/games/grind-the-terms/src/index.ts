@@ -22,7 +22,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   let boardY=ground, lastBoardY=ground, vy=0, elapsed=0, distance=0;
   let bonus=0, extraClauses=0, grindDistance=0, totalGrindDistance=0, grindMs=0;
   let alive=true, bailRemaining=0, cause='accept', held=false, grinding=false;
-  // A supporting surface may be a rail or a flat-topped consent box.
+  // Rails, low Accept buttons, and taller consent forms are separate surfaces.
   let support:Obstacle|null=null,platformLandings=0,platformGrinds=0;
   let jumpCount=0,tricksUsed=0,trick2Unlocked=false,airBoost=false,shield=false,shieldsUsed=0,sprayCans=0,hazardsCleared=0;
   let bufferLeft=0, coyoteLeft=0, stateTime=0, landTimer=0;
@@ -53,9 +53,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const sourceCellHeight=112;
   const surfaces={
     rail:   {top:53,bottom:82,height:77},   // metal coping / feet
-    accept: {top:4,bottom:94,height:92},   // larger sidewalk block with a visible CONSENT TO ALL button
-    popup:  {top:24,bottom:105,height:94},  // pink window frame / bottom
-    modal:  {top:27,bottom:101,height:130}  // tall agreement panel / bottom
+    accept: {top:0,bottom:112,height:42},   // low, standalone ACCEPT curb
+    popup:  {top:0,bottom:112,height:82},   // taller consent form
+    modal:  {top:0,bottom:112,height:102}  // tallest consent form
   } as const;
   type SurfaceKind=keyof typeof surfaces;
   const surfaceSpec=(kind:SurfaceKind)=>surfaces[kind];
@@ -190,7 +190,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const emitChunk=()=>{
     const choices=chunks.filter(c=>c.tier<=tier()&&(!firstChunk||c.id==='intro-rails')&&c.id!==lastChunkId);
     const list=choices.length?choices:chunks.filter(c=>c.tier<=tier()&&(!firstChunk||c.id==='intro-rails'));
-    // A wide first consent box always follows the opening practice rail.
+    // The first low ACCEPT button follows the opening practice rail.
     const picked=lastChunkId==='intro-rails'?(chunks.find(c=>c.id==='intro-accept')||list[0]):list[Math.floor(rng()*list.length)];
     if(!picked)return;
     firstChunk=false;lastChunkId=picked.id;
@@ -282,7 +282,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         o.scored=true;hazardsCleared++;
         const base=o.kind==='modal'?10:o.kind==='popup'?5:o.kind==='gap'?8:3;
         comboBonus(base);
-        const near=Math.abs(boardY-(ground-(o.kind==='modal'?98:o.kind==='popup'?62:30)))<10;
+        const nearTarget=o.kind==='gap'?ground-30:surfaceY(o);
+        const near=Math.abs(boardY-nearTarget)<10;
         if(near){bonus+=1;emit('game:near-miss',{score:score()})}
       }
     }
@@ -439,61 +440,55 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const drawAccept=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
     const top=flatTopY('accept'),x=o.x,w=o.w,h=ground-top;
+    const buttonW=Math.min(w-16,Math.max(72,(h-8)*3.25));
+    const buttonH=buttonW/3.25,buttonX=x+(w-buttonW)/2,buttonY=ground-buttonH-4;
     ctx.save();ctx.lineJoin='round';
-    // A broad paper consent block reads at speed; the green button is its grindable front.
+    // A short curb and one button form the whole ACCEPT obstacle.
     ctx.fillStyle='rgba(10,8,16,.55)';ctx.beginPath();ctx.ellipse(x+w/2,ground-1,w*.48,4,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#0c0a11';ctx.beginPath();ctx.roundRect(x-4,top-3,w+8,h+5,8);ctx.fill();
-    ctx.fillStyle='#EDEAE0';ctx.beginPath();ctx.roundRect(x,top,w,h,5);ctx.fill();
-    ctx.fillStyle='#E0287A';ctx.beginPath();ctx.roundRect(x,top,w,23,5);ctx.fill();
-    ctx.fillStyle='#140f18';ctx.font='bold 12px monospace';ctx.textAlign='left';ctx.textBaseline='middle';
-    ctx.fillText('CONSENT TO ALL',x+8,top+13,Math.max(42,w-16));
-    ctx.fillStyle='#33283a';ctx.font='bold 8px monospace';ctx.fillText('TERMS • DATA • EVERYTHING',x+8,top+32,Math.max(38,w-16));
+    ctx.fillStyle='#0c0a11';ctx.beginPath();ctx.roundRect(x-3,top-2,w+6,h+4,7);ctx.fill();
+    ctx.fillStyle='#EDEAE0';ctx.beginPath();ctx.roundRect(x,top,w,h,4);ctx.fill();
+    ctx.fillStyle='#E0287A';ctx.fillRect(x+5,top+3,w-10,3);
     const button=art?.images.acceptButton;
-    const buttonW=w-14,buttonH=buttonW/3.25,buttonX=x+7,buttonY=ground-buttonH-2;
     if(button)ctx.drawImage(button,buttonX,buttonY,buttonW,buttonH);
     else{
-      ctx.fillStyle='#D7FF00';ctx.beginPath();ctx.roundRect(buttonX,buttonY,buttonW,buttonH,8);ctx.fill();
+      ctx.fillStyle='#D7FF00';ctx.beginPath();ctx.roundRect(buttonX,buttonY,buttonW,buttonH,7);ctx.fill();
       ctx.strokeStyle='#151216';ctx.lineWidth=3;ctx.stroke();
       ctx.fillStyle='#151216';ctx.beginPath();ctx.arc(buttonX+buttonH/2,buttonY+buttonH/2,buttonH*.23,0,Math.PI*2);ctx.fill();
     }
-    ctx.fillStyle='#151216';ctx.font='bold 10px monospace';ctx.textAlign='center';
+    ctx.fillStyle='#151216';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('ACCEPT ALL',buttonX+buttonW*.61,buttonY+buttonH/2+1,buttonW*.65);
-    ctx.fillStyle='#17121b';ctx.fillRect(x+12,ground-5,10,5);ctx.fillRect(x+w-23,ground-5,10,5);
+    ctx.fillStyle='#17121b';ctx.fillRect(x+12,ground-4,10,4);ctx.fillRect(x+w-22,ground-4,10,4);
     ctx.restore();
   };
   const drawConsent=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
     const modal=o.kind==='modal',top=flatTopY(o.kind),x=o.x,w=o.w,h=ground-top;
     const panel=art?.images[modal?'consentModal':'consentPopup'];
-    ctx.save();
+    ctx.save();ctx.lineJoin='round';
     if(panel)ctx.drawImage(panel,x-4,top-3,w+8,h+3);
     else{
-      ctx.fillStyle='#0e0b14';ctx.fillRect(x-4,top-3,w+8,h+3);
-      ctx.fillStyle='#f6efe2';ctx.fillRect(x,top,w,h);
+      ctx.fillStyle='#0e0b14';ctx.beginPath();ctx.roundRect(x-4,top-3,w+8,h+3,6);ctx.fill();
+      ctx.fillStyle='#f6efe2';ctx.beginPath();ctx.roundRect(x,top,w,h,3);ctx.fill();
       ctx.fillStyle='#d72c80';ctx.fillRect(x,top,w,22);
     }
     ctx.fillStyle=panel?'#f6efe2':'#15111b';ctx.font='bold 11px monospace';
+    ctx.textBaseline='alphabetic';ctx.textAlign='left';
     ctx.fillText(modal?'TERMS / DATA':'CONSENT TO ALL',x+7,top+15,Math.max(34,w-14));
     if(!panel){
       ctx.fillStyle='#1a1621';ctx.fillRect(x+w-17,top+4,12,13);
       ctx.fillStyle='#f7e7ef';ctx.font='bold 10px monospace';ctx.fillText('×',x+w-15,top+14);
     }
     ctx.font='9px monospace';ctx.fillStyle='#231b2c';
-    for(let i=0;i<(modal?4:2);i++){
-      const rowY=top+34+i*15;
-      if(rowY>ground-29)break;
+    const rows=modal?4:2;
+    for(let i=0;i<rows;i++){
+      const rowY=top+32+i*(modal?15:18);
+      if(rowY>ground-10)break;
       ctx.strokeStyle='#221a26';ctx.lineWidth=1.6;ctx.strokeRect(x+8,rowY-8,9,9);
       ctx.fillText(['Share my data','Track activity','Personalize ads','Agree to all'][i],x+22,rowY,Math.max(20,w-27));
     }
-    if(!panel){
-      ctx.fillStyle='#1d1728';ctx.fillRect(x+7,ground-22,w-14,17);
-      ctx.fillStyle='#e0287a';ctx.fillRect(x+9,ground-20,w-18,13);
-    }
-    ctx.fillStyle='#130d1b';ctx.font='bold 10px monospace';
-    ctx.textAlign='center';ctx.fillText(modal?'I AGREE':'ACCEPT ALL',x+w/2,ground-11,Math.max(36,w-14));
     if(!panel){ctx.strokeStyle='#15121a';ctx.lineWidth=2;ctx.strokeRect(x,top,w,h)}
     if(o.deflected){
       ctx.fillStyle='#171119';ctx.fillRect(x+3,top+25,w-6,19);
-      ctx.fillStyle='#d7ff00';ctx.font='bold 12px monospace';ctx.fillText('DENIED!',x+w/2,top+39);
+      ctx.fillStyle='#d7ff00';ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.fillText('DENIED!',x+w/2,top+39);
     }
     ctx.restore();
   };
@@ -657,7 +652,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(host.hasAttribute('data-qa-accept'))
       drawAccept(ctx,{kind:'accept',x:315,w:160,scored:false,collected:false,deflected:false});
     // QA-only obstacle at a fixed WORLD position verifies the pavement
-    // and actual consent buttons scroll at exactly the same world velocity.
+    // and actual ACCEPT buttons scroll at exactly the same world velocity.
     if(host.hasAttribute('data-qa-ground-scroll'))
       drawAccept(ctx,{kind:'accept',x:980-distance,w:160,scored:false,collected:false,deflected:false});
     if(host.hasAttribute('data-qa-token'))

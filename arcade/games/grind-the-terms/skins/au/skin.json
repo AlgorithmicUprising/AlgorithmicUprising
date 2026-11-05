@@ -1,7 +1,7 @@
 {
   "id": "au",
   "game": "grind-the-terms",
-  "name": "Algorithmic Uprising \u2014 approved punk-comic gameplay art",
+  "name": "Algorithmic Uprising — approved punk-comic gameplay art",
   "version": "0.9.0-tricks-rocket-consent",
   "license": "all-rights-reserved",
   "extends": "fony",
@@ -116,22 +116,22 @@
   },
   "surfaces": {
     "accept": {
-      "surfaceCellY": 4,
-      "groundCellY": 94,
-      "drawHeight": 92
+      "surfaceCellY": 0,
+      "groundCellY": 112,
+      "drawHeight": 42
     },
     "popup": {
-      "surfaceCellY": 24,
-      "groundCellY": 105,
-      "drawHeight": 94
+      "surfaceCellY": 0,
+      "groundCellY": 112,
+      "drawHeight": 82
     },
     "modal": {
-      "surfaceCellY": 27,
-      "groundCellY": 101,
-      "drawHeight": 130
+      "surfaceCellY": 0,
+      "groundCellY": 112,
+      "drawHeight": 102
     }
   },
-  "source": "User-approved Nov 4\u20135 Fony gameplay and punk-comic art pack; includes readable CONSENT TO ALL obstacle, trick-upgrade coin, rocket spray can, sidewalk-aligned character/obstacles, and mobile/desktop gameplay UI.",
+  "source": "User-approved Nov 4–5 Fony gameplay and punk-comic art pack; includes a separate low ACCEPT ALL obstacle and taller CONSENT / TERMS hazards, trick-upgrade coin, rocket spray can, sidewalk-aligned character/obstacles, and mobile/desktop gameplay UI.",
   "cloudTypography": {
     "largestRenderedTextPx": 5,
     "heading": "TERMS & CONDITIONS",

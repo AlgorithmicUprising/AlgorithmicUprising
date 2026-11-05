@@ -211,8 +211,8 @@ test('all original hazard art bottoms align with floor and surface matches sprit
   }
   expect(data.rail.visibleTop).toBeGreaterThan(288);
   expect(data.rail.visibleTop).toBeLessThan(292);
-  expect(data.accept.visibleTop).toBeGreaterThan(234);
-  expect(data.accept.visibleTop).toBeLessThan(238);
+  expect(data.accept.visibleTop).toBeGreaterThan(267);
+  expect(data.accept.visibleTop).toBeLessThan(269);
 });
 test('clean ACCEPT ALL sprite body is grounded with no detached green guide',async({page})=>{
  await page.goto('/demo/');
@@ -269,7 +269,7 @@ test('opt-out token and loophole use the approved gameplay art',async({page},inf
  await game.screenshot({path:'test-results/screenshots/coin-manhole-clean.png'});
 });
 
-test('the first flat-topped consent box can be ground and popped from',async({page})=>{
+test('the first flat-topped ACCEPT obstacle can be ground and popped from',async({page})=>{
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');
  const attempts=await game.evaluate(el=>{
