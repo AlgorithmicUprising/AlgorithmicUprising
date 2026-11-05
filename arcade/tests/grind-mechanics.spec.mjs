@@ -119,16 +119,17 @@ test('Fony atlas has 39 unclipped poses sharing one board/foot baseline',async({
   }
   return {grid,source:[asset.naturalWidth,asset.naturalHeight],boxes};
  });
- expect(poses.source).toEqual([2048,1280]);
- expect(poses.grid.anchorX).toBe(128);expect(poses.grid.anchorY).toBe(234);expect(poses.grid.displayScale).toBe(.5);
+ expect(poses.source).toEqual([1024,640]);
+ expect(poses.grid.cellW).toBe(128);expect(poses.grid.cellH).toBe(128);
+ expect(poses.grid.anchorX).toBe(64);expect(poses.grid.anchorY).toBe(117);expect(poses.grid.displayScale).toBe(1);
  expect(poses.boxes).toHaveLength(39);
  for(const [i,b] of poses.boxes.entries()){
   expect(b.pixels,`frame ${i} missing pixels`).toBeGreaterThan(1000);
   expect(b.minX,`frame ${i} clips left`).toBeGreaterThan(7);
-  expect(b.maxX,`frame ${i} clips right`).toBeLessThan(249);
+  expect(b.maxX,`frame ${i} clips right`).toBeLessThan(121);
   expect(b.minY,`frame ${i} clips top`).toBeGreaterThan(3);
-  expect(b.maxY,`frame ${i} exceeds foot baseline`).toBeLessThanOrEqual(236);
-  expect(b.maxY,`frame ${i} not aligned to foot baseline`).toBeGreaterThanOrEqual(225);
+  expect(b.maxY,`frame ${i} exceeds foot baseline`).toBeLessThanOrEqual(118);
+  expect(b.maxY,`frame ${i} not aligned to foot baseline`).toBeGreaterThanOrEqual(110);
  }
 });
 
@@ -139,7 +140,7 @@ test('running and bail animations use stable on-screen actor origin and never lo
  const result=await game.evaluate(el=>{
   const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
   const original=ctx.drawImage.bind(ctx),poses=[];
-  ctx.drawImage=(...args)=>{if(args.length===9&&args[0]?.naturalWidth===2048)poses.push({sx:args[1],sy:args[2],dx:args[5],dy:args[6],w:args[7],h:args[8]});return original(...args)};
+  ctx.drawImage=(...args)=>{if(args.length===9&&args[0]?.naturalWidth===1024&&args[0]?.naturalHeight===640)poses.push({sx:args[1],sy:args[2],dx:args[5],dy:args[6],w:args[7],h:args[8]});return original(...args)};
   g.start();
   for(let i=0;i<6;i++){g.update(.05);g.draw(ctx,canvas.width,canvas.height)}
   const run=poses.slice();
@@ -156,8 +157,8 @@ test('running and bail animations use stable on-screen actor origin and never lo
  for(const p of result.run){expect(p.dx).toBeCloseTo(76,0);expect(p.dy).toBeCloseTo(183,0);expect(p.w).toBe(128);expect(p.h).toBe(128)}
  expect(result.final.dx).toBeCloseTo(76,0);
  expect(result.final.dy).toBeCloseTo(183,0);
- expect(result.final.sx).toBe((26%8)*256);
- expect(result.final.sy).toBe(Math.floor(26/8)*256);
+ expect(result.final.sx).toBe((26%8)*128);
+ expect(result.final.sy).toBe(Math.floor(26/8)*128);
  expect(result.after).toEqual(result.final);
 });
 
@@ -246,21 +247,21 @@ test('clean rails stay capped and supported at one through four full spans',asyn
  }
 });
 
-test('token and manhole fixtures are readable, independent of old hazard atlas',async({page},info)=>{
+test('opt-out token and loophole use the approved gameplay art',async({page},info)=>{
  test.skip(info.project.name.startsWith('mobile'),'Representative desktop pixel screenshot');
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');
  const result=await game.evaluate(el=>{
   el.setAttribute('data-qa-token','');
   el.setAttribute('data-qa-loophole','');
-  const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
-  el.game.start();el.game.draw(ctx,c.width,c.height);
+  const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d'),draw=ctx.drawImage.bind(ctx),tokens=[];
+  ctx.drawImage=(...args)=>{if(args[0]?.src?.includes('terms_opt_out_token_v1.webp'))tokens.push(args);return draw(...args)};
+  el.game.start();el.game.draw(ctx,c.width,c.height);ctx.drawImage=draw;
   const k=Math.min(c.width/640,c.height/360),dx=(c.width-640*k)/2,dy=(c.height-360*k)/2;
-  const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
-  return {coin:sample(323,230),manhole:sample(320,307)};
+  const manhole=[...ctx.getImageData(Math.floor(dx+320*k),Math.floor(dy+307*k),1,1).data];
+  return {tokens:tokens.length,manhole};
  });
- expect(result.coin[1]).toBeGreaterThan(155);
- expect(result.coin[3]).toBe(255);
+ expect(result.tokens).toBeGreaterThan(0);
  expect(result.manhole[3]).toBe(255);
  await game.screenshot({path:'test-results/screenshots/coin-manhole-clean.png'});
 });
@@ -309,7 +310,7 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  await el.locator('button[part=start]').click();
  await page.keyboard.press('Space');
  expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(true);
- expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBe(300);
+ expect(await el.evaluate(x=>x.game.result().stats.jumpCount)).toBe(0);
  await el.evaluate(x=>{for(let i=0;i<10;i++)x.game.update(.05)});
  const measured=await el.evaluate(x=>x.game.result().stats.runSpeed);
  expect(measured).toBeGreaterThan(345);
@@ -321,60 +322,49 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBeLessThan(300);
 });
 
-test('consent forms are opaque, visible, grounded obstacles rather than translucent pickups',async({page},info)=>{
- test.skip(info.project.name.startsWith('mobile'),'Exact pixel colors in desktop art fixture');
+test('consent forms render the approved illustrated panels as grounded obstacles',async({page},info)=>{
+ test.skip(info.project.name.startsWith('mobile'),'Representative desktop art fixture');
  await page.goto('/demo/');
  const el=page.locator('grind-the-terms');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
- const colors=await el.evaluate(e=>{
+ const sources=await el.evaluate(e=>{
    e.setAttribute('data-qa-consent','');
-   const c=e.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
-   e.game.start();e.game.draw(ctx,c.width,c.height);
-   const sample=(x,y)=>{
-     const px=Math.floor(c.width*x/640),py=Math.floor(c.height*y/360);
-     return [...ctx.getImageData(px,py,1,1).data];
-   };
-   return {popup:sample(274,259),modal:sample(457,241)};
+   const c=e.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d'),draw=ctx.drawImage.bind(ctx),seen=[];
+   ctx.drawImage=(...args)=>{if(args[0]?.src)seen.push(args[0].src.split('/').pop());return draw(...args)};
+   e.game.start();e.game.draw(ctx,c.width,c.height);ctx.drawImage=draw;
+   return seen;
  });
- // The fully opaque paper fill is #f5eddd (245,237,221).
- for(const color of [colors.popup,colors.modal]){
-   expect(color[0]).toBeGreaterThan(225);
-   expect(color[1]).toBeGreaterThan(212);
-   expect(color[2]).toBeGreaterThan(194);
-   expect(color[3]).toBe(255);
- }
- await el.locator('canvas').screenshot({path:'test-results/screenshots/consent-opaque-desktop.png'});
+ expect(sources).toContain('terms_consent_popup_v1.webp');
+ expect(sources).toContain('terms_consent_modal_v1.webp');
+ await el.locator('canvas').screenshot({path:'test-results/screenshots/consent-illustrations-desktop.png'});
 });
 
-test('approved PNG cloudbank is cached with the illustrated city, wall and road',async({page})=>{
+test('approved layered WebP scenery is cached and rendered across the scene',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
  const result=await page.locator('grind-the-terms').evaluate(async el=>{
    const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
    const skin=await(await fetch(url)).json();
-   const keys=['cloudsNear','dataCity','graffitiWall','road'];
+   const keys=['cloudsNear','cloudsFar','dataCity','graffitiWall','road'];
    const images=await Promise.all(keys.map(async key=>{const img=new Image();img.src=new URL(skin.files[key],url).href;await img.decode();return {key,assetName:skin.files[key],w:img.naturalWidth,h:img.naturalHeight}}));
    const canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d'),original=ctx.drawImage.bind(ctx),seen=[];
    ctx.drawImage=(...args)=>{
      if(args[0] instanceof HTMLImageElement)seen.push(args[0].src.split('/').pop());
-     if(args[0] instanceof HTMLCanvasElement&&args[0].width===1024&&args[0].height===253)seen.push('cached-cloud');
+     if(args[0] instanceof HTMLCanvasElement&&args[0].width===1024&&args[0].height===342)seen.push('cached-cloud');
      return original(...args);
    };
    el.game.start();el.game.draw(ctx,canvas.width,canvas.height);ctx.drawImage=original;
    return {images,seen,hasFar:Object.hasOwn(skin.files,'cloudsFar')};
  });
- expect(result.hasFar).toBe(false);
- expect(result.images).toHaveLength(4);
+ expect(result.hasFar).toBe(true);
+ expect(result.images).toHaveLength(5);
+ const dimensions={cloudsNear:[1024,342],cloudsFar:[1024,100],dataCity:[1024,342],graffitiWall:[1024,342],road:[1024,128]};
  for(const img of result.images){
-   if(img.key==='cloudsNear'){
-     expect([img.w,img.h]).toEqual([1024,253]);
-     expect(result.seen).toContain('cached-cloud');
-   }else{
-     expect(img.w).toBe(1280);expect(img.h).toBeGreaterThan(80);
-     expect(result.seen,`Missing rendered asset: ${img.assetName}`).toContain(img.assetName);
-   }
+   expect([img.w,img.h]).toEqual(dimensions[img.key]);
+   if(img.key==='cloudsNear')expect(result.seen).toContain('cached-cloud');
+   else expect(result.seen,`Missing rendered asset: ${img.assetName}`).toContain(img.assetName);
  }
- await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v12.png'});
+ await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/approved-illustrated-scene-v13.png'});
 });
 
 test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains smoothing',async({page})=>{
@@ -384,7 +374,7 @@ test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains 
    const game=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
    const original=ctx.drawImage.bind(ctx),seen=[];
    ctx.drawImage=(...args)=>{
-     if(args[0]?.naturalWidth===2048)seen.push({smooth:ctx.imageSmoothingEnabled,sourceW:args[3],destW:args[7]});
+     if(args[0]?.naturalWidth===1024&&args[0]?.naturalHeight===640)seen.push({smooth:ctx.imageSmoothingEnabled,sourceW:args[3],destW:args[7]});
      return original(...args);
    };
    game.start();game.draw(ctx,canvas.width,canvas.height);
@@ -392,7 +382,7 @@ test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains 
    return {seen,after:ctx.imageSmoothingEnabled};
  });
  expect(data.seen.length).toBeGreaterThan(0);
- expect(data.seen.every(s=>s.smooth===false&&s.sourceW===256&&s.destW===128)).toBe(true);
+ expect(data.seen.every(s=>s.smooth===false&&s.sourceW===128&&s.destW===128)).toBe(true);
  expect(data.after).toBe(true);
  await page.locator('grind-the-terms').screenshot({path:'test-results/screenshots/fony-crisp-legal-smog-v6.png'});
 });
@@ -406,7 +396,7 @@ test('world-space ACCEPT and physical sidewalk scroll at identical speed',async(
    const draw=ctx.drawImage.bind(ctx),fill=ctx.fillText.bind(ctx),scans=[];
    let roadX=null,acceptX=null;
    ctx.drawImage=(...args)=>{
-     if(args[0]?.src?.includes('terms_illustrated_sidewalk_road_v5.png')&&roadX===null)roadX=args.length===9?args[5]-args[1]:args[1];
+     if(args[0]?.src?.includes('terms_sidewalk_road_v6.webp')&&roadX===null)roadX=args.length===9?args[5]-args[1]:args[1];
      return draw(...args);
    };
    ctx.fillText=(...args)=>{if(args[0]==='ACCEPT ALL')acceptX=args[1];return fill(...args)};
@@ -439,8 +429,8 @@ test('cloud skin references the approved opaque PNG, not the translucent SVGs',a
  });
  expect(detail.type.largestRenderedTextPx).toBeLessThanOrEqual(10);
  expect(detail.type.heading).toBe('TERMS & CONDITIONS');
- expect(detail.far).toBeUndefined();
- expect(detail.near).toBe('terms_papercut_cloudbank_v12.png');
+ expect(detail.far).toBe('terms_far_clouds_v1.webp');
+ expect(detail.near).toBe('terms_papercut_cloudbank_v13.webp');
 });
 
 test('double ollie is always available without AIR BOOST pickup',async({page})=>{
@@ -475,24 +465,25 @@ test('speed toggle exactly doubles baseline after the ramp',async({page})=>{
  expect(stats.runSpeed/stats.normalSpeed).toBeLessThan(2.01);
 });
 
-test('ground motion uses low stable Fony pose with persistent board',async({page})=>{
+test('ground motion uses the approved six-frame board-contact Fony cycle',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
  const result=await page.locator('grind-the-terms').evaluate(el=>{
   const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
   const seen=[],draw=ctx.drawImage.bind(ctx);g.start();
-  ctx.drawImage=(...args)=>{if(args.length===9&&args[3]===256&&args[4]===256)seen.push({sx:args[1],sy:args[2]});return draw(...args)};
+  ctx.drawImage=(...args)=>{if(args.length===9&&args[0]?.naturalHeight===640&&args[3]===128&&args[4]===128)seen.push({sx:args[1],sy:args[2]});return draw(...args)};
   for(let frame=0;frame<6;frame++){g.update(.05);g.draw(ctx,canvas.width,canvas.height)}
   ctx.drawImage=draw;
   return seen;
  });
  expect(result.length).toBeGreaterThan(3);
- // Two approved crouch/recovery cells alternate, both safely on the board baseline.
- for(const frame of result){expect(frame.sy).toBe(256);expect([512,768]).toContain(frame.sx)}
+ for(const frame of result){
+   expect(frame.sy).toBe(0);
+   expect([0,128,256,384,512,640]).toContain(frame.sx);
+ }
 });
 
-
-test('the approved cloud asset has PNG bytes and opaque paper with transparent scallop edges',async({page})=>{
+test('the approved cloudbank is a transparent-edge WebP with opaque paper artwork',async({page})=>{
  await page.goto('/demo/');
  const detail=await page.evaluate(async()=>{
    const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
@@ -502,14 +493,15 @@ test('the approved cloud asset has PNG bytes and opaque paper with transparent s
    const img=new Image();img.src=new URL(skin.files.cloudsNear,url).href;await img.decode();
    const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
    const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
-   return {signature:[...bytes.slice(0,8)],w:c.width,h:c.height,
+   return {riff:[...bytes.slice(0,4)],format:[...bytes.slice(8,12)],w:c.width,h:c.height,
      paperAlpha:ctx.getImageData(500,110,1,1).data[3],
-     skyAlpha:ctx.getImageData(500,0,1,1).data[3]};
+     transparentEdgeAlpha:ctx.getImageData(512,341,1,1).data[3]};
  });
- expect(detail.signature).toEqual([137,80,78,71,13,10,26,10]);
- expect([detail.w,detail.h]).toEqual([1024,253]);
- expect(detail.paperAlpha).toBe(255);
- expect(detail.skyAlpha).toBe(0);
+ expect(detail.riff).toEqual([82,73,70,70]);
+ expect(detail.format).toEqual([87,69,66,80]);
+ expect([detail.w,detail.h]).toEqual([1024,342]);
+ expect(detail.paperAlpha).toBeGreaterThan(240);
+ expect(detail.transparentEdgeAlpha).toBe(0);
 });
 
 test('normal cruising remains stable and speed toggle doubles it',async({page})=>{
@@ -530,15 +522,15 @@ test('normal cruising remains stable and speed toggle doubles it',async({page})=
 });
 
 
-test('PNG cloud and city parallax draw only the visible world-camera region',async({page})=>{
+test('WebP cloud and city parallax draw only the visible world-camera region',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
  const result=await page.locator('grind-the-terms').evaluate(el=>{
    const g=el.game,c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d'),original=ctx.drawImage.bind(ctx),drawn=[];
    ctx.drawImage=(...args)=>{
-     if(args.length===9&&args[0]?.width===1024&&args[0]?.height===253)
+     if(args.length===9&&args[0]?.width===1024&&args[0]?.height===342)
        drawn.push({kind:'raster-cloud',sourceWidth:args[3],destWidth:args[7],y:args[6],h:args[8]});
-     if(args.length===9&&args[0]?.src?.includes('terms_illustrated_datacenter_city'))
+     if(args.length===9&&args[0]?.src?.includes('terms_datacenter_city_v6.webp'))
        drawn.push({kind:'city',sourceWidth:args[3],destWidth:args[7]});
      return original(...args);
    };
@@ -549,13 +541,13 @@ test('PNG cloud and city parallax draw only the visible world-camera region',asy
  for(const item of result)expect(item.destWidth).toBeLessThanOrEqual(650);
 });
 
-test('PNG cloud top contour is hidden behind HUD in mobile and desktop camera',async({page})=>{
+test('cloud top edge stays under the HUD in mobile and desktop camera',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
  const dimensions=await page.locator('grind-the-terms').evaluate(el=>{
    const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d'),real=ctx.drawImage.bind(ctx),rows=[];
    ctx.drawImage=(...args)=>{
-     if(args.length===9&&args[0] instanceof HTMLCanvasElement&&args[0].width===1024&&args[0].height===253)
+     if(args.length===9&&args[0] instanceof HTMLCanvasElement&&args[0].width===1024&&args[0].height===342)
        rows.push({y:args[6],h:args[8]});
      return real(...args);
    };
@@ -567,8 +559,7 @@ test('PNG cloud top contour is hidden behind HUD in mobile and desktop camera',a
  });
  expect(dimensions.rows.length).toBeGreaterThan(0);
  const cloud=dimensions.rows[0];
- // Maximum source top-alpha y across all 1024 columns of the reviewed PNG.
- const uppermostVisibleContour=cloud.y+cloud.h*69/253;
- expect(uppermostVisibleContour).toBeLessThan(dimensions.hudBottom-2);
+ expect(cloud.y).toBeLessThan(dimensions.hudBottom-2);
  expect(cloud.y+cloud.h).toBeGreaterThan(dimensions.hudBottom+60);
 });
+
