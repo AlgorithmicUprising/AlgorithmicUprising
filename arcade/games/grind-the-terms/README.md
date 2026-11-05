@@ -1,35 +1,35 @@
-# Grind the Terms · Fony Sprock (M1 mechanics + M2 art preview)
+# Grind the Terms · Fony Sprock (v0.9 tricks, rocket boosts + art)
 
 > Nobody reads them. Skate them.
 
 The side-scrolling browser runner for Punk Arcade's CH 05. The `arcade` branch now uses the newly approved Fony gameplay atlas, layered punk-comic city art, paper-cut consent obstacles, and themed title/control screens. Desktop stays 16:9; mobile keeps the portrait tablet layout so it fits inside the ZERO GAME THING player. Gameplay/collision rules remain independent of the image layers. Physical-device art acceptance is still pending.
 
-## Controls
+## Current controls and rules (v0.9)
 
-| Move | Keyboard | Touch |
-| --- | --- | --- |
-| Ollie | ↑ / W / U (tap) | U cabinet button |
-| Catch rail grind | Keep holding ↑ / W / U while descending | Hold U |
-| Pop off grind | Release jump while grinding | Release U |
-| Double ollie | Find AIR BOOST, then tap jump again while airborne | Tap U again after pickup |
-| Go faster | SPACE or A toggles, 30% ramp | A toggles speed (pressed state) |
-| Future special | Not yet available | Large lightning-bolt Ø on left (reserved) |
-| Pause / resume | P / Esc, pause button | Pause / Resume buttons |
-| Gamepad | A = jump / hold to grind, release to pop | Standard controller |
+| Move | Desktop | ZERO GAME THING tablet / touch | Gamepad |
+| --- | --- | --- | --- |
+| Ollie / hold to grind | ↑ / W / U | Hold U | A |
+| Pop off a grind | Release ↑ / W / U | Release U | Release A |
+| Trick | SPACE or A | A button | B |
+| Spray-can rocket | R | Ø button | X |
+| Pause / resume | P / Esc or pause button | Pause / Resume buttons | — |
 
-Jump physics: gravity 1800 logical px/s², ollie impulse -620 px/s, rail-pop impulse -380 px/s. Board landing uses a forgiving rail snap zone. Input buffering is 100 ms and ground coyote time is 80 ms. A double jump is deliberately *not* always available: it is an extra power-up, avoiding a mandatory second button.
+**Grind:** Press U / ↑ / W for one ollie. Hold it as Fony descends to catch a rail or the flat top of a consent block and keep grinding. Releasing jump pops off. A tap on the game canvas does not jump, and jump input never triggers a double jump.
+
+**Tricks:** SPACE / desktop A / tablet A performs one trick during an airtime, including after an ollie or a grind pop. It cannot be used while supported or grinding. Trick height is fixed so tricks do not replace the ollie. Score improves the trick name and points: Kickflip (+2), Heelflip (+4) from 50 clauses, and 360 Flip (+6) from 125 clauses. At 80 clauses a glowing trick token appears; collecting it unlocks one extra trick before the next landing. That second combo has a more complex animation and doubles the trick points. Landing resets the airtime trick count; the upgrade stays unlocked for the run.
+
+**Coins and upgrades:** Ordinary coins, defensive tokens, trick upgrades, and spray cans are collected by rolling through them at sidewalk height. No jump is needed. Coins add 10 points. The 80-clause trick token adds the second trick. Spray-can pickups begin at 160 clauses and recur at 120-clause intervals, up to three cans carried.
+
+**Spray-can rocket:** R / Ø uses one collected can for exactly 2× the current normal speed for 1.25 seconds. Additional cans extend the boost, up to 3.75 seconds total. Rocket boost cannot be activated during a grind; a can stays in inventory until used. A long grind still builds a separate brief +7% momentum bonus.
 
 ## Obstacles and scores
 
-- **Accept All**: low pill-shaped button, clears for +3.
-- **Consent popup**: floating modal with a tiny close control, +5.
-- **Agree & Continue**: tall wall introduced in tier 4, +10.
-- **Clause rails**: safe to skate below; land while holding jump to grind; +2 per 32px and double the distance-based clauses while grinding.
-- **Fine-print gaps**: jump the black pit (reward currently +8; balance candidate).
-- **Opt Out**: +10 and a one-hit shield.
-- **Air Boost**: +10 and one optional second ollie.
-
-A procedural seeded chunk scheduler reads `src/chunks.json`, starts with a guaranteed easy rail, and unlocks tiers at 20, 45 and 90 seconds. Hand-authored chunks deliberately leave recovery space; a more complete jump-arc fairness test and five-run human playtest remain required.
+- **CONSENT TO ALL block:** Large, paper-white sidewalk block with a magenta consent header and a high-contrast Accept button. Its flat top can be ridden or ground across; hitting its side causes a bail.
+- **Consent popup / terms modal:** Wider readable panels with clear “CONSENT TO ALL” / “TERMS / DATA” headers; their flat tops can also be ridden or ground.
+- **Clause rails:** Fewer rails appear in the route; the first is a safe practice rail, with another later for continued grind practice.
+- **Fine-print gaps:** Jump the black pit (reward currently +8; balance candidate).
+- **Opt Out / Air Boost:** +10 and one-hit protection. They are defensive tokens, not extra jumps.
+- **Ordinary coins:** Bright sidewalk-height pickups are placed in trails and gaps between hazards to reward rolling through the line.
 
 ## Build and embed
 
@@ -47,6 +47,8 @@ From `arcade/`: `npm install && npm run check && npm run e2e`.
 See `GAP-ANALYSIS.md` for the gap-by-gap status, release blockers, and next QA steps.
 
 Sound effects are procedurally generated by Web Audio after a user gesture (disabled by default); enable with the Sound toggle or **M**. No prerecorded music is distributed.
+
+## Archived development notes — superseded by current controls and art above
 
 ## Rail sprite contact calibration (v0.2.2)
 
@@ -150,3 +152,10 @@ User approved the overall cloud silhouette, then requested slightly greater dens
 ## November 4 — v0.7: approved textured PNG replaces SVG cloud layers
 
 The user approved the cream/mauve cut-paper PNG created from the existing background cloud style. The game now uses the actual approved artwork, resized and quantized to a lightweight 1024×253 indexed-alpha PNG (`terms_papercut_cloudbank_v12.png`), rather than the old translucent SVG strips. The asset includes its own three-dimensional paper-cut shadow layers. Legal microtext is stamped into the cloud raster once at load using `source-atop`, not drawn per frame. The cloud draws at full opacity, in one parallax plane, and the source-to-world scaling supports 1024-pixel assets in the existing 1280-unit tiler. On phones the nearest upper cloud contour is geometrically hidden behind the 98-unit opaque HUD; desktop contour is likewise hidden behind the 71-unit HUD. The lower scalloped cloud bank remains above the data-center skyline, with chimney smoke retained. Road, skater, controls, and speeds are unchanged.
+
+
+## November 5 — v0.9 tricks, pickups, and consent readability
+
+The 2× input is now a trick button; it no longer changes ground speed. U / ↑ / W remains a single ollie and hold-to-grind input. Score tiers improve trick names and points, and the 80-clause upgrade token unlocks a second combo trick. Spray-can pickups power a separate R / Ø rocket burst at exactly 2× speed. Ground-lane pickup collisions now allow coins and upgrades to be collected by skating through them without a jump.
+
+The chunk set places more ordinary coins and reduces the rail count to two intentional practice rails. All tiny Accept buttons have been removed. The consent hazard is now a broad block with readable “CONSENT TO ALL” labeling and a larger Accept treatment. Fony, pickup centers, obstacles, and the board baseline share the sidewalk lane.

@@ -32,10 +32,10 @@ test('rail catch and pop increase grind time in deterministic first chunk',async
  const result=await game.evaluate(el=>{
   const g=el.game;g.start();
   for(let i=0;i<170;i++)g.update(1/60);
-  g.input('tap',true);
+  g.input('up',true);
   for(let i=0;i<68;i++)g.update(1/60);
   const afterHold=g.result().stats.grindMs;
-  g.input('tap',false);
+  g.input('up',false);
   for(let i=0;i<10;i++)g.update(1/60);
   return {grindMs:afterHold,afterRelease:g.result().stats.grindMs,cause:g.result().cause};
  });
@@ -171,7 +171,7 @@ test('seamless rail cap top matches skater contact and end legs touch pavement',
   const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
   g.start();
   for(let i=0;i<170;i++)g.update(1/60);
-  g.input('tap',true);
+  g.input('up',true);
   let caught=false;
   for(let i=0;i<100;i++){g.update(1/60);if(g.result().stats.grindMs>0){caught=true;break}}
   g.draw(ctx,canvas.width,canvas.height);
@@ -179,12 +179,12 @@ test('seamless rail cap top matches skater contact and end legs touch pavement',
   const portrait=canvas.width/canvas.height<1.05,k=portrait?canvas.width/450:Math.min(canvas.width/640,canvas.height/360),dx=portrait?-35*k:(canvas.width-640*k)/2,dy=portrait?canvas.height-340*k:(canvas.height-360*k)/2;
   const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
   const bar=stats.supportX!==null?sample(stats.supportX+stats.supportWidth*.72,stats.supportTop+4):null;
-  g.input('tap',false);g.update(1/60);
+  g.input('up',false);g.update(1/60);
   return {caught,stats,bar,pop:g.result().stats.boardY};
  });
  expect(result.caught).toBe(true);
- expect(result.stats.supportTop).toBeGreaterThan(278);
- expect(result.stats.supportTop).toBeLessThan(282);
+ expect(result.stats.supportTop).toBeGreaterThan(288);
+ expect(result.stats.supportTop).toBeLessThan(292);
  expect(Math.abs(result.stats.boardY-result.stats.supportTop)).toBeLessThan(1.5);
  expect(result.pop).toBeLessThan(result.stats.supportTop);
  expect(result.bar[1]).toBeGreaterThan(155);
@@ -199,20 +199,20 @@ test('all original hazard art bottoms align with floor and surface matches sprit
     const cell=skin.grid.hazards.cellH;
     const geom={rail:skin.rail,...skin.surfaces};
     return Object.fromEntries(Object.entries(geom).map(([kind,g])=>{
-      const drawTop=300-g.groundCellY/cell*g.drawHeight;
+      const drawTop=310-g.groundCellY/cell*g.drawHeight;
       const visibleTop=drawTop+g.surfaceCellY/cell*g.drawHeight;
       const visibleBottom=drawTop+g.groundCellY/cell*g.drawHeight;
       return [kind,{visibleTop,visibleBottom}];
     }));
   });
   for(const kind of ['rail','accept','popup','modal']){
-    expect(data[kind].visibleBottom).toBeCloseTo(300,5);
-    expect(data[kind].visibleTop).toBeLessThan(300);
+    expect(data[kind].visibleBottom).toBeCloseTo(310,5);
+    expect(data[kind].visibleTop).toBeLessThan(310);
   }
-  expect(data.rail.visibleTop).toBeGreaterThan(278);
-  expect(data.rail.visibleTop).toBeLessThan(282);
-  expect(data.accept.visibleTop).toBeGreaterThan(265);
-  expect(data.accept.visibleTop).toBeLessThan(275);
+  expect(data.rail.visibleTop).toBeGreaterThan(288);
+  expect(data.rail.visibleTop).toBeLessThan(292);
+  expect(data.accept.visibleTop).toBeGreaterThan(234);
+  expect(data.accept.visibleTop).toBeLessThan(238);
 });
 test('clean ACCEPT ALL sprite body is grounded with no detached green guide',async({page})=>{
  await page.goto('/demo/');
@@ -242,7 +242,7 @@ test('clean rails stay capped and supported at one through four full spans',asyn
    el.game.start();el.game.draw(ctx,c.width,c.height);
    const k=Math.min(c.width/640,c.height/360),dx=(c.width-640*k)/2,dy=(c.height-360*k)/2;
    const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
-   return {left:sample(284,283),mid:sample(280+width/2,283),right:sample(276+width,283),end:sample(286+width,292)};
+   return {left:sample(284,293),mid:sample(280+width/2,293),right:sample(276+width,293),end:sample(286+width,292)};
   },width);
   for(const pixel of [bounds.left,bounds.mid,bounds.right])expect(pixel[1]).toBeGreaterThan(125);
   if(width===300)await game.screenshot({path:'test-results/screenshots/rail-four-span.png'});
@@ -278,11 +278,11 @@ test('the first flat-topped consent box can be ground and popped from',async({pa
      g.start();
      for(let i=0;i<frame;i++)g.update(1/60);
      if(g.over())continue;
-     g.input('tap',true);
+     g.input('up',true);
      for(let i=0;i<110;i++)g.update(1/60);
      const stats=g.result().stats;
      if(stats.platformGrinds>0){
-       g.input('tap',false);
+       g.input('up',false);
        for(let j=0;j<8;j++)g.update(1/60);
        viable.push({frame,landings:stats.platformLandings,grinds:stats.platformGrinds,ms:g.result().stats.grindMs});
      }
@@ -306,31 +306,24 @@ test('new flat-top counters are exposed for both skins',async({page})=>{
 });
 
 
-test('space changes speed without causing an ollie',async({page},info)=>{
+test('desktop SPACE performs an aerial trick without changing ground speed',async({page},info)=>{
  test.skip(info.project.name.startsWith('mobile'),'Desktop keyboard only');
  await page.goto('/demo/');
  const el=page.locator('grind-the-terms');
  await el.locator('button[part=start]').click();
  const result=await el.evaluate(e=>{
-  const initialJumpCount=e.game.result().stats.jumpCount;
   e.focus();
   const send=(type,key)=>e.dispatchEvent(new KeyboardEvent(type,{key,bubbles:true,composed:true,cancelable:true}));
-  send('keydown',' ');send('keyup',' ');
-  const fast=e.game.result().stats;
-  for(let i=0;i<10;i++)e.game.update(.05);
-  const measured=e.game.result().stats.runSpeed;
-  send('keydown',' ');send('keyup',' ');
-  const normal=e.game.result().stats;
   send('keydown','ArrowUp');send('keyup','ArrowUp');e.game.update(.05);
-  const jumped=e.game.result().stats;
-  return {initialJumpCount,fast,measured,normal,jumped};
+  const airborne=e.game.result().stats;
+  send('keydown',' ');send('keyup',' ');e.game.update(.05);
+  const trick=e.game.result().stats;
+  return {airborne,trick};
  });
- expect(result.fast.speedEnabled).toBe(true);
- expect(result.fast.jumpCount).toBe(result.initialJumpCount);
- expect(result.measured).toBeGreaterThan(345);
- expect(result.measured).toBeLessThan(380);
- expect(result.normal.speedEnabled).toBe(false);
- expect(result.jumped.boardY).toBeLessThan(300);
+ expect(result.airborne.boardY).toBeLessThan(310);
+ expect(result.trick.tricksUsed).toBe(1);
+ expect(result.trick.speedMultiplier).toBe(1);
+ expect(result.trick.runSpeed).toBe(result.trick.normalSpeed);
 });
 
 test('consent forms render the approved illustrated panels as grounded obstacles',async({page},info)=>{
@@ -448,36 +441,39 @@ test('cloud skin references the approved opaque PNG, not the translucent SVGs',a
  expect(detail.near).toBe('terms_papercut_cloudbank_v13.webp');
 });
 
-test('double ollie is always available without AIR BOOST pickup',async({page})=>{
+test('trick upgrade enables one more combo before landing',async({page})=>{
  await page.goto('/demo/');
  const result=await page.locator('grind-the-terms').evaluate(el=>{
+  el.setAttribute('data-qa-trick-upgrade','');
   const g=el.game;g.start();
   g.input('up',true);g.update(1/60);g.input('up',false);
   for(let i=0;i<8;i++)g.update(1/60);
+  const airborne=g.result().stats;
+  g.input('trick',true);g.input('trick',false);g.update(1/60);
   const first=g.result().stats;
-  g.input('up',true);g.update(1/60);g.input('up',false);
-  const second=g.result().stats;
-  g.input('up',true);g.update(1/60);g.input('up',false);
-  return {first,second,third:g.result().stats};
+  g.input('trick',true);g.input('trick',false);g.update(1/60);
+  return {airborne,first,second:g.result().stats};
  });
- expect(result.first.jumpCount).toBe(1);
- expect(result.second.jumpCount).toBe(2);
- expect(result.second.boardY).toBeLessThan(result.first.boardY);
- expect(result.second.doubleJumpAlwaysOn).toBe(true);
- expect(result.third.jumpCount).toBe(2);
+ expect(result.airborne.tricksUsed).toBe(0);
+ expect(result.first.tricksUsed).toBe(1);
+ expect(result.first.trick2Unlocked).toBe(true);
+ expect(result.second.tricksUsed).toBe(2);
+ expect(result.second.trickLimit).toBe(2);
 });
 
-test('speed toggle exactly doubles baseline after the ramp',async({page})=>{
+test('spray can rocket gives one temporary 2x burst',async({page})=>{
  await page.goto('/demo/');
  const stats=await page.locator('grind-the-terms').evaluate(el=>{
-  const g=el.game;g.start();g.input('speed',true);
-  for(let i=0;i<10;i++)g.update(.05);
+  el.setAttribute('data-qa-rocket-charge','');
+  const g=el.game;g.start();g.input('boost',true);
+  g.update(.05);
   return g.result().stats;
  });
- expect(stats.speedEnabled).toBe(true);
- expect(stats.acceleration).toBe(1);
+ expect(stats.sprayCans).toBe(0);
+ expect(stats.speedMultiplier).toBe(2);
  expect(stats.runSpeed/stats.normalSpeed).toBeGreaterThan(1.99);
  expect(stats.runSpeed/stats.normalSpeed).toBeLessThan(2.01);
+ expect(stats.rocketBoostLeft).toBeGreaterThan(1.1);
 });
 
 test('ground motion uses the approved six-frame board-contact Fony cycle',async({page})=>{
@@ -520,21 +516,20 @@ test('the approved cloudbank is a transparent-edge WebP with opaque paper artwor
  expect(detail.transparentEdgeAlpha).toBe(0);
 });
 
-test('normal cruising remains stable and speed toggle doubles it',async({page})=>{
+test('normal cruising remains stable until a spray-can boost is activated',async({page})=>{
  await page.goto('/demo/');
  const stat=await page.locator('grind-the-terms').evaluate(el=>{
    const g=el.game;g.start();
    for(let i=0;i<20;i++)g.update(1/60);
-   const normal=g.result().stats.normalSpeed;
+   const normal=g.result().stats;
    g.input('speed',true);
-   for(let i=0;i<40;i++)g.update(1/60);
-   const fast=g.result().stats;
-   return {normal,fast};
+   for(let i=0;i<10;i++)g.update(.05);
+   const ignoredLegacyToggle=g.result().stats;
+   return {normal,ignoredLegacyToggle};
  });
- expect(stat.normal).toBeGreaterThanOrEqual(180);
- expect(stat.fast.normalSpeed).toBeGreaterThanOrEqual(stat.normal);
- expect(stat.fast.runSpeed/stat.fast.normalSpeed).toBeGreaterThan(1.99);
- expect(stat.fast.runSpeed/stat.fast.normalSpeed).toBeLessThan(2.01);
+ expect(stat.normal.runSpeed/stat.normal.normalSpeed).toBe(1);
+ expect(stat.ignoredLegacyToggle.speedMultiplier).toBe(1);
+ expect(stat.ignoredLegacyToggle.runSpeed/stat.ignoredLegacyToggle.normalSpeed).toBe(1);
 });
 
 

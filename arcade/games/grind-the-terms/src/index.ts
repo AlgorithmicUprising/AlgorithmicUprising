@@ -3,7 +3,7 @@ import chunksData from './chunks.json';
 
 // Grind the Terms v0.2 preview: mechanics separated from the AU-only skin assets.
 type HazardKind = 'accept' | 'popup' | 'modal' | 'gap' | 'rail' | 'token';
-type Power = 'shield' | 'airboost';
+type Power = 'coin' | 'shield' | 'airboost' | 'trick2' | 'rocket';
 type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power}> };
 type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; scored:boolean; collected:boolean; deflected:boolean };
 type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
@@ -15,7 +15,8 @@ const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
 
 // No global listeners: multiple embedded games are independent Web Components.
 defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
-  const ground = 300, playerX = 140, gravity = 1800, jumpVelocity = -620, railPopVelocity = -380;
+  // Fony, ground pickups, and obstacles share the sidewalk centerline.
+  const ground = 310, playerX = 140, gravity = 1800, jumpVelocity = -620, railPopVelocity = -380;
   const baseSpeed=180; // Gameplay travel is independent of render FPS; do not change it to fix stutter.
   let viewLeft=0,viewRight=640; // Current world-space camera bounds for parallax cropping.
   let boardY=ground, lastBoardY=ground, vy=0, elapsed=0, distance=0;
@@ -23,10 +24,12 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   let alive=true, bailRemaining=0, cause='accept', held=false, grinding=false;
   // A supporting surface may be a rail or a flat-topped consent box.
   let support:Obstacle|null=null,platformLandings=0,platformGrinds=0;
-  let jumpCount=0, airBoost=false, shield=false, shieldsUsed=0, hazardsCleared=0;
+  let jumpCount=0,tricksUsed=0,trick2Unlocked=false,airBoost=false,shield=false,shieldsUsed=0,sprayCans=0,hazardsCleared=0;
   let bufferLeft=0, coyoteLeft=0, stateTime=0, landTimer=0;
   let combo=0, longestCombo=0, lastSurface='ground';
-  let speedEnabled=false, acceleration=0, grindCharge=0, grindBoostLeft=0, boostTriggered=false, shieldDeflections=0;
+  let trickDown=false,boostDown=false,trickUpgradeSpawned=false,nextRocketScore=160,rocketBoostLeft=0;
+  let grindCharge=0,grindBoostLeft=0,boostTriggered=false,shieldDeflections=0;
+  let trickCallout='',trickCalloutLeft=0;
   let objects:Obstacle[]=[];
   let nextChunk=0, lastChunkId='', firstChunk=true;
   let art:Art|null=null,skinRequest=0;
@@ -39,11 +42,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
 
   const rng=()=>{rngState=(Math.imul(1664525,rngState)+1013904223)>>>0;return rngState/4294967296};
   const tier=()=>elapsed<20?1:elapsed<45?2:elapsed<90?3:4;
-  // SPACE (keyboard) / A (cabinet) is a TOGGLE, not a jump input.
-  // The cabinet A / SPACE toggle doubles an already brisk normal skating pace.
+  // Ground pace ramps independently; only a collected spray can can briefly double it.
   const normalSpeed=()=>clamp(baseSpeed+elapsed*1.72,baseSpeed,460);
-  // The toggle ramps to exactly 2x the current baseline. Grind momentum remains independent.
-  const speed=()=>normalSpeed()*(1+acceleration)*(grindBoostLeft>0?1.07:1);
+  const speed=()=>normalSpeed()*(rocketBoostLeft>0?2:(grindBoostLeft>0?1.07:1));
   const score=()=>Math.floor(distance/48)+Math.floor(extraClauses)+Math.floor(totalGrindDistance/32)*2+Math.floor(bonus);
   // Grounding contract (source atlas cells are 144x112).
   // Each obstacle is drawn relative to its *visible* feet / button base,
@@ -52,7 +53,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const sourceCellHeight=112;
   const surfaces={
     rail:   {top:53,bottom:82,height:77},   // metal coping / feet
-    accept: {top:45,bottom:92,height:72},   // original yellow ACCEPT ALL body
+    accept: {top:4,bottom:94,height:92},   // larger sidewalk block with a visible CONSENT TO ALL button
     popup:  {top:24,bottom:105,height:94},  // pink window frame / bottom
     modal:  {top:27,bottom:101,height:130}  // tall agreement panel / bottom
   } as const;
@@ -75,23 +76,39 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const reset=()=>{
     boardY=ground;lastBoardY=ground;vy=0;elapsed=0;distance=0;bonus=0;extraClauses=0;
     grindDistance=0;totalGrindDistance=0;grindMs=0;alive=true;bailRemaining=0;cause='accept';
-    held=false;grinding=false;support=null;platformLandings=0;platformGrinds=0;jumpCount=0;airBoost=false;shield=false;shieldsUsed=0;
+    held=false;grinding=false;support=null;platformLandings=0;platformGrinds=0;jumpCount=0;tricksUsed=0;trick2Unlocked=false;airBoost=false;shield=false;shieldsUsed=0;sprayCans=0;
     hazardsCleared=0;bufferLeft=0;coyoteLeft=.08;stateTime=0;landTimer=0;
     combo=0;longestCombo=0;lastSurface='ground';objects=[];nextChunk=380;lastChunkId='';firstChunk=true;
-    speedEnabled=false;acceleration=0;grindCharge=0;grindBoostLeft=0;boostTriggered=false;shieldDeflections=0;
+    trickDown=false;boostDown=false;trickUpgradeSpawned=false;nextRocketScore=160;rocketBoostLeft=0;grindCharge=0;grindBoostLeft=0;boostTriggered=false;shieldDeflections=0;
+    trickCallout='';trickCalloutLeft=0;
+    if(host.hasAttribute('data-qa-trick-upgrade'))trick2Unlocked=true;
+    if(host.hasAttribute('data-qa-rocket-charge'))sprayCans=1;
     rngState=(Number(host.getAttribute('seed'))||0x11b00c5)>>>0;visualFlash=0;currentAnim='run';
   };
   const land=()=>{
-    boardY=ground;vy=0;grinding=false;jumpCount=0;coyoteLeft=.08;
+    boardY=ground;vy=0;grinding=false;jumpCount=0;tricksUsed=0;coyoteLeft=.08;
     if(lastSurface!=='ground'){landTimer=.12;state('land')}
     lastSurface='ground';combo=0;
     if(bufferLeft>0){bufferLeft=0;ollie()}
   };
-  const ollie=(secondary=false)=>{
+  const ollie=()=>{
     if(!alive||bailRemaining>0)return;
-    if(secondary){if(jumpCount>=2)return;jumpCount=2;vy=-520;state('double');emit('game:double-jump',{alwaysAvailable:true})}
-    else{jumpCount=1;vy=jumpVelocity;state('ollie')}
+    // Jump input is always a single ollie. Tricks use their own button.
+    jumpCount=1;vy=jumpVelocity;state('ollie');
     support=null;grinding=false;landTimer=0;coyoteLeft=0;bufferLeft=0;lastSurface='air';
+  };
+  const trickLimit=()=>trick2Unlocked?2:1;
+  const trickTier=()=>score()>=125?2:score()>=50?1:0;
+  const performTrick=()=>{
+    if(!alive||bailRemaining>0||grinding||support||lastSurface!=='air'||boardY>=ground-1||tricksUsed>=trickLimit())return;
+    const sequence=tricksUsed+1,level=trickTier();
+    const names=sequence===1?['KICKFLIP','HEELFLIP','360 FLIP']:['VARIAL COMBO','HARD FLIP COMBO','LASER FLIP COMBO'];
+    const values=sequence===1?[2,4,6]:[4,8,12];
+    const name=names[level],points=values[level];
+    tricksUsed=sequence;jumpCount=1;vy=sequence===1?-520:-470;
+    state(sequence===1?'flip':'double');lastSurface='air';
+    bonus+=points;trickCallout=name+' +'+points;trickCalloutLeft=1.15;
+    emit('game:trick',{name,points,level:level+1,sequence,limit:trickLimit(),score:score()});
   };
   const railPop=()=>{
     const from=support?.kind||'rail';support=null;grinding=false;grindCharge=0;boostTriggered=false;
@@ -99,16 +116,22 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     state('railpop');emit('game:grind-end',{surface:from,distancePx:Math.floor(grindDistance),grindMs:Math.floor(grindMs)});
   };
   const input=(key:string,down:boolean)=>{
-    if(key==='speed'){
-      if(down&&alive){speedEnabled=!speedEnabled;emit('game:speed',{enabled:speedEnabled,speedPxPerSecond:Math.round(speed())})}
-      return;
+    if(key==='trick'){
+      if(down&&!trickDown)performTrick();
+      trickDown=down;return;
     }
-    if(key==='special')return; // Ø cabinet button is reserved for a future special.
-    if(key!=='tap'&&key!=='up')return;
+    if(key==='boost'||key==='special'){
+      if(down&&!boostDown&&alive&&!grinding&&sprayCans>0){
+        sprayCans--;rocketBoostLeft=Math.min(3.75,rocketBoostLeft+1.25);
+        emit('game:boost',{source:'spray-can',durationMs:1250,charges:sprayCans,speedMultiplier:2});
+      }
+      boostDown=down;return;
+    }
+    // Canvas clicks and the trick button never trigger an ollie or release a grind.
+    if(key!=='up')return;
     if(down&&!held){
       if(grinding){railPop()}
       else if(support||boardY>=ground-1||coyoteLeft>0){ollie()}
-      else if(jumpCount===1){ollie(true)}
       else bufferLeft=.1;
     }
     if(!down&&held&&grinding)railPop();
@@ -131,9 +154,38 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const collect=(o:Obstacle)=>{
     if(o.collected)return;
     o.collected=true;bonus+=10;
-    // Double jump is permanently unlocked; older AIR BOOST tokens now grant protection.
+    if(o.power==='trick2'){
+      trick2Unlocked=true;
+      emit('game:power',{power:'trick2',collected:true,secondTrickUnlocked:true});
+      return;
+    }
+    if(o.power==='rocket'){
+      sprayCans=Math.min(3,sprayCans+1);
+      emit('game:power',{power:'rocket',collected:true,charges:sprayCans,maxCharges:3});
+      return;
+    }
+    if(o.power==='coin'){
+      emit('game:power',{power:'coin',collected:true,score:score()});
+      return;
+    }
+    // Opt-out and legacy AIR BOOST pickups are defensive, not jump upgrades.
     shield=true;airBoost=false;
     emit('game:power',{power:o.power||'shield',collected:true});
+  };
+  const spawnMilestonePickups=()=>{
+    if(!trickUpgradeSpawned&&score()>=80){
+      trickUpgradeSpawned=true;
+      objects.push({x:playerX+430,w:48,kind:'token',power:'trick2',scored:false,collected:false,deflected:false});
+      emit('game:pickup-ready',{power:'trick2',score:score()});
+    }
+    while(score()>=nextRocketScore){
+      nextRocketScore+=120;
+      const pending=objects.some(o=>o.kind==='token'&&o.power==='rocket'&&!o.collected);
+      if(sprayCans<3&&!pending){
+        objects.push({x:playerX+440,w:72,kind:'token',power:'rocket',scored:false,collected:false,deflected:false});
+        emit('game:pickup-ready',{power:'rocket',score:score()});
+      }
+    }
   };
   const emitChunk=()=>{
     const choices=chunks.filter(c=>c.tier<=tier()&&(!firstChunk||c.id==='intro-rails')&&c.id!==lastChunkId);
@@ -150,7 +202,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const update=(dt:number)=>{
     if(!alive){bailRemaining=Math.max(0,bailRemaining-dt);stateTime+=dt;return}
     dt=Math.min(dt,.05);elapsed+=dt;stateTime+=dt;landTimer=Math.max(0,landTimer-dt);
-    acceleration=clamp(acceleration+(speedEnabled?dt/.45:-dt/.35),0,1);
+    rocketBoostLeft=Math.max(0,rocketBoostLeft-dt);
+    trickCalloutLeft=Math.max(0,trickCalloutLeft-dt);
     grindBoostLeft=Math.max(0,grindBoostLeft-dt);
     if(grinding){grindCharge+=dt;if(grindCharge>=.85&&!boostTriggered){boostTriggered=true;grindBoostLeft=2.2;emit('game:boost',{source:'extended-grind',durationMs:2200,bonusPercent:7})}}
     else {grindCharge=0;boostTriggered=false;}
@@ -186,13 +239,13 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       if(o.kind==='rail'){
         const top=railSurfaceY();
         if(!support&&held&&overlap&&vy>=0&&lastBoardY<=top+15&&boardY>=top-16&&boardY<=top+20){
-          support=o;boardY=top;vy=0;grinding=true;grindCharge=0;boostTriggered=false;lastSurface='rail';
+          support=o;boardY=top;vy=0;grinding=true;grindCharge=0;boostTriggered=false;jumpCount=0;tricksUsed=0;lastSurface='rail';
           state('grind');emit('game:grind-start',{surface:'rail',score:score()});
         }
         continue;
       }
       if(o.kind==='token'){
-        if(overlap&&!o.collected&&Math.abs(boardY-(ground-58))<50)collect(o);
+        if(overlap&&!o.collected&&Math.abs(boardY-(ground-28))<45)collect(o);
         continue;
       }
       if(!overlap||o.collected||o.deflected||!alive||o===support)continue;
@@ -205,7 +258,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       const top=flatTopY(o.kind);
       if(!support&&vy>=0&&lastBoardY<=top+12&&boardY>=top-10&&boardY<=top+Math.max(26,Math.abs(vy)*dt+12)){
         support=o;boardY=top;vy=0;lastSurface=o.kind;
-        jumpCount=0;coyoteLeft=.08;landTimer=.12;platformLandings++;
+        jumpCount=0;tricksUsed=0;coyoteLeft=.08;landTimer=.12;platformLandings++;
         if(held){
           grinding=true;grindCharge=0;boostTriggered=false;platformGrinds++;state('grind');
           emit('game:grind-start',{surface:o.kind,score:score()});
@@ -219,7 +272,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
     if(!support&&boardY>=ground){land()}
     if(!support&&boardY<ground-1&&landTimer===0&&alive){
-      if(currentAnim!=='ollie'&&currentAnim!=='double'&&currentAnim!=='railpop')state('ollie');
+      if(currentAnim!=='ollie'&&currentAnim!=='double'&&currentAnim!=='railpop'&&currentAnim!=='flip')state('ollie');
     }
     if(!support&&boardY>=ground&&landTimer===0)state('idle');
     if(support&&!grinding&&landTimer===0)state('idle');
@@ -234,6 +287,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       }
     }
     objects=objects.filter(o=>o.x+o.w>-45);
+    spawnMilestonePickups();
   };
 
   async function setSkin(url:string|null){
@@ -386,20 +440,24 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const drawAccept=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
     const top=flatTopY('accept'),x=o.x,w=o.w,h=ground-top;
     ctx.save();ctx.lineJoin='round';
+    // A broad paper consent block reads at speed; the green button is its grindable front.
+    ctx.fillStyle='rgba(10,8,16,.55)';ctx.beginPath();ctx.ellipse(x+w/2,ground-1,w*.48,4,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#0c0a11';ctx.beginPath();ctx.roundRect(x-4,top-3,w+8,h+5,8);ctx.fill();
+    ctx.fillStyle='#EDEAE0';ctx.beginPath();ctx.roundRect(x,top,w,h,5);ctx.fill();
+    ctx.fillStyle='#E0287A';ctx.beginPath();ctx.roundRect(x,top,w,23,5);ctx.fill();
+    ctx.fillStyle='#140f18';ctx.font='bold 12px monospace';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText('CONSENT TO ALL',x+8,top+13,Math.max(42,w-16));
+    ctx.fillStyle='#33283a';ctx.font='bold 8px monospace';ctx.fillText('TERMS • DATA • EVERYTHING',x+8,top+32,Math.max(38,w-16));
     const button=art?.images.acceptButton;
-    ctx.fillStyle='#0c0a11';ctx.beginPath();ctx.roundRect(x-3,top-2,w+6,h+3,10);ctx.fill();
-    if(button)ctx.drawImage(button,x-3,top-2,w+6,h+3);
+    const buttonW=w-14,buttonH=buttonW/3.25,buttonX=x+7,buttonY=ground-buttonH-2;
+    if(button)ctx.drawImage(button,buttonX,buttonY,buttonW,buttonH);
     else{
-      ctx.fillStyle='#627f0e';ctx.beginPath();ctx.roundRect(x+1,top+4,w-2,h-6,8);ctx.fill();
-      const g=ctx.createLinearGradient(0,top,0,ground);
-      g.addColorStop(0,'#eeff72');g.addColorStop(.43,'#d7ff00');g.addColorStop(1,'#9eae14');
-      ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x+2,top+1,w-4,h-6,7);ctx.fill();
-      ctx.strokeStyle='#283019';ctx.lineWidth=2;ctx.stroke();
-      ctx.fillStyle='#fafdc3';ctx.fillRect(x+12,top+4,Math.max(8,w-24),2);
+      ctx.fillStyle='#D7FF00';ctx.beginPath();ctx.roundRect(buttonX,buttonY,buttonW,buttonH,8);ctx.fill();
+      ctx.strokeStyle='#151216';ctx.lineWidth=3;ctx.stroke();
+      ctx.fillStyle='#151216';ctx.beginPath();ctx.arc(buttonX+buttonH/2,buttonY+buttonH/2,buttonH*.23,0,Math.PI*2);ctx.fill();
     }
-    ctx.fillStyle='#151216';ctx.font='bold 13px monospace';
-    ctx.textBaseline='middle';ctx.textAlign='center';
-    ctx.fillText('ACCEPT ALL',x+w/2,top+(h-6)/2+1,Math.max(32,w-12));
+    ctx.fillStyle='#151216';ctx.font='bold 10px monospace';ctx.textAlign='center';
+    ctx.fillText('ACCEPT ALL',buttonX+buttonW*.61,buttonY+buttonH/2+1,buttonW*.65);
     ctx.fillStyle='#17121b';ctx.fillRect(x+12,ground-5,10,5);ctx.fillRect(x+w-23,ground-5,10,5);
     ctx.restore();
   };
@@ -414,7 +472,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#d72c80';ctx.fillRect(x,top,w,22);
     }
     ctx.fillStyle=panel?'#f6efe2':'#15111b';ctx.font='bold 11px monospace';
-    ctx.fillText(modal?'TERMS / DATA':'CONSENT?',x+7,top+15);
+    ctx.fillText(modal?'TERMS / DATA':'CONSENT TO ALL',x+7,top+15,Math.max(34,w-14));
     if(!panel){
       ctx.fillStyle='#1a1621';ctx.fillRect(x+w-17,top+4,12,13);
       ctx.fillStyle='#f7e7ef';ctx.font='bold 10px monospace';ctx.fillText('×',x+w-15,top+14);
@@ -430,8 +488,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#1d1728';ctx.fillRect(x+7,ground-22,w-14,17);
       ctx.fillStyle='#e0287a';ctx.fillRect(x+9,ground-20,w-18,13);
     }
-    ctx.fillStyle='#130d1b';ctx.font='bold 9px monospace';
-    ctx.textAlign='center';ctx.fillText('I AGREE',x+w/2,ground-11);
+    ctx.fillStyle='#130d1b';ctx.font='bold 10px monospace';
+    ctx.textAlign='center';ctx.fillText(modal?'I AGREE':'ACCEPT ALL',x+w/2,ground-11,Math.max(36,w-14));
     if(!panel){ctx.strokeStyle='#15121a';ctx.lineWidth=2;ctx.strokeRect(x,top,w,h)}
     if(o.deflected){
       ctx.fillStyle='#171119';ctx.fillRect(x+3,top+25,w-6,19);
@@ -440,11 +498,24 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     ctx.restore();
   };
   const drawToken=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
-    // This is a collectible, never a consent form. Stable center and collision size.
-    const x=o.x+o.w/2,cy=ground-66;
+    // Pickups sit in Fony's rolling lane. Passing through them at sidewalk height collects them.
+    const x=o.x+o.w/2,cy=ground-28;
     const wobble=1+Math.sin(elapsed*7+o.x*.018)*.045;
     ctx.save();ctx.translate(x,cy);ctx.scale(wobble,1);
-    if(o.power==='shield'&&art?.images.optOutToken){
+    if(o.power==='trick2'&&art?.images.trickUpgrade){
+      ctx.fillStyle='rgba(224,40,122,.24)';ctx.beginPath();ctx.arc(0,0,26,0,Math.PI*2);ctx.fill();
+      ctx.drawImage(art.images.trickUpgrade,-24,-24,48,48);
+    }else if(o.power==='rocket'&&art?.images.rocketCan){
+      ctx.fillStyle='rgba(215,255,0,.2)';ctx.beginPath();ctx.ellipse(0,0,39,22,0,0,Math.PI*2);ctx.fill();
+      ctx.drawImage(art.images.rocketCan,-37,-13,74,26);
+    }else if(o.power==='coin'){
+      // Ordinary coins are visually distinct from defensive and upgrade tokens.
+      ctx.fillStyle='rgba(215,255,0,.25)';ctx.beginPath();ctx.arc(0,0,23,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#111018';ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#d7ff00';ctx.beginPath();ctx.arc(0,0,15,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#fff6b7';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle='#17121b';ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(2.4,-2.4);ctx.lineTo(8,0);ctx.lineTo(2.4,2.4);ctx.lineTo(0,8);ctx.lineTo(-2.4,2.4);ctx.lineTo(-8,0);ctx.lineTo(-2.4,-2.4);ctx.closePath();ctx.fill();
+    }else if((o.power==='shield'||o.power==='airboost')&&art?.images.optOutToken){
       ctx.fillStyle='rgba(215,255,0,.18)';ctx.beginPath();ctx.arc(0,0,23,0,Math.PI*2);ctx.fill();
       ctx.drawImage(art.images.optOutToken,-23,-23,46,46);
     }else{
@@ -503,7 +574,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const drawBackdrop=(ctx:CanvasRenderingContext2D,portrait:boolean,topWorld:number)=>{
     // Illustrated 2.5-D city plus paper-cut cloud canopy; foreground remains independent.
-    // Keep the playable sidewalk at ground Y=300; no enlarged paper wallpaper.
+    // Keep the board at the sidewalk centerline; no enlarged paper wallpaper.
     const sky=ctx.createLinearGradient(0,topWorld,0,ground);
     sky.addColorStop(0,'#170d19');sky.addColorStop(.47,'#46203e');
     sky.addColorStop(.76,'#d92a82');sky.addColorStop(1,'#2d1b36');
@@ -544,10 +615,10 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       // behind the actor, never on top of the skating surface.
       tileLayer(ctx,'graffitiWall',239,61,.32,.97);
       // Image holds the curb, textured sidewalk and distinct asphalt lanes.
-      // Everything sits at Y=300; no black line standing in for a floor.
+      // The board baseline sits near the sidewalk center; no black line stands in for a floor.
       // This is physical world geometry: sidewalk and attached obstacles
       // MUST move in perfect lockstep. Never use parallax on the ground.
-      tileLayer(ctx,'road',ground-5,90,1,1);
+      tileLayer(ctx,'road',295,90,1,1);
       return;
     }
     // Safe fallback to the former clearly framed art; never a blank stage.
@@ -575,7 +646,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // This opt-in developer-only visual fixture uses the production renderer.
     // It is not part of gameplay, and is never displayed without the QA attr.
     if(host.hasAttribute('data-qa-consent')){
-      for(const [kind,x,width] of [['popup',225,116],['modal',405,120]] as const)
+      for(const [kind,x,width] of [['popup',225,144],['modal',405,154]] as const)
         drawObstacle(ctx,{kind,x,w:width,scored:false,collected:false,deflected:false});
     }
     // QA fixtures exercise production geometry (not simplified test drawings).
@@ -584,16 +655,22 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       drawRail(ctx,{kind:'rail',x:280,w,scored:false,collected:false,deflected:false});
     }
     if(host.hasAttribute('data-qa-accept'))
-      drawAccept(ctx,{kind:'accept',x:315,w:120,scored:false,collected:false,deflected:false});
+      drawAccept(ctx,{kind:'accept',x:315,w:160,scored:false,collected:false,deflected:false});
     // QA-only obstacle at a fixed WORLD position verifies the pavement
     // and actual consent buttons scroll at exactly the same world velocity.
     if(host.hasAttribute('data-qa-ground-scroll'))
-      drawAccept(ctx,{kind:'accept',x:980-distance,w:120,scored:false,collected:false,deflected:false});
+      drawAccept(ctx,{kind:'accept',x:980-distance,w:160,scored:false,collected:false,deflected:false});
     if(host.hasAttribute('data-qa-token'))
       drawToken(ctx,{kind:'token',power:'shield',x:310,w:26,scored:false,collected:false,deflected:false});
     if(host.hasAttribute('data-qa-loophole'))
       drawLoophole(ctx,{kind:'gap',x:270,w:100,scored:false,collected:false,deflected:false});
+    if(rocketBoostLeft>0){
+      const pulse=.72+.18*Math.sin(elapsed*34),left=playerX-30,base=boardY-30;
+      ctx.fillStyle='#E0287A';ctx.beginPath();ctx.moveTo(left,base-8);ctx.lineTo(left-29*pulse,base);ctx.lineTo(left,base+7);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#D7FF00';ctx.beginPath();ctx.moveTo(left-2,base-4);ctx.lineTo(left-21*pulse,base);ctx.lineTo(left-2,base+3);ctx.closePath();ctx.fill();
+    }
     drawSkater(ctx);
+    if(trickCalloutLeft>0){ctx.fillStyle='#D7FF00';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(trickCallout,playerX,Math.max(84,boardY-74));ctx.textAlign='left'}
     if(grinding){ctx.fillStyle='#E0287A';const y=support?surfaceY(support):railSurfaceY();for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,y-2+(i%2)*3,5,2)}
     if(portrait){
       const t=-dy/scale;
@@ -602,29 +679,28 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillText('CLAUSES  '+score(),48,t+29);
       ctx.fillStyle='#f3ebde';ctx.font='bold 12px monospace';
       ctx.fillText('TIER '+tier()+'   BEST '+(host as any).best,48,t+51);
-      ctx.fillStyle=speedEnabled?'#d7ff00':'#e4cbd7';
-      ctx.fillText('SPEED '+Math.round(speed())+(speedEnabled?'  FAST x2':''),48,t+72);
-      ctx.fillStyle='#e0287a';ctx.font='bold 11px monospace';
-      ctx.fillText(grinding?'GRIND! RELEASE U TO POP':'CONSENT = LAND / GRIND   •   Ø TOKENS = PICKUPS',48,t+91);
+      ctx.fillStyle=rocketBoostLeft>0?'#d7ff00':'#e4cbd7';ctx.font='bold 11px monospace';
+      ctx.fillText('TRICKS '+tricksUsed+'/'+trickLimit()+'   CANS '+sprayCans+(rocketBoostLeft>0?'   ROCKET x2':'') ,48,t+72);
+      ctx.fillStyle='#e0287a';ctx.font='bold 10px monospace';
+      ctx.fillText(grinding?'GRIND — RELEASE U TO POP':'U=OLLIE/GRIND  •  SPACE/A=TRICK  •  Ø=ROCKET',48,t+91);
       ctx.fillStyle='#b8aaba';ctx.font='bold 12px monospace';
-      ctx.fillText((shield?'SHIELD  ':'')+'DOUBLE JUMP ON',48,t+150);
+      ctx.fillText((shield?'SHIELD  ':'')+(trick2Unlocked?'COMBO TRICK UNLOCKED':'COMBO UPGRADE AT 80'),48,t+150);
     }else{
       ctx.fillStyle='rgba(17,12,20,.93)';ctx.fillRect(0,0,640,71);
       ctx.fillStyle='#D7FF00';ctx.font='bold 18px monospace';ctx.fillText('CLAUSES SKIPPED  '+score(),14,27);
       ctx.fillStyle='#F3EBDE';ctx.font='bold 12px monospace';ctx.fillText('TIER '+tier()+'   COMBO x'+(combo>=3?3:combo===2?2:combo===1?1.5:1),14,47);
       ctx.fillStyle='#D7FF00';ctx.fillText('BEST '+(host as any).best,485,27);
-      ctx.fillStyle=speedEnabled||grindBoostLeft>0?'#D7FF00':'#aaa1b3';
-      ctx.fillText('SPD '+Math.round(speed()),307,47);
-      ctx.fillText((shield?'[SHIELD] ':'')+'[DOUBLE JUMP ON]',400,47);
-      ctx.fillStyle='#E0287A';ctx.font='bold 11px monospace';
-      if(elapsed<11)ctx.fillText('U / ↑: JUMP & HOLD GRIND  •  SPACE / A: 2x FAST',12,65);
-      else if(grinding)ctx.fillText('GRINDING THE FINE PRINT — RELEASE TO POP!',170,65);
-      else ctx.fillText('CONSENT FORMS = OBSTACLES  •  TOKENS = PICKUPS',12,65);
+      ctx.fillStyle=rocketBoostLeft>0||grindBoostLeft>0?'#D7FF00':'#aaa1b3';
+      ctx.fillText('TRICK '+tricksUsed+'/'+trickLimit()+'  CANS '+sprayCans+(rocketBoostLeft>0?'  x2':'') ,307,47);
+      ctx.fillText((shield?'[SHIELD] ':'')+(trick2Unlocked?'[COMBO +1]':'[TRICK UPGRADE 80]'),430,47);
+      ctx.fillStyle='#E0287A';ctx.font='bold 10px monospace';
+      if(grinding)ctx.fillText('GRINDING THE FINE PRINT — RELEASE U TO POP!',170,65);
+      else ctx.fillText('U / ↑: OLLIE + HOLD GRIND  •  SPACE / A: TRICK  •  R: ROCKET',12,65);
     }
     if(visualFlash>0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
     ctx.restore();
   };
-  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,longestCombo,shieldsUsed,speedEnabled,acceleration:Math.round(acceleration*100)/100,runSpeed:Math.round(speed()),normalSpeed:Math.round(normalSpeed()),doubleJumpAlwaysOn:true,grindBoostLeft:Math.round(grindBoostLeft*100)/100,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null}});
+  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',modal:'AGREE & CONTINUE? NOT THIS TIME.',gap:'YOU FELL THROUGH A LOOPHOLE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,longestCombo,shieldsUsed,runSpeed:Math.round(speed()),normalSpeed:Math.round(normalSpeed()),speedMultiplier:rocketBoostLeft>0?2:1,tricksUsed,trickLimit:trickLimit(),trick2Unlocked,trickAvailable:!support&&!grinding&&lastSurface==='air'&&boardY<ground-1&&tricksUsed<trickLimit(),sprayCans,rocketBoostLeft:Math.round(rocketBoostLeft*100)/100,grindBoostLeft:Math.round(grindBoostLeft*100)/100,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null}});
   reset();
   return {start:reset,input,update,draw,score,over:()=>!alive&&bailRemaining===0,result,setSkin} satisfies GameAPI;
 });
