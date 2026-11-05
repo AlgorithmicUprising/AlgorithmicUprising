@@ -312,6 +312,7 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  const el=page.locator('grind-the-terms');
  await el.locator('button[part=start]').click();
  const result=await el.evaluate(e=>{
+  const initialJumpCount=e.game.result().stats.jumpCount;
   e.focus();
   const send=(type,key)=>e.dispatchEvent(new KeyboardEvent(type,{key,bubbles:true,composed:true,cancelable:true}));
   send('keydown',' ');send('keyup',' ');
@@ -322,10 +323,10 @@ test('space changes speed without causing an ollie',async({page},info)=>{
   const normal=e.game.result().stats;
   send('keydown','ArrowUp');send('keyup','ArrowUp');e.game.update(.05);
   const jumped=e.game.result().stats;
-  return {fast,measured,normal,jumped};
+  return {initialJumpCount,fast,measured,normal,jumped};
  });
  expect(result.fast.speedEnabled).toBe(true);
- expect(result.fast.jumpCount).toBe(0);
+ expect(result.fast.jumpCount).toBe(result.initialJumpCount);
  expect(result.measured).toBeGreaterThan(345);
  expect(result.measured).toBeLessThan(380);
  expect(result.normal.speedEnabled).toBe(false);
