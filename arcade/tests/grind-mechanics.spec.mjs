@@ -223,7 +223,7 @@ test('clean ACCEPT ALL sprite body is grounded with no detached green guide',asy
   el.game.start();el.game.draw(ctx,c.width,c.height);
   const portrait=c.width/c.height<1.05,k=portrait?c.width/450:Math.min(c.width/640,c.height/360),dx=portrait?-35*k:(c.width-640*k)/2,dy=portrait?c.height-350*k:(c.height-360*k)/2;
   const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
-  return {button:sample(375,276),above:sample(375,252),floor:sample(375,299)};
+  return {button:sample(344,280),above:sample(344,252),floor:sample(344,299)};
  });
  expect(colors.button[1]).toBeGreaterThan(150);
  expect(colors.button[3]).toBe(255);
