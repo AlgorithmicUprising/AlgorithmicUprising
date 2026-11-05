@@ -60,8 +60,12 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     const jump=root.querySelector('[data-key=jump]') as HTMLButtonElement|null;
     const boost=root.querySelector('[data-key=boost]') as HTMLButtonElement|null;
     const activate=(key:string)=>{if(!this.active)this.start();else if(!this.paused){this.game.input(key,true);this.game.input(key,false)}};
-    trick?.addEventListener('click',()=>activate('trick'));
-    boost?.addEventListener('click',()=>activate('boost'));
+    const bindAction=(button:HTMLButtonElement|null,key:string)=>{
+     button?.addEventListener('pointerdown',event=>{event.preventDefault();activate(key)});
+     button?.addEventListener('click',event=>{if(event.detail===0)activate(key)});
+    };
+    bindAction(trick,'trick');
+    bindAction(boost,'boost');
     jump?.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
     jump?.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
     jump?.addEventListener('pointerdown',e=>{e.preventDefault();try{jump.setPointerCapture(e.pointerId)}catch{}if(!this.active)this.start();if(!this.paused)this.game.input('up',true)});
