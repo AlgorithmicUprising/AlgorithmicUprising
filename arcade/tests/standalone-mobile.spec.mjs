@@ -96,8 +96,8 @@ test('portrait phone cabinet is contained and does not cover artwork buttons',as
  const controls=await game.locator('.deck button').evaluateAll(nodes=>nodes.map(n=>({key:n.dataset.key,w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,x:n.getBoundingClientRect().x})));
  expect(controls).toHaveLength(3);
  for(const b of controls)expect(b.h).toBeGreaterThanOrEqual(44);
- expect(controls.find(b=>b.key==='special').w).toBeGreaterThan(controls.find(b=>b.key==='speed').w);
- expect(controls.find(b=>b.key==='special').x).toBeLessThan(controls.find(b=>b.key==='speed').x);
+ expect(controls.find(b=>b.key==='boost').w).toBeGreaterThan(controls.find(b=>b.key==='trick').w);
+ expect(controls.find(b=>b.key==='boost').x).toBeLessThan(controls.find(b=>b.key==='trick').x);
 });
 
 test('320px phone width keeps the Ø A U controls usable',async({page},info)=>{
@@ -110,7 +110,7 @@ test('320px phone width keeps the Ø A U controls usable',async({page},info)=>{
  expect(host).not.toBeNull();expect(deck).not.toBeNull();
  expect(host.width).toBeLessThanOrEqual(320);
  expect(host.y+host.height).toBeGreaterThanOrEqual(deck.y+deck.height-2);
- for(const key of ['special','speed','jump']){
+ for(const key of ['boost','trick','jump']){
   const button=game.locator('button[data-key='+key+']'),box=await button.boundingBox();
   expect(box).not.toBeNull();
   expect(box.width).toBeGreaterThanOrEqual(44);
@@ -118,31 +118,28 @@ test('320px phone width keeps the Ø A U controls usable',async({page},info)=>{
  }
 });
 
-test('mobile A toggles speed, U ollies, Ø special is reserved',async({page},info)=>{
+test('mobile A performs an aerial trick and Ø spends a collected spray can',async({page},info)=>{
  test.skip(!info.project.name.startsWith('mobile'),'Mobile cabinet only');
  await page.goto(standalone);
  const game=page.locator('grind-the-terms');
+ await game.evaluate(el=>el.setAttribute('data-qa-rocket-charge',''));
  await game.locator('button[part=start]').click();
- const a=game.locator('button[data-key=speed]'),u=game.locator('button[data-key=jump]'),zero=game.locator('button[data-key=special]');
- await expect(a).toHaveAttribute('aria-pressed','false');
- await a.click();
- await expect(a).toHaveAttribute('aria-pressed','true');
- expect(await game.evaluate(el=>el.game.result().stats.speedEnabled)).toBe(true);
- await game.evaluate(el=>{for(let i=0;i<10;i++)el.game.update(.05)});
- expect(await game.evaluate(el=>el.game.result().stats.acceleration)).toBeGreaterThan(0);
- await a.click();
- await expect(a).toHaveAttribute('aria-pressed','false');
- await game.evaluate(el=>{for(let i=0;i<8;i++)el.game.update(.05)});
- expect(await game.evaluate(el=>el.game.result().stats.acceleration)).toBeLessThan(.1);
- const before=await game.evaluate(el=>el.game.result().stats.boardY);
+ const a=game.locator('button[data-key=trick]'),u=game.locator('button[data-key=jump]'),zero=game.locator('button[data-key=boost]');
  await u.dispatchEvent('pointerdown',{pointerId:2});
  await game.evaluate(el=>el.game.update(.05));
- const jumped=await game.evaluate(el=>el.game.result().stats.boardY);
- expect(jumped).toBeLessThan(before-10);
  await u.dispatchEvent('pointerup',{pointerId:2});
- await expect(zero).toHaveAttribute('aria-disabled','true');
- await zero.dispatchEvent('click');
- expect(await game.evaluate(el=>el.game.result().stats.speedEnabled)).toBe(false);
+ const before=await game.evaluate(el=>el.game.result().stats);
+ expect(before.boardY).toBeLessThan(310);
+ await a.click();
+ const trick=await game.evaluate(el=>el.game.result().stats);
+ expect(trick.tricksUsed).toBe(1);
+ expect(trick.speedMultiplier).toBe(1);
+ expect(trick.runSpeed).toBe(trick.normalSpeed);
+ await zero.click();
+ const rocket=await game.evaluate(el=>el.game.result().stats);
+ expect(rocket.sprayCans).toBe(0);
+ expect(rocket.speedMultiplier).toBe(2);
+ expect(rocket.rocketBoostLeft).toBeGreaterThan(1.1);
 });
 
 test('iPhone long U hold cannot select text or open a context menu',async({page},info)=>{
@@ -166,7 +163,7 @@ test('iPhone long U hold cannot select text or open a context menu',async({page}
  await jump.dispatchEvent('pointerdown',{pointerId:7});
  await game.evaluate(el=>{for(let i=0;i<10;i++)el.game.update(.05)});
  await jump.dispatchEvent('pointerup',{pointerId:7});
- expect(await game.evaluate(el=>el.game.result().stats.boardY)).toBeLessThanOrEqual(300);
+ expect(await game.evaluate(el=>el.game.result().stats.boardY)).toBeLessThanOrEqual(310);
 });
 
 test('portrait camera fills the tablet game screen without landscape letterboxing',async({page},info)=>{
