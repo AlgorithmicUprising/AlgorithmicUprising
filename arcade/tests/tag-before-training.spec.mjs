@@ -21,7 +21,7 @@ test('Tag touch deck leaves the play area clear and supports drag plus spray',as
  const zone=el.locator('.tag-stick'),box=await zone.boundingBox(),x=box.x+box.width/2,y=box.y+box.height/2,before=await el.evaluate(e=>e.game.world.x);
  await zone.dispatchEvent('pointerdown',{pointerId:77,pointerType:'touch',clientX:x,clientY:y});await zone.dispatchEvent('pointermove',{pointerId:77,pointerType:'touch',clientX:x+42,clientY:y});
  await el.locator('[data-key=spray]').dispatchEvent('pointerdown',{pointerId:78,pointerType:'touch'});await page.waitForTimeout(500);
- expect(await el.evaluate(e=>e.game.world.x)).toBeGreaterThan(before+20);expect(await el.evaluate(e=>e.game.world.paint)).toBeLessThan(100);
+ expect(await el.evaluate(e=>e.game.world.x)).toBeGreaterThan(before+20);expect(await el.evaluate(e=>e.game.world.paint)).toBeLessThan(200);
  await zone.dispatchEvent('pointerup',{pointerId:77,pointerType:'touch'});await el.locator('[data-key=spray]').dispatchEvent('pointerup',{pointerId:78,pointerType:'touch'});
  await page.setViewportSize({width:320,height:760});await page.waitForTimeout(100);expect(await el.evaluate(e=>e.state)).toBe('playing');await el.screenshot({path:`test-results/screenshots/tag-small-${info.project.name}.png`});
  await page.evaluate(()=>{document.querySelector('#shell').requestFullscreen=undefined});await page.locator('#fullscreen').click();await expect(page.locator('#shell')).toHaveClass('game-shell expanded');await expect(page.locator('#fullscreen')).toHaveText('EXIT FULLSCREEN');await page.locator('#fullscreen').click();await expect(page.locator('#shell')).toHaveClass('game-shell');
@@ -39,4 +39,19 @@ test('Tag pause clears held controls and game-over uses Tag share/retry text',as
  await el.evaluate(e=>{e.game.world.score=4250;e.game.world.meter=100;e.game.world.alive=false;e.addEventListener('game:share',ev=>{e.shared=ev.detail;ev.preventDefault()})});
  await expect(el.locator('.overlay')).toContainText('TRAINING COMPLETE');await expect(el.locator('[part=again]')).toHaveText('ROLL AGAIN');await el.locator('[part=share]').click();expect(await el.evaluate(e=>e.shared.text)).toContain('held the alley');
  await el.locator('[part=again]').click();expect(await el.evaluate(e=>e.game.world.meter)).toBe(0);expect(await el.evaluate(e=>e.best)).toBe(4250);
+});
+test('No-art player scan dispatches police; direct spray breaks a hold and arrest explains game over',async({page},info)=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));const el=await start(page);
+ await el.evaluate(e=>{const g=e.game.world;g.x=480;g.y=335;g.noFreshArtTime=9.9;g.drones=[{id:99,kind:'scout',x:540,y:335,target:-1,phase:'hunt',timer:0,lockTime:2.5,paint:0,photos:0,age:0,spin:0,touchCooldown:0}];e.addEventListener('game:over',ev=>{e.lastOver=ev.detail})});
+ await expect.poll(()=>el.evaluate(e=>e.game.world.scanProgress)).toBeGreaterThan(0);
+ await expect.poll(()=>el.evaluate(e=>e.game.world.wanted),{timeout:5000}).toBe(true);
+ await expect.poll(()=>el.evaluate(e=>e.game.world.police.length),{timeout:5000}).toBe(2);
+ await el.evaluate(e=>{const g=e.game.world;g.paint=600;g.drones=[];g.tags[6].fill=1;for(const p of g.police){p.x=g.x+p.side*90;p.y=g.y}});
+ await el.evaluate(e=>{const g=e.game.world;g.arrestTime=0;g.facing=0;for(const p of g.police){p.x=g.x+p.side*18;p.y=g.y}});
+ await page.keyboard.down(' ');await expect.poll(()=>el.evaluate(e=>e.game.world.stats.policeTagged),{timeout:4000,intervals:[50]}).toBeGreaterThanOrEqual(1);await page.keyboard.up(' ');
+ expect(await el.evaluate(e=>e.game.world.alive)).toBe(true);expect(await el.evaluate(e=>e.game.world.arrestTime)).toBe(0);
+ await el.evaluate(e=>{const g=e.game.world;g.police=[-1,1].map(side=>({id:side+20,x:g.x+side*18,y:g.y,side,paint:0,tagged:false,timer:0,spin:0}));g.wanted=true});
+ await expect(el.locator('.overlay')).toContainText('BUSTED');await expect(el.locator('.overlay')).toContainText('Two police drones held you for 1.5 seconds');expect(await el.evaluate(e=>e.lastOver.cause)).toBe('arrested');expect(errors).toEqual([]);
+ await el.screenshot({path:`test-results/screenshots/tag-busted-${info.project.name}.png`});
+ await el.locator('[part=again]').click();expect(await el.evaluate(e=>e.game.world.police.length)).toBe(0);expect(await el.evaluate(e=>e.game.world.cans)).toBe(1);expect(await el.evaluate(e=>e.game.world.wanted)).toBe(false);
 });

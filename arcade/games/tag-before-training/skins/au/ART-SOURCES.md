@@ -2,6 +2,8 @@
 
 Game 02 artwork approved for integration on November 4, 2026. This skin uses the original generated punk alley art set: overhead Fony, Scout, Swarmlet, Hoover, Watermarker, props, paint effects, tag treatments, interface controls and copyright stamps.
 
+The v0.4.0 police prototype reuses the approved Scout body with a code-drawn shield, POLICE nameplate and solid emergency lights. It adds no external image sources. Warning rings, paint progress and arrest indicators are drawn at runtime.
+
 The fourteen overhead Fony poses are the gameplay source. The three-quarter alternate is reserved for presentation and is not used for movement.
 
 The export script cleans transparent margins, slices the animation sheets, registers Fony to the board, and packs 87 frames. `frames.json` records the frame rectangles and anchors. The exported PNG sprite atlases and interface files preserve the approved raster artwork and contain no scripts or remote image references.
