@@ -17,3 +17,17 @@ Replaced the source composite's flawed 80 × 94 crops with **39 individually iso
 ## New approved visual treatment (Nov 3)
 
 The user supplied the alternate Fony Sprock pink-mohawk, goggles and skateboard pose sheet and approved the newly generated Terms/data-center city mockup. `fony_punk_approved_v3.png` is a cleaned 39-pose normalization from that sheet (same 8-column×128px grid and board/foot anchor). Per-frame source rectangles remain in the Game 01 Drive art folder. `terms_clouds_far_v4.png`, `terms_clouds_near_v4.png`, `terms_datacenter_city_v4.png`, `terms_smoke_plumes_v4.png`, `terms_graffiti_wall_v4.png` and `terms_sidewalk_road_v4.png` are hand-composed independent parallax layers derived from the mockup's stylistic direction, not a frozen screenshot of its player, hazards or controls. The earlier hazard atlas is archived for provenance but **not used by the game renderer**; all obstacle surfaces now have clean vector geometry. This all remains **AU protected artwork**; do not relicense it as CC BY 4.0.
+
+
+## Approved gameplay art pack — Nov 5
+
+The active AU skin now uses the approved Fony and punk-comic pack saved in the Punk Arcade / Grind the Terms art-approval folder. The uploaded WebP/JPEG files are optimized game-ready derivatives; the full-resolution approved source sheets remain in the shared Drive folder.
+
+- `fony_gameplay_atlas_v1.webp`: 8 columns × 5 rows, 128 × 128 cells. Cells 0–5 are the six-frame board-run cycle; cells 6–38 preserve the engine's idle, land, ollie, double-jump, bail, grind, rail-pop and flip indices. Fony's board is included in the new grounded poses, so the runtime no longer paints a second board over it.
+- `terms_papercut_cloudbank_v13.webp` and `terms_far_clouds_v1.webp`: near/far paper-cloud parallax layers.
+- `terms_datacenter_city_v6.webp`, `terms_graffiti_wall_v6.webp` and `terms_sidewalk_road_v6.webp`: separate city, wall and street layers. The generated street's fixed manhole/cover was removed before use; the game continues to place its code-driven loophole at the collision location.
+- `terms_accept_button_v1.webp`, `terms_consent_popup_v1.webp`, `terms_consent_modal_v1.webp` and `terms_opt_out_token_v1.webp`: actual gameplay art drawn over the existing obstacle geometry, preserving collision surfaces and pickup behavior.
+- `terms_title_card_v1.jpg` and `terms_game_over_card_v1.jpg`: skin-specific desktop/mobile title and game-over backgrounds.
+- `terms_mobile_control_deck_v1.jpg`: the existing 9:16 mobile control area only. It skins the game controls inside the established tablet layout; it does not replace the ZERO GAME THING outer frame.
+
+The skin is all rights reserved. Keep it under `skins/au/`; do not copy these assets into the open `fony/` starter or label them CC BY 4.0. The generated action sheet supplies the visible poses; screen-size, actual iPhone/Android and ZERO GAME THING tablet review remains pending.

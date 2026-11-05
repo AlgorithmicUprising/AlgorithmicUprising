@@ -79,3 +79,13 @@ Keyboard SPACE now toggles GO FASTER; ↑/W/U jump. Portrait mobile U jumps and 
 - [x] Corrected roadside parallax from 0.86× to 1.0× so ACCEPT buttons and sidewalk share the exact same world motion.
 - [x] Added tests for atlas geometry, crisp sampling, heading size contract and road/ACCEPT on-screen displacement.
 - [ ] Manual art approval on desktop and real iPhone; proper individually redrawn high-resolution Fony poses.
+
+
+## Nov 5 — approved game-art integration
+
+- [x] Replaced the active ground-roll poses with the approved six-frame Fony skateboard cycle and filled the existing 39-cell animation layout from the approved action sheet.
+- [x] Added approved near/far paper clouds, data-center skyline, graffiti retaining wall and roadside textures as independent scrolling layers. The static manhole and cover were removed from the road texture so the drawn loophole remains aligned with its actual collision.
+- [x] Applied the generated ACCEPT button, consent-panel states and opt-out token as art while retaining existing collision geometry and game behavior.
+- [x] Added title/game-over scene art and the generated mobile control deck inside the game's existing 9:16 layout. The ZERO GAME THING tablet outer shell remains the host's responsibility.
+- [ ] Inspect the updated branch preview in desktop browser, phone-sized portrait and the actual ZERO GAME THING tablet; tune control alignment and any remaining crop/alpha artifacts before release.
+- [ ] Human gameplay and physical-device acceptance remain pending; this is an `arcade` branch preview, not a production ZERO TV release.

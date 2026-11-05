@@ -7,7 +7,7 @@ type Power = 'shield' | 'airboost';
 type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power}> };
 type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; scored:boolean; collected:boolean; deflected:boolean };
 type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
-type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number};
+type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number;boardIncluded?:boolean};
 type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
 type Art = { images:Record<string,HTMLImageElement>; cloudRaster:Record<string,HTMLCanvasElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
 const chunks = chunksData as Chunk[];
@@ -30,6 +30,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   let objects:Obstacle[]=[];
   let nextChunk=0, lastChunkId='', firstChunk=true;
   let art:Art|null=null,skinRequest=0;
+  const skinCssVars={titleCard:'--grind-title-art',gameOverCard:'--grind-over-art',mobileControlDeck:'--grind-deck-art'};
+  const clearSkinCss=()=>{for(const property of Object.values(skinCssVars))host.style.removeProperty(property);host.removeAttribute('data-au-art-ready')};
+  const applySkinCss=(files:Record<string,string>,skinUrl:URL)=>{let ready=false;for(const [key,property] of Object.entries(skinCssVars)){const path=files[key];if(path){host.style.setProperty(property,'url(\"'+new URL(path,skinUrl).href+'\")');ready=true}else host.style.removeProperty(property)}if(ready)host.setAttribute('data-au-art-ready','');else host.removeAttribute('data-au-art-ready')};
   let rngState=0x11b00c5;
   let visualFlash=0;
   let currentAnim:Anim='run';
@@ -235,7 +238,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
 
   async function setSkin(url:string|null){
     const request=++skinRequest;
-    if(!url){art=null;emit('game:skin-loaded',{skin:'placeholder',usingPlaceholder:true});return}
+    if(!url){art=null;clearSkinCss();emit('game:skin-loaded',{skin:'placeholder',usingPlaceholder:true});return}
     try{
       const skinUrl=new URL(url,document.baseURI);
       const response=await fetch(skinUrl.toString(),{credentials:'omit'});
@@ -249,9 +252,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       if(request!==skinRequest)return;
       if(data.grid?.skater){const g=data.grid.skater,image=images.skater;if(!image||!Number.isInteger(g.cellW)||!Number.isInteger(g.cellH)||!Number.isInteger(g.columns)||g.cellW<16||g.cellH<16||g.columns<1||image.naturalWidth<g.columns*g.cellW||image.naturalHeight<Math.ceil(39/g.columns)*g.cellH)throw new Error('Incomplete Fony sprite atlas grid')}
       if(data.rail){const r=data.rail,g=data.grid?.hazards; if(!g||!Number.isFinite(r.groundCellY)||!Number.isFinite(r.drawHeight)||!Number.isFinite(r.surfaceCellY)||!Number.isFinite(r.clipTopCellY)||r.drawHeight<=0||r.clipTopCellY<0||r.clipTopCellY>=r.surfaceCellY||r.surfaceCellY>=r.groundCellY||r.groundCellY>g.cellH)throw new Error('Invalid rail surface metadata')}
-      // The approved PNG is an internally layered paper-cut cloudbank.
-      // Cache it once at its NATIVE dimensions; no costly SVG gradients/text
-      // or full-frame resampling in the requestAnimationFrame loop.
+      // The approved WebP is an internally layered paper-cut cloudbank.
+      // Cache it once at its NATIVE dimensions; no full-frame resampling in the render loop.
       const cloudRaster:Record<string,HTMLCanvasElement>={};
       const source=images.cloudsNear;
       if(source){
@@ -261,7 +263,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         if(cc){
           cc.drawImage(source,0,0);
           // Almost-illegible legal fine print is printed into the cloud artwork,
-          // clipped automatically to the PNG's already-opaque paper shapes.
+          // clipped automatically to the cloudbank's paper shapes.
           cc.save();cc.globalCompositeOperation='source-atop';
           cc.fillStyle='rgba(48,31,51,.16)';cc.font='3.2px monospace';
           const clauses=['TERMS AND CONDITIONS SUBJECT TO CHANGE','DATA RETENTION MAY CONTINUE WITHOUT NOTICE','SECTION 14.2 CONSENT TO PROCESSING','YOUR INFORMATION MAY BE REVIEWED'];
@@ -274,8 +276,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         }
       }
       art={images,cloudRaster,name:data.name||'Fony',palette:data.palette,grid:data.grid,rail:data.rail,anims:data.anims};
+      applySkinCss(data.files,skinUrl);
       emit('game:skin-loaded',{skin:'au',usingPlaceholder:false,assets:Object.keys(images)});
-    }catch(error){if(request!==skinRequest)return;art=null;emit('game:error',{code:'SKIN_LOAD_FAILED',message:String(error),usingPlaceholder:true})}
+    }catch(error){if(request!==skinRequest)return;art=null;clearSkinCss();emit('game:error',{code:'SKIN_LOAD_FAILED',message:String(error),usingPlaceholder:true})}
   }
 
   const drawSheet=(ctx:CanvasRenderingContext2D,key:string,col:number,row:number,x:number,y:number,w:number,h:number)=>{
@@ -300,12 +303,10 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const [start,frames,fps]=map[animation];
     const looping=animation==='run'||animation==='idle'||animation==='grind';
     const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
-    // The old run sprites are leg-running poses. Ground travel now uses the
-    // stable low, board-contact Fony stance from the approved pose atlas; no sprint loop.
     const rolling=alive&&!grinding&&(animation==='run'||animation==='idle'||animation==='land');
-    // Alternate two real crouch/recovery cells, never the six leg-running cells.
-    const rollFrame=Math.floor(elapsed*2.4)%6;
-    const idx=rolling&&art?.images.skater?(rollFrame===0||rollFrame===4?11:10):start+frame;
+    // The approved Fony run cycle uses six grounded board-contact poses in cells 0–5.
+    const rollFrame=Math.floor(elapsed*12)%6;
+    const idx=rolling&&art?.images.skater?rollFrame:start+frame;
     const cfg=art?.grid?.skater;
     const width=cfg?.cellW??80,height=cfg?.cellH??94,columns=cfg?.columns??8;
     const anchorX=cfg?.anchorX??width/2,anchorY=cfg?.anchorY??height-4;
@@ -313,9 +314,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // The world point is Fony's skateboard contact, never the changing sprite top-left.
     // Bail frames anchor at the impact position and stop at the final frame (no looping).
     const poseY=alive?boardY:ground;
-    // The complete skateboard is drawn independently of Fony's source frame.
-    // That prevents a disappearing board, even if some original poses lack it.
-    const boardVisible=alive&&rolling&&Boolean(art?.images.skater);
+    // Legacy atlases can use the procedural board. The approved gameplay atlas includes Fony's board.
+    const boardVisible=alive&&rolling&&!Boolean(cfg?.boardIncluded)&&Boolean(art?.images.skater);
     if(boardVisible){
       ctx.save();ctx.fillStyle='#14101a';
       for(let n=0;n<5;n++){
@@ -386,14 +386,17 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const drawAccept=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
     const top=flatTopY('accept'),x=o.x,w=o.w,h=ground-top;
     ctx.save();ctx.lineJoin='round';
-    // Clean, opaque remake of the original ACCEPT ALL button silhouette.
+    const button=art?.images.acceptButton;
     ctx.fillStyle='#0c0a11';ctx.beginPath();ctx.roundRect(x-3,top-2,w+6,h+3,10);ctx.fill();
-    ctx.fillStyle='#627f0e';ctx.beginPath();ctx.roundRect(x+1,top+4,w-2,h-6,8);ctx.fill();
-    const g=ctx.createLinearGradient(0,top,0,ground);
-    g.addColorStop(0,'#eeff72');g.addColorStop(.43,'#d7ff00');g.addColorStop(1,'#9eae14');
-    ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x+2,top+1,w-4,h-6,7);ctx.fill();
-    ctx.strokeStyle='#283019';ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle='#fafdc3';ctx.fillRect(x+12,top+4,Math.max(8,w-24),2);
+    if(button)ctx.drawImage(button,x-3,top-2,w+6,h+3);
+    else{
+      ctx.fillStyle='#627f0e';ctx.beginPath();ctx.roundRect(x+1,top+4,w-2,h-6,8);ctx.fill();
+      const g=ctx.createLinearGradient(0,top,0,ground);
+      g.addColorStop(0,'#eeff72');g.addColorStop(.43,'#d7ff00');g.addColorStop(1,'#9eae14');
+      ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x+2,top+1,w-4,h-6,7);ctx.fill();
+      ctx.strokeStyle='#283019';ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle='#fafdc3';ctx.fillRect(x+12,top+4,Math.max(8,w-24),2);
+    }
     ctx.fillStyle='#151216';ctx.font='bold 13px monospace';
     ctx.textBaseline='middle';ctx.textAlign='center';
     ctx.fillText('ACCEPT ALL',x+w/2,top+(h-6)/2+1,Math.max(32,w-12));
@@ -402,14 +405,20 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const drawConsent=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
     const modal=o.kind==='modal',top=flatTopY(o.kind),x=o.x,w=o.w,h=ground-top;
+    const panel=art?.images[modal?'consentModal':'consentPopup'];
     ctx.save();
-    ctx.fillStyle='#0e0b14';ctx.fillRect(x-4,top-3,w+8,h+3);
-    ctx.fillStyle='#f6efe2';ctx.fillRect(x,top,w,h);
-    ctx.fillStyle='#d72c80';ctx.fillRect(x,top,w,22);
-    ctx.fillStyle='#15111b';ctx.font='bold 11px monospace';
+    if(panel)ctx.drawImage(panel,x-4,top-3,w+8,h+3);
+    else{
+      ctx.fillStyle='#0e0b14';ctx.fillRect(x-4,top-3,w+8,h+3);
+      ctx.fillStyle='#f6efe2';ctx.fillRect(x,top,w,h);
+      ctx.fillStyle='#d72c80';ctx.fillRect(x,top,w,22);
+    }
+    ctx.fillStyle=panel?'#f6efe2':'#15111b';ctx.font='bold 11px monospace';
     ctx.fillText(modal?'TERMS / DATA':'CONSENT?',x+7,top+15);
-    ctx.fillStyle='#1a1621';ctx.fillRect(x+w-17,top+4,12,13);
-    ctx.fillStyle='#f7e7ef';ctx.font='bold 10px monospace';ctx.fillText('×',x+w-15,top+14);
+    if(!panel){
+      ctx.fillStyle='#1a1621';ctx.fillRect(x+w-17,top+4,12,13);
+      ctx.fillStyle='#f7e7ef';ctx.font='bold 10px monospace';ctx.fillText('×',x+w-15,top+14);
+    }
     ctx.font='9px monospace';ctx.fillStyle='#231b2c';
     for(let i=0;i<(modal?4:2);i++){
       const rowY=top+34+i*15;
@@ -417,11 +426,13 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.strokeStyle='#221a26';ctx.lineWidth=1.6;ctx.strokeRect(x+8,rowY-8,9,9);
       ctx.fillText(['Share my data','Track activity','Personalize ads','Agree to all'][i],x+22,rowY,Math.max(20,w-27));
     }
-    ctx.fillStyle='#1d1728';ctx.fillRect(x+7,ground-22,w-14,17);
-    ctx.fillStyle='#e0287a';ctx.fillRect(x+9,ground-20,w-18,13);
+    if(!panel){
+      ctx.fillStyle='#1d1728';ctx.fillRect(x+7,ground-22,w-14,17);
+      ctx.fillStyle='#e0287a';ctx.fillRect(x+9,ground-20,w-18,13);
+    }
     ctx.fillStyle='#130d1b';ctx.font='bold 9px monospace';
     ctx.textAlign='center';ctx.fillText('I AGREE',x+w/2,ground-11);
-    ctx.strokeStyle='#15121a';ctx.lineWidth=2;ctx.strokeRect(x,top,w,h);
+    if(!panel){ctx.strokeStyle='#15121a';ctx.lineWidth=2;ctx.strokeRect(x,top,w,h)}
     if(o.deflected){
       ctx.fillStyle='#171119';ctx.fillRect(x+3,top+25,w-6,19);
       ctx.fillStyle='#d7ff00';ctx.font='bold 12px monospace';ctx.fillText('DENIED!',x+w/2,top+39);
@@ -433,14 +444,14 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const x=o.x+o.w/2,cy=ground-66;
     const wobble=1+Math.sin(elapsed*7+o.x*.018)*.045;
     ctx.save();ctx.translate(x,cy);ctx.scale(wobble,1);
-    ctx.fillStyle='rgba(215,255,0,.2)';ctx.beginPath();ctx.arc(0,0,22,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#0c0a13';ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#d7ff00';ctx.beginPath();ctx.arc(0,0,15,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='#f4ffae';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,11.5,0,Math.PI*2);ctx.stroke();
-    if(o.power==='shield'){
-      ctx.strokeStyle='#16121e';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(0,0,7.5,8.7,0,0,Math.PI*2);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(-10,11);ctx.lineTo(10,-11);ctx.stroke();
+    if(o.power==='shield'&&art?.images.optOutToken){
+      ctx.fillStyle='rgba(215,255,0,.18)';ctx.beginPath();ctx.arc(0,0,23,0,Math.PI*2);ctx.fill();
+      ctx.drawImage(art.images.optOutToken,-23,-23,46,46);
     }else{
+      ctx.fillStyle='rgba(215,255,0,.2)';ctx.beginPath();ctx.arc(0,0,22,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#0c0a13';ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#d7ff00';ctx.beginPath();ctx.arc(0,0,15,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#f4ffae';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,11.5,0,Math.PI*2);ctx.stroke();
       ctx.fillStyle='#16121e';ctx.beginPath();
       ctx.moveTo(2,-12);ctx.lineTo(-7,2);ctx.lineTo(0,2);ctx.lineTo(-3,12);
       ctx.lineTo(10,-4);ctx.lineTo(3,-4);ctx.lineTo(6,-12);ctx.closePath();ctx.fill();
@@ -500,13 +511,11 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(art?.images.cloudsNear&&art?.images.dataCity){
       // Give each plane a meaningful silhouette and leave the factory visible.
       const cityFactor=.19;
+      // Fine paper clouds drift behind the industrial skyline at a slower depth.
+      tileLayer(ctx,'cloudsFar',74,92,.025,.78);
       tileLayer(ctx,'dataCity',132,143,cityFactor,1);
-      // The new opaque PNG already contains layered paper-cut clouds.
-      // Its highest top silhouette is source y=69/253. These positions hide
-      // that contour BEHIND the HUD in both portrait and landscape:
-      // portrait: topWorld+2+310*(69/253) < topWorld+98 HUD bottom
-      // landscape: -10+190*(69/253) < 71 HUD bottom.
-      // Only the deep rounded underside hangs over the city's upper skyline.
+      // Keep the cloudbank's top edge behind the existing HUD in both views.
+      // Its canvas starts at the screen top; only the rounded underside is exposed.
       const cloudNearY=portrait?topWorld+2:-10;
       const cloudNearH=portrait?310:190;
       const cityShift=((distance*cityFactor)%1280+1280)%1280;

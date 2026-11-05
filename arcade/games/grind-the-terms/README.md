@@ -2,7 +2,7 @@
 
 > Nobody reads them. Skate them.
 
-The side-scrolling browser runner for Punk Arcade's CH 05. This branch includes the user-approved **protected AU art preview**, the original Fony character model and paper backgrounds. Art is extracted from a concept sheet: sprites are usable in the game but still need human cleanup and performance testing before a v0.1 tagged release.
+The side-scrolling browser runner for Punk Arcade's CH 05. The `arcade` branch now uses the newly approved Fony gameplay atlas, layered punk-comic city art, paper-cut consent obstacles, and themed title/control screens. Desktop stays 16:9; mobile keeps the portrait tablet layout so it fits inside the ZERO GAME THING player. Gameplay/collision rules remain independent of the image layers. Physical-device art acceptance is still pending.
 
 ## Controls
 
