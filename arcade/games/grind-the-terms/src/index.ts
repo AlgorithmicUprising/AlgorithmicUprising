@@ -4,8 +4,8 @@ import chunksData from './chunks.json';
 // Grind the Terms v0.2 preview: mechanics separated from the AU-only skin assets.
 type HazardKind = 'accept' | 'popup' | 'modal' | 'gap' | 'rail' | 'token';
 type Power = 'coin' | 'shield' | 'airboost' | 'trick2' | 'rocket';
-type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power}> };
-type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; scored:boolean; collected:boolean; deflected:boolean };
+type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power;pickupY?:number}> };
+type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; pickupY?:number; scored:boolean; collected:boolean; deflected:boolean };
 type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
 type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number;boardIncluded?:boolean};
 type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
@@ -53,7 +53,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const sourceCellHeight=112;
   const surfaces={
     rail:   {top:53,bottom:82,height:77},   // metal coping / feet
-    accept: {top:0,bottom:112,height:42},   // low, standalone ACCEPT curb
+    accept: {top:0,bottom:112,height:53},   // low, standalone ACCEPT block sprite
     popup:  {top:0,bottom:112,height:82},   // taller consent form
     modal:  {top:0,bottom:112,height:102}  // tallest consent form
   } as const;
@@ -122,8 +122,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
     if(key==='boost'||key==='special'){
       if(down&&!boostDown&&alive&&!grinding&&sprayCans>0){
-        sprayCans--;rocketBoostLeft=Math.min(3.75,rocketBoostLeft+1.25);
-        emit('game:boost',{source:'spray-can',durationMs:1250,charges:sprayCans,speedMultiplier:2});
+        sprayCans--;rocketBoostLeft=Math.min(11.25,rocketBoostLeft+3.75);
+        emit('game:boost',{source:'spray-can',durationMs:3750,remainingMs:Math.round(rocketBoostLeft*1000),charges:sprayCans,speedMultiplier:2});
       }
       boostDown=down;return;
     }
@@ -175,15 +175,17 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const spawnMilestonePickups=()=>{
     if(!trickUpgradeSpawned&&score()>=80){
       trickUpgradeSpawned=true;
-      objects.push({x:playerX+430,w:48,kind:'token',power:'trick2',scored:false,collected:false,deflected:false});
-      emit('game:pickup-ready',{power:'trick2',score:score()});
+      objects.push({x:playerX+430,w:48,kind:'token',power:'trick2',pickupY:ground-90,scored:false,collected:false,deflected:false});
+      emit('game:pickup-ready',{power:'trick2',score:score(),pickupY:ground-90});
     }
     while(score()>=nextRocketScore){
+      const milestone=nextRocketScore;
       nextRocketScore+=120;
       const pending=objects.some(o=>o.kind==='token'&&o.power==='rocket'&&!o.collected);
       if(sprayCans<3&&!pending){
-        objects.push({x:playerX+440,w:72,kind:'token',power:'rocket',scored:false,collected:false,deflected:false});
-        emit('game:pickup-ready',{power:'rocket',score:score()});
+        const pickupY=Math.floor(milestone/120)%2===1?ground-90:ground;
+        objects.push({x:playerX+440,w:72,kind:'token',power:'rocket',pickupY,scored:false,collected:false,deflected:false});
+        emit('game:pickup-ready',{power:'rocket',score:score(),pickupY});
       }
     }
   };
@@ -195,7 +197,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(!picked)return;
     firstChunk=false;lastChunkId=picked.id;
     for(const item of picked.objects){
-      objects.push({x:playerX+nextChunk+item.at-distance,w:item.w,kind:item.kind,power:item.power,scored:false,collected:false,deflected:false});
+      objects.push({x:playerX+nextChunk+item.at-distance,w:item.w,kind:item.kind,power:item.power,pickupY:item.pickupY,scored:false,collected:false,deflected:false});
     }
     nextChunk+=picked.width;
   };
@@ -245,7 +247,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         continue;
       }
       if(o.kind==='token'){
-        if(overlap&&!o.collected&&Math.abs(boardY-(ground-28))<45)collect(o);
+        if(overlap&&!o.collected&&Math.abs(boardY-(o.pickupY??ground))<34)collect(o);
         continue;
       }
       if(!overlap||o.collected||o.deflected||!alive||o===support)continue;
@@ -440,24 +442,23 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const drawAccept=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
     const top=flatTopY('accept'),x=o.x,w=o.w,h=ground-top;
-    const buttonW=Math.min(w-16,Math.max(72,(h-8)*3.25));
-    const buttonH=buttonW/3.25,buttonX=x+(w-buttonW)/2,buttonY=ground-buttonH-4;
+    const sprite=art?.images.acceptObstacle;
     ctx.save();ctx.lineJoin='round';
-    // A short curb and one button form the whole ACCEPT obstacle.
     ctx.fillStyle='rgba(10,8,16,.55)';ctx.beginPath();ctx.ellipse(x+w/2,ground-1,w*.48,4,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#0c0a11';ctx.beginPath();ctx.roundRect(x-3,top-2,w+6,h+4,7);ctx.fill();
-    ctx.fillStyle='#EDEAE0';ctx.beginPath();ctx.roundRect(x,top,w,h,4);ctx.fill();
-    ctx.fillStyle='#E0287A';ctx.fillRect(x+5,top+3,w-10,3);
-    const button=art?.images.acceptButton;
-    if(button)ctx.drawImage(button,buttonX,buttonY,buttonW,buttonH);
-    else{
-      ctx.fillStyle='#D7FF00';ctx.beginPath();ctx.roundRect(buttonX,buttonY,buttonW,buttonH,7);ctx.fill();
-      ctx.strokeStyle='#151216';ctx.lineWidth=3;ctx.stroke();
-      ctx.fillStyle='#151216';ctx.beginPath();ctx.arc(buttonX+buttonH/2,buttonY+buttonH/2,buttonH*.23,0,Math.PI*2);ctx.fill();
+    if(sprite){
+      // The standalone low ACCEPT ALL curb art is its own sprite, separate from consent forms.
+      ctx.drawImage(sprite,x,top,w,h);
+    }else{
+      ctx.fillStyle='#0c0a11';ctx.beginPath();ctx.roundRect(x-3,top-2,w+6,h+4,7);ctx.fill();
+      ctx.fillStyle='#81766c';ctx.beginPath();ctx.roundRect(x,top,w,h,4);ctx.fill();
+      ctx.fillStyle='#e0287a';ctx.fillRect(x+5,top+4,w-10,4);
+      const buttonW=Math.min(w-16,Math.max(72,(h-8)*3.25));
+      const buttonH=buttonW/3.25,buttonX=x+(w-buttonW)/2,buttonY=ground-buttonH-4;
+      ctx.fillStyle='#d7ff00';ctx.beginPath();ctx.roundRect(buttonX,buttonY,buttonW,buttonH,5);ctx.fill();
+      ctx.strokeStyle='#151216';ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle='#151216';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('ACCEPT ALL',buttonX+buttonW*.58,buttonY+buttonH/2+1,buttonW*.7);
     }
-    ctx.fillStyle='#151216';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText('ACCEPT ALL',buttonX+buttonW*.61,buttonY+buttonH/2+1,buttonW*.65);
-    ctx.fillStyle='#17121b';ctx.fillRect(x+12,ground-4,10,4);ctx.fillRect(x+w-22,ground-4,10,4);
     ctx.restore();
   };
   const drawConsent=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
@@ -493,8 +494,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     ctx.restore();
   };
   const drawToken=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
-    // Pickups sit in Fony's rolling lane. Passing through them at sidewalk height collects them.
-    const x=o.x+o.w/2,cy=ground-28;
+    // Each pickup targets a board height: ground lanes roll through, high lanes require an ollie.
+    const x=o.x+o.w/2,cy=(o.pickupY??ground)-28;
     const wobble=1+Math.sin(elapsed*7+o.x*.018)*.045;
     ctx.save();ctx.translate(x,cy);ctx.scale(wobble,1);
     if(o.power==='trick2'&&art?.images.trickUpgrade){

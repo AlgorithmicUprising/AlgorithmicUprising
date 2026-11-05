@@ -13,13 +13,15 @@
         "at": 500,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       },
       {
         "at": 560,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       }
     ]
   },
@@ -34,16 +36,25 @@
         "w": 160
       },
       {
+        "at": 345,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 257
+      },
+      {
         "at": 500,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       },
       {
         "at": 580,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       }
     ]
   },
@@ -56,25 +67,29 @@
         "at": 220,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       },
       {
         "at": 310,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       },
       {
         "at": 400,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 220
       },
       {
         "at": 490,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       }
     ]
   },
@@ -89,16 +104,25 @@
         "w": 160
       },
       {
+        "at": 320,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 257
+      },
+      {
         "at": 490,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       },
       {
         "at": 550,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       }
     ]
   },
@@ -113,16 +137,25 @@
         "w": 144
       },
       {
+        "at": 330,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 228
+      },
+      {
         "at": 510,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       },
       {
         "at": 590,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       }
     ]
   },
@@ -145,7 +178,8 @@
         "at": 700,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 257
       }
     ]
   },
@@ -168,7 +202,8 @@
         "at": 880,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       }
     ]
   },
@@ -181,7 +216,8 @@
         "at": 200,
         "kind": "token",
         "w": 26,
-        "power": "shield"
+        "power": "shield",
+        "pickupY": 260
       },
       {
         "at": 450,
@@ -192,7 +228,8 @@
         "at": 660,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       }
     ]
   },
@@ -210,13 +247,15 @@
         "at": 550,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       },
       {
         "at": 630,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 220
       }
     ]
   },
@@ -229,7 +268,8 @@
         "at": 170,
         "kind": "token",
         "w": 26,
-        "power": "airboost"
+        "power": "airboost",
+        "pickupY": 220
       },
       {
         "at": 560,
@@ -240,7 +280,8 @@
         "at": 760,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       }
     ]
   },
@@ -253,19 +294,22 @@
         "at": 190,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       },
       {
         "at": 280,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       },
       {
         "at": 370,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 220
       },
       {
         "at": 650,
@@ -288,13 +332,15 @@
         "at": 610,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       },
       {
         "at": 700,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       }
     ]
   },
@@ -309,22 +355,32 @@
         "w": 144
       },
       {
+        "at": 300,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 228
+      },
+      {
         "at": 540,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       },
       {
         "at": 630,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       },
       {
         "at": 720,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 260
       }
     ]
   },
@@ -337,7 +393,8 @@
         "at": 220,
         "kind": "token",
         "w": 26,
-        "power": "shield"
+        "power": "shield",
+        "pickupY": 260
       },
       {
         "at": 560,
@@ -348,13 +405,15 @@
         "at": 840,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 310
       },
       {
         "at": 880,
         "kind": "token",
         "w": 26,
-        "power": "coin"
+        "power": "coin",
+        "pickupY": 220
       }
     ]
   }

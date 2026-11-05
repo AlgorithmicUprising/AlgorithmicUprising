@@ -32,7 +32,8 @@
     "gameOverCard": "terms_game_over_card_v1.jpg",
     "mobileControlDeck": "terms_mobile_control_deck_v1.jpg",
     "trickUpgrade": "terms_trick_upgrade_v1.webp",
-    "rocketCan": "terms_spray_rocket_v1.webp"
+    "rocketCan": "terms_spray_rocket_v1.webp",
+    "acceptObstacle": "terms_accept_obstacle_v3.webp"
   },
   "grid": {
     "skater": {
@@ -118,7 +119,7 @@
     "accept": {
       "surfaceCellY": 0,
       "groundCellY": 112,
-      "drawHeight": 42
+      "drawHeight": 53
     },
     "popup": {
       "surfaceCellY": 0,

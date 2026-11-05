@@ -2,7 +2,7 @@
 
 > Nobody reads them. Skate them.
 
-The side-scrolling browser runner for Punk Arcade's CH 05. The `arcade` branch now uses the newly approved Fony gameplay atlas, layered punk-comic city art, paper-cut consent obstacles, and themed title/control screens. Desktop stays 16:9; mobile keeps the portrait tablet layout so it fits inside the ZERO GAME THING player. Gameplay/collision rules remain independent of the image layers. Physical-device art acceptance is still pending.
+The side-scrolling browser runner for Punk Arcade's CH 05. The `arcade` branch uses the approved Fony atlas and punk-comic city art, with a standalone low ACCEPT ALL curb and separate taller consent-form hazards. Desktop stays 16:9; mobile keeps the portrait tablet layout for the ZERO GAME THING player. Gameplay and collision rules remain independent of the image layers.
 
 ## Current controls and rules (v0.9)
 
@@ -18,9 +18,9 @@ The side-scrolling browser runner for Punk Arcade's CH 05. The `arcade` branch n
 
 **Tricks:** SPACE / desktop A / tablet A performs one trick during an airtime, including after an ollie or a grind pop. It cannot be used while supported or grinding. Trick height is fixed so tricks do not replace the ollie. Score improves the trick name and points: Kickflip (+2), Heelflip (+4) from 50 clauses, and 360 Flip (+6) from 125 clauses. At 80 clauses a glowing trick token appears; collecting it unlocks one extra trick before the next landing. That second combo has a more complex animation and doubles the trick points. Landing resets the airtime trick count; the upgrade stays unlocked for the run.
 
-**Coins and upgrades:** Ordinary coins, defensive tokens, trick upgrades, and spray cans are collected by rolling through them at sidewalk height. No jump is needed. Coins add 10 points. The 80-clause trick token adds the second trick. Spray-can pickups begin at 160 clauses and recur at 120-clause intervals, up to three cans carried.
+**Coins and upgrades:** Ground pickups can be collected by rolling through them. Other coins and powerups sit in jump arcs, and a few align with obstacle tops to reward deliberate platform landings. High lines require an ollie. Coins add 10 points. The 80-clause trick token adds the second trick. Spray-can pickups begin at 160 clauses and recur at 120-clause intervals, up to three cans carried.
 
-**Spray-can rocket:** R / Ø uses one collected can for exactly 2× the current normal speed for 1.25 seconds. Additional cans extend the boost, up to 3.75 seconds total. Rocket boost cannot be activated during a grind; a can stays in inventory until used. A long grind still builds a separate brief +7% momentum bonus.
+**Spray-can rocket:** R / Ø uses one collected can for exactly 2× the current normal speed for 3.75 seconds. Each additional can adds another 3.75 seconds, up to 11.25 seconds total with three cans. Rocket boost cannot be activated during a grind; a can stays in inventory until used. A long grind still builds a separate brief +7% momentum bonus.
 
 ## Obstacles and scores
 
