@@ -6,6 +6,7 @@ test('AU image skin loads and renders new Fony art', async ({page})=>{
  const game=page.locator('grind-the-terms');
  await expect(game).toHaveAttribute('skin',art);
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(page.locator('grind-the-terms')).toHaveAttribute('data-au-art-ready','');
  await expect(page.locator('#events')).not.toContainText('SKIN_LOAD_FAILED');
  await game.locator('button[part=start]').click();
  await page.waitForTimeout(100);
@@ -137,6 +138,7 @@ test('running and bail animations use stable on-screen actor origin and never lo
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(page.locator('grind-the-terms')).toHaveAttribute('data-au-art-ready','');
  const result=await game.evaluate(el=>{
   const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
   const original=ctx.drawImage.bind(ctx),poses=[];
@@ -327,6 +329,7 @@ test('consent forms render the approved illustrated panels as grounded obstacles
  await page.goto('/demo/');
  const el=page.locator('grind-the-terms');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(page.locator('grind-the-terms')).toHaveAttribute('data-au-art-ready','');
  const sources=await el.evaluate(e=>{
    e.setAttribute('data-qa-consent','');
    const c=e.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d'),draw=ctx.drawImage.bind(ctx),seen=[];
@@ -342,6 +345,7 @@ test('consent forms render the approved illustrated panels as grounded obstacles
 test('approved layered WebP scenery is cached and rendered across the scene',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(page.locator('grind-the-terms')).toHaveAttribute('data-au-art-ready','');
  const result=await page.locator('grind-the-terms').evaluate(async el=>{
    const url=new URL('../games/grind-the-terms/skins/au/skin.json',location.href);
    const skin=await(await fetch(url)).json();
@@ -370,6 +374,7 @@ test('approved layered WebP scenery is cached and rendered across the scene',asy
 test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains smoothing',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(page.locator('grind-the-terms')).toHaveAttribute('data-au-art-ready','');
  const data=await page.locator('grind-the-terms').evaluate(el=>{
    const game=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
    const original=ctx.drawImage.bind(ctx),seen=[];
@@ -390,13 +395,14 @@ test('Fony gameplay atlas uses crisp no-interpolation ink while scenery retains 
 test('world-space ACCEPT and physical sidewalk scroll at identical speed',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(page.locator('grind-the-terms')).toHaveAttribute('data-au-art-ready','');
  const result=await page.locator('grind-the-terms').evaluate(el=>{
    el.setAttribute('data-qa-ground-scroll','');
    const game=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
    const draw=ctx.drawImage.bind(ctx),fill=ctx.fillText.bind(ctx),scans=[];
    let roadX=null,acceptX=null;
    ctx.drawImage=(...args)=>{
-     if(args[0]?.src?.includes('terms_sidewalk_road_v6.webp')&&roadX===null)roadX=args.length===9?args[5]-args[1]:args[1];
+     if(args[0]?.src?.includes('terms_sidewalk_road_v6.webp')&&roadX===null)roadX=args.length===9?args[5]-args[1]/(args[0].naturalWidth/1280):args[1];
      return draw(...args);
    };
    ctx.fillText=(...args)=>{if(args[0]==='ACCEPT ALL')acceptX=args[1];return fill(...args)};
@@ -468,6 +474,7 @@ test('speed toggle exactly doubles baseline after the ramp',async({page})=>{
 test('ground motion uses the approved six-frame board-contact Fony cycle',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(page.locator('grind-the-terms')).toHaveAttribute('data-au-art-ready','');
  const result=await page.locator('grind-the-terms').evaluate(el=>{
   const g=el.game,canvas=el.shadowRoot.querySelector('canvas'),ctx=canvas.getContext('2d');
   const seen=[],draw=ctx.drawImage.bind(ctx);g.start();
@@ -525,6 +532,7 @@ test('normal cruising remains stable and speed toggle doubles it',async({page})=
 test('WebP cloud and city parallax draw only the visible world-camera region',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(page.locator('grind-the-terms')).toHaveAttribute('data-au-art-ready','');
  const result=await page.locator('grind-the-terms').evaluate(el=>{
    const g=el.game,c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d'),original=ctx.drawImage.bind(ctx),drawn=[];
    ctx.drawImage=(...args)=>{
@@ -544,6 +552,7 @@ test('WebP cloud and city parallax draw only the visible world-camera region',as
 test('cloud top edge stays under the HUD in mobile and desktop camera',async({page})=>{
  await page.goto('/demo/');
  await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(page.locator('grind-the-terms')).toHaveAttribute('data-au-art-ready','');
  const dimensions=await page.locator('grind-the-terms').evaluate(el=>{
    const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d'),real=ctx.drawImage.bind(ctx),rows=[];
    ctx.drawImage=(...args)=>{
