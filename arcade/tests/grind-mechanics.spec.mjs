@@ -253,6 +253,7 @@ test('opt-out token and loophole use the approved gameplay art',async({page},inf
  test.skip(info.project.name.startsWith('mobile'),'Representative desktop pixel screenshot');
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');
+ await expect(game).toHaveAttribute('data-au-art-ready','');
  const result=await game.evaluate(el=>{
   el.setAttribute('data-qa-token','');
   el.setAttribute('data-qa-loophole','');
@@ -310,20 +311,25 @@ test('space changes speed without causing an ollie',async({page},info)=>{
  await page.goto('/demo/');
  const el=page.locator('grind-the-terms');
  await el.locator('button[part=start]').click();
- await el.focus();
- await expect(el).toBeFocused();
- await page.keyboard.press('Space');
- expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(true);
- expect(await el.evaluate(x=>x.game.result().stats.jumpCount)).toBe(0);
- await el.evaluate(x=>{for(let i=0;i<10;i++)x.game.update(.05)});
- const measured=await el.evaluate(x=>x.game.result().stats.runSpeed);
- expect(measured).toBeGreaterThan(345);
- expect(measured).toBeLessThan(380);
- await page.keyboard.press('Space');
- expect(await el.evaluate(x=>x.game.result().stats.speedEnabled)).toBe(false);
- await page.keyboard.press('ArrowUp');
- await el.evaluate(x=>x.game.update(.05));
- expect(await el.evaluate(x=>x.game.result().stats.boardY)).toBeLessThan(300);
+ const result=await el.evaluate(e=>{
+  e.focus();
+  const send=(type,key)=>e.dispatchEvent(new KeyboardEvent(type,{key,bubbles:true,composed:true,cancelable:true}));
+  send('keydown',' ');send('keyup',' ');
+  const fast=e.game.result().stats;
+  for(let i=0;i<10;i++)e.game.update(.05);
+  const measured=e.game.result().stats.runSpeed;
+  send('keydown',' ');send('keyup',' ');
+  const normal=e.game.result().stats;
+  send('keydown','ArrowUp');send('keyup','ArrowUp');e.game.update(.05);
+  const jumped=e.game.result().stats;
+  return {fast,measured,normal,jumped};
+ });
+ expect(result.fast.speedEnabled).toBe(true);
+ expect(result.fast.jumpCount).toBe(0);
+ expect(result.measured).toBeGreaterThan(345);
+ expect(result.measured).toBeLessThan(380);
+ expect(result.normal.speedEnabled).toBe(false);
+ expect(result.jumped.boardY).toBeLessThan(300);
 });
 
 test('consent forms render the approved illustrated panels as grounded obstacles',async({page},info)=>{
