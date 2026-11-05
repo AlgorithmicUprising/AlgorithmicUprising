@@ -514,7 +514,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       // Fine paper clouds drift behind the industrial skyline at a slower depth.
       tileLayer(ctx,'cloudsFar',74,92,.025,.78);
       // Align the city's opaque lower edge with the retaining wall's opaque top.
-      tileLayer(ctx,'dataCity',157,143,cityFactor,1);
+      tileLayer(ctx,'dataCity',86,230,cityFactor,1);
       // Keep the cloudbank's top edge behind the existing HUD in both views.
       // Its canvas starts at the screen top; only the rounded underside is exposed.
       const cloudNearY=portrait?topWorld+2:-10;
@@ -525,7 +525,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       // upward INTO the near-cloud silhouette instead of floating separately.
       ctx.save();
       for(let tile=-1280-cityShift;tile<1400;tile+=1280){
-        for(const [i,stack] of [[44,199],[216,181],[484,188],[744,185],[1024,194]] as const){
+        for(const [i,stack] of [[44,199],[216,180],[484,179],[744,183],[1024,183]] as const){
           const x=tile+i;
           if(x<viewLeft-42||x>viewRight+42)continue;
           const top=Math.min(stack-49,cloudNearY+cloudNearH*.8);
