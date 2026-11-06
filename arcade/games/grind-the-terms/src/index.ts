@@ -113,7 +113,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     support=null;grinding=false;landTimer=0;coyoteLeft=0;bufferLeft=0;lastSurface='air';comboAction();
   };
   const trickLimit=()=>trick2Unlocked?2:1;
-  const trickTier=()=>score()>=125?2:score()>=50?1:0;
+  const trickTier=():0|1|2 =>score()>=125?2:score()>=50?1:0;
   const performTrick=()=>{
     if(!alive||bailRemaining>0||grinding||support||lastSurface!=='air'||boardY>=ground-1||tricksUsed>=trickLimit())return;
     const sequence=tricksUsed+1,level=trickTier();
