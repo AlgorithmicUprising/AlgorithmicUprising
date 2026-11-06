@@ -1,3 +1,4 @@
+import { games } from './games.mjs';
 import{readdirSync,readFileSync,existsSync}from'node:fs';import{join,dirname,resolve}from'node:path';
-const games=['grind-the-terms','tag-before-training'];let errors=0;
+let errors=0;
 for(const game of games){const parent=join('games',game,'skins');if(!existsSync(parent))continue;for(const dir of readdirSync(parent,{withFileTypes:true}).filter(d=>d.isDirectory())){const path=join(parent,dir.name,'skin.json');if(!existsSync(path)){console.error('missing',path);errors++;continue}try{const data=JSON.parse(readFileSync(path,'utf8'));if(data.game!==game||data.id!==dir.name)throw Error('id/game mismatch');const assets=[...(data.sheets||[]).map(s=>s.src),...Object.values(data.files||{})];for(const asset of assets){const dest=resolve(dirname(path),asset);if(!dest.startsWith(resolve(dirname(path))+'/')||!existsSync(dest))throw Error('Missing or unsafe asset: '+asset)}console.log('valid',path)}catch(e){console.error(path,e.message);errors++}}}if(errors)process.exitCode=1;

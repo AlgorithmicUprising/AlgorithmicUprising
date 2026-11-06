@@ -1,0 +1,47 @@
+<div class="viewport" part="viewport">
+  <aside class="scoreboard" aria-label="Scoreboard">
+    <strong class="wordmark" data-copy="title"></strong>
+    <div class="score"><span data-copy="hud_score"></span><output data-value="score">0</output></div>
+    <div><span data-copy="hud_lives"></span><output data-value="lives">3</output></div>
+    <div><span data-copy="hud_wall"></span><output data-value="wall">1</output></div>
+  </aside>
+  <div class="screen">
+    <canvas role="img" aria-label="Cookie Wall" aria-describedby="cw-instructions"></canvas>
+    <div class="overlay" data-phase="title">
+      <section class="card" aria-labelledby="cw-heading">
+        <h2 id="cw-heading">COOKIE WALL</h2><p data-detail></p><p data-summary hidden></p>
+        <div class="actions"><button type="button" part="start">Play</button><button type="button" part="resume" hidden></button>
+          <button type="button" part="again" hidden></button><button type="button" part="share" hidden></button></div>
+        <input data-share-fallback type="text" aria-label="Score to share" readonly hidden>
+      </section>
+    </div>
+  </div>
+  <p class="brief" aria-live="polite" data-status></p>
+  <div class="controls" part="mobile-controls">
+    <div class="strip" data-position-strip aria-hidden="true"><span data-copy="move_strip"></span><i></i></div>
+    <div class="keys" aria-hidden="true"><small data-copy="key_move_label"></small><b data-copy="move_keys"></b>
+      <small data-copy="key_launch_label"></small><b data-copy="launch_keys"></b></div>
+    <div class="primary-row">
+      <div class="unused" aria-hidden="true"><span data-copy="unused_button"></span><span data-copy="reserved_button"></span></div>
+      <button type="button" class="launch" data-primary><b data-copy="launch_mark"></b><span data-copy="launch"></span></button>
+    </div>
+  </div>
+  <div class="top">
+    <button type="button" part="pause" data-copy="pause">Pause</button>
+    <button type="button" part="sound" aria-pressed="false">Sound off</button>
+    <button type="button" part="settings" data-copy="settings">Settings</button>
+  </div>
+  <dialog class="settings" aria-labelledby="cw-settings">
+    <form method="dialog">
+      <h2 id="cw-settings" data-copy="settings"></h2>
+      <label><span data-copy="volume"></span> <input name="volume" type="range" min="0" max="100" step="5"></label>
+      <label><span data-copy="motion"></span> <select name="motion"><option value="auto" data-copy="auto"></option><option value="on" data-copy="on"></option><option value="off" data-copy="off"></option></select></label>
+      <label><input name="contrast" type="checkbox"> <span data-copy="contrast"></span></label>
+      <label><input name="left" type="checkbox"> <span data-copy="left_handed"></span></label>
+      <p id="cw-instructions" data-copy="instructions"></p>
+      <dl data-legend></dl>
+      <button type="submit" autofocus data-copy="close">Done</button>
+    </form>
+  </dialog>
+  <span class="live" aria-live="polite" aria-atomic="true"></span>
+</div>

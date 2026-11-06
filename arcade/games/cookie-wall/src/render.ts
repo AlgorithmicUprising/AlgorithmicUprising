@@ -1,0 +1,94 @@
+import { COURT, PADDLE, type Brick, type Kind } from './board';
+import type { CookieWallGame } from './game';
+import type { Skin } from './skin';
+
+const hue: Record<Kind, string> = { necessary: 'safe', partners: 'hazard', interest: 'interest', reject: 'danger' };
+export const highContrast = { bg: '#08090b', panel: '#111216', court: '#090a0e', grid: '#474850',
+  ink: '#ffffff', dark: '#000000', muted: '#ffffff', accent: '#ffff72', safe: '#ffffff', hazard: '#ffdb70', interest: '#abdfff', danger: '#ffafd4' };
+
+function brickFace(ctx: CanvasRenderingContext2D, brick: Brick, art: Skin, colors: Record<string, string>) {
+  const { x, y, w, h, kind } = brick;
+  const cracked = brick.hp === 1 && (kind === 'interest' || kind === 'reject');
+  const frame = art.frames['brick_' + kind + (cracked ? '_crack_00' : '_idle_00')];
+  if (frame) ctx.drawImage(frame, x, y, w, h);
+  else {
+    ctx.fillStyle = colors[hue[kind]]; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = colors.dark; ctx.fillRect(x, y + h - 2, w, 2);
+    ctx.fillStyle = colors.ink; ctx.fillRect(x + 2, y + 1, w - 4, 1);
+    ctx.fillStyle = colors.dark;
+    if (kind === 'necessary') ctx.fillRect(x + 3, y + 3, 5, 2);
+    if (kind === 'partners') for (let dot = 0; dot < 3; dot++) ctx.fillRect(x + 3 + 3 * dot, y + 3, 2, 2);
+    if (kind === 'interest') for (let index = 0; index < 4; index++) ctx.fillRect(x + 3 + 3 * index, y + 3 + index % 2, 1.6, 3);
+    if (kind === 'reject') {
+      ctx.fillRect(x + 3, y + 3, 5, 1); ctx.fillRect(x + 3, y + 3, 1, 4);
+      ctx.fillRect(x + w - 8, y + 3, 5, 1); ctx.fillRect(x + w - 4, y + 3, 1, 4);
+    }
+    if (cracked) {
+      ctx.strokeStyle = colors.dark; ctx.lineWidth = 1.8; ctx.beginPath();
+      ctx.moveTo(x + w * .63, y); ctx.lineTo(x + w * .51, y + 4); ctx.lineTo(x + w * .62, y + 5);
+      ctx.lineTo(x + w * .48, y + 8); ctx.stroke();
+    }
+  }
+  ctx.fillStyle = colors.dark; ctx.font = 'bold 7px ui-monospace,monospace'; ctx.textAlign = 'center';
+  ctx.fillText(art.strings['alias_' + kind], x + w / 2, y + 13, w - 2);
+}
+
+export function drawCourt(ctx: CanvasRenderingContext2D, width: number, height: number, world: CookieWallGame, skin: Skin,
+  reduced: boolean, contrast: boolean) {
+  const colors = contrast ? highContrast : skin.palette;
+  ctx.save(); ctx.setTransform(width / COURT, 0, 0, height / COURT, 0, 0);
+  ctx.fillStyle = colors.court; ctx.fillRect(0, 0, COURT, COURT);
+  if (skin.frames.bg_court_00) ctx.drawImage(skin.frames.bg_court_00, 0, 0, COURT, COURT);
+  else {
+    ctx.strokeStyle = colors.grid; ctx.lineWidth = .5; ctx.beginPath();
+    for (let unit = 0; unit <= COURT; unit += 20) {
+      ctx.moveTo(unit, 0); ctx.lineTo(unit, COURT); ctx.moveTo(0, unit); ctx.lineTo(COURT, unit);
+    }
+    ctx.stroke();
+    ctx.fillStyle = colors.muted;
+    for (let y = 10; y < COURT; y += 10) {
+      const tick = y % 50 === 0 ? 5 : 2;
+      ctx.fillRect(0, y, tick, 1); ctx.fillRect(COURT - tick, y, tick, 1);
+    }
+  }
+  ctx.fillStyle = colors.danger;
+  for (let x = 0; x < COURT; x += 12) ctx.fillRect(x, COURT - 1.5, 6, 1.5);
+  for (const brick of world.bricks) if (brick.hp > 0) brickFace(ctx, brick, skin, colors);
+  if (!reduced && world.burst && world.burst.until > world.time) {
+    const progress = 1 - (world.burst.until - world.time) / .22;
+    ctx.fillStyle = colors.ink; ctx.globalAlpha = 1 - progress;
+    for (let i = 0; i < 4; i++) {
+      const angle = Math.PI / 4 + i * Math.PI / 2;
+      ctx.fillRect(world.burst.x + Math.cos(angle) * progress * 20, world.burst.y + Math.sin(angle) * progress * 15, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+  const px = world.paddleX - PADDLE.width / 2, py = PADDLE.y - PADDLE.height / 2;
+  if (skin.frames.blocker_idle_00) ctx.drawImage(skin.frames.blocker_idle_00, px, PADDLE.y - 8, 64, 16);
+  else {
+    ctx.fillStyle = colors.accent; ctx.fillRect(px, py, PADDLE.width, PADDLE.height);
+    ctx.fillStyle = colors.dark; ctx.fillRect(px + 2, py + 3, PADDLE.width - 4, 6);
+    ctx.fillStyle = colors.accent;
+    for (let i = 0; i < 3; i++) ctx.fillRect(px + 5 + i * 3, py + 4, 1, 4);
+    ctx.fillRect(px + 51, py + 5, 7, 2);
+  }
+  if (skin.strings.patch) {
+    ctx.fillStyle = colors.ink; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(skin.strings.patch, world.paddleX, PADDLE.y + 3);
+  }
+  const ball = world.packet;
+  if (world.phase === 'docked') {
+    ctx.strokeStyle = colors.accent; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.beginPath();
+    ctx.moveTo(ball.x, ball.y); ctx.lineTo(ball.x + Math.sin(world.aim) * 42, ball.y - Math.cos(world.aim) * 42);
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  if (world.phase !== 'leaking' && world.phase !== 'over') {
+    const frame = skin.frames['packet_spin_0' + (reduced ? 0 : Math.floor(world.time * 8) % 4)] ?? skin.frames.packet_spin_00;
+    if (frame) ctx.drawImage(frame, ball.x - 6, ball.y - 6, 12, 12);
+    else {
+      ctx.fillStyle = colors.ink; ctx.beginPath(); ctx.arc(ball.x, ball.y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = colors.dark; ctx.fillRect(ball.x - 1.3, ball.y - 1.3, 2.6, 2.6);
+    }
+  }
+  ctx.restore();
+}

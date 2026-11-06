@@ -1,10 +1,11 @@
+import { games } from './games.mjs';
 import {cp,mkdir,rm,writeFile,stat,readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 const root='.pages';
 await rm(root,{recursive:true,force:true});
 await mkdir(root,{recursive:true});
 await cp('demo',join(root,'demo'),{recursive:true});
-for(const game of ['grind-the-terms','tag-before-training']){
+for(const game of games){
   await mkdir(join(root,'games',game),{recursive:true});
   await cp(join('games',game,'dist'),join(root,'games',game,'dist'),{recursive:true});
   await cp(join('games',game,'skins'),join(root,'games',game,'skins'),{recursive:true});
@@ -19,7 +20,7 @@ const landing=`<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="0;url=./demo/">
 <title>Punk Arcade — Algorithmic Uprising</title>
-<meta name="description" content="Play Punk Arcade's browser-based skate and graffiti game prototypes.">
+<meta name="description" content="Play Punk Arcade's browser-based skate, graffiti and brick-breaker games.">
 <link rel="canonical" href="./demo/">
 <style>
 body{font:16px/1.6 monospace;margin:0;background:#101017;color:#f7f1e8;min-height:100vh;display:grid;place-content:center;text-align:center;padding:1rem}
@@ -32,12 +33,19 @@ h1{color:#c0ff39}a{color:#ff5ea9}
 await writeFile(join(root,'index.html'),landing);
 await writeFile(join(root,'.nojekyll'),'');
 // Fail deployment before upload if a required entrypoint or game bundle is missing.
-for(const path of ['index.html','demo/index.html','games/grind-the-terms/demo/index.html','games/grind-the-terms/demo/embed.html','games/grind-the-terms/dist/grind-the-terms.js','games/tag-before-training/dist/tag-before-training.js','games/tag-before-training/demo/index.html','games/tag-before-training/demo/embed.html','games/tag-before-training/skins/au/background.png','games/tag-before-training/skins/au/skater.png']){
-  const file=join(root,path),s=await stat(file);
-  if(!s.isFile()||s.size===0)throw new Error('Missing/empty Pages file: '+file);
+const required = ['index.html', 'demo/index.html', 'games/tag-before-training/skins/au/background.png', 'games/tag-before-training/skins/au/skater.png', 'games/cookie-wall/demo/page.js'];
+for (const game of games) {
+  const prefix = 'games/' + game + '/';
+  required.push(prefix + 'dist/' + game + '.js', prefix + 'demo/index.html', prefix + 'demo/embed.html', prefix + 'skins/placeholder/skin.json');
 }
-const demo=await readFile(join(root,'demo/index.html'),'utf8');
-if(!demo.includes('../games/grind-the-terms/dist/grind-the-terms.js')||!demo.includes('../games/tag-before-training/dist/tag-before-training.js'))throw new Error('Demo entrypoint references unexpected bundle locations');
+for (const path of required) {
+  const file = join(root, path), info = await stat(file);
+  if (!info.isFile() || !info.size) throw Error('Missing or empty Pages file: ' + path);
+}
+const demo = await readFile(join(root, 'demo/index.html'), 'utf8');
+for (const game of games) {
+  if (!demo.includes('../games/' + game + '/dist/' + game + '.js')) throw Error('Missing demo import: ' + game);
+}
 for(const page of ['games/grind-the-terms/demo/index.html','games/grind-the-terms/demo/embed.html']){
  const content=await readFile(join(root,page),'utf8');
  for(const expected of ['src="../dist/grind-the-terms.js"','skin="../skins/au/skin.json"']){
@@ -48,5 +56,5 @@ for(const page of ['games/tag-before-training/demo/index.html','games/tag-before
  const content=await readFile(join(root,page),'utf8');
  for(const expected of ['src="../dist/tag-before-training.js','skin="../skins/au/skin.json'])if(!content.includes(expected))throw Error('Standalone Tag resource path invalid: '+page);
 }
-console.log('Pages staged and validated. Root redirects to ./demo/; both game bundles present.');
+console.log('Pages staged and validated. Root redirects to ./demo/; all game bundles present.');
 

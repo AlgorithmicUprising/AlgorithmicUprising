@@ -1,15 +1,16 @@
 import {test,expect} from '@playwright/test';
 
 // These tests run against a real Chromium browser, not a DOM simulation.
-test('both games load their Web Components and render starting UI',async({page},testInfo)=>{
+test('all three games load their Web Components and render starting UI',async({page},testInfo)=>{
  await page.goto('/demo/');
  await expect(page.locator('grind-the-terms')).toBeVisible();
  await expect(page.locator('tag-before-training')).toBeVisible();
  await expect(page.locator('grind-the-terms button[part=start]')).toHaveText('START');
  await expect(page.locator('tag-before-training button[part=start]')).toHaveText('START');
  await expect(page.locator('#events')).toContainText('game:ready');
- const components=await page.evaluate(()=>['grind-the-terms','tag-before-training'].map(t=>Boolean(customElements.get(t))));
- expect(components).toEqual([true,true]);
+ await expect(page.locator('cookie-wall button[part=start]')).toHaveText('PLAY');
+ const components=await page.evaluate(()=>['grind-the-terms','tag-before-training','cookie-wall'].map(t=>Boolean(customElements.get(t))));
+ expect(components).toEqual([true,true,true]);
 });
 
 test('Grind starts, draws a moving game, and pauses for host',async({page},testInfo)=>{

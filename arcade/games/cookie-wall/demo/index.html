@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cookie Wall · Punk Arcade</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#121019;color:#fff5da;font:15px/1.5 ui-monospace,monospace}
+main{margin:auto;width:min(980px,100%);padding:0 12px 24px}header{display:flex;align-items:center;justify-content:space-between;min-height:46px;gap:8px}
+a{color:#ccf764}select{font:inherit;color:inherit;background:#242232;padding:6px}cookie-wall{display:block;width:100%;aspect-ratio:16/9}
+details{margin-top:12px}summary{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow:auto}
+@media(orientation:portrait){main{padding:0 0 16px}header,details{padding:0 8px}cookie-wall{aspect-ratio:9/16;width:min(100%,calc((100svh - 48px)*9/16));margin:auto}}
+</style>
+</head>
+<body><main><header><a href="../../../demo/">← Punk Arcade</a><label>Skin <select id="skins"><option value="placeholder">Placeholder</option><option value="fony">Neutral</option><option value="au">AU</option></select></label></header>
+<cookie-wall></cookie-wall>
+<details><summary>Controls and game events</summary><p>Move with ← → or A/D. Aim and launch with Space, U or ↑. On a phone, drag below the court and tap Launch. Gamepad uses the left stick or D-pad and A. Pause with P or Escape.</p><pre id="events"></pre></details>
+</main><script type="module" src="./page.js"></script></body>
+</html>

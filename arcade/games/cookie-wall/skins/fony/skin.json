@@ -1,0 +1,5 @@
+{
+  "id": "fony", "game": "cookie-wall", "name": "Neutral starter", "version": "0.1.0",
+  "extends": "placeholder", "procedural": true, "license": "CC-BY-4.0", "attribution": "Punk Arcade contributors",
+  "palette": { "accent": "#85edd6", "safe": "#a1d8ef", "hazard": "#ffbe80", "interest": "#dcb8f3", "danger": "#ffc3ba" }
+}
