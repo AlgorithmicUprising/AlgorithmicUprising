@@ -421,15 +421,17 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const drawSkater=(ctx:CanvasRenderingContext2D)=>{
     let animation=currentAnim;
     if(!alive)animation='bail';else if(grinding)animation='grind';else if((support||boardY>=ground-1)&&landTimer<=0)animation='idle';
-    // Pose 29 keeps both feet on the deck; pop before pose 34, which has a rail baked into its art.
+    // Pose 29 keeps both feet on the deck. Cells 20 and 36 have grind rails baked into Fony's pose art, so tricks skip them.
     const map={run:[0,6,12],idle:[6,4,6],land:[10,2,16],ollie:[12,5,14],double:[17,4,12],bail:[21,6,12],grind:[29,1,10],railpop:[31,3,12],flip:[35,4,14]} as const;
     const [start,frames,fps]=map[animation];
     const looping=animation==='run'||animation==='idle'||animation==='grind';
     const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
     const rolling=alive&&!grinding&&(animation==='run'||animation==='idle'||animation==='land');
+    // Keep the trick poses flowing without displaying the two contaminated atlas cells.
+    const cleanTrickFrames:Partial<Record<Anim,readonly number[]>>={double:[17,18,19,19],flip:[35,37,38,39]};
     // The approved Fony run cycle uses six grounded board-contact poses in cells 0–5.
     const rollFrame=Math.floor(elapsed*12)%6;
-    const idx=rolling&&art?.images.skater?rollFrame:start+frame;
+    const idx=rolling&&art?.images.skater?rollFrame:(cleanTrickFrames[animation]?.[frame]??start+frame);
     const cfg=art?.grid?.skater;
     const width=cfg?.cellW??80,height=cfg?.cellH??94,columns=cfg?.columns??8;
     const anchorX=cfg?.anchorX??width/2,anchorY=cfg?.anchorY??height-4;
