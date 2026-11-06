@@ -123,3 +123,20 @@ test('embedded game accepts commands from its parent and rejects other origins a
   await page.evaluate(()=>document.querySelector('iframe').contentWindow.postMessage({source:'punk-arcade',type:'resume'},location.origin));
   await expect(game).toHaveJSProperty('state','playing');
 });
+
+test('downloadable playtest runs offline and keeps a best when storage is blocked', async ({page,context}) => {
+  const {pathToFileURL} = await import('node:url'), {resolve} = await import('node:path');
+  await context.setOffline(true);
+  await page.addInitScript(()=>{
+    Storage.prototype.setItem=()=>{throw new DOMException('Unavailable','SecurityError')};
+    Storage.prototype.getItem=()=>{throw new DOMException('Unavailable','SecurityError')};
+  });
+  await page.goto(pathToFileURL(resolve('games/cookie-wall/dist/Cookie-Wall.html')).href);
+  const game=page.locator('cookie-wall');await game.locator('[part=start]').click();
+  await game.evaluate(e=>{
+    const w=e.game.world;w.lives=1;w.score=42;w.phase='flight';Object.assign(w.packet,{x:20,y:323,vx:0,vy:200});
+  });
+  await expect(game).toHaveJSProperty('state','over');await expect(game).toHaveJSProperty('best',42);
+  await game.evaluate(e=>{const parent=e.parentNode;e.remove();parent.append(e)});
+  await expect(game).toHaveJSProperty('best',42);
+});

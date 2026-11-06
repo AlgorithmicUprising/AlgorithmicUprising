@@ -299,7 +299,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
         if (navigator.getGamepads?.().some(pad => pad?.connected)) {
           // Only controls are polled at rest. A paused simulation has no animation frame.
           this.idlePadTimer = window.setInterval(() => {
-            if (this.phase !== 'playing' && !document.hidden && document.hasFocus() && document.activeElement === this) this.pollGamepad();
+            if (this.phase !== 'playing' && !root.querySelector('dialog[open]') && !document.hidden && document.hasFocus() && document.activeElement === this) this.pollGamepad();
           }, 100);
         } else this.readProfilePad(null);
       } catch { /* Some embeds disable gamepads. */ }
@@ -342,12 +342,13 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     else { overlay.innerHTML=`<h2>${tag==='tag-before-training'?(result.cause==='arrested'?'BUSTED':'TRAINING COMPLETE'):'GAME OVER'}</h2><p>${typeof result.causeLine==='string'?result.causeLine:'TERMS ACCEPTED. OOPS.'}</p><p>SCORE ${score} • BEST ${this.bestScore}</p><p>${tag==='tag-before-training'?(isNewBest?'NEW STYLE RECORD.':'YOUR ALLEY. YOUR STYLE.'):(isNewBest?'NEW RECORD. STILL UNREAD.':'SKIM AGAIN?')}</p><button part="again">${tag==='tag-before-training'?'ROLL AGAIN':'SKIM AGAIN'}</button><button part="share">SHARE</button>`;overlay.querySelector('[part=again]')!.addEventListener('click',()=>this.start());overlay.querySelector('[part=share]')!.addEventListener('click',()=>{void this.shareScore(score,label)});}
     this.notify('game:over', {score, best:this.bestScore, isNewBest, durationMs:Math.round(performance.now()-this.runStartedAt-this.pausedMs), ...result});return;}this.frame=requestAnimationFrame(this.tick)};
   private async shareScore(score: number, label: string) {
-    const result = this.game.result?.(), url = location.href;
+    const result = this.game.result?.();
+    const url = location.protocol === 'http:' || location.protocol === 'https:' ? location.href : '';
     const template = typeof result?.shareText === 'string' ? result.shareText : 'I skipped ' + score + ' clauses in ' + label + '. Nobody reads them. Skate them!';
-    const text = template.replaceAll('{url}', url);
+    const text = template.replaceAll('{url}', url).replace(/:\s*$/, '').trim();
     if (!this.notify('game:share', { score, best: this.bestScore, text, url }, true)) return;
     try {
-      if (navigator.share) { await navigator.share({ title: label, text, url }); return; }
+      if (navigator.share) { await navigator.share({ title: label, text, ...(url ? { url } : {}) }); return; }
     } catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; }
     const combined = text.includes(url) ? text : text + ' ' + url;
     try {

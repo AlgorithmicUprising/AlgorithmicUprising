@@ -4,7 +4,7 @@ Bounce a packet of personal data through a wall of fictional consent banners. Th
 
 ## Play the branch build
 
-From `arcade/`, install the locked dependencies with `npm ci`, run `npm run build`, then `npm run dev`. Open `/games/cookie-wall/demo/` on the local server. The standalone preview has a skin switcher and an event log. The full-height iframe entry is `games/cookie-wall/demo/embed.html`.
+From `arcade/`, install the locked dependencies with `npm ci`, run `npm run build`, then `npm run dev`. Open `/games/cookie-wall/demo/` on the local server. For a download-and-open playtest, open the built `dist/Cookie-Wall.html`. It includes the game and its procedural skin in one file and works offline. The HTTP preview has a skin switcher and an event log. The full-height iframe entry is `games/cookie-wall/demo/embed.html`.
 
 | Action | Keyboard / pointer | Touch | Gamepad |
 | --- | --- | --- | --- |
