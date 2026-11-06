@@ -36,3 +36,9 @@ The skin is all rights reserved. Keep it under `skins/au/`; do not copy these as
 ## November 5 — Short Consent barrier and movement poses
 
 `terms_consent_barrier_v3.webp` is the 100-unit Consent barrier sprite, composed for the in-game 152 × 103 drawing area without aspect distortion. It remains distinct from the 42-unit ACCEPT curb. The former high-tier Terms slots now use the same Consent hazard and the separate Terms window is retired. The grind loop holds frame 29 (both feet on the board), and rail-pop ends at frame 33 to avoid frame 34's rail embedded in the sprite.
+
+## November 6 — Terms Runner delivery drone
+
+- `terms_runner_delivery_drone_v1.webp`: transparent, losslessly optimized 576 × 288 px game sprite derived from the user-selected “Acid-lime Terms Runner Drone.png” concept in the ChatGPT Library. Displayed at 144 × 72 px (4× source sampling) in the AU-only skin.
+- The renderer anchors the lime grind coping at 35.6% of the sprite height so the image and collision surface stay aligned. Spawned couriers cycle through stable hover heights of 96, 118, and 140 world units above the sidewalk, with the existing subtle ±3-unit hover motion. The lowest route is raised from the former 64-unit lane.
+- The packaged artwork stays under `skins/au/`; it is not copied into the open Fony skin.

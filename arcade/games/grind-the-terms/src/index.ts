@@ -5,7 +5,7 @@ import chunksData from './chunks.json';
 type HazardKind = 'accept' | 'popup' | 'gap' | 'rail' | 'token' | 'drone';
 type Power = 'coin' | 'shield' | 'airboost' | 'trick2' | 'rocket';
 type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power;pickupY?:number}> };
-type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; pickupY?:number; scored:boolean; collected:boolean; deflected:boolean; cargoCollected?:boolean; phase?:number };
+type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; pickupY?:number; scored:boolean; collected:boolean; deflected:boolean; cargoCollected?:boolean; phase?:number; hoverHeight?:number };
 type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
 type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number;boardIncluded?:boolean};
 type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
@@ -32,7 +32,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   let trickCallout='',trickCalloutLeft=0;
   let objects:Obstacle[]=[];
   let clearedStationary:{rail:boolean;accept:boolean;popup:boolean;gap:boolean}={rail:false,accept:false,popup:false,gap:false};
-  let deliveryUnlocked=false,nextDroneDistance=Infinity;
+  let deliveryUnlocked=false,nextDroneDistance=Infinity,droneHeightIndex=0;
+  const droneHeightBands=[96,118,140] as const;
   const boostSeconds=11.25;
   let nextChunk=0, lastChunkId='', firstChunk=true;
   let art:Art|null=null,skinRequest=0;
@@ -82,7 +83,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const railSurfaceY=()=>surfaceTopY('rail');
   const flatTopY=(kind:HazardKind)=>
     kind==='accept'||kind==='popup'?surfaceTopY(kind):ground;
-  const droneTopY=(o:Obstacle)=>ground-64+Math.sin((o.phase||0)+elapsed*2.1)*3;
+  const droneTopY=(o:Obstacle)=>ground-(o.hoverHeight??118)+Math.sin((o.phase||0)+elapsed*2.1)*3;
   const surfaceY=(o:Obstacle)=>o.kind==='rail'?railSurfaceY():o.kind==='drone'?droneTopY(o):flatTopY(o.kind);
   const overlaps=(o:Obstacle)=>o.x<playerX+16&&o.x+o.w>playerX-16;
   const state=(animation:Anim)=>{if(currentAnim!==animation){currentAnim=animation;stateTime=0}};
@@ -91,7 +92,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     grindDistance=0;totalGrindDistance=0;grindMs=0;alive=true;bailRemaining=0;cause='accept';
     held=false;grinding=false;support=null;platformLandings=0;platformGrinds=0;jumpCount=0;tricksUsed=0;trick2Unlocked=false;airBoost=false;shield=false;shieldsUsed=0;sprayGauge=0;
     hazardsCleared=0;bufferLeft=0;coyoteLeft=.08;stateTime=0;landTimer=0;
-    combo=0;comboTimer=0;longestCombo=0;lastSurface='ground';objects=[];clearedStationary={rail:false,accept:false,popup:false,gap:false};deliveryUnlocked=false;nextDroneDistance=Infinity;nextChunk=380;lastChunkId='';firstChunk=true;
+    combo=0;comboTimer=0;longestCombo=0;lastSurface='ground';objects=[];clearedStationary={rail:false,accept:false,popup:false,gap:false};deliveryUnlocked=false;nextDroneDistance=Infinity;droneHeightIndex=0;nextChunk=380;lastChunkId='';firstChunk=true;
     trickDown=false;boostDown=false;boostExhausted=false;trickUpgradeSpawned=false;nextRocketScore=160;grindCharge=0;grindBoostLeft=0;boostTriggered=false;shieldDeflections=0;
     trickCallout='';trickCalloutLeft=0;
     if(host.hasAttribute('data-qa-trick-upgrade'))trick2Unlocked=true;
@@ -228,10 +229,13 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(objects.some(o=>o.kind==='drone'&&o.x+o.w>-45))return;
     let x=playerX+nextDroneDistance-distance;
     if(x<playerX+300){nextDroneDistance=distance+900;x=playerX+900;}
-    const crowded=objects.some(o=>o.kind!=='token'&&o.kind!=='drone'&&x<o.x+o.w+110&&x+144>o.x-110);
+    const droneWidth=144;
+    const crowded=objects.some(o=>o.kind!=='token'&&o.kind!=='drone'&&x<o.x+o.w+110&&x+droneWidth>o.x-110);
     if(crowded){nextDroneDistance+=220;return;}
-    objects.push({x,w:144,kind:'drone',power:'coin',phase:rng()*Math.PI*2,scored:false,collected:false,cargoCollected:false,deflected:false});
-    emit('game:delivery-spawn',{x:Math.round(x),cargo:'coin',grindable:true,clearCount:stationaryClearCount()});
+    const hoverHeight=droneHeightBands[droneHeightIndex%droneHeightBands.length];
+    droneHeightIndex=(droneHeightIndex+1)%droneHeightBands.length;
+    objects.push({x,w:droneWidth,kind:'drone',power:'coin',phase:rng()*Math.PI*2,hoverHeight,scored:false,collected:false,cargoCollected:false,deflected:false});
+    emit('game:delivery-spawn',{x:Math.round(x),cargo:'coin',grindable:true,hoverHeight,clearCount:stationaryClearCount()});
     nextDroneDistance+=1400+Math.floor(rng()*260);
   };
   const update=(dt:number)=>{
@@ -585,33 +589,48 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const drawDeliveryDrone=(ctx:CanvasRenderingContext2D,o:Obstacle)=>{
     const x=o.x,w=o.w,top=surfaceY(o),phase=o.phase||0;
-    const rotorY=top-12, cargoX=x-22, cargoY=top-28;
+    const cargoX=x-22,hoverHeight=o.hoverHeight??118;
+    const shadowAlpha=clamp(.34-(hoverHeight-96)*.002,.15,.34);
+    const shadowWidth=38+(hoverHeight-96)*.12;
     ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
-    // Courier shadow and the hanging parcel make the moving obstacle read at sidewalk scale.
-    ctx.fillStyle='rgba(7,5,11,.34)';ctx.beginPath();ctx.ellipse(x+w*.48,ground-1,38,5,0,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='#15101a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x+27,top+18);ctx.lineTo(x+17,ground-42);ctx.moveTo(x+w-27,top+18);ctx.lineTo(x+w-6,ground-42);ctx.stroke();
-    ctx.strokeStyle='#e0287a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x+27,top+18);ctx.lineTo(x+17,ground-42);ctx.moveTo(x+w-27,top+18);ctx.lineTo(x+w-6,ground-42);ctx.stroke();
-    // Wide twin rotors, distressed black fuselage, and the lime deck Fony can grind.
-    for(const cx of [x+20,x+w-20]){
-      ctx.strokeStyle='#17121c';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(cx,rotorY+9);ctx.lineTo(cx,top+1);ctx.stroke();
-      ctx.fillStyle='#292331';ctx.beginPath();ctx.ellipse(cx,rotorY,16,4,0,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle='#e8dfd0';ctx.lineWidth=1.3;ctx.stroke();
-      ctx.strokeStyle='#e0287a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-11,rotorY+Math.sin(elapsed*18+phase)*2);ctx.lineTo(cx+11,rotorY-Math.sin(elapsed*18+phase)*2);ctx.stroke();
+    // The shadow softens as the same courier flies higher above the sidewalk.
+    ctx.fillStyle='rgba(7,5,11,'+shadowAlpha.toFixed(3)+')';
+    ctx.beginPath();ctx.ellipse(x+w*.48,ground-1,shadowWidth,5,0,0,Math.PI*2);ctx.fill();
+    const sprite=art?.images.deliveryDrone;
+    if(sprite&&sprite.naturalWidth>0){
+      // The bright lime coping in Terms Runner sits 35.6% down the sprite.
+      // Anchor it exactly to the collision surface so board contact matches the art.
+      const spriteH=w*(sprite.naturalHeight/sprite.naturalWidth);
+      const grindRailAnchorY=spriteH*.356;
+      ctx.save();ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(sprite,x,top-grindRailAnchorY,w,spriteH);
+      ctx.restore();
+    }else{
+      // Keep the procedural fallback fully aligned with the same three hover lanes.
+      const rotorY=top-12;
+      ctx.strokeStyle='#15101a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x+27,top+18);ctx.lineTo(x+17,ground-42);ctx.moveTo(x+w-27,top+18);ctx.lineTo(x+w-6,ground-42);ctx.stroke();
+      ctx.strokeStyle='#e0287a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x+27,top+18);ctx.lineTo(x+17,ground-42);ctx.moveTo(x+w-27,top+18);ctx.lineTo(x+w-6,ground-42);ctx.stroke();
+      for(const cx of [x+20,x+w-20]){
+        ctx.strokeStyle='#17121c';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(cx,rotorY+9);ctx.lineTo(cx,top+1);ctx.stroke();
+        ctx.fillStyle='#292331';ctx.beginPath();ctx.ellipse(cx,rotorY,16,4,0,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='#e8dfd0';ctx.lineWidth=1.3;ctx.stroke();
+        ctx.strokeStyle='#e0287a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-11,rotorY+Math.sin(elapsed*18+phase)*2);ctx.lineTo(cx+11,rotorY-Math.sin(elapsed*18+phase)*2);ctx.stroke();
+      }
+      ctx.fillStyle='#111018';ctx.beginPath();ctx.roundRect(x+19,top-11,w-38,27,7);ctx.fill();
+      ctx.strokeStyle='#e8dfd0';ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle='#392334';ctx.fillRect(x+27,top-7,w-54,14);
+      ctx.fillStyle='#e0287a';ctx.fillRect(x+34,top-5,17,4);
+      ctx.fillStyle='#d7ff00';ctx.fillRect(x+w-49,top-5,12,4);
+      // The parcel hangs from the hovering body rather than staying fixed by the ground.
+      ctx.fillStyle='#b6a78d';ctx.beginPath();ctx.roundRect(x+7,top+21,30,28,3);ctx.fill();
+      ctx.strokeStyle='#151019';ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle='#e0287a';ctx.fillRect(x+7,top+30,30,4);
+      ctx.fillStyle='#17121b';ctx.font='bold 7px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('TERMS',x+22,top+39);
+      ctx.fillStyle='#101018';ctx.beginPath();ctx.roundRect(x+6,top-4,w-12,10,4);ctx.fill();
+      ctx.fillStyle='#d7ff00';ctx.fillRect(x+9,top-2,w-18,5);
+      ctx.fillStyle='#e0287a';ctx.fillRect(x+14,top+3,w-28,2);
     }
-    ctx.fillStyle='#111018';ctx.beginPath();ctx.roundRect(x+19,top-11,w-38,27,7);ctx.fill();
-    ctx.strokeStyle='#e8dfd0';ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle='#392334';ctx.fillRect(x+27,top-7,w-54,14);
-    ctx.fillStyle='#e0287a';ctx.fillRect(x+34,top-5,17,4);
-    ctx.fillStyle='#d7ff00';ctx.fillRect(x+w-49,top-5,12,4);
-    // Package hangs under the drone; the coin icon is a separate, pass-through cargo hitbox.
-    ctx.fillStyle='#b6a78d';ctx.beginPath();ctx.roundRect(x+7,ground-43,30,28,3);ctx.fill();
-    ctx.strokeStyle='#151019';ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle='#e0287a';ctx.fillRect(x+7,ground-34,30,4);
-    ctx.fillStyle='#17121b';ctx.font='bold 7px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('TERMS',x+22,ground-25);
-    // The continuous lime coping is the drone's grind lane.
-    ctx.fillStyle='#101018';ctx.beginPath();ctx.roundRect(x+6,top-4,w-12,10,4);ctx.fill();
-    ctx.fillStyle='#d7ff00';ctx.fillRect(x+9,top-2,w-18,5);
-    ctx.fillStyle='#e0287a';ctx.fillRect(x+14,top+3,w-28,2);
+    // Cargo coin remains separate from the grind surface and collects on contact.
     if(!o.cargoCollected)drawToken(ctx,{kind:'token',power:'coin',x:cargoX-13,w:26,pickupY:top,scored:false,collected:false,deflected:false});
     else{ctx.fillStyle='#d7ff00';ctx.font='bold 8px monospace';ctx.textAlign='center';ctx.fillText('DELIVERED',cargoX,top-24)}
     ctx.restore();

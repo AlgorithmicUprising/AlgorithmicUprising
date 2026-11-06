@@ -2,7 +2,7 @@
   "id": "au",
   "game": "grind-the-terms",
   "name": "Algorithmic Uprising — approved punk-comic gameplay art",
-  "version": "0.9.3-single-100u-consent",
+  "version": "0.9.4-terms-runner-drone",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -32,7 +32,8 @@
     "mobileControlDeck": "terms_mobile_control_deck_v1.jpg",
     "trickUpgrade": "terms_trick_upgrade_v1.webp",
     "rocketCan": "terms_spray_rocket_v1.webp",
-    "acceptObstacle": "terms_accept_obstacle_v4.webp"
+    "acceptObstacle": "terms_accept_obstacle_v4.webp",
+    "deliveryDrone": "terms_runner_delivery_drone_v1.webp"
   },
   "grid": {
     "skater": {
@@ -126,7 +127,7 @@
       "drawHeight": 100
     }
   },
-  "source": "User-approved Nov 4–5 Fony gameplay and punk-comic art pack; includes a separate low ACCEPT ALL obstacle and taller CONSENT / TERMS hazards, trick-upgrade coin, rocket spray can, sidewalk-aligned character/obstacles, and mobile/desktop gameplay UI.",
+  "source": "User-approved Nov 4–6 Fony gameplay and punk-comic art pack; includes a separate low ACCEPT ALL obstacle and taller CONSENT / TERMS hazards, trick-upgrade coin, rocket spray can, sidewalk-aligned character/obstacles, the Terms Runner delivery drone, and mobile/desktop gameplay UI.",
   "cloudTypography": {
     "largestRenderedTextPx": 5,
     "heading": "TERMS & CONDITIONS",
