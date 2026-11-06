@@ -2,7 +2,7 @@
   "id": "au",
   "game": "grind-the-terms",
   "name": "Algorithmic Uprising — approved punk-comic gameplay art",
-  "version": "0.10.0-fony-animation-atlas",
+  "version": "0.10.1-fony-split-animation-atlas",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -16,7 +16,7 @@
     "paper": "#EDEAE0"
   },
   "files": {
-    "skater": "fony_gameplay_atlas_v2.webp",
+    "skater": "fony_gameplay_atlas_v1.webp",
     "far": "terms_far_plate.jpg",
     "skyline": "terms_skyline_v2.jpg",
     "cloudsFar": "terms_far_clouds_v1.webp",
@@ -33,7 +33,8 @@
     "trickUpgrade": "terms_trick_upgrade_v1.webp",
     "rocketCan": "terms_spray_rocket_v1.webp",
     "acceptObstacle": "terms_accept_obstacle_v4.webp",
-    "deliveryDrone": "terms_runner_delivery_drone_v1.webp"
+    "deliveryDrone": "terms_runner_delivery_drone_v1.webp",
+    "skaterActions": "fony_gameplay_atlas_v2.webp"
   },
   "grid": {
     "skater": {
@@ -49,6 +50,15 @@
       "cellW": 144,
       "cellH": 112,
       "columns": 4
+    },
+    "skaterActions": {
+      "cellW": 128,
+      "cellH": 128,
+      "columns": 8,
+      "anchorX": 64,
+      "anchorY": 117,
+      "displayScale": 1,
+      "boardIncluded": true
     }
   },
   "anims": {
@@ -56,69 +66,82 @@
       "start": 0,
       "frames": 6,
       "fps": 12,
-      "loop": true
+      "loop": true,
+      "sheet": "skater"
     },
     "idle": {
       "start": 0,
       "frames": 6,
       "fps": 12,
-      "loop": true
+      "loop": true,
+      "sheet": "skater"
     },
     "ollie": {
       "start": 6,
       "frames": 5,
-      "fps": 9
+      "fps": 9,
+      "sheet": "skaterActions"
     },
     "land": {
       "start": 11,
       "frames": 4,
-      "fps": 12
+      "fps": 12,
+      "sheet": "skaterActions"
     },
     "kickflip": {
       "start": 15,
       "frames": 4,
-      "fps": 8
+      "fps": 8,
+      "sheet": "skaterActions"
     },
     "heelflip": {
       "start": 19,
       "frames": 4,
-      "fps": 8
+      "fps": 8,
+      "sheet": "skaterActions"
     },
     "varial": {
       "start": 27,
       "frames": 4,
-      "fps": 8
+      "fps": 8,
+      "sheet": "skaterActions"
     },
     "hardflip": {
       "start": 31,
       "frames": 4,
-      "fps": 8
+      "fps": 8,
+      "sheet": "skaterActions"
     },
     "laserflip": {
       "start": 35,
       "frames": 4,
-      "fps": 8
+      "fps": 8,
+      "sheet": "skaterActions"
     },
     "grind": {
       "start": 39,
       "frames": 4,
       "fps": 10,
-      "loop": true
+      "loop": true,
+      "sheet": "skaterActions"
     },
     "railpop": {
       "start": 43,
       "frames": 4,
-      "fps": 10
+      "fps": 10,
+      "sheet": "skaterActions"
     },
     "bail": {
       "start": 47,
       "frames": 4,
-      "fps": 8
+      "fps": 8,
+      "sheet": "skaterActions"
     },
     "flip360": {
       "start": 23,
       "frames": 4,
-      "fps": 8
+      "fps": 8,
+      "sheet": "skaterActions"
     }
   },
   "strings": {
@@ -147,7 +170,7 @@
       "drawHeight": 100
     }
   },
-  "source": "User-approved Fony character art, expanded into a 51-frame punk-comic gameplay atlas with score-tier trick variants, clean landing and grind loops, grind-pop, and bail animations. The existing Terms Runner, obstacle, desktop, and Zero Game Thing tablet artwork remains in the AU-only skin.",
+  "source": "User-approved Fony character art. The original v1 atlas supplies the six-frame board-contact skating cycle and settled post-bail pose; the generated v2 action atlas supplies ollie, landing, score-tier trick, grind, grind-pop, and bail sequences. The surrounding Terms Runner, obstacle, desktop, and Zero Game Thing tablet artwork remains in the AU-only skin.",
   "cloudTypography": {
     "largestRenderedTextPx": 5,
     "heading": "TERMS & CONDITIONS",

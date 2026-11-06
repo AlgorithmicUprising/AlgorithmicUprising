@@ -46,15 +46,10 @@ The skin is all rights reserved. Keep it under `skins/au/`; do not copy these as
 
 ## Fony animation atlas v2
 
-`fony_gameplay_atlas_v2.webp` replaces the v1 runtime atlas with a 8-column × 7-row, 128 × 128 cell atlas. Frame map:
+The runtime keeps the two approved atlas files separate by role, with a shared 128 × 128 cell size and (64, 117) board/foot contact anchor:
 
-- 0–5: run cycle (retained from the approved atlas).
-- 6–10: ollie (retained from the approved atlas).
-- 11–14: landing / recovery.
-- 15–18: kickflip; 19–22: heelflip; 23–26: 360 flip.
-- 27–30: varial combo; 31–34: hard flip combo; 35–38: laser flip combo.
-- 39–42: grind loop, with both feet on the board.
-- 43–46: grind-pop / rail-pop.
-- 47–50: bail sequence. Cells 51–55 are reserved transparent padding.
-
-All v2 generated poses are isolated over transparency, normalized to the existing `(64, 117)` contact anchor, and contain no rail, pipe, ledge, or support art. Rails remain world-space obstacles drawn separately. The six named tricks now each have their own four-frame sequence selected by trick sequence and score tier. Landing displays its four-frame sequence; grind loops through four board-contact poses; the run cycle remains the grounded skating pose. The v1 cells containing embedded rails and the unused v1 coast poses are not carried forward. `skin.json` animation metadata mirrors the renderer map.
+- `fony_gameplay_atlas_v1.webp` remains the source for the six-frame board-contact skating cycle and the settled pose after a bail. Keeping this sheet preserves the established grounded animation and stable game-over silhouette.
+- `fony_gameplay_atlas_v2.webp` is loaded as `skaterActions` (8 columns × 7 rows). Its generated action frames drive ollie, landing/recovery, tricks, grinding, grind-pop and bail.
+- v2 frame map: 0–5 copied run poses (reserved for comparison); 6–10 ollie; 11–14 landing; 15–18 kickflip; 19–22 heelflip; 23–26 360 flip; 27–30 varial combo; 31–34 hard flip combo; 35–38 laser flip combo; 39–42 grind loop; 43–46 grind-pop; 47–50 bail. Cells 51–55 are transparent padding.
+- The six named trick animations each use their own four-frame sequence selected by trick sequence and score tier. Grinding keeps both feet on the board. The action-sheet art is transparent and contains no rail, pipe, ledge, or support; gameplay rails remain world-space objects.
+- The `sheet` field in `skin.json` identifies each animation's source atlas. Both character sheets render with interpolation disabled and share one contact anchor, keeping desktop and Zero Game Thing tablet poses aligned.

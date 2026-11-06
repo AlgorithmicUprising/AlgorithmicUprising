@@ -9,7 +9,7 @@ type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; pickupY?:nu
 type Anim = 'run'|'idle'|'land'|'ollie'|'bail'|'grind'|'railpop'|'kickflip'|'heelflip'|'flip360'|'varial'|'hardflip'|'laserflip';
 type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number;boardIncluded?:boolean};
 type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
-type Art = { images:Record<string,HTMLImageElement>; cloudRaster:Record<string,HTMLCanvasElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
+type Art = { images:Record<string,HTMLImageElement>; cloudRaster:Record<string,HTMLCanvasElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean;sheet?:string}>; name:string };
 const chunks = chunksData as Chunk[];
 const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
 
@@ -375,6 +375,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       }));
       if(request!==skinRequest)return;
       if(data.grid?.skater){const g=data.grid.skater,image=images.skater;if(!image||!Number.isInteger(g.cellW)||!Number.isInteger(g.cellH)||!Number.isInteger(g.columns)||g.cellW<16||g.cellH<16||g.columns<1||image.naturalWidth<g.columns*g.cellW||image.naturalHeight<Math.ceil(39/g.columns)*g.cellH)throw new Error('Incomplete Fony sprite atlas grid')}
+      if(data.grid?.skaterActions){const g=data.grid.skaterActions,image=images.skaterActions;if(!image||!Number.isInteger(g.cellW)||!Number.isInteger(g.cellH)||!Number.isInteger(g.columns)||g.cellW<16||g.cellH<16||g.columns<1||image.naturalWidth<g.columns*g.cellW||image.naturalHeight<Math.ceil(51/g.columns)*g.cellH)throw new Error('Incomplete Fony action atlas grid')}
       if(data.rail){const r=data.rail,g=data.grid?.hazards; if(!g||!Number.isFinite(r.groundCellY)||!Number.isFinite(r.drawHeight)||!Number.isFinite(r.surfaceCellY)||!Number.isFinite(r.clipTopCellY)||r.drawHeight<=0||r.clipTopCellY<0||r.clipTopCellY>=r.surfaceCellY||r.surfaceCellY>=r.groundCellY||r.groundCellY>g.cellH)throw new Error('Invalid rail surface metadata')}
       // The approved WebP is an internally layered paper-cut cloudbank.
       // Cache it once at its NATIVE dimensions; no full-frame resampling in the render loop.
@@ -407,7 +408,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
 
   const drawSheet=(ctx:CanvasRenderingContext2D,key:string,col:number,row:number,x:number,y:number,w:number,h:number)=>{
     const asset=art?.images[key];if(!asset)return false;
-    const isSkater=key==='skater',cfg=art?.grid?.[key],cellW=cfg?.cellW??(isSkater?80:144),cellH=cfg?.cellH??(isSkater?94:112);
+    const isSkater=key==='skater'||key==='skaterActions',cfg=art?.grid?.[key],cellW=cfg?.cellW??(isSkater?80:144),cellH=cfg?.cellH??(isSkater?94:112);
     const sx=col*cellW,sy=row*cellH;
     if(sx<0||sy<0||sx+cellW>asset.naturalWidth||sy+cellH>asset.naturalHeight)return false;
     // Fony is an inked sprite with intentional hard contour lines.
@@ -426,16 +427,28 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     else if(grinding)animation='grind';
     else if(landTimer>0)animation='land';
     else if(support||boardY>=ground-1)animation='idle';
-    // Atlas v2 has dedicated four-frame landing, grind, pop and trick sequences.
-    const map={run:[0,6,12],idle:[0,6,12],ollie:[6,5,9],land:[11,4,12],kickflip:[15,4,8],heelflip:[19,4,8],flip360:[23,4,8],varial:[27,4,8],hardflip:[31,4,8],laserflip:[35,4,8],grind:[39,4,10],railpop:[43,4,10],bail:[47,4,8]} as const;
-    const [start,frames,fps]=map[animation];
-    const looping=animation==='run'||animation==='idle'||animation==='grind';
+    // The approved v1 sheet keeps the six-frame cruise cycle; generated v2 cells cover action poses.
+    const fallbackMap:Record<Anim,{sheet:string;start:number;frames:number;fps:number;loop?:boolean}>={
+      run:{sheet:'skater',start:0,frames:6,fps:12,loop:true},idle:{sheet:'skater',start:0,frames:6,fps:12,loop:true},
+      ollie:{sheet:'skaterActions',start:6,frames:5,fps:9},land:{sheet:'skaterActions',start:11,frames:4,fps:12},
+      kickflip:{sheet:'skaterActions',start:15,frames:4,fps:8},heelflip:{sheet:'skaterActions',start:19,frames:4,fps:8},
+      flip360:{sheet:'skaterActions',start:23,frames:4,fps:8},varial:{sheet:'skaterActions',start:27,frames:4,fps:8},
+      hardflip:{sheet:'skaterActions',start:31,frames:4,fps:8},laserflip:{sheet:'skaterActions',start:35,frames:4,fps:8},
+      grind:{sheet:'skaterActions',start:39,frames:4,fps:10,loop:true},railpop:{sheet:'skaterActions',start:43,frames:4,fps:10},
+      bail:{sheet:'skaterActions',start:47,frames:4,fps:8}
+    };
+    const fallback=fallbackMap[animation],metadata=art?.anims?.[animation];
+    const sheet=metadata?.sheet??fallback.sheet,start=metadata?.start??fallback.start;
+    const frames=metadata?.frames??fallback.frames,fps=metadata?.fps??fallback.fps;
+    const looping=metadata?.loop??fallback.loop??false;
     const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
     const rolling=alive&&!grinding&&(animation==='run'||animation==='idle');
     // The approved six-frame board-run cycle stays active on the ground.
     const rollFrame=Math.floor(elapsed*12)%6;
-    const idx=rolling&&art?.images.skater?rollFrame:start+frame;
-    const cfg=art?.grid?.skater;
+    const settledBail=!alive&&bailRemaining<=0;
+    const atlasKey=settledBail?'skater':sheet;
+    const idx=settledBail?26:rolling&&atlasKey==='skater'?rollFrame:start+frame;
+    const cfg=art?.grid?.[atlasKey]??art?.grid?.skater;
     const width=cfg?.cellW??80,height=cfg?.cellH??94,columns=cfg?.columns??8;
     const anchorX=cfg?.anchorX??width/2,anchorY=cfg?.anchorY??height-4;
     const zoom=cfg?.displayScale??1;
@@ -443,7 +456,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     // Bail frames anchor at the impact position and stop at the final frame (no looping).
     const poseY=alive?boardY:ground;
     // Legacy atlases can use the procedural board. The approved gameplay atlas includes Fony's board.
-    const boardVisible=alive&&rolling&&!Boolean(cfg?.boardIncluded)&&Boolean(art?.images.skater);
+    const boardVisible=alive&&rolling&&!Boolean(cfg?.boardIncluded)&&Boolean(art?.images[atlasKey]);
     if(boardVisible){
       ctx.save();ctx.fillStyle='#14101a';
       for(let n=0;n<5;n++){
@@ -460,7 +473,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         ctx.beginPath();ctx.moveTo(playerX-38-offset,poseY-7+i*3);ctx.lineTo(playerX-19-offset,poseY-7+i*3);ctx.stroke()}
       ctx.restore();
     }
-    const usedAtlas=drawSheet(ctx,'skater',idx%columns,Math.floor(idx/columns),playerX-anchorX*zoom,poseY-anchorY*zoom,width*zoom,height*zoom);
+    const usedAtlas=drawSheet(ctx,atlasKey,idx%columns,Math.floor(idx/columns),playerX-anchorX*zoom,poseY-anchorY*zoom,width*zoom,height*zoom);
     if(boardVisible){
       // Draw board ON TOP of any stray source-cell foot fragments, at the board baseline.
       ctx.save();
