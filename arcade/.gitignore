@@ -1,0 +1,6 @@
+node_modules/
+games/*/dist/
+.DS_Store
+.pages/
+test-results/
+playwright-report/

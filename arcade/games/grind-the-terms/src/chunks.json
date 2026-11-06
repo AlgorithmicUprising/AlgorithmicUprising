@@ -1,0 +1,420 @@
+[
+  {
+    "id": "intro-rails",
+    "tier": 1,
+    "width": 740,
+    "objects": [
+      {
+        "at": 250,
+        "kind": "rail",
+        "w": 180
+      },
+      {
+        "at": 500,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      },
+      {
+        "at": 560,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      }
+    ]
+  },
+  {
+    "id": "intro-accept",
+    "tier": 1,
+    "width": 760,
+    "objects": [
+      {
+        "at": 260,
+        "kind": "accept",
+        "w": 160
+      },
+      {
+        "at": 345,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 257
+      },
+      {
+        "at": 500,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      },
+      {
+        "at": 580,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      }
+    ]
+  },
+  {
+    "id": "coin-trail",
+    "tier": 1,
+    "width": 780,
+    "objects": [
+      {
+        "at": 220,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      },
+      {
+        "at": 310,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      },
+      {
+        "at": 400,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 220
+      },
+      {
+        "at": 490,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      }
+    ]
+  },
+  {
+    "id": "single-button",
+    "tier": 1,
+    "width": 740,
+    "objects": [
+      {
+        "at": 240,
+        "kind": "accept",
+        "w": 160
+      },
+      {
+        "at": 320,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 257
+      },
+      {
+        "at": 490,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      },
+      {
+        "at": 550,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      }
+    ]
+  },
+  {
+    "id": "popup-practice",
+    "tier": 2,
+    "width": 830,
+    "objects": [
+      {
+        "at": 250,
+        "kind": "popup",
+        "w": 144
+      },
+      {
+        "at": 330,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 258
+      },
+      {
+        "at": 510,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      },
+      {
+        "at": 590,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      }
+    ]
+  },
+  {
+    "id": "button-double",
+    "tier": 2,
+    "width": 900,
+    "objects": [
+      {
+        "at": 200,
+        "kind": "accept",
+        "w": 160
+      },
+      {
+        "at": 560,
+        "kind": "accept",
+        "w": 160
+      },
+      {
+        "at": 700,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 257
+      }
+    ]
+  },
+  {
+    "id": "grind-to-button",
+    "tier": 2,
+    "width": 1080,
+    "objects": [
+      {
+        "at": 170,
+        "kind": "rail",
+        "w": 220
+      },
+      {
+        "at": 625,
+        "kind": "accept",
+        "w": 160
+      },
+      {
+        "at": 880,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      }
+    ]
+  },
+  {
+    "id": "opt-out-bonus",
+    "tier": 2,
+    "width": 840,
+    "objects": [
+      {
+        "at": 200,
+        "kind": "token",
+        "w": 26,
+        "power": "shield",
+        "pickupY": 260
+      },
+      {
+        "at": 450,
+        "kind": "popup",
+        "w": 144
+      },
+      {
+        "at": 660,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      }
+    ]
+  },
+  {
+    "id": "gap-ahead",
+    "tier": 3,
+    "width": 820,
+    "objects": [
+      {
+        "at": 255,
+        "kind": "gap",
+        "w": 100
+      },
+      {
+        "at": 550,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      },
+      {
+        "at": 630,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 220
+      }
+    ]
+  },
+  {
+    "id": "airboost",
+    "tier": 3,
+    "width": 940,
+    "objects": [
+      {
+        "at": 170,
+        "kind": "token",
+        "w": 26,
+        "power": "airboost",
+        "pickupY": 220
+      },
+      {
+        "at": 560,
+        "kind": "popup",
+        "w": 144
+      },
+      {
+        "at": 760,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      }
+    ]
+  },
+  {
+    "id": "coin-gap",
+    "tier": 3,
+    "width": 1020,
+    "objects": [
+      {
+        "at": 190,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      },
+      {
+        "at": 280,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      },
+      {
+        "at": 370,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 220
+      },
+      {
+        "at": 650,
+        "kind": "gap",
+        "w": 96
+      }
+    ]
+  },
+  {
+    "id": "consent-barrier",
+    "tier": 4,
+    "width": 900,
+    "objects": [
+      {
+        "at": 280,
+        "kind": "popup",
+        "w": 144
+      },
+      {
+        "at": 610,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      },
+      {
+        "at": 700,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      }
+    ]
+  },
+  {
+    "id": "mixed-clause",
+    "tier": 4,
+    "width": 1100,
+    "objects": [
+      {
+        "at": 210,
+        "kind": "popup",
+        "w": 144
+      },
+      {
+        "at": 300,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 258
+      },
+      {
+        "at": 540,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      },
+      {
+        "at": 630,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      },
+      {
+        "at": 720,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 260
+      }
+    ]
+  },
+  {
+    "id": "opt-out-final",
+    "tier": 4,
+    "width": 1060,
+    "objects": [
+      {
+        "at": 220,
+        "kind": "token",
+        "w": 26,
+        "power": "shield",
+        "pickupY": 260
+      },
+      {
+        "at": 560,
+        "kind": "popup",
+        "w": 144
+      },
+      {
+        "at": 840,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 310
+      },
+      {
+        "at": 880,
+        "kind": "token",
+        "w": 26,
+        "power": "coin",
+        "pickupY": 220
+      }
+    ]
+  }
+]

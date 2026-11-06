@@ -1,0 +1,82 @@
+name: Punk Arcade CI
+on:
+  push:
+    paths: ['arcade/**', '.github/workflows/arcade.yml']
+  pull_request:
+    paths: ['arcade/**', '.github/workflows/arcade.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+# Keep only the newest push per branch when GitHub is backlogged.
+# Cancel outdated builds rather than enqueue one full Pages deploy per commit.
+concurrency:
+  group: punk-arcade-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-and-browser-test:
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+    defaults:
+      run:
+        working-directory: arcade
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
+      - run: npm test
+      - name: Verify matching Playwright browsers
+        run: npx playwright install --list
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: punk-arcade-browser-results
+          path: |
+            arcade/test-results/screenshots/
+            arcade/playwright-report/
+            arcade/test-results/**/*.zip
+          if-no-files-found: warn
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: punk-arcade-demo
+          path: |
+            arcade/demo/
+            arcade/games/*/dist/
+            arcade/games/*/skins/
+            arcade/games/*/demo/
+          if-no-files-found: error
+          retention-days: 14
+  deploy-preview:
+    name: Publish browser-tested arcade preview
+    needs: build-and-browser-test
+    if: github.ref == 'refs/heads/arcade' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+        working-directory: arcade
+      - run: npm run build
+        working-directory: arcade
+      - run: npm run stage-pages
+        working-directory: arcade
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: arcade/.pages
+      - id: deployment
+        uses: actions/deploy-pages@v4

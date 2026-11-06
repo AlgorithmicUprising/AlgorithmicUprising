@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#100b17">
+  <title>Grind the Terms — Fony Sprock</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:#100b17;color:#eee9e1;font:16px/1.5 monospace}
+    main{margin:0 auto;max-width:1080px;padding:clamp(12px,3vw,28px)}
+    h1{font-size:clamp(1.3rem,4.5vw,2rem);line-height:1.2;color:#d7ff00;margin:.4rem 0}
+    .tagline{margin:.5rem 0 1rem}
+    grind-the-terms{display:block;position:relative;width:100%;aspect-ratio:16/9;min-height:210px;border:2px solid #d7ff00;background:#0d0b12}
+    .fallback{padding:22px;text-align:center;color:#f3e4dc}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin:1rem 0}
+    button{cursor:pointer;min-height:44px;padding:.6rem .8rem;background:#e0287a;color:#140b19;border:2px solid #e0287a;font:700 14px monospace}
+    button:focus-visible,a:focus-visible{outline:3px solid #d7ff00;outline-offset:2px}
+    .note{line-height:1.5;max-width:70ch;margin:.75rem 0}
+    .back{margin:1rem 0}
+    a{color:#d7ff00}
+    details{margin-top:1.2rem;color:#bbb;font-size:12px}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:140px;overflow:auto}
+    @media(max-width:600px){
+      main{padding:12px}
+      .tagline{font-size:14px;margin:.5rem 0}
+      .note{font-size:13px;line-height:1.45}
+      button{font-size:13px}
+      grind-the-terms{aspect-ratio:auto;min-height:0;height:auto;overflow:visible}
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>GRIND THE TERMS</h1>
+  <p class="tagline">Nobody reads them. Skate them.</p>
+  <grind-the-terms skin="../skins/au/skin.json">
+    <p class="fallback">Loading Fony… If the game stays blank, <a href="../../../demo/">open Arcade Lab</a>.</p>
+  </grind-the-terms>
+  <p class="note">U / ↑ / W ollies. Hold during descent to grind, release to pop. SPACE / A performs one aerial trick; at 80 clauses collect the combo token to unlock a second trick. Collect ground pickups by rolling through them; airborne pickups and obstacle-top rewards take an ollie or a careful landing. R / Ø spends a can for 2× speed for 3.75 seconds; up to three cans can extend it to 11.25 seconds.</p>
+  <div class="controls" aria-label="Artwork selection">
+    <button type="button" id="au" aria-label="Use Fony artwork">Fony Art</button>
+    <button type="button" id="placeholder" aria-label="Use placeholder artwork">Placeholder</button>
+  </div>
+  <p class="back"><a href="../../../demo/">Back to Arcade Lab</a></p>
+  <details><summary>Developer events</summary><pre id="events" aria-live="polite"></pre></details>
+</main>
+<!-- The assets live ONE folder above demo/, not two. Works under GitHub Pages' project subpath. -->
+<script type="module" src="../dist/grind-the-terms.js"></script>
+<script>
+  for(const event of ['game:ready','game:skin-loaded','game:error','game:start','game:over','game:grind-start','game:grind-end','game:power','game:trick','game:boost']){
+    document.addEventListener(event,e=>{
+      const panel=document.querySelector('#events');
+      panel.textContent=(e.type+' '+JSON.stringify(e.detail)+'\n'+panel.textContent).slice(0,2500);
+    });
+  }
+  const game=document.querySelector('grind-the-terms');
+  document.querySelector('#au').addEventListener('click',()=>game.setAttribute('skin','../skins/au/skin.json'));
+  document.querySelector('#placeholder').addEventListener('click',()=>game.removeAttribute('skin'));
+</script>
+</body>
+</html>

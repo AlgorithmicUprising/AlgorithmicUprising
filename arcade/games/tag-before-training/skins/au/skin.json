@@ -1,0 +1,833 @@
+{
+  "id": "au",
+  "game": "tag-before-training",
+  "name": "Algorithmic Uprising - Fony Back Alley",
+  "version": "0.3.0-art-preview",
+  "license": "all-rights-reserved",
+  "extends": "fony",
+  "render": {
+    "pixelated": false
+  },
+  "palette": {
+    "bg": "#15111d",
+    "ink": "#f4eddd",
+    "accent": "#ff2889",
+    "hazard": "#e69f00",
+    "safe": "#56b4e9"
+  },
+  "files": {
+    "skater": "skater.png",
+    "scout": "scout.png",
+    "swarm": "swarm.png",
+    "hoover": "hoover.png",
+    "marker": "marker.png",
+    "props": "props.png",
+    "effects": "effects.png",
+    "background": "background.png",
+    "tiles": "tiles.png",
+    "title": "title.png",
+    "stick": "stick.png",
+    "knob": "knob.png",
+    "spray": "spray.png",
+    "sprayPressed": "sprayPressed.png",
+    "soundOn": "soundOn.png",
+    "soundOff": "soundOff.png",
+    "pause": "pause.png",
+    "share": "share.png",
+    "settings": "settings.png",
+    "watermark0": "watermark0.png",
+    "watermark1": "watermark1.png"
+  },
+  "frames": {
+    "skater_idle_00": {
+      "sheet": "skater",
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_idle_01": {
+      "sheet": "skater",
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_roll_00": {
+      "sheet": "skater",
+      "x": 0,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_roll_01": {
+      "sheet": "skater",
+      "x": 128,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_roll_02": {
+      "sheet": "skater",
+      "x": 256,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_roll_03": {
+      "sheet": "skater",
+      "x": 384,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_spray_00": {
+      "sheet": "skater",
+      "x": 0,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_spray_01": {
+      "sheet": "skater",
+      "x": 128,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_spray_02": {
+      "sheet": "skater",
+      "x": 256,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_spray_03": {
+      "sheet": "skater",
+      "x": 384,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_stun_00": {
+      "sheet": "skater",
+      "x": 0,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_stun_01": {
+      "sheet": "skater",
+      "x": 128,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_stun_02": {
+      "sheet": "skater",
+      "x": 256,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "skater_stun_03": {
+      "sheet": "skater",
+      "x": 384,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 97.28
+    },
+    "drone_scout_fly_00": {
+      "sheet": "scout",
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_fly_01": {
+      "sheet": "scout",
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_fly_02": {
+      "sheet": "scout",
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_fly_03": {
+      "sheet": "scout",
+      "x": 384,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_lock_00": {
+      "sheet": "scout",
+      "x": 0,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_lock_01": {
+      "sheet": "scout",
+      "x": 128,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_tagged_00": {
+      "sheet": "scout",
+      "x": 256,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_tagged_01": {
+      "sheet": "scout",
+      "x": 384,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_tagged_02": {
+      "sheet": "scout",
+      "x": 0,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_tagged_03": {
+      "sheet": "scout",
+      "x": 128,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_tagged_04": {
+      "sheet": "scout",
+      "x": 256,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_scout_tagged_05": {
+      "sheet": "scout",
+      "x": 384,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_fly_00": {
+      "sheet": "swarm",
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_fly_01": {
+      "sheet": "swarm",
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_fly_02": {
+      "sheet": "swarm",
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_fly_03": {
+      "sheet": "swarm",
+      "x": 384,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_lock_00": {
+      "sheet": "swarm",
+      "x": 0,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_lock_01": {
+      "sheet": "swarm",
+      "x": 128,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_tagged_00": {
+      "sheet": "swarm",
+      "x": 256,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_tagged_01": {
+      "sheet": "swarm",
+      "x": 384,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_tagged_02": {
+      "sheet": "swarm",
+      "x": 0,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_swarm_tagged_03": {
+      "sheet": "swarm",
+      "x": 128,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_fly_00": {
+      "sheet": "hoover",
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_fly_01": {
+      "sheet": "hoover",
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_fly_02": {
+      "sheet": "hoover",
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_fly_03": {
+      "sheet": "hoover",
+      "x": 384,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_lock_00": {
+      "sheet": "hoover",
+      "x": 0,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_lock_01": {
+      "sheet": "hoover",
+      "x": 128,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_tagged_00": {
+      "sheet": "hoover",
+      "x": 256,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_tagged_01": {
+      "sheet": "hoover",
+      "x": 384,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_tagged_02": {
+      "sheet": "hoover",
+      "x": 0,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_tagged_03": {
+      "sheet": "hoover",
+      "x": 128,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_tagged_04": {
+      "sheet": "hoover",
+      "x": 256,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_hoover_tagged_05": {
+      "sheet": "hoover",
+      "x": 384,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_fly_00": {
+      "sheet": "marker",
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_fly_01": {
+      "sheet": "marker",
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_fly_02": {
+      "sheet": "marker",
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_fly_03": {
+      "sheet": "marker",
+      "x": 384,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_stamp_00": {
+      "sheet": "marker",
+      "x": 0,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_stamp_01": {
+      "sheet": "marker",
+      "x": 128,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_stamp_02": {
+      "sheet": "marker",
+      "x": 256,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_tagged_00": {
+      "sheet": "marker",
+      "x": 384,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_tagged_01": {
+      "sheet": "marker",
+      "x": 0,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_tagged_02": {
+      "sheet": "marker",
+      "x": 128,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_tagged_03": {
+      "sheet": "marker",
+      "x": 256,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_tagged_04": {
+      "sheet": "marker",
+      "x": 384,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_marker_tagged_05": {
+      "sheet": "marker",
+      "x": 0,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "wall_brick": {
+      "sheet": "props",
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "wall_concrete": {
+      "sheet": "props",
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "wall_shutter": {
+      "sheet": "props",
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "prop_dumpster": {
+      "sheet": "props",
+      "x": 384,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "prop_crate": {
+      "sheet": "props",
+      "x": 0,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "prop_fence": {
+      "sheet": "props",
+      "x": 128,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "prop_exit": {
+      "sheet": "props",
+      "x": 256,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "pickup_paint_00": {
+      "sheet": "props",
+      "x": 384,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "pickup_paint_01": {
+      "sheet": "props",
+      "x": 0,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "pickup_paint_02": {
+      "sheet": "props",
+      "x": 128,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_spray_00": {
+      "sheet": "effects",
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_spray_01": {
+      "sheet": "effects",
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_spray_02": {
+      "sheet": "effects",
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_spray_03": {
+      "sheet": "effects",
+      "x": 384,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_lock_ring": {
+      "sheet": "effects",
+      "x": 0,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_shutter": {
+      "sheet": "effects",
+      "x": 128,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "skater_shadow": {
+      "sheet": "effects",
+      "x": 256,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "drone_shadow": {
+      "sheet": "effects",
+      "x": 384,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_drip_00": {
+      "sheet": "effects",
+      "x": 0,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_drip_01": {
+      "sheet": "effects",
+      "x": 128,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_drip_02": {
+      "sheet": "effects",
+      "x": 256,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "tag_fony": {
+      "sheet": "effects",
+      "x": 384,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "tag_au": {
+      "sheet": "effects",
+      "x": 0,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "patch_neutral": {
+      "sheet": "effects",
+      "x": 128,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "patch_au": {
+      "sheet": "effects",
+      "x": 256,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    },
+    "fx_edge_arrow": {
+      "sheet": "effects",
+      "x": 384,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "ax": 64,
+      "ay": 64
+    }
+  },
+  "strings": {
+    "title": "TAG BEFORE TRAINING",
+    "subtitle": "Spray it before they save it.",
+    "hud_score": "STYLE",
+    "hud_meter": "TRAINING DATA",
+    "retry": "ROLL AGAIN"
+  }
+}

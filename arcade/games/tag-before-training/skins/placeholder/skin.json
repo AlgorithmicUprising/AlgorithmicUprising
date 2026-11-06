@@ -1,0 +1,11 @@
+{
+  "id": "placeholder",
+  "game": "tag-before-training",
+  "procedural": true,
+  "render": {
+    "pixelated": true
+  },
+  "strings": {
+    "title": "TAG BEFORE TRAINING"
+  }
+}

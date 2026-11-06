@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Punk Arcade skin metadata",
+  "type": "object",
+  "required": [
+    "id",
+    "game"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "game": {
+      "enum": [
+        "grind-the-terms",
+        "tag-before-training"
+      ]
+    },
+    "name": {
+      "type": "string"
+    },
+    "extends": {
+      "type": "string"
+    },
+    "procedural": {
+      "type": "boolean"
+    },
+    "render": {
+      "type": "object",
+      "properties": {
+        "pixelated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "palette": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^#[0-9a-fA-F]{6}$"
+      }
+    },
+    "strings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "sheets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "src"
+        ],
+        "properties": {
+          "src": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}
