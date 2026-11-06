@@ -84,11 +84,6 @@
       "frames": 4,
       "fps": 8
     },
-    "360flip": {
-      "start": 23,
-      "frames": 4,
-      "fps": 8
-    },
     "varial": {
       "start": 27,
       "frames": 4,
@@ -117,6 +112,11 @@
     },
     "bail": {
       "start": 47,
+      "frames": 4,
+      "fps": 8
+    },
+    "flip360": {
+      "start": 23,
       "frames": 4,
       "fps": 8
     }
