@@ -6,7 +6,7 @@ type HazardKind = 'accept' | 'popup' | 'gap' | 'rail' | 'token' | 'drone';
 type Power = 'coin' | 'shield' | 'airboost' | 'trick2' | 'rocket';
 type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power;pickupY?:number}> };
 type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; pickupY?:number; scored:boolean; collected:boolean; deflected:boolean; cargoCollected?:boolean; phase?:number; hoverHeight?:number };
-type Anim = 'run'|'idle'|'land'|'ollie'|'double'|'bail'|'grind'|'railpop'|'flip';
+type Anim = 'run'|'idle'|'land'|'ollie'|'bail'|'grind'|'railpop'|'kickflip'|'heelflip'|'flip360'|'varial'|'hardflip'|'laserflip';
 type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number;boardIncluded?:boolean};
 type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
 type Art = { images:Record<string,HTMLImageElement>; cloudRaster:Record<string,HTMLCanvasElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean}>; name:string };
@@ -87,6 +87,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const surfaceY=(o:Obstacle)=>o.kind==='rail'?railSurfaceY():o.kind==='drone'?droneTopY(o):flatTopY(o.kind);
   const overlaps=(o:Obstacle)=>o.x<playerX+16&&o.x+o.w>playerX-16;
   const state=(animation:Anim)=>{if(currentAnim!==animation){currentAnim=animation;stateTime=0}};
+  const isTrickAnimation=(animation:Anim)=>animation==='kickflip'||animation==='heelflip'||animation==='flip360'||animation==='varial'||animation==='hardflip'||animation==='laserflip';
   const reset=()=>{
     boardY=ground;lastBoardY=ground;vy=0;elapsed=0;distance=0;bonus=0;extraClauses=0;
     grindDistance=0;totalGrindDistance=0;grindMs=0;alive=true;bailRemaining=0;cause='accept';
@@ -101,7 +102,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const land=()=>{
     boardY=ground;vy=0;grinding=false;jumpCount=0;tricksUsed=0;coyoteLeft=.08;
-    if(lastSurface!=='ground'){landTimer=.12;state('land')}
+    if(lastSurface!=='ground'){landTimer=.36;state('land')}
     lastSurface='ground';combo=0;comboTimer=0;
     if(bufferLeft>0){bufferLeft=0;ollie()}
   };
@@ -120,7 +121,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const values=sequence===1?[2,4,6]:[4,8,12];
     const name=names[level],points=values[level];
     tricksUsed=sequence;jumpCount=1;vy=sequence===1?-520:-470;
-    state(sequence===1?'flip':'double');lastSurface='air';
+    const trickAnims=sequence===1?['kickflip','heelflip','flip360'] as const:['varial','hardflip','laserflip'] as const;
+    state(trickAnims[level]);lastSurface='air';
     comboAction(points);addSpray(.015+Math.min(.01,Math.max(0,combo-2)*.002));trickCallout=name+' +'+points;trickCalloutLeft=1.15;
     emit('game:trick',{name,points,level:level+1,sequence,limit:trickLimit(),combo,sprayGauge,score:score()});
   };
@@ -298,7 +300,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
           emit('game:power',{power:'coin',collected:true,source:'delivery-drone',score:score()});
         }
         if(!o.deflected&&!support&&overlap&&vy>=0&&lastBoardY<=top+12&&boardY>=top-10&&boardY<=top+Math.max(26,Math.abs(vy)*dt+12)){
-          support=o;boardY=top;vy=0;coyoteLeft=.08;landTimer=.12;platformLandings++;lastSurface='drone';
+          support=o;boardY=top;vy=0;coyoteLeft=.08;landTimer=.36;platformLandings++;lastSurface='drone';
           if(held){
             grinding=true;grindCharge=0;boostTriggered=false;platformGrinds++;state('grind');comboAction(1);
             emit('game:grind-start',{surface:'drone',combo,score:score()});
@@ -323,7 +325,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       const top=flatTopY(o.kind);
       if(!support&&vy>=0&&lastBoardY<=top+12&&boardY>=top-10&&boardY<=top+Math.max(26,Math.abs(vy)*dt+12)){
         support=o;boardY=top;vy=0;lastSurface=o.kind;
-        jumpCount=0;coyoteLeft=.08;landTimer=.12;platformLandings++;
+        jumpCount=0;coyoteLeft=.08;landTimer=.36;platformLandings++;
         if(held){
           grinding=true;grindCharge=0;boostTriggered=false;platformGrinds++;state('grind');comboAction(1);
           emit('game:grind-start',{surface:o.kind,combo,score:score()});
@@ -337,7 +339,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
     if(!support&&boardY>=ground){land()}
     if(!support&&boardY<ground-1&&landTimer===0&&alive){
-      if(currentAnim!=='ollie'&&currentAnim!=='double'&&currentAnim!=='railpop'&&currentAnim!=='flip')state('ollie');
+      if(currentAnim!=='ollie'&&!isTrickAnimation(currentAnim)&&currentAnim!=='railpop')state('ollie');
     }
     if(!support&&boardY>=ground&&landTimer===0)state('idle');
     if(support&&!grinding&&landTimer===0)state('idle');
@@ -420,18 +422,19 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const drawSkater=(ctx:CanvasRenderingContext2D)=>{
     let animation=currentAnim;
-    if(!alive)animation='bail';else if(grinding)animation='grind';else if((support||boardY>=ground-1)&&landTimer<=0)animation='idle';
-    // Pose 29 keeps both feet on the deck. Cells 20 and 36 have grind rails baked into Fony's pose art, so tricks skip them.
-    const map={run:[0,6,12],idle:[6,4,6],land:[10,2,16],ollie:[12,5,14],double:[17,4,12],bail:[21,6,12],grind:[29,1,10],railpop:[31,3,12],flip:[35,4,14]} as const;
+    if(!alive)animation='bail';
+    else if(grinding)animation='grind';
+    else if(landTimer>0)animation='land';
+    else if(support||boardY>=ground-1)animation='idle';
+    // Atlas v2 has dedicated four-frame landing, grind, pop and trick sequences.
+    const map={run:[0,6,12],idle:[0,6,12],ollie:[6,5,9],land:[11,4,12],kickflip:[15,4,8],heelflip:[19,4,8],flip360:[23,4,8],varial:[27,4,8],hardflip:[31,4,8],laserflip:[35,4,8],grind:[39,4,10],railpop:[43,4,10],bail:[47,4,8]} as const;
     const [start,frames,fps]=map[animation];
     const looping=animation==='run'||animation==='idle'||animation==='grind';
     const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
-    const rolling=alive&&!grinding&&(animation==='run'||animation==='idle'||animation==='land');
-    // Keep the trick poses flowing without displaying the two contaminated atlas cells.
-    const cleanTrickFrames:Partial<Record<Anim,readonly number[]>>={double:[17,18,19,19],flip:[35,37,38,39]};
-    // The approved Fony run cycle uses six grounded board-contact poses in cells 0–5.
+    const rolling=alive&&!grinding&&(animation==='run'||animation==='idle');
+    // The approved six-frame board-run cycle stays active on the ground.
     const rollFrame=Math.floor(elapsed*12)%6;
-    const idx=rolling&&art?.images.skater?rollFrame:(cleanTrickFrames[animation]?.[frame]??start+frame);
+    const idx=rolling&&art?.images.skater?rollFrame:start+frame;
     const cfg=art?.grid?.skater;
     const width=cfg?.cellW??80,height=cfg?.cellH??94,columns=cfg?.columns??8;
     const anchorX=cfg?.anchorX??width/2,anchorY=cfg?.anchorY??height-4;

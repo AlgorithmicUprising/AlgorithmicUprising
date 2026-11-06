@@ -42,3 +42,19 @@ The skin is all rights reserved. Keep it under `skins/au/`; do not copy these as
 - `terms_runner_delivery_drone_v1.webp`: transparent, losslessly optimized 576 × 288 px game sprite derived from the user-selected “Acid-lime Terms Runner Drone.png” concept in the ChatGPT Library. Displayed at 144 × 72 px (4× source sampling) in the AU-only skin.
 - The renderer anchors the lime grind coping at 35.6% of the sprite height so the image and collision surface stay aligned. Spawned couriers cycle through stable hover heights of 96, 118, and 140 world units above the sidewalk, with the existing subtle ±3-unit hover motion. The lowest route is raised from the former 64-unit lane.
 - The packaged artwork stays under `skins/au/`; it is not copied into the open Fony skin.
+
+
+## Fony animation atlas v2
+
+`fony_gameplay_atlas_v2.webp` replaces the v1 runtime atlas with a 8-column × 7-row, 128 × 128 cell atlas. Frame map:
+
+- 0–5: run cycle (retained from the approved atlas).
+- 6–10: ollie (retained from the approved atlas).
+- 11–14: landing / recovery.
+- 15–18: kickflip; 19–22: heelflip; 23–26: 360 flip.
+- 27–30: varial combo; 31–34: hard flip combo; 35–38: laser flip combo.
+- 39–42: grind loop, with both feet on the board.
+- 43–46: grind-pop / rail-pop.
+- 47–50: bail sequence. Cells 51–55 are reserved transparent padding.
+
+All v2 generated poses are isolated over transparency, normalized to the existing `(64, 117)` contact anchor, and contain no rail, pipe, ledge, or support art. Rails remain world-space obstacles drawn separately. The six named tricks now each have their own four-frame sequence selected by trick sequence and score tier. Landing displays its four-frame sequence; grind loops through four board-contact poses; the run cycle remains the grounded skating pose. The v1 cells containing embedded rails and the unused v1 coast poses are not carried forward. `skin.json` animation metadata mirrors the renderer map.

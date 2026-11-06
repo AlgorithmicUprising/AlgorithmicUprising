@@ -2,7 +2,7 @@
   "id": "au",
   "game": "grind-the-terms",
   "name": "Algorithmic Uprising — approved punk-comic gameplay art",
-  "version": "0.9.4-terms-runner-drone",
+  "version": "0.10.0-fony-animation-atlas",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -16,7 +16,7 @@
     "paper": "#EDEAE0"
   },
   "files": {
-    "skater": "fony_gameplay_atlas_v1.webp",
+    "skater": "fony_gameplay_atlas_v2.webp",
     "far": "terms_far_plate.jpg",
     "skyline": "terms_skyline_v2.jpg",
     "cloudsFar": "terms_far_clouds_v1.webp",
@@ -59,46 +59,66 @@
       "loop": true
     },
     "idle": {
-      "start": 6,
-      "frames": 4,
-      "fps": 6,
+      "start": 0,
+      "frames": 6,
+      "fps": 12,
       "loop": true
     },
-    "land": {
-      "start": 10,
-      "frames": 2,
-      "fps": 16
-    },
     "ollie": {
-      "start": 12,
+      "start": 6,
       "frames": 5,
-      "fps": 14
+      "fps": 9
     },
-    "double": {
-      "start": 17,
+    "land": {
+      "start": 11,
       "frames": 4,
       "fps": 12
     },
-    "bail": {
-      "start": 21,
-      "frames": 6,
-      "fps": 12
+    "kickflip": {
+      "start": 15,
+      "frames": 4,
+      "fps": 8
+    },
+    "heelflip": {
+      "start": 19,
+      "frames": 4,
+      "fps": 8
+    },
+    "360flip": {
+      "start": 23,
+      "frames": 4,
+      "fps": 8
+    },
+    "varial": {
+      "start": 27,
+      "frames": 4,
+      "fps": 8
+    },
+    "hardflip": {
+      "start": 31,
+      "frames": 4,
+      "fps": 8
+    },
+    "laserflip": {
+      "start": 35,
+      "frames": 4,
+      "fps": 8
     },
     "grind": {
-      "start": 27,
+      "start": 39,
       "frames": 4,
       "fps": 10,
       "loop": true
     },
     "railpop": {
-      "start": 31,
+      "start": 43,
       "frames": 4,
-      "fps": 12
+      "fps": 10
     },
-    "flip": {
-      "start": 35,
+    "bail": {
+      "start": 47,
       "frames": 4,
-      "fps": 14
+      "fps": 8
     }
   },
   "strings": {
@@ -127,7 +147,7 @@
       "drawHeight": 100
     }
   },
-  "source": "User-approved Nov 4–6 Fony gameplay and punk-comic art pack; includes a separate low ACCEPT ALL obstacle and taller CONSENT / TERMS hazards, trick-upgrade coin, rocket spray can, sidewalk-aligned character/obstacles, the Terms Runner delivery drone, and mobile/desktop gameplay UI.",
+  "source": "User-approved Fony character art, expanded into a 51-frame punk-comic gameplay atlas with score-tier trick variants, clean landing and grind loops, grind-pop, and bail animations. The existing Terms Runner, obstacle, desktop, and Zero Game Thing tablet artwork remains in the AU-only skin.",
   "cloudTypography": {
     "largestRenderedTextPx": 5,
     "heading": "TERMS & CONDITIONS",
