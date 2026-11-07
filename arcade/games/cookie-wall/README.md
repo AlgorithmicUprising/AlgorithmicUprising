@@ -4,7 +4,7 @@ Bounce a packet of personal data through a wall of fictional consent banners. Th
 
 ## Play the branch build
 
-From `arcade/`, install the locked dependencies with `npm ci`, run `npm run build`, then `npm run dev`. Open `/games/cookie-wall/demo/` on the local server. For a download-and-open playtest, open the built `dist/Cookie-Wall.html`. It includes the game and its procedural skin in one file and works offline. The HTTP preview has a skin switcher and an event log. The full-height iframe entry is `games/cookie-wall/demo/embed.html`.
+From `arcade/`, install the locked dependencies with `npm ci`, run `npm run build`, then `npm run dev`. Open `/games/cookie-wall/demo/` on the local server. For a download-and-open playtest, open the built `dist/Cookie-Wall.html`. It includes the game and the illustrated Fony skin in one file and works offline. The HTTP preview has a skin switcher and an event log. The full-height iframe entry is `games/cookie-wall/demo/embed.html`.
 
 | Action | Keyboard / pointer | Touch | Gamepad |
 | --- | --- | --- | --- |
@@ -37,6 +37,6 @@ Component attributes also include `autostart`, `storage-key`, `controls="auto|to
 
 The component emits bubbling, composed `game:ready`, `game:skin-loaded`, `game:start`, `game:wall`, `game:pause`, `game:resume`, `game:over`, `game:share`, `game:sound` and `game:error` events. Results include the leak cause, score, best, active duration and stats for cleared walls, broken bricks, lost packets, returns and maximum chain. Cancel `game:share` in the component's document to handle sharing yourself.
 
-The first pass ships code-drawn graphics. Copy `skins/placeholder/` to a sibling folder and change its id, attribution, flat strings, colors or synthesized SFX. Put each license in its skin folder. Optional loose PNG/WebP or simple vector frames use named keys in `files`, e.g. `blocker_idle_00`, `packet_spin_00`, `brick_interest_crack_00` and `bg_court_00`. File paths resolve against the manifest. Skin changes preserve the run; a bad manifest falls back to procedural play. Code is MIT, neutral and placeholder skins are CC BY 4.0, and the AU skin and marks are reserved.
+The original placeholder art is code-drawn. Fony now has the first illustrated Cookie Wall skin, with editable source atlases and native-size frames under `skins/fony/`. The renderer animates banner breaks, blocker hits, packet spins, tracker catches and debris. Copy `skins/placeholder/` to a sibling folder and change its id, attribution, flat strings, colors or synthesized SFX. Put each license in its skin folder. Optional loose PNG/WebP or simple vector frames use named keys in `files`, e.g. `blocker_idle_00`, `packet_spin_00`, `brick_interest_crack_00` and `bg_court_00`. File paths resolve against the manifest. Skin changes preserve the run; a bad manifest falls back to procedural play. Code is MIT, neutral and placeholder skins are CC BY 4.0, and the AU skin and marks are reserved.
 
 Run `npm run check`, `npm test`, `npm run stage-pages` and `npm run e2e` from `arcade/`. This branch provides a review build. Physical-device playtesting, final illustrated skins and the production cartridge shelf are later milestones.

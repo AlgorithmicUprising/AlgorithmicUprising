@@ -38,7 +38,7 @@ export function drawCourt(ctx: CanvasRenderingContext2D, width: number, height: 
   const colors = contrast ? highContrast : skin.palette;
   ctx.save(); ctx.setTransform(width / COURT, 0, 0, height / COURT, 0, 0);
   ctx.fillStyle = colors.court; ctx.fillRect(0, 0, COURT, COURT);
-  if (skin.frames.bg_court_00) ctx.drawImage(skin.frames.bg_court_00, 0, 0, COURT, COURT);
+  if (skin.frames.bg_court_00 && !contrast) ctx.drawImage(skin.frames.bg_court_00, 0, 0, COURT, COURT);
   else {
     ctx.strokeStyle = colors.grid; ctx.lineWidth = .5; ctx.beginPath();
     for (let unit = 0; unit <= COURT; unit += 20) {
@@ -54,17 +54,30 @@ export function drawCourt(ctx: CanvasRenderingContext2D, width: number, height: 
   ctx.fillStyle = colors.danger;
   for (let x = 0; x < COURT; x += 12) ctx.fillRect(x, COURT - 1.5, 6, 1.5);
   for (const brick of world.bricks) if (brick.hp > 0) brickFace(ctx, brick, skin, colors);
-  if (!reduced && world.burst && world.burst.until > world.time) {
-    const progress = 1 - (world.burst.until - world.time) / .22;
-    ctx.fillStyle = colors.ink; ctx.globalAlpha = 1 - progress;
-    for (let i = 0; i < 4; i++) {
-      const angle = Math.PI / 4 + i * Math.PI / 2;
-      ctx.fillRect(world.burst.x + Math.cos(angle) * progress * 20, world.burst.y + Math.sin(angle) * progress * 15, 2, 2);
+  if (world.burst && world.burst.until > world.time) {
+    const { x, y, w, h, kind, until } = world.burst;
+    const progress = Math.max(0, Math.min(1, 1 - (until - world.time) / .22));
+    const frameIndex = reduced ? 0 : Math.min(2, Math.floor(progress * 3));
+    const frame = skin.frames[`brick_${kind}_break_0${frameIndex}`];
+    if (frame) ctx.drawImage(frame, x - w / 2, y - h / 2, w, h);
+    if (!reduced) {
+      ctx.globalAlpha = 1 - progress;
+      for (let i = 0; i < 4; i++) {
+        const angle = Math.PI / 4 + i * Math.PI / 2;
+        const fragment = skin.frames['fx_crumb_0' + ((i + Math.floor(progress * 4)) % 4)];
+        const fx = x + Math.cos(angle) * progress * 18 - 4;
+        const fy = y + Math.sin(angle) * progress * 13 - 4;
+        if (fragment) ctx.drawImage(fragment, fx, fy, 8, 8);
+        else ctx.fillRect(fx + 3, fy + 3, 2, 2);
+      }
+      ctx.globalAlpha = 1;
     }
-    ctx.globalAlpha = 1;
   }
   const px = world.paddleX - PADDLE.width / 2, py = PADDLE.y - PADDLE.height / 2;
-  if (skin.frames.blocker_idle_00) ctx.drawImage(skin.frames.blocker_idle_00, px, PADDLE.y - 8, 64, 16);
+  const paddleHitAge = world.time - world.lastPaddleHit;
+  const paddleHitFrame = paddleHitAge >= 0 && paddleHitAge < .18 ? Math.min(2, Math.floor(paddleHitAge / .06)) : -1;
+  const blocker = paddleHitFrame >= 0 ? skin.frames['blocker_hit_0' + paddleHitFrame] : skin.frames.blocker_idle_00;
+  if (blocker) ctx.drawImage(blocker, px, PADDLE.y - 8, 64, 16);
   else {
     ctx.fillStyle = colors.accent; ctx.fillRect(px, py, PADDLE.width, PADDLE.height);
     ctx.fillStyle = colors.dark; ctx.fillRect(px + 2, py + 3, PADDLE.width - 4, 6);
@@ -75,6 +88,12 @@ export function drawCourt(ctx: CanvasRenderingContext2D, width: number, height: 
   if (skin.strings.patch) {
     ctx.fillStyle = colors.ink; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
     ctx.fillText(skin.strings.patch, world.paddleX, PADDLE.y + 3);
+  }
+  if ((world.phase === 'leaking' || world.phase === 'over') && skin.frames.tracker_idle_00) {
+    const age = Math.max(0, world.time - world.leakAt);
+    const frame = Math.min(3, Math.floor(age / .06));
+    const tracker = skin.frames['tracker_idle_0' + frame] ?? skin.frames.tracker_idle_00;
+    ctx.drawImage(tracker, Math.max(0, Math.min(COURT - 32, world.packet.x - 16)), COURT - 24, 32, 24);
   }
   const ball = world.packet;
   if (world.phase === 'docked') {

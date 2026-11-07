@@ -1,0 +1,387 @@
+{
+  "bg_court_00": {
+    "file": "sprites/bg_court_00.webp",
+    "size": [
+      320,
+      320
+    ],
+    "anchor": [
+      0,
+      0
+    ]
+  },
+  "blocker_hit_00": {
+    "file": "sprites/blocker_hit_00.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ]
+  },
+  "blocker_hit_01": {
+    "file": "sprites/blocker_hit_01.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ]
+  },
+  "blocker_hit_02": {
+    "file": "sprites/blocker_hit_02.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ]
+  },
+  "blocker_idle_00": {
+    "file": "sprites/blocker_idle_00.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ]
+  },
+  "brick_interest_break_00": {
+    "file": "sprites/brick_interest_break_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_interest_break_01": {
+    "file": "sprites/brick_interest_break_01.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_interest_break_02": {
+    "file": "sprites/brick_interest_break_02.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_interest_crack_00": {
+    "file": "sprites/brick_interest_crack_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_interest_idle_00": {
+    "file": "sprites/brick_interest_idle_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_necessary_break_00": {
+    "file": "sprites/brick_necessary_break_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_necessary_break_01": {
+    "file": "sprites/brick_necessary_break_01.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_necessary_break_02": {
+    "file": "sprites/brick_necessary_break_02.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_necessary_idle_00": {
+    "file": "sprites/brick_necessary_idle_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_partners_break_00": {
+    "file": "sprites/brick_partners_break_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_partners_break_01": {
+    "file": "sprites/brick_partners_break_01.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_partners_break_02": {
+    "file": "sprites/brick_partners_break_02.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_partners_idle_00": {
+    "file": "sprites/brick_partners_idle_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_reject_break_00": {
+    "file": "sprites/brick_reject_break_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_reject_break_01": {
+    "file": "sprites/brick_reject_break_01.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_reject_break_02": {
+    "file": "sprites/brick_reject_break_02.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_reject_crack_00": {
+    "file": "sprites/brick_reject_crack_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_reject_idle_00": {
+    "file": "sprites/brick_reject_idle_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "fx_crumb_00": {
+    "file": "sprites/fx_crumb_00.png",
+    "size": [
+      8,
+      8
+    ],
+    "anchor": [
+      4,
+      4
+    ]
+  },
+  "fx_crumb_01": {
+    "file": "sprites/fx_crumb_01.png",
+    "size": [
+      8,
+      8
+    ],
+    "anchor": [
+      4,
+      4
+    ]
+  },
+  "fx_crumb_02": {
+    "file": "sprites/fx_crumb_02.png",
+    "size": [
+      8,
+      8
+    ],
+    "anchor": [
+      4,
+      4
+    ]
+  },
+  "fx_crumb_03": {
+    "file": "sprites/fx_crumb_03.png",
+    "size": [
+      8,
+      8
+    ],
+    "anchor": [
+      4,
+      4
+    ]
+  },
+  "packet_spin_00": {
+    "file": "sprites/packet_spin_00.png",
+    "size": [
+      12,
+      12
+    ],
+    "anchor": [
+      6,
+      6
+    ]
+  },
+  "packet_spin_01": {
+    "file": "sprites/packet_spin_01.png",
+    "size": [
+      12,
+      12
+    ],
+    "anchor": [
+      6,
+      6
+    ]
+  },
+  "packet_spin_02": {
+    "file": "sprites/packet_spin_02.png",
+    "size": [
+      12,
+      12
+    ],
+    "anchor": [
+      6,
+      6
+    ]
+  },
+  "packet_spin_03": {
+    "file": "sprites/packet_spin_03.png",
+    "size": [
+      12,
+      12
+    ],
+    "anchor": [
+      6,
+      6
+    ]
+  },
+  "tracker_idle_00": {
+    "file": "sprites/tracker_idle_00.png",
+    "size": [
+      32,
+      24
+    ],
+    "anchor": [
+      16,
+      12
+    ]
+  },
+  "tracker_idle_01": {
+    "file": "sprites/tracker_idle_01.png",
+    "size": [
+      32,
+      24
+    ],
+    "anchor": [
+      16,
+      12
+    ]
+  },
+  "tracker_idle_02": {
+    "file": "sprites/tracker_idle_02.png",
+    "size": [
+      32,
+      24
+    ],
+    "anchor": [
+      16,
+      12
+    ]
+  },
+  "tracker_idle_03": {
+    "file": "sprites/tracker_idle_03.png",
+    "size": [
+      32,
+      24
+    ],
+    "anchor": [
+      16,
+      12
+    ]
+  }
+}

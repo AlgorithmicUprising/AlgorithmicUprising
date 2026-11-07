@@ -20,6 +20,19 @@ function webURL(path: string, base: string) {
   return url;
 }
 
+function manifestURL(path: string, base: string) {
+  if (path.startsWith('data:')) {
+    if (path.length > 1_500_000 || !/^data:application\/json;base64,[A-Za-z0-9+/]+={0,2}$/i.test(path)) throw Error('Unsupported inline skin');
+    return new URL(path);
+  }
+  return webURL(path, base);
+}
+
+function inlineImageURL(path: string) {
+  if (path.length > 2_800_000 || !/^data:image\/(?:png|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(path)) throw Error('Unsupported inline frame');
+  return new URL(path);
+}
+
 async function bytes(url: URL, limit: number, signal: AbortSignal) {
   const response = await fetch(url, { signal, mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' });
   if (!response.ok || Number(response.headers.get('content-length')) > limit || !response.body) throw Error('Skin resource unavailable or too large');
@@ -53,8 +66,9 @@ function safeSVG(source: string) {
 }
 
 async function imageFrame(url: URL, signal: AbortSignal) {
-  const ext = url.pathname.split('.').pop()?.toLowerCase();
-  if (!ext || !['png', 'webp', 'svg'].includes(ext)) throw Error('Unsupported frame format');
+  const inline = url.protocol === 'data:' ? /^data:image\/(png|webp);base64,/i.exec(url.href) : null;
+  const ext = inline ? inline[1].toLowerCase() : url.pathname.split('.').pop()?.toLowerCase();
+  if (!ext || !['png', 'webp', 'svg'].includes(ext) || (url.protocol === 'data:' && !inline)) throw Error('Unsupported frame format');
   const data = await bytes(url, 2 * 1024 * 1024, signal);
   const content = ext === 'svg' ? new Blob([safeSVG(await data.text())], { type: 'image/svg+xml' }) :
     data.slice(0, data.size, 'image/' + ext);
@@ -76,7 +90,8 @@ function dictionary(value: unknown) {
 async function resolveSkin(url: URL, seen: Set<string>, signal: AbortSignal, warnings: Set<string>): Promise<Skin> {
   if (seen.has(url.href) || seen.size >= 4) throw Error('Invalid skin inheritance');
   seen.add(url.href);
-  const manifest = JSON.parse(await (await bytes(url, 256 * 1024, signal)).text(), (key, value) => {
+  const manifestLimit = url.protocol === 'data:' ? 1024 * 1024 : 256 * 1024;
+  const manifest = JSON.parse(await (await bytes(url, manifestLimit, signal)).text(), (key, value) => {
     if (['constructor', 'prototype', '__proto__'].includes(key)) throw Error('Invalid skin key');
     return value;
   });
@@ -102,11 +117,11 @@ async function resolveSkin(url: URL, seen: Set<string>, signal: AbortSignal, war
   }
   const files = Object.entries(dictionary(manifest.files));
   if (files.length > 64) throw Error('Too many frames');
-  const folder = new URL('.', url);
+  const folder = url.protocol === 'data:' ? null : new URL('.', url);
   for (const [key, path] of files) {
     if (!frameName.test(key) || typeof path !== 'string') throw Error('Invalid skin frame');
-    const asset = webURL(path, url.href);
-    if (asset.origin === folder.origin && !asset.pathname.startsWith(folder.pathname)) throw Error('Frame outside skin folder');
+    const asset = folder ? webURL(path, url.href) : inlineImageURL(path);
+    if (folder && asset.origin === folder.origin && !asset.pathname.startsWith(folder.pathname)) throw Error('Frame outside skin folder');
     try { skin.frames[key] = await imageFrame(asset, signal); }
     catch { signal.throwIfAborted(); delete skin.frames[key]; warnings.add(key); }
   }
@@ -125,7 +140,7 @@ export class SkinBank {
     let selected = fallback();
     const warnings = new Set<string>();
     try {
-      if (path) selected = await resolveSkin(webURL(path, document.baseURI), new Set(), request.signal, warnings);
+      if (path) selected = await resolveSkin(manifestURL(path, document.baseURI), new Set(), request.signal, warnings);
     } catch {
       if (this.loading !== request) return;
       this.emit('game:error', { code: 'SKIN_LOAD_FAILED', message: 'Using procedural skin.' });

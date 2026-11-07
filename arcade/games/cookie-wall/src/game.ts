@@ -21,7 +21,9 @@ export class CookieWallGame {
   time = 0;
   stats = freshStats();
   bricks: Brick[];
-  burst: { x: number; y: number; until: number } | null = null;
+  burst: { x: number; y: number; w: number; h: number; kind: Brick['kind']; until: number } | null = null;
+  lastPaddleHit = -Infinity;
+  leakAt = -Infinity;
   private held = new Set<string>();
   private contacts = new Set<Brick>();
   private axis = 0;
@@ -37,7 +39,7 @@ export class CookieWallGame {
   reset(seed = this.seed) {
     this.seed = seed; this.wall = 1; this.score = 0; this.lives = 3; this.chain = 0;
     this.stats = freshStats(); this.time = 0; this.speed = speeds[0]; this.breather = 0;
-    this.accumulator = 0; this.burst = null; this.paddleX = COURT / 2;
+    this.accumulator = 0; this.burst = null; this.lastPaddleHit = -Infinity; this.leakAt = -Infinity; this.paddleX = COURT / 2;
     this.releaseInput();
     this.newWall();
   }
@@ -125,7 +127,7 @@ export class CookieWallGame {
       if (hit.type === 'paddle') {
         this.speed = speeds[Math.min(this.wall - 1, speeds.length - 1)];
         rebound(this.packet, this.packet.x - (oldX + paddleVx * elapsed), this.speed);
-        this.chain = 0; this.stats.paddleReturns++; this.emit('game:paddle');
+        this.chain = 0; this.stats.paddleReturns++; this.lastPaddleHit = this.time; this.emit('game:paddle');
       } else {
         if (hit.nx) this.packet.vx *= -1;
         if (hit.ny) this.packet.vy *= -1;
@@ -150,7 +152,7 @@ export class CookieWallGame {
     this.stats.maxChain = Math.max(this.chain, this.stats.maxChain);
     const multiplier = Math.min(3, Math.ceil(this.chain / 2));
     this.score += brickRules[brick.kind].points * multiplier;
-    this.burst = { x: brick.x + brick.w / 2, y: brick.y + brick.h / 2, until: this.time + 0.22 };
+    this.burst = { x: brick.x + brick.w / 2, y: brick.y + brick.h / 2, w: brick.w, h: brick.h, kind: brick.kind, until: this.time + 0.22 };
     this.emit('game:brick', { kind: brick.kind, multiplier });
     if (this.bricks.some(candidate => candidate.hp > 0)) return;
     this.score += 100; this.stats.wallsCleared++; this.chain = 0;
@@ -160,7 +162,7 @@ export class CookieWallGame {
   }
 
   private losePacket() {
-    this.stats.packetsLost++; this.lives--; this.chain = 0;
+    this.stats.packetsLost++; this.lives--; this.chain = 0; this.leakAt = this.time;
     this.emit('game:leak', { lives: this.lives });
     if (this.lives > 0) { this.dock(); this.dockedAfterLoss = true; }
     else { this.phase = 'leaking'; this.breather = 0.25; }
