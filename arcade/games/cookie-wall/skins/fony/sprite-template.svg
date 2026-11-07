@@ -2,7 +2,7 @@
 <title>Cookie Wall guide frame template</title>
 <desc>Blank frame slots sized to the Cookie Wall guide. Cyan crosses mark each frame anchor. Names and dimensions are review labels outside the art bounds.</desc>
 <defs><pattern id="checker" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#17131e"/><path d="M0 0h8v8H0zM8 8h8v8H8z" fill="#211c2a"/></pattern></defs>
-<rect width="100%" height="100%" fill="#0e0b13">
+<rect width="100%" height="100%" fill="#0e0b13"/>
 <text x="28" y="38" fill="#f4efd8" font-family="monospace" font-size="24" font-weight="700">COOKIE WALL · SPRITE TEMPLATE</text>
 <text x="28" y="70" fill="#a0fff0" font-family="monospace" font-size="14">43 GUIDE FRAMES · BLANK ART BOUNDS · CYAN CROSS = ANCHOR · LABELS OUTSIDE SPRITES</text>
 <g data-frame="bg_court_00">
