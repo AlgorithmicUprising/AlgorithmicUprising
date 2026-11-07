@@ -1,0 +1,352 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="5504" viewBox="0 0 1080 5504">
+<title>Cookie Wall guide frame template</title>
+<desc>Blank frame slots sized to the Cookie Wall guide. Cyan crosses mark each frame anchor. Names and dimensions are review labels outside the art bounds.</desc>
+<defs><pattern id="checker" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#17131e"/><path d="M0 0h8v8H0zM8 8h8v8H8z" fill="#211c2a"/></pattern></defs>
+<rect width="100%" height="100%" fill="#0e0b13">
+<text x="28" y="38" fill="#f4efd8" font-family="monospace" font-size="24" font-weight="700">COOKIE WALL · SPRITE TEMPLATE</text>
+<text x="28" y="70" fill="#a0fff0" font-family="monospace" font-size="14">43 GUIDE FRAMES · BLANK ART BOUNDS · CYAN CROSS = ANCHOR · LABELS OUTSIDE SPRITES</text>
+<g data-frame="bg_court_00">
+<rect x="8" y="112" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="136" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">bg_court_00</text>
+<text x="22" y="155" fill="#a0fff0" font-family="monospace" font-size="11">320×320 · anchor 0,0</text>
+<rect x="40" y="170" width="280" height="280" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M33 170H47 M40 163V177" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="40" cy="170" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="blocker_idle_00">
+<rect x="368" y="112" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="136" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">blocker_idle_00</text>
+<text x="382" y="155" fill="#a0fff0" font-family="monospace" font-size="11">64×16 · anchor 32,8</text>
+<rect x="412" y="278" width="256" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 310H547 M540 303V317" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="310" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="blocker_hit_00">
+<rect x="728" y="112" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="136" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">blocker_hit_00</text>
+<text x="742" y="155" fill="#a0fff0" font-family="monospace" font-size="11">64×16 · anchor 32,8</text>
+<rect x="772" y="278" width="256" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 310H907 M900 303V317" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="310" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="blocker_hit_01">
+<rect x="8" y="472" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="496" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">blocker_hit_01</text>
+<text x="22" y="515" fill="#a0fff0" font-family="monospace" font-size="11">64×16 · anchor 32,8</text>
+<rect x="52" y="638" width="256" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 670H187 M180 663V677" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="670" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="blocker_ad_idle_00">
+<rect x="368" y="472" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="496" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">blocker_ad_idle_00</text>
+<text x="382" y="515" fill="#a0fff0" font-family="monospace" font-size="11">64×16 · anchor 32,8</text>
+<rect x="412" y="638" width="256" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 670H547 M540 663V677" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="670" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="blocker_ad_hit_00">
+<rect x="728" y="472" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="496" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">blocker_ad_hit_00</text>
+<text x="742" y="515" fill="#a0fff0" font-family="monospace" font-size="11">64×16 · anchor 32,8</text>
+<rect x="772" y="638" width="256" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 670H907 M900 663V677" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="670" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="blocker_ad_hit_01">
+<rect x="8" y="832" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="856" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">blocker_ad_hit_01</text>
+<text x="22" y="875" fill="#a0fff0" font-family="monospace" font-size="11">64×16 · anchor 32,8</text>
+<rect x="52" y="998" width="256" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 1030H187 M180 1023V1037" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="1030" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_necessary_idle_00">
+<rect x="368" y="832" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="856" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_necessary_idle_00</text>
+<text x="382" y="875" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="472" y="994" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 1030H547 M540 1023V1037" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="1030" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_necessary_break_00">
+<rect x="728" y="832" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="856" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_necessary_break_00</text>
+<text x="742" y="875" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="832" y="994" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 1030H907 M900 1023V1037" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="1030" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_necessary_break_01">
+<rect x="8" y="1192" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="1216" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_necessary_break_01</text>
+<text x="22" y="1235" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="112" y="1354" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 1390H187 M180 1383V1397" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="1390" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_necessary_break_02">
+<rect x="368" y="1192" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="1216" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_necessary_break_02</text>
+<text x="382" y="1235" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="472" y="1354" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 1390H547 M540 1383V1397" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="1390" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_partners_idle_00">
+<rect x="728" y="1192" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="1216" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_partners_idle_00</text>
+<text x="742" y="1235" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="832" y="1354" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 1390H907 M900 1383V1397" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="1390" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_partners_break_00">
+<rect x="8" y="1552" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="1576" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_partners_break_00</text>
+<text x="22" y="1595" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="112" y="1714" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 1750H187 M180 1743V1757" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="1750" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_partners_break_01">
+<rect x="368" y="1552" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="1576" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_partners_break_01</text>
+<text x="382" y="1595" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="472" y="1714" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 1750H547 M540 1743V1757" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="1750" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_partners_break_02">
+<rect x="728" y="1552" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="1576" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_partners_break_02</text>
+<text x="742" y="1595" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="832" y="1714" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 1750H907 M900 1743V1757" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="1750" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_interest_idle_00">
+<rect x="8" y="1912" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="1936" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_interest_idle_00</text>
+<text x="22" y="1955" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="112" y="2074" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 2110H187 M180 2103V2117" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="2110" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_interest_crack_00">
+<rect x="368" y="1912" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="1936" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_interest_crack_00</text>
+<text x="382" y="1955" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="472" y="2074" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 2110H547 M540 2103V2117" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="2110" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_interest_break_00">
+<rect x="728" y="1912" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="1936" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_interest_break_00</text>
+<text x="742" y="1955" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="832" y="2074" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 2110H907 M900 2103V2117" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="2110" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_interest_break_01">
+<rect x="8" y="2272" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="2296" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_interest_break_01</text>
+<text x="22" y="2315" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="112" y="2434" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 2470H187 M180 2463V2477" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="2470" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_interest_break_02">
+<rect x="368" y="2272" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="2296" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_interest_break_02</text>
+<text x="382" y="2315" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="472" y="2434" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 2470H547 M540 2463V2477" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="2470" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_reject_idle_00">
+<rect x="728" y="2272" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="2296" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_reject_idle_00</text>
+<text x="742" y="2315" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="832" y="2434" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 2470H907 M900 2463V2477" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="2470" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_reject_crack_00">
+<rect x="8" y="2632" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="2656" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_reject_crack_00</text>
+<text x="22" y="2675" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="112" y="2794" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 2830H187 M180 2823V2837" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="2830" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_reject_break_00">
+<rect x="368" y="2632" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="2656" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_reject_break_00</text>
+<text x="382" y="2675" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="472" y="2794" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 2830H547 M540 2823V2837" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="2830" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_reject_break_01">
+<rect x="728" y="2632" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="2656" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_reject_break_01</text>
+<text x="742" y="2675" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="832" y="2794" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 2830H907 M900 2823V2837" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="2830" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="brick_reject_break_02">
+<rect x="8" y="2992" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="3016" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">brick_reject_break_02</text>
+<text x="22" y="3035" fill="#a0fff0" font-family="monospace" font-size="11">34×18 · anchor 17,9</text>
+<rect x="112" y="3154" width="136" height="72" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 3190H187 M180 3183V3197" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="3190" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="packet_spin_00">
+<rect x="368" y="2992" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="3016" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">packet_spin_00</text>
+<text x="382" y="3035" fill="#a0fff0" font-family="monospace" font-size="11">12×12 · anchor 6,6</text>
+<rect x="516" y="3166" width="48" height="48" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 3190H547 M540 3183V3197" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="3190" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="packet_spin_01">
+<rect x="728" y="2992" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="3016" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">packet_spin_01</text>
+<text x="742" y="3035" fill="#a0fff0" font-family="monospace" font-size="11">12×12 · anchor 6,6</text>
+<rect x="876" y="3166" width="48" height="48" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 3190H907 M900 3183V3197" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="3190" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="packet_spin_02">
+<rect x="8" y="3352" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="3376" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">packet_spin_02</text>
+<text x="22" y="3395" fill="#a0fff0" font-family="monospace" font-size="11">12×12 · anchor 6,6</text>
+<rect x="156" y="3526" width="48" height="48" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 3550H187 M180 3543V3557" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="3550" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="packet_spin_03">
+<rect x="368" y="3352" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="3376" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">packet_spin_03</text>
+<text x="382" y="3395" fill="#a0fff0" font-family="monospace" font-size="11">12×12 · anchor 6,6</text>
+<rect x="516" y="3526" width="48" height="48" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 3550H547 M540 3543V3557" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="3550" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="tracker_idle_00">
+<rect x="728" y="3352" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="3376" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">tracker_idle_00</text>
+<text x="742" y="3395" fill="#a0fff0" font-family="monospace" font-size="11">32×24 · anchor 16,12</text>
+<rect x="836" y="3502" width="128" height="96" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 3550H907 M900 3543V3557" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="3550" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="tracker_idle_01">
+<rect x="8" y="3712" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="3736" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">tracker_idle_01</text>
+<text x="22" y="3755" fill="#a0fff0" font-family="monospace" font-size="11">32×24 · anchor 16,12</text>
+<rect x="116" y="3862" width="128" height="96" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 3910H187 M180 3903V3917" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="3910" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="fx_crumb_00">
+<rect x="368" y="3712" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="3736" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">fx_crumb_00</text>
+<text x="382" y="3755" fill="#a0fff0" font-family="monospace" font-size="11">8×8 · anchor 4,4</text>
+<rect x="524" y="3894" width="32" height="32" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 3910H547 M540 3903V3917" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="3910" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="fx_crumb_01">
+<rect x="728" y="3712" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="3736" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">fx_crumb_01</text>
+<text x="742" y="3755" fill="#a0fff0" font-family="monospace" font-size="11">8×8 · anchor 4,4</text>
+<rect x="884" y="3894" width="32" height="32" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 3910H907 M900 3903V3917" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="3910" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="fx_crumb_02">
+<rect x="8" y="4072" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="4096" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">fx_crumb_02</text>
+<text x="22" y="4115" fill="#a0fff0" font-family="monospace" font-size="11">8×8 · anchor 4,4</text>
+<rect x="164" y="4254" width="32" height="32" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 4270H187 M180 4263V4277" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="4270" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="fx_crumb_03">
+<rect x="368" y="4072" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="4096" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">fx_crumb_03</text>
+<text x="382" y="4115" fill="#a0fff0" font-family="monospace" font-size="11">8×8 · anchor 4,4</text>
+<rect x="524" y="4254" width="32" height="32" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 4270H547 M540 4263V4277" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="4270" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="logo_title_00">
+<rect x="728" y="4072" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="4096" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">logo_title_00</text>
+<text x="742" y="4115" fill="#a0fff0" font-family="monospace" font-size="11">320×96 · anchor 0,0</text>
+<rect x="760" y="4228" width="280" height="84" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M753 4228H767 M760 4221V4235" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="760" cy="4228" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="ui_sound_on_00">
+<rect x="8" y="4432" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="4456" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">ui_sound_on_00</text>
+<text x="22" y="4475" fill="#a0fff0" font-family="monospace" font-size="11">16×16 · anchor 8,8</text>
+<rect x="148" y="4598" width="64" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 4630H187 M180 4623V4637" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="4630" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="ui_sound_off_00">
+<rect x="368" y="4432" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="4456" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">ui_sound_off_00</text>
+<text x="382" y="4475" fill="#a0fff0" font-family="monospace" font-size="11">16×16 · anchor 8,8</text>
+<rect x="508" y="4598" width="64" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 4630H547 M540 4623V4637" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="4630" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="ui_pause_00">
+<rect x="728" y="4432" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="4456" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">ui_pause_00</text>
+<text x="742" y="4475" fill="#a0fff0" font-family="monospace" font-size="11">16×16 · anchor 8,8</text>
+<rect x="868" y="4598" width="64" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 4630H907 M900 4623V4637" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="4630" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="ui_share_00">
+<rect x="8" y="4792" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="4816" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">ui_share_00</text>
+<text x="22" y="4835" fill="#a0fff0" font-family="monospace" font-size="11">16×16 · anchor 8,8</text>
+<rect x="148" y="4958" width="64" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 4990H187 M180 4983V4997" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="4990" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="ui_settings_00">
+<rect x="368" y="4792" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="382" y="4816" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">ui_settings_00</text>
+<text x="382" y="4835" fill="#a0fff0" font-family="monospace" font-size="11">16×16 · anchor 8,8</text>
+<rect x="508" y="4958" width="64" height="64" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M533 4990H547 M540 4983V4997" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="540" cy="4990" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="ui_btn_launch_00">
+<rect x="728" y="4792" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="742" y="4816" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">ui_btn_launch_00</text>
+<text x="742" y="4835" fill="#a0fff0" font-family="monospace" font-size="11">64×64 · anchor 32,32</text>
+<rect x="772" y="4862" width="256" height="256" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M893 4990H907 M900 4983V4997" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="900" cy="4990" r="2" fill="#ff637a"/>
+</g>
+<g data-frame="ui_btn_launch_01">
+<rect x="8" y="5152" width="344" height="344" rx="5" fill="#17131e" stroke="#554667"/>
+<text x="22" y="5176" fill="#f4efd8" font-family="monospace" font-size="13" font-weight="700">ui_btn_launch_01</text>
+<text x="22" y="5195" fill="#a0fff0" font-family="monospace" font-size="11">64×64 · anchor 32,32</text>
+<rect x="52" y="5222" width="256" height="256" fill="url(#checker)" stroke="#d6cbe1" stroke-width="1"/>
+<path d="M173 5350H187 M180 5343V5357" fill="none" stroke="#35dfcc" stroke-width="2"/>
+<circle cx="180" cy="5350" r="2" fill="#ff637a"/>
+</g>
+</svg>
