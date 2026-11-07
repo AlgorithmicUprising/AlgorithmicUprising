@@ -218,6 +218,8 @@ test('active obstacle art aligns with floor and surface height',async({page})=>{
 test('clean ACCEPT ALL sprite body is grounded with no detached green guide',async({page})=>{
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(game).toHaveAttribute('data-au-art-ready','');
  const colors=await game.evaluate(el=>{
   el.setAttribute('data-qa-accept','');
   const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
