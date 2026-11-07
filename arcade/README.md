@@ -1,6 +1,6 @@
 # PUNK ARCADE · CH 05
 
-Two dependency-free Canvas web component games, designed to embed in ZERO TV or stand alone. **Engineering scaffold / early playable greybox**; not a completed v0.1 release.
+Three dependency-free Canvas web component games, designed to embed in ZERO TV or stand alone. **Engineering scaffold / early playable greybox**; not a completed v0.1 release.
 
 ## Getting started
 
@@ -21,9 +21,13 @@ Open `demo/index.html` through an HTTP server (for example `python3 -m http.serv
 <grind-the-terms></grind-the-terms>
 <script type="module" src="/games/tag-before-training/dist/tag-before-training.js"></script>
 <tag-before-training></tag-before-training>
+<script type="module" src="/games/cookie-wall/dist/cookie-wall.js"></script>
+<cookie-wall></cookie-wall>
 ```
 
-Both components emit bubbling `game:ready`, `game:start`, `game:pause`, `game:resume`, `game:over`, `game:share` and `game:error` events. The host owns analytics and share links. Games store only a best score locally. Press space to jump in Grind; use arrows/WASD and space to spray in Tag. Mobile: tap Grind; use the on-screen buttons in Tag. Game art is intentionally replaceable by a per-game `skins/<id>/skin.json`; the first playable greybox uses built-in shapes.
+All three components emit bubbling `game:ready`, `game:start`, `game:pause`, `game:resume`, `game:over`, `game:share` and `game:error` events. The host owns analytics and share links. Games store only a best score locally. Press space to jump in Grind; use arrows/WASD and space to spray in Tag. Mobile: tap Grind; use the on-screen buttons in Tag. Game art is intentionally replaceable by a per-game `skins/<id>/skin.json`; the first playable greybox uses built-in shapes.
+
+[Cookie Wall](games/cookie-wall/README.md) uses one square court in both layouts. Move with arrows or A/D and launch with Space/U. On a phone, drag below the court and tap Launch.
 
 ## License
 

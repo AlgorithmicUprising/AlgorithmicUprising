@@ -14,7 +14,8 @@
     "game": {
       "enum": [
         "grind-the-terms",
-        "tag-before-training"
+        "tag-before-training",
+        "cookie-wall"
       ]
     },
     "name": {

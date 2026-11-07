@@ -218,18 +218,20 @@ test('active obstacle art aligns with floor and surface height',async({page})=>{
 test('clean ACCEPT ALL sprite body is grounded with no detached green guide',async({page})=>{
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');
+ await expect(page.locator('#events')).toContainText('game:skin-loaded');
+ await expect(game).toHaveAttribute('data-au-art-ready','');
  const colors=await game.evaluate(el=>{
   el.setAttribute('data-qa-accept','');
   const c=el.shadowRoot.querySelector('canvas'),ctx=c.getContext('2d');
   el.game.start();el.game.draw(ctx,c.width,c.height);
   const portrait=c.width/c.height<1.05,k=portrait?Math.min(c.width/450,c.height/350):Math.min(c.width/640,c.height/360),dx=portrait?(c.width-450*k)/2-35*k:(c.width-640*k)/2,dy=portrait?c.height-350*k:(c.height-360*k)/2;
   const sample=(x,y)=>[...ctx.getImageData(Math.floor(dx+x*k),Math.floor(dy+y*k),1,1).data];
-  const buttonX=portrait?379:344;
-  return {button:sample(buttonX,280),above:sample(buttonX,252),floor:sample(buttonX,299)};
+  const checkX=350;
+  return {check:sample(checkX,286),above:sample(checkX,252),floor:sample(checkX,299)};
  });
- expect(colors.button[1]).toBeGreaterThan(150);
- expect(colors.button[3]).toBe(255);
- expect(colors.above[1]).toBeLessThan(colors.button[1]);
+ expect(colors.check[1]).toBeGreaterThan(150);
+ expect(colors.check[3]).toBe(255);
+ expect(colors.above[1]).toBeLessThan(colors.check[1]);
  await game.screenshot({path:'test-results/screenshots/accept-no-fringe-desktop.png'});
 });
 
