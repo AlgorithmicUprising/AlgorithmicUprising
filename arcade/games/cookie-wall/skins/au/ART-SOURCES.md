@@ -1,0 +1,1 @@
+The AU skin inherits the Fony CC BY 4.0 code/vector sprite pack. AU-specific palette and the Ø blocker patch are composited from this manifest and the shared renderer; the neutral Fony art contains no protected AU mark. No AI-generated or third-party image pixels are used.
