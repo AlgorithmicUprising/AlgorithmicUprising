@@ -16,7 +16,7 @@ test('one square court fits the container, launches, pauses, and rotates in plac
   const game = await boot(page);
   const phone = info.project.name.includes('mobile');
   await expect(game).toHaveAttribute('data-orientation', phone ? 'portrait' : 'landscape');
-  const board = game.locator('canvas'), outer = await game.boundingBox(), court = await board.boundingBox();
+  const board = game.locator('canvas[aria-label="COOKIE WALL"]'), outer = await game.boundingBox(), court = await board.boundingBox();
   expect(Math.abs(court.width - court.height)).toBeLessThan(1.1); expect(within(outer, court)).toBe(true);
   for (const button of ['pause','sound','settings']) {
     const box = await game.locator('[part=' + button + ']').boundingBox();
@@ -134,7 +134,7 @@ test('downloadable playtest runs offline and keeps a best when storage is blocke
   await page.goto(pathToFileURL(resolve('games/cookie-wall/dist/Cookie-Wall.html')).href);
   const game=page.locator('cookie-wall');
   await expect.poll(()=>game.evaluate(e=>e.game.presentation().id)).toBe('fony');
-  await expect.poll(()=>game.evaluate(e=>Object.keys(e.game.presentation().frames).length)).toBe(35);
+  await expect.poll(()=>game.evaluate(e=>Object.keys(e.game.presentation().frames).length)).toBe(43);
   await game.locator('[part=start]').click();
   await game.evaluate(e=>{
     const w=e.game.world;w.lives=1;w.score=42;w.phase='flight';Object.assign(w.packet,{x:20,y:323,vx:0,vy:200});
