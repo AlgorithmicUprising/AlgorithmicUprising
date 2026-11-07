@@ -29,8 +29,6 @@ function brickFace(ctx: CanvasRenderingContext2D, brick: Brick, art: Skin, color
       ctx.lineTo(x + w * .48, y + 8); ctx.stroke();
     }
   }
-  ctx.fillStyle = colors.dark; ctx.font = 'bold 7px ui-monospace,monospace'; ctx.textAlign = 'center';
-  ctx.fillText(art.strings['alias_' + kind], x + w / 2, y + 13, w - 2);
 }
 
 export function drawCourt(ctx: CanvasRenderingContext2D, width: number, height: number, world: CookieWallGame, skin: Skin,
