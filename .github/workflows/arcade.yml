@@ -51,10 +51,11 @@ jobs:
             arcade/games/*/demo/
           if-no-files-found: error
           retention-days: 14
-  deploy-preview:
-    name: Publish browser-tested arcade preview
+  deploy-main:
+    name: Publish browser-tested arcade production assets from main
     needs: build-and-browser-test
-    if: github.ref == 'refs/heads/arcade' && github.event_name != 'pull_request'
+    # The production game player is served from main; feature and arcade branches only run CI.
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
