@@ -1,0 +1,6 @@
+{
+  "id": "au", "game": "cookie-wall", "name": "Algorithmic Uprising", "version": "0.1.0",
+  "extends": "fony", "procedural": true, "license": "All rights reserved", "attribution": "Algorithmic Uprising",
+  "palette": { "accent": "#c9ff31", "court": "#171723", "danger": "#ff85b6", "safe": "#9cdecc", "interest": "#c8afff" },
+  "strings": { "launch_mark": "U", "unused_button": "A · UNUSED", "reserved_button": "Ø · RESERVED", "patch": "Ø" }
+}

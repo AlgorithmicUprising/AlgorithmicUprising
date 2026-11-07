@@ -1,0 +1,531 @@
+{
+  "bg_court_00": {
+    "file": "sprites/bg_court_00.webp",
+    "size": [
+      320,
+      320
+    ],
+    "anchor": [
+      0,
+      0
+    ]
+  },
+  "blocker_idle_00": {
+    "file": "sprites/blocker_idle_00.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ]
+  },
+  "blocker_hit_00": {
+    "file": "sprites/blocker_hit_00.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "blocker_hit_01": {
+    "file": "sprites/blocker_hit_01.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "blocker_ad_idle_00": {
+    "file": "sprites/blocker_ad_idle_00.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ]
+  },
+  "blocker_ad_hit_00": {
+    "file": "sprites/blocker_ad_hit_00.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "blocker_ad_hit_01": {
+    "file": "sprites/blocker_ad_hit_01.png",
+    "size": [
+      64,
+      16
+    ],
+    "anchor": [
+      32,
+      8
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_necessary_idle_00": {
+    "file": "sprites/brick_necessary_idle_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_necessary_break_00": {
+    "file": "sprites/brick_necessary_break_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_necessary_break_01": {
+    "file": "sprites/brick_necessary_break_01.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_necessary_break_02": {
+    "file": "sprites/brick_necessary_break_02.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_partners_idle_00": {
+    "file": "sprites/brick_partners_idle_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_partners_break_00": {
+    "file": "sprites/brick_partners_break_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_partners_break_01": {
+    "file": "sprites/brick_partners_break_01.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_partners_break_02": {
+    "file": "sprites/brick_partners_break_02.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_interest_idle_00": {
+    "file": "sprites/brick_interest_idle_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_interest_crack_00": {
+    "file": "sprites/brick_interest_crack_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_interest_break_00": {
+    "file": "sprites/brick_interest_break_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_interest_break_01": {
+    "file": "sprites/brick_interest_break_01.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_interest_break_02": {
+    "file": "sprites/brick_interest_break_02.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_reject_idle_00": {
+    "file": "sprites/brick_reject_idle_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_reject_crack_00": {
+    "file": "sprites/brick_reject_crack_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ]
+  },
+  "brick_reject_break_00": {
+    "file": "sprites/brick_reject_break_00.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_reject_break_01": {
+    "file": "sprites/brick_reject_break_01.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "brick_reject_break_02": {
+    "file": "sprites/brick_reject_break_02.png",
+    "size": [
+      34,
+      18
+    ],
+    "anchor": [
+      17,
+      9
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "packet_spin_00": {
+    "file": "sprites/packet_spin_00.png",
+    "size": [
+      12,
+      12
+    ],
+    "anchor": [
+      6,
+      6
+    ],
+    "fps": 8,
+    "loop": true
+  },
+  "packet_spin_01": {
+    "file": "sprites/packet_spin_01.png",
+    "size": [
+      12,
+      12
+    ],
+    "anchor": [
+      6,
+      6
+    ],
+    "fps": 8,
+    "loop": true
+  },
+  "packet_spin_02": {
+    "file": "sprites/packet_spin_02.png",
+    "size": [
+      12,
+      12
+    ],
+    "anchor": [
+      6,
+      6
+    ],
+    "fps": 8,
+    "loop": true
+  },
+  "packet_spin_03": {
+    "file": "sprites/packet_spin_03.png",
+    "size": [
+      12,
+      12
+    ],
+    "anchor": [
+      6,
+      6
+    ],
+    "fps": 8,
+    "loop": true
+  },
+  "tracker_idle_00": {
+    "file": "sprites/tracker_idle_00.png",
+    "size": [
+      32,
+      24
+    ],
+    "anchor": [
+      16,
+      12
+    ],
+    "fps": 4,
+    "loop": true
+  },
+  "tracker_idle_01": {
+    "file": "sprites/tracker_idle_01.png",
+    "size": [
+      32,
+      24
+    ],
+    "anchor": [
+      16,
+      12
+    ],
+    "fps": 4,
+    "loop": true
+  },
+  "fx_crumb_00": {
+    "file": "sprites/fx_crumb_00.png",
+    "size": [
+      8,
+      8
+    ],
+    "anchor": [
+      4,
+      4
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "fx_crumb_01": {
+    "file": "sprites/fx_crumb_01.png",
+    "size": [
+      8,
+      8
+    ],
+    "anchor": [
+      4,
+      4
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "fx_crumb_02": {
+    "file": "sprites/fx_crumb_02.png",
+    "size": [
+      8,
+      8
+    ],
+    "anchor": [
+      4,
+      4
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "fx_crumb_03": {
+    "file": "sprites/fx_crumb_03.png",
+    "size": [
+      8,
+      8
+    ],
+    "anchor": [
+      4,
+      4
+    ],
+    "fps": 12,
+    "loop": false
+  },
+  "logo_title_00": {
+    "file": "sprites/logo_title_00.png",
+    "size": [
+      320,
+      96
+    ],
+    "anchor": [
+      0,
+      0
+    ]
+  },
+  "ui_sound_on_00": {
+    "file": "sprites/ui_sound_on_00.png",
+    "size": [
+      16,
+      16
+    ],
+    "anchor": [
+      8,
+      8
+    ]
+  },
+  "ui_sound_off_00": {
+    "file": "sprites/ui_sound_off_00.png",
+    "size": [
+      16,
+      16
+    ],
+    "anchor": [
+      8,
+      8
+    ]
+  },
+  "ui_pause_00": {
+    "file": "sprites/ui_pause_00.png",
+    "size": [
+      16,
+      16
+    ],
+    "anchor": [
+      8,
+      8
+    ]
+  },
+  "ui_share_00": {
+    "file": "sprites/ui_share_00.png",
+    "size": [
+      16,
+      16
+    ],
+    "anchor": [
+      8,
+      8
+    ]
+  },
+  "ui_settings_00": {
+    "file": "sprites/ui_settings_00.png",
+    "size": [
+      16,
+      16
+    ],
+    "anchor": [
+      8,
+      8
+    ]
+  },
+  "ui_btn_launch_00": {
+    "file": "sprites/ui_btn_launch_00.png",
+    "size": [
+      64,
+      64
+    ],
+    "anchor": [
+      32,
+      32
+    ],
+    "fps": 8,
+    "loop": false
+  },
+  "ui_btn_launch_01": {
+    "file": "sprites/ui_btn_launch_01.png",
+    "size": [
+      64,
+      64
+    ],
+    "anchor": [
+      32,
+      32
+    ],
+    "fps": 8,
+    "loop": false
+  }
+}
