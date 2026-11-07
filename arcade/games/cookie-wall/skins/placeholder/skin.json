@@ -13,7 +13,7 @@
   },
   "strings": {
     "title": "COOKIE WALL", "subtitle": "Your data. Their masonry.",
-    "play": "PLAY", "start": "Move to aim. Press U, ↑ or Space, or tap Launch.",
+    "play": "PLAY", "start": "Move to aim. Press U, Space or Up, or tap Launch. Lock = NEEDED; nodes = 347; eye = INTEREST; X = REJECT.",
     "launch": "LAUNCH", "retry": "BLOCK AGAIN", "share": "SHARE", "best": "BEST",
     "hud_score": "DATA KEPT", "hud_lives": "PACKETS LEFT", "hud_wall": "WALL",
     "walls_cleared": "WALLS CLEARED", "gameover_title": "PACKET LOST",
@@ -34,7 +34,7 @@
     "wall_three": "Reject All shrinks after one hit.", "wall_later": "Same permissions. Different wall.",
     "flight_hint": "Aim returns with the edge of your blocker.", "relaunch": "Next packet docked. Aim and launch.",
     "unused_button": "", "reserved_button": "", "launch_mark": "", "patch": "",
-    "instructions": "Move with arrows or A/D, a pointer, the drag strip, or a gamepad. Press Space, U, Up, Launch, or gamepad A to send a docked packet. P or Escape pauses. M toggles sound.",
+    "instructions": "Move with arrows or A/D, a pointer, the drag strip, or a gamepad. Press Space, U, Up, Launch, or gamepad A to send a docked packet. P or Escape pauses. M toggles sound. Banner symbols: lock = Strictly Necessary; linked nodes = 347 Ad Partners; eye = Legitimate Interest; X = Reject All.",
     "legend": "Banner types", "required_hits": "hits"
   },
   "sfx": {

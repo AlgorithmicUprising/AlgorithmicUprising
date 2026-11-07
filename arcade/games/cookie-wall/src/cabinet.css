@@ -36,13 +36,21 @@ button:active { filter:brightness(.83); }
 .strip { display:none; }
 .overlay { position:absolute; inset:0; display:grid; place-content:center; text-align:center; padding:6%;
   background:linear-gradient(165deg,#19172225 5%,#19172290 50%,#19172272); }
-.card { width:100%; max-width:430px; background:var(--cw-panel); color:var(--cw-ink);
+.card { position:relative; width:100%; max-width:430px; background:var(--cw-panel); color:var(--cw-ink);
   border:2px solid var(--cw-ink); box-shadow:4px 4px 0 var(--cw-dark); padding:clamp(9px,2.4cqw,28px); }
-.card h2 { margin:0; font:italic 950 clamp(21px,4.5cqw,64px)/.95 system-ui,sans-serif; letter-spacing:-.07em; }
+.card h2 { position:relative; display:grid; place-items:center; min-height:clamp(48px,15cqw,96px); margin:0; font:italic 950 clamp(21px,4.5cqw,64px)/.95 system-ui,sans-serif; letter-spacing:-.07em; text-shadow:2px 2px var(--cw-dark); }
+.logo-plate { position:absolute; z-index:0; left:50%; top:clamp(2px,1cqw,8px); transform:translateX(-50%); width:min(100%,320px); height:auto; opacity:.55; background:transparent; image-rendering:pixelated; pointer-events:none; }
+.card h2 { position:relative; z-index:1; }
+.overlay[data-phase=over] .logo-plate, .overlay[data-phase=paused] .logo-plate { opacity:.12; }
+.ui-art { display:inline-block; width:16px; height:16px; flex:none; background:transparent; image-rendering:pixelated; vertical-align:middle; }
+.launch-art { display:block; width:32px; height:32px; flex:none; background:transparent; image-rendering:pixelated; }
+.top button { display:flex; align-items:center; justify-content:center; gap:4px; }
+.settings dt { display:flex; align-items:center; gap:5px; }
+.settings .legend-icon { display:inline-block; width:34px; height:18px; flex:none; image-rendering:pixelated; }
 .card p { margin:.75em 0; font-size:clamp(10px,1.6cqw,19px); }
 .card [data-summary] { color:var(--cw-accent); }
 .actions { display:flex; flex-wrap:wrap; gap:5px; justify-content:center; }
-.actions button { min-width:72px; }
+.actions button { display:inline-flex; align-items:center; justify-content:center; gap:4px; min-width:72px; }
 [data-share-fallback] { margin:.5em auto 0; width:95%; }
 .live { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
 .settings { color:var(--cw-ink); background:var(--cw-panel); border:2px solid var(--cw-accent); border-radius:4px;

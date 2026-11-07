@@ -21,7 +21,7 @@ const profile: CartridgeProfile = {
 
 defineArcade('cookie-wall', 'COOKIE WALL', (emit, host) => {
   const root = host.shadowRoot!;
-  const element = host as HTMLElement & { state: string; pause(reason: string): void; resume(reason: string): void };
+  const element = host as HTMLElement & { state: string; muted: boolean; pause(reason: string): void; resume(reason: string): void };
   const seed = () => {
     const value = Number(host.getAttribute('seed') ?? 1);
     return Number.isFinite(value) ? value | 0 : 1;
@@ -32,6 +32,16 @@ defineArcade('cookie-wall', 'COOKIE WALL', (emit, host) => {
   const systemMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const signal = new AbortController();
   const bank = new SkinBank(applySkin, emit);
+  function paintArt(canvas: HTMLCanvasElement, key: string) {
+    const context = canvas.getContext('2d'); if (!context) return;
+    context.clearRect(0, 0, canvas.width, canvas.height); context.imageSmoothingEnabled = false;
+    const frame = bank.current.frames[key]; if (frame) context.drawImage(frame, 0, 0, canvas.width, canvas.height);
+  }
+  function paintSkinArtwork() {
+    root.querySelectorAll<HTMLCanvasElement>('[data-art-frame]').forEach(canvas => paintArt(canvas, canvas.dataset.artFrame!));
+    const soundArt = root.querySelector<HTMLCanvasElement>('[data-sound-art]');
+    if (soundArt) paintArt(soundArt, element.muted ? 'ui_sound_off_00' : 'ui_sound_on_00');
+  }
   const dialog = root.querySelector<HTMLDialogElement>('dialog')!;
   const form = dialog.querySelector('form')!;
   const motion = form.elements.namedItem('motion') as HTMLSelectElement;
@@ -68,10 +78,16 @@ defineArcade('cookie-wall', 'COOKIE WALL', (emit, host) => {
     legend.replaceChildren(); legend.setAttribute('aria-label', strings.legend);
     for (const [kind, rule] of Object.entries(brickRules)) {
       const term = document.createElement('dt'), value = document.createElement('dd');
-      term.textContent = strings['brick_' + kind]; value.textContent = rule.hits + ' ×  /  ' + rule.points;
+      const icon = document.createElement('canvas'); icon.width = 34; icon.height = 18; icon.className = 'legend-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      const iconFrame = bank.current.frames['brick_' + kind + '_idle_00'];
+      if (iconFrame) icon.getContext('2d')?.drawImage(iconFrame, 0, 0, 34, 18);
+      const alias = strings['alias_' + kind];
+      term.append(icon, document.createTextNode((alias ? alias + ' · ' : '') + strings['brick_' + kind]));
+      value.textContent = rule.hits + ' ×  /  ' + rule.points;
       legend.append(term, value);
     }
-    applyPreferences();
+    applyPreferences(); paintSkinArtwork();
   }
   readPreferences(); applySkin();
   const redraw = () => {
@@ -83,6 +99,18 @@ defineArcade('cookie-wall', 'COOKIE WALL', (emit, host) => {
     resumeAfterSettings = element.state === 'playing';
     if (resumeAfterSettings) element.pause('settings');
     if (!dialog.open) dialog.showModal();
+  }, { signal: signal.signal });
+  const launchButton = root.querySelector<HTMLButtonElement>('[data-primary]')!;
+  const launchArt = launchButton.querySelector<HTMLCanvasElement>('[data-art-frame]');
+  if (launchArt) {
+    launchButton.addEventListener('pointerdown', () => paintArt(launchArt, 'ui_btn_launch_01'), { signal: signal.signal });
+    for (const name of ['pointerup', 'pointercancel', 'lostpointercapture'])
+      launchButton.addEventListener(name, () => paintArt(launchArt, 'ui_btn_launch_00'), { signal: signal.signal });
+  }
+  host.addEventListener('game:sound', event => {
+    const on = (event as CustomEvent<{ on?: boolean }>).detail?.on === true;
+    const icon = root.querySelector<HTMLCanvasElement>('[data-sound-art]');
+    if (icon) paintArt(icon, on ? 'ui_sound_on_00' : 'ui_sound_off_00');
   }, { signal: signal.signal });
   form.addEventListener('change', () => {
     preferences.motion = motion.value; preferences.contrast = contrast.checked; preferences.left = left.checked;
