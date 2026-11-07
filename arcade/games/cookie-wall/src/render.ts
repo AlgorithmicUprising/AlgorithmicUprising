@@ -103,7 +103,7 @@ export function drawCourt(ctx: CanvasRenderingContext2D, width: number, height: 
   }
   if ((world.phase === 'leaking' || world.phase === 'over') && skin.frames.tracker_idle_00) {
     const age = Math.max(0, world.time - world.leakAt);
-    const frame = Math.floor(age * 4) % 2;
+    const frame = reduced ? 0 : Math.floor(age * 4) % 2;
     const tracker = skin.frames['tracker_idle_0' + frame] ?? skin.frames.tracker_idle_00;
     ctx.drawImage(tracker, Math.max(0, Math.min(COURT - 32, world.packet.x - 16)), COURT - 24, 32, 24);
   }
