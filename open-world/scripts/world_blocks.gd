@@ -6,6 +6,12 @@ static var _cel: Shader
 static func material(color: Color) -> ShaderMaterial:
 	return cel(color)
 
+static func cel_textured(color: Color, texture: Texture2D, bands := 3.0, outline := 0.22) -> ShaderMaterial:
+	var mat := cel(color, bands, outline)
+	mat.set_shader_parameter("albedo_tex", texture)
+	mat.set_shader_parameter("texture_mix", 1.0)
+	return mat
+
 static func cel(color: Color, bands := 3.0, outline := 0.22) -> ShaderMaterial:
 	if _cel == null:
 		_cel = load("res://shaders/cel_block.gdshader")

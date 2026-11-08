@@ -20,6 +20,7 @@ func _ready() -> void:
 	await _grind()
 	await _body()
 	await _quarter()
+	await _art_quarter()
 	await _district()
 	print("SUMMARY failed=", fails.size())
 	for item in fails:
@@ -401,6 +402,52 @@ func _quarter() -> void:
 		await get_tree().physics_frame
 		low_y = minf(low_y, player.global_position.y)
 	expect(low_y < high_y - 0.45 or low_y < start_y + 0.4, "quarter rides back down low=%s high=%s" % [low_y, high_y])
+	host.queue_free()
+	await frames(2)
+
+func _art_quarter() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(40, 1, 40), Palette.GROUND)
+	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	pipe.name = "LibraryQuarter"
+	host.add_child(pipe)
+	await frames(2)
+	expect(pipe.triangle_count > 800 and pipe.triangle_count < 8000, "quarter pipe triangle budget %s" % pipe.triangle_count)
+	expect(pipe.get_node_or_null("Shell") != null and pipe.get_node_or_null("Coping") != null, "quarter pipe has shell and coping")
+	expect(pipe.get_node_or_null("GraffitiL") != null, "quarter pipe has a graffiti face")
+	for skating in [true, false]:
+		var player = _player(host, Vector3(-2.4, 0.5, 0))
+		await frames(18)
+		var start_y: float = player.global_position.y
+		player.skating = skating
+		player.camera_yaw = -PI * 0.5
+		player.external_move_active = true
+		player.external_move = Vector2(0, 1)
+		var max_y: float = start_y
+		var stuck := 0
+		var reversed := false
+		var high_y: float = start_y
+		var low_y: float = start_y
+		var turn_at: float = 0.8 if skating else 0.45
+		for _i in 180:
+			await get_tree().physics_frame
+			max_y = maxf(max_y, player.global_position.y)
+			var gain: float = player.global_position.y - start_y
+			var speed: float = Vector2(player.velocity.x, player.velocity.z).length()
+			if not reversed and gain > 0.3 and gain < 1.15 and speed < 0.2:
+				stuck += 1
+			if not reversed and gain > turn_at:
+				reversed = true
+				high_y = player.global_position.y
+				low_y = high_y
+				player.external_move = Vector2(0, -1)
+			elif reversed:
+				low_y = minf(low_y, player.global_position.y)
+		expect(max_y > start_y + turn_at, "library quarter %s climbs max_y=%s start=%s" % ["skate" if skating else "walk", max_y, start_y])
+		expect(stuck < 12, "library quarter %s does not snag stuck=%s pos=%s" % ["skate" if skating else "walk", stuck, player.global_position])
+		expect(reversed and low_y < high_y - 0.25, "library quarter %s comes back down low=%s high=%s" % ["skate" if skating else "walk", low_y, high_y])
+		player.queue_free()
+		await frames(2)
 	host.queue_free()
 	await frames(2)
 

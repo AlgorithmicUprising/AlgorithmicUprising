@@ -9,7 +9,7 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Yard shell | 160 m wall square, one south gate, Rust Avenue apron, future-section curb |
 | Ground | Warm concrete slabs and a few darker patch boxes. No crack texture |
 | Drainage bowl | Floor at y = −3 m and four straight bank slopes |
-| Skate yard | Quarter and half-pipe are one mesh each: a curve that meets a short deck, with collision slices that share edges (radius 2.4 m and 2.0 m). Coping is visual. Also a 0.9 m funbox, four lane strips, 12 m grind rail |
+| Skate yard | The west quarter is `assets/library/quarter_pipe/quarter_pipe.tscn`: a 2.4 m textured concrete shell, deck, metal coping, and two graffiti panels. Half-pipes, funbox, lanes, and the 12 m rail are still the simpler ramps |
 | Workshop | Open industrial shell, bench, five green battery blocks, eight container ribs on the south face |
 | Resistance rooms | Private shell, bunks, counter. Zero stands here |
 | Solar warehouse arcade | Teal shell, rust band, tilted blue roof cells, roof coping, door, one real cabinet, four mute cabinet boxes |

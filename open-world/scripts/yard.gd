@@ -163,7 +163,11 @@ static func _docks(parent: Node) -> void:
 	Blocks.label(parent, "DOCKS +1.2m", Vector3(2, 2.4, -20), Palette.LABEL, 28)
 
 static func _skate(parent: Node) -> void:
-	Blocks.add_quarter(parent, "SkateQuarter", Vector3(-54, 0, -12), PI, 2.4, 7.0, Palette.RAMP)
+	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	pipe.name = "SkateQuarter"
+	pipe.position = Vector3(-54, 0, -12)
+	pipe.rotation.y = PI
+	parent.add_child(pipe)
 	Blocks.solid(parent, "Funbox", Vector3(-48, 0.45, -2), Vector3(4.2, 0.9, 4.2), Palette.FUNBOX)
 	Blocks.add_quarter(parent, "HalfPipeWest", Vector3(-50, 0, -30), PI, 2.0, 6.5, Palette.RAMP)
 	Blocks.add_quarter(parent, "HalfPipeEast", Vector3(-44, 0, -30), 0.0, 2.0, 6.5, Palette.RAMP)
