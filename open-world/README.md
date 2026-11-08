@@ -1,6 +1,6 @@
 # AU Open World HQ greybox
 
-A provisional 3D yard. Fony, an articulated capsule-and-sphere teen, skates it. Zero, a CRT-headed rig, waits in the resistance rooms. Neither is a skinned character, and the banded shader is not the painted concept. It is not the Punk Arcade, and it does not change that project. The engine and the shipping platform are not locked. This pass uses Godot 4.7.2 and the Compatibility renderer.
+A provisional 3D yard. Fony, an articulated capsule-and-sphere teen with connected joints, skates it. Zero, a CRT-headed rig, waits in the resistance rooms. Neither is a skinned character, and the banded shader is not the painted concept. It is not the Punk Arcade, and it does not change that project. The engine and the shipping platform are not locked. This pass uses Godot 4.7.2 and the Compatibility renderer.
 
 Play it locally:
 

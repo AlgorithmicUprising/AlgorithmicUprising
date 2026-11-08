@@ -100,7 +100,7 @@ Wall centers sit on a **160 m** square (`scripts/yard.gd`, `HALF = 80`). The dia
 | 200 m square | 160 m between wall centers |
 | Drainage bowl, banks about 3 m | Floor at y = −3 m, four straight bank plates |
 | Mini half-pipe, 2 m | Two facing quarter-segments, radius 2.0 m, plus coping |
-| Quarter about 2 m | Five-segment quarter, radius 2.4 m, plus coping. Not a smooth curve |
+| Quarter about 2 m | One mesh, radius 2.4 m, climbing onto a short deck. Coping is visual. Not a smooth sculpt |
 | Flat rail | 12 m straight rail, y = 1.05 m, same grind rules as before |
 | Funbox, height not fixed | 0.9 m so the current jump, about 1.1 m, can land on it |
 | Loading docks +1.2 m | 1.2 m decks plus a ride-up slope, because the jump does not clear 1.2 m by itself |

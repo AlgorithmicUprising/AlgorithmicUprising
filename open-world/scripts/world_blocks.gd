@@ -113,45 +113,85 @@ static func add_slope(parent: Node, node_name: String, low: Vector3, high: Vecto
 	return body
 
 static func add_quarter(parent: Node, node_name: String, origin: Vector3, yaw: float, radius: float, width: float, color: Color) -> Node3D:
+	# Flat at the origin, rising toward local +X onto a short deck. One mesh, shared-edge collision.
 	var root := Node3D.new()
 	root.name = node_name
 	root.position = origin
 	root.rotation.y = yaw
 	parent.add_child(root)
-	var steps := 5
+	var steps := 12
+	var depth := 0.7
+	var climb := deg_to_rad(68.0)
+	var deck := 1.5
+	var half_w := width * 0.5
+	var outer: Array[Vector3] = []
+	var inner: Array[Vector3] = []
+	for i in steps + 1:
+		var ang := float(i) / float(steps) * climb
+		var point := Vector3(radius * sin(ang), radius * (1.0 - cos(ang)), 0.0)
+		var into := Vector3(sin(ang), -cos(ang), 0.0)
+		outer.append(point)
+		inner.append(point + into * depth)
+	var deck_far := outer[steps] + Vector3(deck, 0.0, 0.0)
+	outer.append(deck_far)
+	inner.append(deck_far + Vector3(0.0, -depth, 0.0))
+	steps += 1
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
 	for i in steps:
-		var t0 := float(i) / float(steps)
-		var t1 := float(i + 1) / float(steps)
-		var ang := (t0 + t1) * 0.5 * PI * 0.5
-		var pos := Vector3(radius * (1.0 - cos(ang)), radius * sin(ang), 0.0)
-		var body := StaticBody3D.new()
-		body.position = pos
-		body.rotation.z = ang
-		var seg := radius * (PI * 0.5) / float(steps) * 1.2
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(seg, 0.2, width)
-		var inst := MeshInstance3D.new()
-		inst.mesh = mesh
-		inst.material_override = cel(color, 3.0, 0.4)
-		body.add_child(inst)
-		var shape := BoxShape3D.new()
-		shape.size = mesh.size
+		var edge := outer[i + 1] - outer[i]
+		var normal := Vector3(-edge.y, edge.x, 0.0).normalized()
+		var left := Vector3(0, 0, -half_w)
+		var right := Vector3(0, 0, half_w)
+		_quad(vertices, normals, outer[i] + left, outer[i + 1] + left, outer[i + 1] + right, outer[i] + right, normal)
+		_quad(vertices, normals, inner[i] + right, inner[i + 1] + right, inner[i + 1] + left, inner[i] + left, -normal)
+		var side_n := Vector3(0, 0, 1)
+		_quad(vertices, normals, outer[i] + right, outer[i + 1] + right, inner[i + 1] + right, inner[i] + right, side_n)
+		_quad(vertices, normals, outer[i + 1] + left, outer[i] + left, inner[i] + left, inner[i + 1] + left, -side_n)
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var inst := MeshInstance3D.new()
+	inst.mesh = mesh
+	inst.material_override = cel(color, 3.0, 0.1)
+	root.add_child(inst)
+	var body := StaticBody3D.new()
+	body.collision_layer = 1
+	body.collision_mask = 1
+	for i in steps:
+		var shape := ConvexPolygonShape3D.new()
+		var points := PackedVector3Array()
+		for z in [-half_w, half_w]:
+			var side := Vector3(0, 0, z)
+			points.append(outer[i] + side)
+			points.append(outer[i + 1] + side)
+			points.append(inner[i] + side)
+			points.append(inner[i + 1] + side)
+		shape.points = points
 		var col := CollisionShape3D.new()
 		col.shape = shape
 		body.add_child(col)
-		root.add_child(body)
+	root.add_child(body)
 	var lip := MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.07
-	cyl.bottom_radius = 0.07
+	cyl.top_radius = 0.06
+	cyl.bottom_radius = 0.06
 	cyl.height = width
 	cyl.radial_segments = 8
 	lip.mesh = cyl
-	lip.position = Vector3(radius * 0.98, radius * 0.98, 0)
+	lip.position = outer[steps - 1] + Vector3(0.0, 0.05, 0.0)
 	lip.rotation.x = PI * 0.5
 	lip.material_override = cel(Color("e7e2da"), 2.0, 0.05)
 	root.add_child(lip)
 	return root
+
+static func _quad(vertices: PackedVector3Array, normals: PackedVector3Array, a: Vector3, b: Vector3, c: Vector3, d: Vector3, normal: Vector3) -> void:
+	vertices.append_array(PackedVector3Array([a, b, c, a, c, d]))
+	for _i in 6:
+		normals.append(normal)
 
 static func add_ramp(parent: Node, node_name: String, at: Vector3) -> StaticBody3D:
 	# `at` is the low end on the ground. The wedge climbs toward -Z.

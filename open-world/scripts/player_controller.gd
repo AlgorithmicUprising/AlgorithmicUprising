@@ -24,7 +24,8 @@ func _ready() -> void:
 	collision_layer = 2
 	collision_mask = 1
 	floor_snap_length = 0.3
-	floor_max_angle = deg_to_rad(50.0)
+	floor_stop_on_slope = false
+	floor_max_angle = deg_to_rad(76.0)
 	camera_yaw = rotation.y
 	spawn_position = global_position
 	spawn_yaw = rotation.y

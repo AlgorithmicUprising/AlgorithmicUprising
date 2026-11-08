@@ -2,6 +2,14 @@ extends Node3D
 
 const Parts = preload("res://scripts/block_parts.gd")
 
+# Player capsule bottom in this rig's local space (shape at y=0.9, height 1.15).
+const GROUND_Y := 0.325
+const THIGH := 0.42
+const SHIN := 0.42
+const SOLE_DROP := 0.065
+const STAND_ANKLE_Y := 0.40
+const SKATE_ANKLE_Y := 0.505
+
 var pose_name := "idle"
 var phase := 0.0
 var land_time := 0.0
@@ -17,6 +25,8 @@ var leg_l: Node3D
 var leg_r: Node3D
 var shin_l: Node3D
 var shin_r: Node3D
+var ankle_l: Node3D
+var ankle_r: Node3D
 var board: Node3D
 
 func _ready() -> void:
@@ -42,6 +52,7 @@ func drive(delta: float, speed: float, skating: bool, airborne: bool, grinding: 
 	else:
 		_idle()
 	_place_board(skating or grinding)
+	_solve_legs()
 
 func face_world(world_yaw: float) -> void:
 	var parent_yaw := 0.0
@@ -49,79 +60,100 @@ func face_world(world_yaw: float) -> void:
 		parent_yaw = get_parent().rotation.y
 	rotation.y = wrapf(world_yaw - parent_yaw, -PI, PI)
 
-func _skate(swing: float) -> void:
+func sole_y() -> float:
+	return ankle_l.global_position.y - SOLE_DROP
+
+func deck_top_y() -> float:
+	return board.global_position.y + 0.048
+
+func _skate(_swing: float) -> void:
 	pose_name = "skate"
-	chest.rotation.x = 0.35
-	head.rotation.x = -0.2
-	arm_l.rotation = Vector3(0.2, 0.0, 0.7 + swing * 0.15)
-	arm_r.rotation = Vector3(0.2, 0.0, -0.7 - swing * 0.15)
-	fore_l.rotation.x = -0.6
-	fore_r.rotation.x = -0.6
-	leg_l.rotation.x = 0.42
-	leg_r.rotation.x = 0.36
-	shin_l.rotation.x = -0.62
-	shin_r.rotation.x = -0.5
+	hips.position.y = 1.08
+	chest.rotation.x = 0.28
+	head.rotation.x = -0.16
+	_arms(0.35, 0.55, -0.7)
+	_feet(SKATE_ANKLE_Y, -0.04, 0.0, 0.0, 0.0, 0.0)
 
 func _walk(swing: float) -> void:
 	pose_name = "walk"
-	chest.rotation.x = 0.08
+	hips.position.y = 1.20
+	chest.rotation.x = 0.06
 	head.rotation.x = 0.0
-	arm_l.rotation = Vector3(-swing * 0.7, 0.0, 0.15)
-	arm_r.rotation = Vector3(swing * 0.7, 0.0, -0.15)
-	fore_l.rotation.x = -0.4
-	fore_r.rotation.x = -0.4
-	leg_l.rotation.x = swing * 0.7
-	leg_r.rotation.x = -swing * 0.7
-	shin_l.rotation.x = -max(0.0, swing) * 0.8
-	shin_r.rotation.x = -max(0.0, -swing) * 0.8
+	_arms(0.1, 0.18, -0.45, swing * 0.55)
+	_feet(STAND_ANKLE_Y, -0.02, max(swing, 0.0) * 0.1, max(-swing, 0.0) * 0.1, -swing * 0.2, swing * 0.2)
 
 func _jump() -> void:
 	pose_name = "jump"
-	chest.rotation.x = -0.15
-	head.rotation.x = 0.1
-	arm_l.rotation = Vector3(-1.0, 0.0, 0.3)
-	arm_r.rotation = Vector3(-1.0, 0.0, -0.3)
-	fore_l.rotation.x = -0.4
-	fore_r.rotation.x = -0.4
-	leg_l.rotation.x = -0.45
-	leg_r.rotation.x = -0.4
-	shin_l.rotation.x = 0.9
-	shin_r.rotation.x = 0.85
+	hips.position.y = 1.22
+	chest.rotation.x = -0.12
+	head.rotation.x = 0.08
+	_arms(-0.9, 0.35, -0.45)
+	_feet(0.78, 0.05, 0.0, 0.0, 0.0, 0.0)
 
 func _crouch(amount: float) -> void:
-	chest.rotation.x = 0.45 * amount
-	head.rotation.x = -0.1
-	arm_l.rotation = Vector3(0.4, 0.0, 0.4)
-	arm_r.rotation = Vector3(0.4, 0.0, -0.4)
-	fore_l.rotation.x = -0.5
-	fore_r.rotation.x = -0.5
-	leg_l.rotation.x = 0.8 * amount
-	leg_r.rotation.x = 0.8 * amount
-	shin_l.rotation.x = -1.3 * amount
-	shin_r.rotation.x = -1.3 * amount
+	hips.position.y = lerpf(1.20, 1.00, amount)
+	chest.rotation.x = 0.4 * amount
+	head.rotation.x = -0.08
+	_arms(0.35, 0.35, -0.5)
+	_feet(STAND_ANKLE_Y, -0.05, 0.0, 0.0, 0.0, 0.0)
 
 func _idle() -> void:
 	pose_name = "idle"
-	var breathe := sin(phase) * 0.04
+	var breathe := sin(phase) * 0.03
+	hips.position.y = 1.20
 	chest.rotation.x = breathe
 	head.rotation.x = -breathe
-	arm_l.rotation = Vector3(0.1, 0.0, 0.12)
-	arm_r.rotation = Vector3(0.1, 0.0, -0.12)
-	fore_l.rotation.x = -0.25
-	fore_r.rotation.x = -0.25
-	leg_l.rotation.x = 0.0
-	leg_r.rotation.x = 0.0
-	shin_l.rotation.x = 0.0
-	shin_r.rotation.x = 0.0
+	_arms(0.12, 0.22, -0.45)
+	_feet(STAND_ANKLE_Y, -0.02, 0.0, 0.0, 0.0, 0.0)
+
+var _ankle_y := STAND_ANKLE_Y
+var _ankle_z := -0.02
+var _lift_l := 0.0
+var _lift_r := 0.0
+var _step_l := 0.0
+var _step_r := 0.0
+
+func _feet(ankle_y: float, ankle_z: float, lift_l: float, lift_r: float, step_l: float, step_r: float) -> void:
+	_ankle_y = ankle_y
+	_ankle_z = ankle_z
+	_lift_l = lift_l
+	_lift_r = lift_r
+	_step_l = step_l
+	_step_r = step_r
+
+func _arms(pitch: float, spread: float, elbow: float, oppose := 0.0) -> void:
+	arm_l.rotation = Vector3(pitch - oppose, 0.0, spread)
+	arm_r.rotation = Vector3(pitch + oppose, 0.0, -spread)
+	fore_l.rotation = Vector3(elbow, 0.0, 0.0)
+	fore_r.rotation = Vector3(elbow, 0.0, 0.0)
+
+func _solve_legs() -> void:
+	_aim(leg_l, shin_l, _ankle_y + _lift_l, _ankle_z + _step_l)
+	_aim(leg_r, shin_r, _ankle_y + _lift_r, _ankle_z + _step_r)
+
+func _aim(leg: Node3D, shin: Node3D, ankle_y: float, ankle_z: float) -> void:
+	var hip_y: float = hips.position.y + leg.position.y
+	var target := Vector3(0.0, ankle_y - hip_y, ankle_z)
+	var dist := clampf(target.length(), 0.12, THIGH + SHIN - 0.02)
+	var dir := atan2(-target.z, -target.y)
+	var cos_hip := (THIGH * THIGH + dist * dist - SHIN * SHIN) / (2.0 * THIGH * dist)
+	var hip_bend := acos(clampf(cos_hip, -1.0, 1.0))
+	leg.rotation = Vector3(dir + hip_bend, 0.0, 0.0)
+	var cos_knee := (THIGH * THIGH + SHIN * SHIN - dist * dist) / (2.0 * THIGH * SHIN)
+	var knee := acos(clampf(cos_knee, -1.0, 1.0))
+	shin.rotation = Vector3(-(PI - knee), 0.0, 0.0)
 
 func _place_board(under_feet: bool) -> void:
 	board.visible = true
 	if under_feet:
-		board.position = Vector3(0.0, 0.045, 0.0)
-		board.rotation = Vector3(0.0, 0.0, 0.0)
+		board.position = Vector3(0.0, 0.39, -0.02)
+		board.rotation = Vector3.ZERO
 	else:
-		board.position = Vector3(0.34, 1.05, 0.02)
-		board.rotation = Vector3(0.1, 0.5, 1.15)
+		board.position = Vector3(0.36, 1.05, 0.02)
+		board.rotation = Vector3(0.1, 0.4, 1.15)
+
+func _limb(parent: Node, node_name: String, radius: float, length: float, color: Color) -> MeshInstance3D:
+	return Parts.capsule(parent, node_name, radius, length, color, Vector3(0, -length * 0.5, 0))
 
 func _build() -> void:
 	var skin := Color("f0c9a0")
@@ -131,55 +163,67 @@ func _build() -> void:
 	var pants := Color("5c6b3a")
 	var pads := Color("e23d78")
 	var shoes := Color("8a7564")
-	hips = Parts.pivot(self, "Hips", Vector3(0, 0.92, 0))
-	chest = Parts.pivot(hips, "Chest", Vector3(0, 0.18, 0))
-	Parts.capsule(chest, "Hoodie", 0.1, 0.46, hoodie, Vector3(0, 0.02, 0.02))
-	Parts.capsule(chest, "Jacket", 0.15, 0.56, jacket, Vector3(0, 0.02, 0))
-	Parts.sphere(chest, "ShoulderL", 0.08, jacket, Vector3(-0.2, 0.22, 0))
-	Parts.sphere(chest, "ShoulderR", 0.08, jacket, Vector3(0.2, 0.22, 0))
-	Parts.box(chest, "Patch", Vector3(0.07, 0.06, 0.025), Color("6a727a"), Vector3(0.1, 0.24, -0.14))
-	Parts.box(chest, "Tape", Vector3(0.05, 0.045, 0.025), pads, Vector3(-0.1, 0.12, -0.14))
-	head = Parts.pivot(chest, "Head", Vector3(0, 0.36, 0))
-	Parts.sphere(head, "Face", 0.09, skin, Vector3(0, 0.05, -0.04))
-	Parts.sphere(head, "Nose", 0.022, skin, Vector3(0, 0.04, -0.13))
-	Parts.sphere(head, "EyeL", 0.024, Color("2a211c"), Vector3(-0.038, 0.08, -0.125))
-	Parts.sphere(head, "EyeR", 0.024, Color("2a211c"), Vector3(0.038, 0.08, -0.125))
-	Parts.capsule(head, "Mouth", 0.012, 0.05, Color("a56858"), Vector3(0, 0.0, -0.13), Vector3(0, 0, PI * 0.5))
-	Parts.sphere(head, "Hair", 0.1, hair, Vector3(0, 0.14, 0.05))
-	Parts.sphere(head, "Tuft", 0.055, hair, Vector3(0.06, 0.18, 0.0))
-	Parts.sphere(head, "TuftSide", 0.05, hair, Vector3(-0.07, 0.13, 0.02))
-	Parts.sphere(head, "Hood", 0.08, hoodie, Vector3(0, 0.08, 0.08))
-	arm_l = Parts.pivot(chest, "ArmL", Vector3(-0.26, 0.22, 0))
-	fore_l = Parts.pivot(arm_l, "ForeL", Vector3(0, -0.28, 0))
-	Parts.capsule(arm_l, "SleeveL", 0.065, 0.28, jacket, Vector3(0, -0.12, 0))
-	Parts.capsule(fore_l, "ForearmL", 0.05, 0.24, jacket, Vector3(0, -0.1, 0))
-	Parts.sphere(fore_l, "HandL", 0.048, skin, Vector3(0, -0.22, 0))
-	arm_r = Parts.pivot(chest, "ArmR", Vector3(0.26, 0.22, 0))
-	fore_r = Parts.pivot(arm_r, "ForeR", Vector3(0, -0.28, 0))
-	Parts.capsule(arm_r, "SleeveR", 0.065, 0.28, jacket, Vector3(0, -0.12, 0))
-	Parts.capsule(fore_r, "ForearmR", 0.05, 0.24, jacket, Vector3(0, -0.1, 0))
-	Parts.sphere(fore_r, "HandR", 0.048, skin, Vector3(0, -0.22, 0))
-	leg_l = Parts.pivot(hips, "LegL", Vector3(-0.09, -0.02, 0))
-	shin_l = Parts.pivot(leg_l, "ShinL", Vector3(0, -0.46, 0))
-	Parts.capsule(leg_l, "ThighL", 0.065, 0.48, pants, Vector3(0, -0.18, 0))
-	Parts.capsule(shin_l, "ShinMeshL", 0.05, 0.34, pants, Vector3(0, -0.14, 0))
-	Parts.sphere(shin_l, "PadL", 0.06, pads, Vector3(0, -0.02, -0.05))
-	Parts.capsule(shin_l, "ShoeL", 0.05, 0.26, shoes, Vector3(0, -0.32, -0.06), Vector3(PI * 0.5, 0, 0))
-	leg_r = Parts.pivot(hips, "LegR", Vector3(0.09, -0.02, 0))
-	shin_r = Parts.pivot(leg_r, "ShinR", Vector3(0, -0.46, 0))
-	Parts.capsule(leg_r, "ThighR", 0.065, 0.48, pants, Vector3(0, -0.18, 0))
-	Parts.capsule(shin_r, "ShinMeshR", 0.05, 0.34, pants, Vector3(0, -0.14, 0))
-	Parts.sphere(shin_r, "PadR", 0.06, pads, Vector3(0, -0.02, -0.05))
-	Parts.capsule(shin_r, "ShoeR", 0.05, 0.26, shoes, Vector3(0, -0.32, -0.06), Vector3(PI * 0.5, 0, 0))
-	board = Parts.pivot(self, "Deck", Vector3(0, 0.05, 0.08))
-	Parts.box(board, "DeckWood", Vector3(0.32, 0.04, 0.92), Color("4a3428"), Vector3(0, 0.03, 0))
-	Parts.box(board, "Nose", Vector3(0.3, 0.03, 0.12), Color("c46a32"), Vector3(0, 0.045, 0.38))
-	Parts.box(board, "Tail", Vector3(0.3, 0.03, 0.12), Color("c46a32"), Vector3(0, 0.045, -0.38))
-	Parts.box(board, "Grip", Vector3(0.26, 0.012, 0.62), Color("2c2a28"), Vector3(0, 0.055, 0))
-	Parts.box(board, "TruckF", Vector3(0.2, 0.03, 0.06), Color("c8c2b8"), Vector3(0, 0.0, 0.24))
-	Parts.box(board, "TruckB", Vector3(0.2, 0.03, 0.06), Color("c8c2b8"), Vector3(0, 0.0, -0.24))
+	hips = Parts.pivot(self, "Hips", Vector3(0, 1.20, 0))
+	Parts.sphere(hips, "Pelvis", 0.13, pants, Vector3(0, 0.02, 0))
+	chest = Parts.pivot(hips, "Chest", Vector3(0, 0.20, 0))
+	Parts.capsule(chest, "Hoodie", 0.09, 0.42, hoodie, Vector3(0, -0.02, 0.01))
+	Parts.capsule(chest, "Jacket", 0.15, 0.50, jacket, Vector3(0, -0.02, 0))
+	Parts.box(chest, "Patch", Vector3(0.07, 0.06, 0.02), Color("6a727a"), Vector3(0.08, 0.12, -0.14))
+	Parts.box(chest, "Tape", Vector3(0.05, 0.04, 0.02), pads, Vector3(-0.08, 0.02, -0.14))
+	Parts.capsule(chest, "Collar", 0.1, 0.24, hoodie, Vector3(0, 0.16, 0))
+	Parts.capsule(chest, "Neck", 0.06, 0.26, skin, Vector3(0, 0.2, 0))
+	head = Parts.pivot(chest, "Head", Vector3(0, 0.28, 0))
+	Parts.sphere(head, "Face", 0.12, skin, Vector3(0, 0.05, -0.015))
+	Parts.sphere(head, "Nose", 0.022, skin, Vector3(0, 0.03, -0.13))
+	Parts.sphere(head, "EyeL", 0.022, Color("2a211c"), Vector3(-0.04, 0.07, -0.12))
+	Parts.sphere(head, "EyeR", 0.022, Color("2a211c"), Vector3(0.04, 0.07, -0.12))
+	Parts.capsule(head, "Mouth", 0.01, 0.045, Color("a56858"), Vector3(0, -0.01, -0.125), Vector3(0, 0, PI * 0.5))
+	Parts.sphere(head, "Hair", 0.11, hair, Vector3(0, 0.1, 0.03))
+	Parts.sphere(head, "Tuft", 0.05, hair, Vector3(0.05, 0.16, 0.0))
+	Parts.sphere(head, "TuftSide", 0.045, hair, Vector3(-0.07, 0.11, 0.0))
+	Parts.sphere(head, "Hood", 0.07, hoodie, Vector3(0, 0.06, 0.07))
+	arm_l = Parts.pivot(chest, "ArmL", Vector3(-0.14, 0.12, 0))
+	fore_l = Parts.pivot(arm_l, "ForeL", Vector3(0, -0.30, 0))
+	Parts.sphere(chest, "ShoulderL", 0.08, jacket, arm_l.position)
+	_limb(arm_l, "SleeveL", 0.058, 0.30, jacket)
+	Parts.sphere(arm_l, "ElbowL", 0.065, jacket, fore_l.position)
+	_limb(fore_l, "ForearmL", 0.05, 0.28, jacket)
+	Parts.sphere(fore_l, "HandL", 0.048, skin, Vector3(0, -0.28, 0))
+	arm_r = Parts.pivot(chest, "ArmR", Vector3(0.14, 0.12, 0))
+	fore_r = Parts.pivot(arm_r, "ForeR", Vector3(0, -0.30, 0))
+	Parts.sphere(chest, "ShoulderR", 0.08, jacket, arm_r.position)
+	_limb(arm_r, "SleeveR", 0.058, 0.30, jacket)
+	Parts.sphere(arm_r, "ElbowR", 0.065, jacket, fore_r.position)
+	_limb(fore_r, "ForearmR", 0.05, 0.28, jacket)
+	Parts.sphere(fore_r, "HandR", 0.048, skin, Vector3(0, -0.28, 0))
+	leg_l = Parts.pivot(hips, "LegL", Vector3(-0.08, -0.04, 0))
+	shin_l = Parts.pivot(leg_l, "ShinL", Vector3(0, -THIGH, 0))
+	ankle_l = Parts.pivot(shin_l, "AnkleL", Vector3(0, -SHIN, 0))
+	Parts.sphere(hips, "HipL", 0.085, pants, leg_l.position)
+	_limb(leg_l, "ThighL", 0.072, THIGH, pants)
+	Parts.sphere(leg_l, "KneeL", 0.075, pants, shin_l.position)
+	Parts.sphere(leg_l, "PadL", 0.055, pads, shin_l.position + Vector3(0, 0, -0.03))
+	_limb(shin_l, "ShinMeshL", 0.055, SHIN, pants)
+	Parts.capsule(ankle_l, "ShoeL", 0.05, 0.26, shoes, Vector3(0, -0.015, -0.06), Vector3(PI * 0.5, 0, 0))
+	leg_r = Parts.pivot(hips, "LegR", Vector3(0.08, -0.04, 0))
+	shin_r = Parts.pivot(leg_r, "ShinR", Vector3(0, -THIGH, 0))
+	ankle_r = Parts.pivot(shin_r, "AnkleR", Vector3(0, -SHIN, 0))
+	Parts.sphere(hips, "HipR", 0.085, pants, leg_r.position)
+	_limb(leg_r, "ThighR", 0.072, THIGH, pants)
+	Parts.sphere(leg_r, "KneeR", 0.075, pants, shin_r.position)
+	Parts.sphere(leg_r, "PadR", 0.055, pads, shin_r.position + Vector3(0, 0, -0.03))
+	_limb(shin_r, "ShinMeshR", 0.055, SHIN, pants)
+	Parts.capsule(ankle_r, "ShoeR", 0.05, 0.26, shoes, Vector3(0, -0.015, -0.06), Vector3(PI * 0.5, 0, 0))
+	board = Parts.pivot(self, "Deck", Vector3(0, 0.39, -0.02))
+	Parts.box(board, "DeckWood", Vector3(0.32, 0.036, 0.9), Color("4a3428"), Vector3(0, 0.03, 0))
+	Parts.box(board, "Nose", Vector3(0.3, 0.028, 0.12), Color("c46a32"), Vector3(0, 0.04, -0.36))
+	Parts.box(board, "Tail", Vector3(0.3, 0.028, 0.12), Color("c46a32"), Vector3(0, 0.04, 0.36))
+	Parts.box(board, "Grip", Vector3(0.26, 0.01, 0.6), Color("2c2a28"), Vector3(0, 0.052, 0))
+	Parts.box(board, "TruckF", Vector3(0.18, 0.025, 0.05), Color("c8c2b8"), Vector3(0, 0.0, -0.22))
+	Parts.box(board, "TruckB", Vector3(0.18, 0.025, 0.05), Color("c8c2b8"), Vector3(0, 0.0, 0.22))
 	for side in [-1.0, 1.0]:
-		for axle in [-0.24, 0.24]:
-			Parts.cylinder(board, "Wheel", 0.045, 0.05, Color("ece7df"), Vector3(side * 0.16, -0.02, axle), Vector3(0, 0, PI * 0.5))
+		for axle in [-0.22, 0.22]:
+			Parts.cylinder(board, "Wheel", 0.042, 0.05, Color("ece7df"), Vector3(side * 0.15, -0.01, axle), Vector3(0, 0, PI * 0.5))
 	_idle()
 	_place_board(true)
+	_solve_legs()

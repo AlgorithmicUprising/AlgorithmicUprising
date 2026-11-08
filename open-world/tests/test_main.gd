@@ -17,6 +17,8 @@ func _ready() -> void:
 	await _input_map()
 	await _movement()
 	await _grind()
+	await _body()
+	await _quarter()
 	await _district()
 	print("SUMMARY failed=", fails.size())
 	for item in fails:
@@ -239,6 +241,66 @@ func _movement() -> void:
 	player.camera_yaw = 0.8
 	await frames(1)
 	expect(is_equal_approx(player.get_node("CameraPivot").rotation.y, player.camera_yaw), "camera yaw follows the rig")
+	host.queue_free()
+	await frames(2)
+
+func _body() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(30, 1, 30), Palette.GROUND)
+	var player = _player(host, Vector3(0, 0.4, 0))
+	await frames(20)
+	player.skating = false
+	player.external_move_active = true
+	player.external_move = Vector2.ZERO
+	player.rotation.y = 0.0
+	player.rig.rotation.y = 0.0
+	await frames(8)
+	var ground_sole: float = player.global_position.y + 0.325
+	var stand_gap: float = absf(player.rig.sole_y() - ground_sole)
+	expect(stand_gap < 0.05, "standing soles meet the capsule bottom gap=%s" % stand_gap)
+	var ankle: Vector3 = player.rig.ankle_l.global_position
+	var wanted: Vector3 = player.to_global(Vector3(-0.08, 0.40, -0.02))
+	expect(ankle.distance_to(wanted) < 0.04, "standing ankle stays on the leg target d=%s" % ankle.distance_to(wanted))
+	player.skating = true
+	player.camera_yaw = 0.0
+	player.external_move = Vector2(0, 1)
+	await frames(10)
+	expect(player.rig.pose_name == "skate", "contact check uses the skate pose")
+	var board_gap: float = absf(player.rig.sole_y() - player.rig.deck_top_y())
+	expect(board_gap < 0.04, "skate soles sit on the deck gap=%s" % board_gap)
+	host.queue_free()
+	await frames(2)
+
+func _quarter() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(40, 1, 40), Palette.GROUND)
+	Blocks.add_quarter(host, "Quarter", Vector3(0, 0, 0), 0.0, 2.4, 6.0, Palette.RAMP)
+	var player = _player(host, Vector3(-2.2, 0.4, 0))
+	await frames(20)
+	var start_y: float = player.global_position.y
+	player.skating = true
+	player.camera_yaw = -PI * 0.5
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	var max_y: float = start_y
+	var stuck := 0
+	for _i in 150:
+		await get_tree().physics_frame
+		max_y = maxf(max_y, player.global_position.y)
+		var gain: float = player.global_position.y - start_y
+		var speed: float = Vector2(player.velocity.x, player.velocity.z).length()
+		if gain > 0.35 and gain < 1.2 and speed < 0.25:
+			stuck += 1
+	expect(max_y > start_y + 0.8, "quarter is rideable up max_y=%s start=%s pos=%s" % [max_y, start_y, player.global_position])
+	expect(stuck < 12, "quarter face does not snag stuck_frames=%s pos=%s v=%s" % [stuck, player.global_position, player.velocity])
+	var high_y: float = player.global_position.y
+	player.camera_yaw = -PI * 0.5
+	player.external_move = Vector2(0, -1)
+	var low_y: float = high_y
+	for _i in 120:
+		await get_tree().physics_frame
+		low_y = minf(low_y, player.global_position.y)
+	expect(low_y < high_y - 0.45 or low_y < start_y + 0.4, "quarter rides back down low=%s high=%s" % [low_y, high_y])
 	host.queue_free()
 	await frames(2)
 

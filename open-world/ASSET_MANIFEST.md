@@ -9,7 +9,7 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Yard shell | 160 m wall square, one south gate, Rust Avenue apron, future-section curb |
 | Ground | Warm concrete slabs and a few darker patch boxes. No crack texture |
 | Drainage bowl | Floor at y = −3 m and four straight bank slopes |
-| Skate yard | Quarter and half-pipe built from five rotated segments plus a coping cylinder (radius 2.4 m and 2.0 m), 0.9 m funbox, four lane strips, 12 m grind rail |
+| Skate yard | Quarter and half-pipe are one mesh each: a curve that meets a short deck, with collision slices that share edges (radius 2.4 m and 2.0 m). Coping is visual. Also a 0.9 m funbox, four lane strips, 12 m grind rail |
 | Workshop | Open industrial shell, bench, five green battery blocks, eight container ribs on the south face |
 | Resistance rooms | Private shell, bunks, counter. Zero stands here |
 | Solar warehouse arcade | Teal shell, rust band, tilted blue roof cells, roof coping, door, one real cabinet, four mute cabinet boxes |
@@ -19,7 +19,7 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Outside, not playable | Cool tower blocks, west factory blocks, north rail beam |
 | Plants | Five box planters with box shrubs |
 | Lighting | Procedural sunset sky, warm key light, cool ambient, three-band cel shader, one shadow map |
-| Fony, the player | Articulated pivots, not a skin rig. Capsules, spheres, and cylinders: copper hair, a face with eyes, nose, and mouth, rust jacket, black hoodie, olive legs, magenta pads, worn shoes. Collision is still a separate capsule. The board is a child of the rig, with a deck, trucks, and cylinder wheels, under the feet while skating and at the side while walking |
+| Fony, the player | Articulated pivots, not a skin rig. Each joint has a sphere and the limb capsule reaches that joint, so the neck, elbows, hips, and knees stay covered in idle, walk, skate, jump, and land. Feet are solved onto the capsule bottom when standing and onto the deck while skating. Collision is still a separate capsule |
 | Zero | Articulated pivots, not a skin rig. Larger cream CRT, lime screen bars, knob, vent, capsule jacket and limbs, red “?” patch, barcode blocks, metal neck, hands, and knees, coiled cable segments. Idle bob and a raised arm while talking |
 
 ## Still needed before this can look like the concept
@@ -40,7 +40,7 @@ Original art, made for Algorithmic Uprising, not copied from Grand Theft Auto, J
 
 Fony is the playable teen. Zero is the NPC in the resistance rooms. The approved drawing was used as direction and is not stored as a texture.
 
-What these rigs are: capsules, spheres, and cylinders parented to pivots for hips, chest, head, arms, and legs. Poses are code (idle, walk, skate, jump, land for Fony; idle and talk for Zero). They are not skinned meshes, not weighted to a production skeleton, and not animation clips from another program. A face and a hair mass are modeled. They are still primitive geometry.
+What these rigs are: capsules, spheres, and cylinders parented to pivots. Fony’s legs are a two-bone solve so the shoes meet the ground or the deck. Poses are code (idle, walk, skate, jump, land for Fony; idle and talk for Zero). They are not skinned meshes and not animation clips from another program. The face and hair are still primitive geometry.
 
 Still missing on the characters:
 
