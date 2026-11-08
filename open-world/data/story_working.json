@@ -1,0 +1,55 @@
+{
+  "status": "working_provisional",
+  "graphic_trauma_scene": false,
+  "inspiration": {
+    "role": "confirmed_inspiration_only",
+    "references": [
+      "Cyberpunk street setting under crony capitalism and tyranny",
+      "Grand Theft Auto as traversal-fantasy inspiration",
+      "Jet Set Radio as skating and bold street-presentation inspiration"
+    ],
+    "not_included": "No franchise assets, maps, costumes, logos, UI, or copied character silhouettes."
+  },
+  "visual_proposal_location": "BUILD_GUIDE.md art direction. Flat colors in this build are a stand-in, not a cel-shaded style.",
+  "hopeful_core": "Zero leads an underground resistance that includes AI members. Zero and Fony cooperate to promise and build a better future.",
+  "protagonist": {
+    "name": null,
+    "appearance": null,
+    "age_band": "teen",
+    "situation": "Forcibly orphaned by a corrupt system, flees drones, is rescued by the resistance, and can become a hero. The exact orphaning and the opening sequence are not fixed.",
+    "playable_now": "Unnamed warm capsule. No avatar."
+  },
+  "world": {
+    "order": "Crony capitalism and tyranny",
+    "pressure": ["AI drones", "surveillance", "militarized police", "massive data-center compounds"],
+    "antagonist_figure": "Egon Dusk, a fictional trillionaire",
+    "future_missions": "Fictional sabotage and disabling of drones, including in-fiction virus actions, are future game mechanics only. They are not real cyber tools and they are not in this pass."
+  },
+  "hq_now": [
+    "Skate and walk the park",
+    "Jump a ramp",
+    "Talk to Zero",
+    "Talk to Fony",
+    "Use the arcade cabinet placeholder and return"
+  ],
+  "npc_lines": {
+    "zero": [
+      "You got here. That is enough for tonight. The park is a promise we keep with our own hands.",
+      "Fony is at the arcade. The cabinet is only a training shell. The future is the part we build."
+    ],
+    "fony": [
+      "Zero holds the line. I hold the door. We are on the same promise.",
+      "Skate the warm park. The cold shops are the edge of someone else's city. We do not own that story yet."
+    ]
+  },
+  "optional_suggestions_not_in_this_build": [
+    "An opening sequence that is still unwritten and contains no graphic trauma scene",
+    "A protagonist name and appearance",
+    "An extra singer, only if later confirmed and cleared",
+    "More neighborhoods linked by skate routes, including data-center compounds as places",
+    "A real Bars per Watt cabinet after an arcade adapter exists",
+    "Cel-shaded silhouettes and original graffiti, which are a visual proposal rather than this greybox",
+    "Tricks beyond one straight grind rail",
+    "Touch controls if a mobile target is chosen later"
+  ]
+}

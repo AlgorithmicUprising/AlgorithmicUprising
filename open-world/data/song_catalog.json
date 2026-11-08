@@ -1,0 +1,39 @@
+{
+  "contract": "au.song_catalog",
+  "contract_version": 1,
+  "policy": {
+    "source": "Zero AU catalog only",
+    "world": "Originals in the world, only after a cleared playable copy is supplied outside this repository",
+    "arcade": "Relevant-song MIDI or Sega-era arrangements for arcade machines",
+    "changed_arrangement": "Any changed arrangement needs its own Bars per Watt chart",
+    "extra_singer": "unconfirmed",
+    "repo_ban": "No recordings, masters, samples, covers, secrets, private paths, or Drive IDs in the public repository",
+    "processing_ban": "No AI processing of music",
+    "assets_ban": "No paid or generated audio",
+    "playback": "Disabled until playable cleared media is supplied outside this repository"
+  },
+  "songs": [
+    {
+      "id": "catalog-placeholder-world-original",
+      "title": "Untitled world original (rights not attached)",
+      "use": "world_original",
+      "duration_s": null,
+      "explicit": false,
+      "rights_status": "not_cleared",
+      "enabled": false,
+      "charts": [],
+      "media": null
+    },
+    {
+      "id": "catalog-placeholder-arcade-arrangement",
+      "title": "Untitled arcade arrangement (rights not attached)",
+      "use": "arcade_arrangement",
+      "arrangement": "midi_or_sega_era",
+      "changed_arrangement_requires_separate_bars_per_watt_chart": true,
+      "rights_status": "not_cleared",
+      "enabled": false,
+      "charts": [],
+      "media": null
+    }
+  ]
+}

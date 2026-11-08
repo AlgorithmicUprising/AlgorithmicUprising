@@ -1,0 +1,60 @@
+name: Open World composite (no Pages deploy)
+
+# Builds a combined static tree: the existing arcade Pages output at the root
+# and the Godot web export under open-world/. Uploads that tree as a workflow
+# artifact only. It does not call actions/deploy-pages and it cannot replace
+# https://algorithmicuprising.github.io/AlgorithmicUprising/
+
+on:
+  pull_request:
+    paths:
+      - 'open-world/**'
+      - '.github/workflows/open-world-pages-composite.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: open-world-composite-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  composite:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install arcade dependencies
+        working-directory: arcade
+        run: npm ci --no-audit --no-fund
+      - name: Install open-world preview tooling
+        working-directory: open-world
+        run: npm ci --no-audit --no-fund
+      - name: Install pinned Godot 4.7.2
+        id: godot
+        run: echo "bin=$(bash open-world/tools/install-godot.sh)" >> "$GITHUB_OUTPUT"
+      - name: Headless project checks
+        run: |
+          set -euo pipefail
+          mkdir -p open-world/node_modules open-world/build
+          : > open-world/node_modules/.gdignore
+          : > open-world/build/.gdignore
+          rm -rf open-world/.godot
+          "${{ steps.godot.outputs.bin }}" --headless --path open-world res://tests/test_main.tscn
+      - name: Export web build and stage the composite tree
+        env:
+          GODOT_BIN: ${{ steps.godot.outputs.bin }}
+        run: |
+          set -euo pipefail
+          node open-world/tools/export-web.mjs
+          node open-world/tools/stage-composite.mjs
+      - name: Upload composite artifact without deploying Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-world-pages-composite
+          path: open-world/build/pages-composite
+          if-no-files-found: error
+          retention-days: 7

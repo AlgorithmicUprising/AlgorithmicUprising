@@ -1,0 +1,33 @@
+extends RefCounted
+
+# Flat albedo stand-ins for the proposed warm HQ / cold surveillance contrast.
+# Not a cel shader, not graffiti art, and not a final palette.
+
+const GROUND := Color("6e655c")
+const SKATE := Color("c47a4a")
+const RAMP := Color("d36b4f")
+const FUNBOX := Color("e0a15a")
+const PARK_WALL := Color("8a4034")
+const PAINT_A := Color("e23e8c")
+const PAINT_B := Color("d6e04a")
+const ARCADE := Color("a8533a")
+const ARCADE_FLOOR := Color("8d4636")
+const ARCADE_SIGN := Color("f0c14a")
+const CABINET := Color("2a211c")
+const SCREEN := Color("16343a")
+const ZERO := Color("f2d2a2")
+const FONY := Color("e07a4c")
+const HERO := Color("f4e1b5")
+const BOARD := Color("241c18")
+const SHOP_A := Color("2c3e50")
+const SHOP_B := Color("1e2a38")
+const SHOP_C := Color("3a5068")
+const SIDEWALK := Color("9aa4ad")
+const CURB := Color("6f8ea8")
+const SURVEILLANCE := Color("7fd0e0")
+const FENCE := Color("4d5966")
+const RAIL := Color("d7d2cb")
+const SKY := Color("8ea4b5")
+const AMBIENT := Color("ffe8d2")
+const LABEL := Color("fff8ef")
+const LABEL_COOL := Color("d7f3f8")
