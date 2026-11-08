@@ -1,0 +1,355 @@
+extends Node
+
+const Result = preload("res://contracts/minigame_result.gd")
+const Catalog = preload("res://contracts/song_catalog.gd")
+const SaveScript = preload("res://contracts/save_record.gd")
+const BoundaryScript = preload("res://contracts/session_boundary.gd")
+const Blocks = preload("res://scripts/world_blocks.gd")
+const Palette = preload("res://scripts/palette.gd")
+const JsonFile = preload("res://scripts/json_file.gd")
+
+var fails: Array[String] = []
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	await get_tree().process_frame
+	_contracts()
+	await _input_map()
+	await _movement()
+	await _grind()
+	await _district()
+	print("SUMMARY failed=", fails.size())
+	for item in fails:
+		print("FAIL ", item)
+	get_tree().quit(1 if fails.size() else 0)
+
+func expect(cond: bool, name: String) -> void:
+	if cond:
+		print("ok ", name)
+	else:
+		fails.append(name)
+		print("not ok ", name)
+
+func frames(count: int) -> void:
+	for _i in count:
+		await get_tree().physics_frame
+
+func _contracts() -> void:
+	var story = JsonFile.read("res://data/story_working.json")
+	expect(typeof(story) == TYPE_DICTIONARY, "story loads")
+	expect(story.get("graphic_trauma_scene") == false, "no graphic trauma scene")
+	expect(story.get("protagonist", {}).get("name") == null, "protagonist name unset")
+	expect(story.get("protagonist", {}).get("appearance") == null, "protagonist appearance unset")
+	var lines = story.get("npc_lines", {})
+	var spoken := JSON.stringify(lines).to_lower()
+	var clean := true
+	for word in ["blood", "gore", "corpse", "torture"]:
+		if word in spoken:
+			clean = false
+	expect(clean, "spoken lines stay non-graphic")
+	expect(story.get("inspiration", {}).get("role") == "confirmed_inspiration_only", "inspiration marked as inspiration")
+	var catalog_text := FileAccess.get_file_as_string("res://data/song_catalog.json")
+	var catalog = Catalog.new()
+	var loaded: Dictionary = catalog.load_text(catalog_text)
+	expect(bool(loaded.get("ok", false)), "catalog accepts placeholders")
+	var songs: Array = catalog.document.get("songs", [])
+	expect(songs.size() == 2, "two catalog placeholders")
+	var enabled := false
+	var separate_chart := false
+	for song in songs:
+		if song.get("enabled", true):
+			enabled = true
+		if song.get("changed_arrangement_requires_separate_bars_per_watt_chart", false):
+			separate_chart = true
+		expect(catalog.request_playback(str(song.get("id"))).get("played") == false, "playback disabled " + str(song.get("id")))
+	expect(not enabled, "catalog entries start disabled")
+	expect(separate_chart, "changed arrangement requires its own chart")
+	var forged: Dictionary = catalog.document.duplicate(true)
+	forged["songs"][0]["enabled"] = true
+	expect(catalog.validate(forged).size() > 0, "enabled song without media is rejected")
+	var audio = get_node("/root/AudioOwner")
+	expect(audio.ready_ok, "audio owner loaded catalog")
+	expect(audio.holder == "world", "audio starts with the world")
+	expect(not audio.claim("other"), "second audio claimant is refused")
+	expect(audio.handoff("world", "session"), "audio can hand to a session")
+	expect(not audio.handoff("world", "other"), "audio handoff requires the current holder")
+	expect(audio.handoff("session", "world"), "audio returns to the world")
+	expect(AudioServer.bus_count == 1, "one audio bus and no music bus")
+	expect(audio.request_song("catalog-placeholder-world-original").get("reason") == "disabled", "owner refuses playback")
+	_scan("res://")
+	expect(true, "media scan finished")
+	var good := _sample_result("keyboard", true)
+	expect(bool(Result.validate(good).get("ok")), "result accepts placeholder")
+	var bad_mode := good.duplicate(true)
+	bad_mode["input_mode"] = "mouse"
+	expect(Result.validate(bad_mode).get("reason") == "input_mode", "mouse is not a claimed input mode")
+	var both := good.duplicate(true)
+	both["aborted"] = true
+	expect(Result.validate(both).get("reason") == "completion_state", "result cannot be both finished and aborted")
+	var with_node := good.duplicate(true)
+	with_node["node"] = self
+	expect(Result.validate(with_node).get("ok") == false, "result rejects a node reference")
+	var boundary = BoundaryScript.new()
+	expect(boundary.enter_session("").get("ok") == false, "session id required")
+	expect(boundary.enter_session("s1").get("ok"), "session enters")
+	expect(boundary.enter_session("s2").get("reason") == "busy", "session refuses overlap")
+	var mismatch := good.duplicate(true)
+	mismatch["session_id"] = "other"
+	expect(boundary.exit_session(mismatch).get("reason") == "session_mismatch", "session id must match")
+	good["session_id"] = "s1"
+	expect(boundary.exit_session(good).get("ok"), "session exits")
+	expect(boundary.phase == "world" and boundary.input_owner == "world", "session restores world focus")
+	for i in 10:
+		expect(boundary.enter_session("loop-%d" % i).get("ok"), "reenter %d" % i)
+		var loop_result := _sample_result("unknown", false)
+		loop_result["session_id"] = "loop-%d" % i
+		expect(boundary.exit_session(loop_result).get("ok"), "reexit %d" % i)
+	expect(boundary.enter_count == 11 and boundary.phase == "world", "ten extra sessions do not stick")
+	var save = SaveScript.new()
+	save.note_meeting("zero")
+	expect(save.add_result(good).get("ok"), "save accepts result")
+	var round = SaveScript.new()
+	expect(round.apply_json(JSON.stringify(save.to_dict())).get("ok"), "save json roundtrip")
+	expect(round.met.get("zero") == true and round.results.size() == 1, "save keeps meeting and result")
+	expect(round.apply_dict({"contract": "au.world_save", "contract_version": 1, "renderer": "gl", "meetings": {}, "results": []}).get("reason") == "renderer_field", "save rejects renderer field")
+
+func _sample_result(mode: String, completed: bool) -> Dictionary:
+	return {
+		"contract": "au.minigame_result",
+		"contract_version": 1,
+		"session_id": "sample",
+		"game_id": "hq.placeholder_cabinet",
+		"game_version": "0.1.0-greybox",
+		"song_id": "",
+		"chart_id": "",
+		"chart_hash": "",
+		"difficulty": "",
+		"accuracy": null,
+		"max_combo": 0,
+		"judgements": {},
+		"completed": completed,
+		"aborted": not completed,
+		"input_mode": mode,
+		"score": 0,
+		"integration": "placeholder_not_canvas",
+		"note": "Placeholder cabinet session. Not the Punk Arcade Canvas runtime and not Bars per Watt.",
+	}
+
+func _scan(path: String) -> void:
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
+	for name in dir.get_directories():
+		if name.begins_with("."):
+			continue
+		_scan(path.path_join(name))
+	for name in dir.get_files():
+		var lower := name.to_lower()
+		for ext in [".mp3", ".wav", ".ogg", ".flac", ".aac", ".m4a", ".opus", ".mid", ".midi", ".webm", ".mp4"]:
+			if lower.ends_with(ext):
+				expect(false, "forbidden media file " + path.path_join(name))
+
+func _input_map() -> void:
+	var down := InputEventKey.new()
+	down.physical_keycode = KEY_W
+	down.keycode = KEY_W
+	down.pressed = true
+	Input.parse_input_event(down)
+	await get_tree().process_frame
+	expect(Input.is_action_pressed("move_forward"), "keyboard W maps to move forward")
+	var up := down.duplicate()
+	up.pressed = false
+	Input.parse_input_event(up)
+	await get_tree().process_frame
+	expect(not Input.is_action_pressed("move_forward"), "keyboard W release clears move forward")
+	var nudge := InputEventJoypadMotion.new()
+	nudge.axis = JOY_AXIS_LEFT_X
+	nudge.axis_value = 0.1
+	Input.parse_input_event(nudge)
+	await get_tree().process_frame
+	expect(not Input.is_action_pressed("move_right"), "gamepad axis inside deadzone is ignored")
+	nudge.axis_value = 1.0
+	Input.parse_input_event(nudge)
+	await get_tree().process_frame
+	expect(Input.is_action_pressed("move_right"), "gamepad left stick maps to move right")
+	var jump := InputEventJoypadButton.new()
+	jump.button_index = JOY_BUTTON_A
+	jump.pressed = true
+	Input.parse_input_event(jump)
+	await get_tree().process_frame
+	expect(Input.is_action_pressed("jump"), "gamepad A maps to jump")
+	nudge.axis_value = 0.0
+	Input.parse_input_event(nudge)
+	jump.pressed = false
+	Input.parse_input_event(jump)
+	Input.action_release("move_right")
+	Input.action_release("jump")
+	await get_tree().process_frame
+
+func _movement() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(40, 1, 40), Palette.GROUND)
+	var player = _player(host, Vector3(0, 0.4, 0))
+	await frames(20)
+	expect(player.is_on_floor(), "player lands on the ground")
+	var y0: float = player.global_position.y
+	player.external_jump = true
+	await frames(8)
+	expect(player.global_position.y > y0 + 0.25 and not player.is_on_floor(), "jump leaves the ground y=%s" % player.global_position.y)
+	await frames(90)
+	expect(player.is_on_floor(), "jump returns to the ground")
+	player.camera_yaw = 0.0
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	var z0: float = player.global_position.z
+	await frames(45)
+	expect(player.global_position.z < z0 - 1.0, "skate moves forward z=%s" % player.global_position.z)
+	host.queue_free()
+	await frames(2)
+	host = _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(40, 1, 40), Palette.GROUND)
+	Blocks.solid(host, "Wall", Vector3(0, 1.5, -3), Vector3(6, 3, 1), Palette.FENCE)
+	player = _player(host, Vector3(0, 0.4, 0))
+	await frames(15)
+	player.camera_yaw = 0.0
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	await frames(90)
+	expect(player.global_position.z < -1.0 and player.global_position.z > -2.45, "wall stops the player z=%s" % player.global_position.z)
+	host.queue_free()
+	await frames(2)
+	host = _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(50, 1, 50), Palette.GROUND)
+	Blocks.add_ramp(host, "Ramp", Vector3(0, 0, -4))
+	player = _player(host, Vector3(0, 0.4, -2.6))
+	await frames(20)
+	player.camera_yaw = 0.0
+	player.skating = true
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	var max_y: float = player.global_position.y
+	var climbed := false
+	for _i in 180:
+		await get_tree().physics_frame
+		max_y = max(max_y, player.global_position.y)
+		if player.is_on_floor() and player.global_position.y > 0.45:
+			climbed = true
+	expect(max_y > 0.7 and climbed, "ramp is rideable max_y=%s pos=%s" % [max_y, player.global_position])
+	player.external_camera_yaw_delta = 0.0
+	player.camera_yaw = 0.8
+	await frames(1)
+	expect(is_equal_approx(player.get_node("CameraPivot").rotation.y, player.camera_yaw), "camera yaw follows the rig")
+	host.queue_free()
+	await frames(2)
+
+func _grind() -> void:
+	var host := _host()
+	Blocks.solid(host, "Pit", Vector3(0, -8, 0), Vector3(40, 1, 40), Palette.GROUND)
+	var rail = load("res://scenes/grind_rail.tscn").instantiate()
+	rail.length = 8.0
+	rail.position = Vector3(0, 1.1, 0)
+	host.add_child(rail)
+	var player = _player(host, Vector3(-3.0, 1.75, 0))
+	player.camera_yaw = -PI / 2.0
+	player.skating = true
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	var attached := false
+	for _i in 90:
+		await get_tree().physics_frame
+		if player.grind != null:
+			attached = true
+			break
+	expect(attached, "airborne approach attaches to the rail y=%s v=%s" % [player.global_position.y, player.velocity])
+	if attached:
+		var x0: float = player.global_position.x
+		await frames(15)
+		expect(player.grind != null and player.global_position.x > x0 + 0.3, "grind travels along the rail")
+		player.external_jump = true
+		await frames(3)
+		expect(player.grind == null, "jump leaves the rail")
+	host.queue_free()
+	await frames(2)
+	host = _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(40, 1, 40), Palette.GROUND)
+	rail = load("res://scenes/grind_rail.tscn").instantiate()
+	rail.length = 8.0
+	rail.position = Vector3(0, 1.1, 0)
+	host.add_child(rail)
+	player = _player(host, Vector3(-3.0, 0.4, 0))
+	await frames(20)
+	player.camera_yaw = -PI / 2.0
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	await frames(70)
+	expect(player.grind == null and player.is_on_floor(), "grounded skating does not snap onto the rail")
+	host.queue_free()
+	await frames(2)
+
+func _district() -> void:
+	var main = load("res://scenes/main.tscn").instantiate()
+	add_child(main)
+	await frames(25)
+	for node_name in ["ZoneSkatePark", "ZoneArcade", "ZoneShoppingEdge", "Ramp", "RampTwo", "Funbox", "GrindRail", "Cabinet", "NPCZero", "NPCFony", "SurveillanceMast"]:
+		expect(main.world_sim.get_node_or_null(node_name) != null, "district has " + node_name)
+	var player = main.player
+	expect(player.input_enabled and main.zone_at(player.global_position) == "SKATE PARK", "spawn is in the skate park")
+	expect(main.zone_at(Vector3(18, 0, 1)) == "SHOPPING EDGE", "shopping edge zone")
+	expect(main.zone_at(Vector3(0, 0, -12)) == "ARCADE", "arcade zone")
+	var zero = main.world_sim.get_node("NPCZero")
+	player.global_position = zero.global_position + Vector3(1.1, 0, 0)
+	zero.interact(main.flow)
+	expect(main.flow.dialogue_open and not player.input_enabled, "Zero opens dialogue and takes input")
+	main.flow.advance_dialogue()
+	main.flow.advance_dialogue()
+	expect(not main.flow.dialogue_open and player.input_enabled and main.flow.save.met.zero, "dialogue returns input and records Zero")
+	var fony = main.world_sim.get_node("NPCFony")
+	player.global_position = fony.global_position + Vector3(1.1, 0, 0)
+	fony.interact(main.flow)
+	main.flow.close_dialogue()
+	expect(main.flow.save.met.fony, "Fony meeting is recorded")
+	var audio = get_node("/root/AudioOwner")
+	audio.holder = "other"
+	var blocked: Dictionary = main.flow.open_cabinet()
+	expect(blocked.get("ok") == false and main.flow.boundary.phase == "world" and player.input_enabled, "cabinet does not open without the audio handoff")
+	audio.holder = "world"
+	var cabinet = main.world_sim.get_node("Cabinet")
+	player.global_position = Vector3(cabinet.global_position.x, 0.2, cabinet.global_position.z + 2.0)
+	expect(main._nearest(2.5) == cabinet, "cabinet is in interact range")
+	cabinet.interact(main.flow)
+	expect(main.flow.boundary.phase == "in_session", "cabinet opens a placeholder session")
+	expect(main.flow.boundary.phase == "in_session" and main.flow.boundary.input_owner == "session", "session owns input")
+	expect(main.world_sim.process_mode == Node.PROCESS_MODE_DISABLED and not player.input_enabled, "world sim and player input pause")
+	expect(audio.holder == "session", "session holds the only audio owner")
+	var finished: Dictionary = main.flow.finish_session("keyboard")
+	expect(finished.get("ok") == true and main.flow.boundary.phase == "world", "finish returns to the world")
+	expect(player.input_enabled and main.world_sim.process_mode == Node.PROCESS_MODE_PAUSABLE, "world input and sim resume")
+	expect(audio.holder == "world", "audio owner returns to the world")
+	expect(str(finished.get("result", {}).get("integration", "")) == "placeholder_not_canvas", "result says this is not the canvas runtime")
+	for i in 10:
+		expect(main.flow.open_cabinet().get("ok") == true, "cabinet reenter %d" % i)
+		expect(main.flow.abort_session("unknown").get("ok") == true, "cabinet reabort %d" % i)
+	expect(main.flow.boundary.phase == "world" and audio.holder == "world" and player.input_enabled, "repeated cabinet use does not stick")
+	expect(main.flow.save.results.size() == 11, "results stay bounded and recorded")
+	var loaded = SaveScript.new()
+	expect(loaded.load_user(main.flow.save_path).get("ok") == true and loaded.results.size() == 11, "save file reloads")
+	var z_before: float = player.global_position.z
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	main.flow.set_paused(true)
+	await frames(20)
+	expect(main.get_tree().paused and is_equal_approx(player.global_position.z, z_before), "pause freezes the player")
+	main.flow.set_paused(false)
+	await frames(20)
+	expect(not main.get_tree().paused and player.global_position.z < z_before - 0.15, "resume lets the player skate")
+
+func _host() -> Node3D:
+	var host := Node3D.new()
+	add_child(host)
+	return host
+
+func _player(host: Node, pos: Vector3):
+	var player = load("res://scenes/player.tscn").instantiate()
+	player.position = pos
+	host.add_child(player)
+	return player
