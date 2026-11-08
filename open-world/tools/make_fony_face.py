@@ -12,23 +12,26 @@ def chunk(tag, data):
 
 
 def main() -> None:
-    w = h = 128
+    w = h = 256
     skin = (240, 201, 160)
     ink = (42, 33, 28)
-    blush = (214, 140, 120)
+    white = (248, 244, 236)
+    blush = (214, 120, 110)
     raw = bytearray()
     for y in range(h):
         raw.append(0)
         for x in range(w):
             col = skin
-            if 28 < y < 36 and (24 < x < 48 or 80 < x < 104):
+            if 48 < y < 64 and (40 < x < 110 or 146 < x < 216):
                 col = ink
-            if 40 < y < 58 and (30 < x < 50 or 78 < x < 98):
-                col = (250, 244, 236)
-                if 34 < x < 46 or 82 < x < 94:
-                    if 44 < y < 56:
+            if 78 < y < 128 and (52 < x < 108 or 148 < x < 204):
+                col = white
+                if 68 < x < 96 or 164 < x < 192:
+                    if 90 < y < 122:
                         col = ink
-            if 78 < y < 88 and 48 < x < 80:
+            if 150 < y < 168 and 108 < x < 148:
+                col = blush
+            if 176 < y < 196 and 88 < x < 168:
                 col = blush
             raw.extend(col)
     png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b"")

@@ -16,6 +16,8 @@ func _ready() -> void:
 	_contracts()
 	await _input_map()
 	await _look()
+	await _heading()
+	await _invert()
 	await _movement()
 	await _grind()
 	await _body()
@@ -219,11 +221,13 @@ func _look() -> void:
 	expect(is_equal_approx(player.camera_yaw, yaw0), "mouse does nothing before the click")
 	main._capture_look()
 	expect(player.look_captured, "click capture is allowed in the world")
+	player.look_invert_y = true
+	var pitch_before: float = player.camera_pitch
 	player.push_mouse_look(Vector2(400, -30))
 	await frames(2)
 	var yaw1: float = player.camera_yaw
 	expect(yaw1 < yaw0 - 0.8, "mouse right turns the view yaw=%s" % yaw1)
-	expect(player.camera_pitch < -0.18, "mouse up looks up without inversion pitch=%s" % player.camera_pitch)
+	expect(player.camera_pitch > pitch_before, "default invert: mouse up looks down pitch=%s" % player.camera_pitch)
 	var key_e := InputEventKey.new()
 	key_e.physical_keycode = KEY_E
 	key_e.keycode = KEY_E
@@ -244,19 +248,21 @@ func _look() -> void:
 	Input.parse_input_event(key_q)
 	expect(is_equal_approx(player.camera_yaw, yaw1), "Q does not rotate the view")
 	var before: Vector3 = player.global_position
-	var forward: Vector3 = player.camera_flat_forward()
+	var cam_forward: Vector3 = player.camera_flat_forward()
 	var hold := InputEventKey.new()
 	hold.physical_keycode = KEY_W
 	hold.keycode = KEY_W
 	hold.pressed = true
 	Input.parse_input_event(hold)
-	await frames(25)
+	await frames(20)
 	hold.pressed = false
 	Input.parse_input_event(hold)
 	await frames(2)
 	var flat := Vector3(player.global_position.x - before.x, 0.0, player.global_position.z - before.z)
-	var aligned: float = flat.normalized().dot(forward) if flat.length() > 0.2 else 0.0
-	expect(flat.length() > 0.8 and aligned > 0.98, "W follows the camera forward moved=%s forward=%s align=%s" % [flat, forward, aligned])
+	var aligned: float = flat.normalized().dot(cam_forward) if flat.length() > 0.2 else 0.0
+	var face := Vector3(-player.rig.global_transform.basis.z.x, 0.0, -player.rig.global_transform.basis.z.z).normalized()
+	expect(flat.length() > 0.8 and aligned > 0.98, "W matches the camera basis moved=%s forward=%s align=%s" % [flat, cam_forward, aligned])
+	expect(face.dot(flat.normalized()) > 0.98, "Fony faces the travel direction face=%s" % face)
 	var stick := InputEventJoypadMotion.new()
 	stick.axis = JOY_AXIS_RIGHT_X
 	stick.axis_value = 1.0
@@ -288,6 +294,147 @@ func _look() -> void:
 	expect(main.flow.dialogue_open and not player.input_enabled and is_equal_approx(player.camera_yaw, yaw_talk), "dialogue blocks look and movement input")
 	main.flow.close_dialogue()
 	main.queue_free()
+	await frames(2)
+
+func _heading() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(80, 1, 80), Palette.GROUND)
+	var player = _player(host, Vector3(0, 0.4, 0))
+	await frames(15)
+	player.rotation.y = 1.05
+	player.camera_yaw = 1.05
+	player._update_camera(0.0)
+	await frames(1)
+	var formula := Vector3(-sin(player.camera_yaw), 0.0, -cos(player.camera_yaw))
+	var rendered: Vector3 = player.camera_flat_forward()
+	var mismatch: float = formula.dot(rendered)
+	expect(mismatch < 0.7, "spawn body yaw offsets the rendered camera from pivot-only math dot=%s rendered=%s formula=%s" % [mismatch, rendered, formula])
+	for sample in [0.0, 0.9, -1.4, 2.2]:
+		player.camera_yaw = sample
+		player._update_camera(0.0)
+		player.velocity = Vector3.ZERO
+		await frames(1)
+		var skate_row: Dictionary = await _sample_heading(player, true, "W")
+		expect(float(skate_row["align"]) > 0.98 and float(skate_row["face"]) > 0.98, "skate W matches camera at yaw %s %s" % [sample, skate_row])
+		player.velocity = Vector3.ZERO
+		var walk_row: Dictionary = await _sample_heading(player, false, "W")
+		expect(float(walk_row["align"]) > 0.98 and float(walk_row["face"]) > 0.98, "walk W matches camera at yaw %s %s" % [sample, walk_row])
+	player.camera_yaw = 0.4
+	player._update_camera(0.0)
+	player.velocity = Vector3.ZERO
+	var back: Dictionary = await _sample_heading(player, true, "S")
+	expect(float(back["align"]) < -0.98, "S is straight back from the camera %s" % back)
+	player.velocity = Vector3.ZERO
+	var strafe: Dictionary = await _sample_heading(player, true, "D")
+	expect(float(strafe["right"]) > 0.98 and absf(float(strafe["align"])) < 0.08, "D strafes without a forward component %s" % strafe)
+	host.queue_free()
+	await frames(2)
+
+func _sample_heading(player, skating: bool, key_name: String) -> Dictionary:
+	player.skating = skating
+	player.velocity = Vector3.ZERO
+	var origin: Vector3 = player.global_position
+	var forward: Vector3 = player.camera_flat_forward()
+	var right: Vector3 = player.camera_flat_right()
+	var code := KEY_W
+	if key_name == "S":
+		code = KEY_S
+	elif key_name == "D":
+		code = KEY_D
+	var hold := InputEventKey.new()
+	hold.physical_keycode = code
+	hold.keycode = code
+	hold.pressed = true
+	Input.parse_input_event(hold)
+	await frames(18)
+	hold.pressed = false
+	Input.parse_input_event(hold)
+	await frames(1)
+	var flat := Vector3(player.global_position.x - origin.x, 0.0, player.global_position.z - origin.z)
+	var unit := flat.normalized() if flat.length() > 0.05 else Vector3.ZERO
+	var face_basis: Vector3 = -player.rig.global_transform.basis.z
+	var face := Vector3(face_basis.x, 0.0, face_basis.z).normalized()
+	return {
+		"travel": flat.length(),
+		"flat": flat,
+		"forward": forward,
+		"align": unit.dot(forward),
+		"right": unit.dot(right),
+		"face": face.dot(unit) if key_name != "D" else face.dot(right),
+	}
+
+func _invert() -> void:
+	var path := "user://au-look-v1.json"
+	DirAccess.remove_absolute(path)
+	var fresh = _player(_host(), Vector3(0, 1, 0))
+	expect(fresh.look_invert_y and not fresh.look_invert_chosen, "new users start with inverted mouse Y")
+	fresh.get_parent().queue_free()
+	var old := FileAccess.open(path, FileAccess.WRITE)
+	old.store_string("{\"sensitivity\":0.004,\"invert_y\":false}")
+	old.close()
+	var legacy = _player(_host(), Vector3(0, 1, 0))
+	expect(legacy.look_invert_y and is_equal_approx(legacy.look_sensitivity, 0.004), "a save without an invert choice stays inverted and keeps sensitivity")
+	legacy.get_parent().queue_free()
+	var chosen := FileAccess.open(path, FileAccess.WRITE)
+	chosen.store_string("{\"sensitivity\":0.0028,\"invert_y\":false,\"invert_chosen\":true}")
+	chosen.close()
+	var explicit = _player(_host(), Vector3(0, 1, 0))
+	expect(not explicit.look_invert_y and explicit.look_invert_chosen, "an explicit saved non-inverted choice reloads")
+	explicit.get_parent().queue_free()
+	DirAccess.remove_absolute(path)
+	var main = load("res://scenes/main.tscn").instantiate()
+	add_child(main)
+	await frames(5)
+	expect(main.player.look_invert_y, "pause menu starts from the inverted default")
+	main.flow.set_paused(true)
+	var toggle: CheckButton = main.invert_check
+	expect(toggle != null and toggle.button_pressed and toggle.text == "Invert mouse Y", "pause menu shows Invert mouse Y")
+	toggle.button_pressed = false
+	expect(not main.player.look_invert_y and main.player.look_invert_chosen, "the toggle stores the choice")
+	main.queue_free()
+	await frames(2)
+	var reloaded = load("res://scenes/main.tscn").instantiate()
+	add_child(reloaded)
+	await frames(5)
+	expect(not reloaded.player.look_invert_y, "the toggle survives a reload")
+	reloaded.flow.set_paused(true)
+	reloaded.invert_check.button_pressed = true
+	expect(reloaded.player.look_invert_y, "the toggle can turn inversion back on")
+	reloaded.flow.set_paused(false)
+	var pitch0: float = reloaded.player.camera_pitch
+	reloaded.player.look_captured = true
+	reloaded.player.look_invert_y = true
+	reloaded.player.push_mouse_look(Vector2(0, 40))
+	await frames(1)
+	var down_pitch: float = reloaded.player.camera_pitch
+	reloaded.player.look_invert_y = false
+	reloaded.player.push_mouse_look(Vector2(0, 40))
+	await frames(1)
+	var up_pitch: float = reloaded.player.camera_pitch
+	expect(down_pitch < pitch0 and up_pitch > down_pitch, "mouse down looks up when inverted and down when not down=%s then=%s" % [down_pitch, up_pitch])
+	var stick := InputEventJoypadMotion.new()
+	stick.axis = JOY_AXIS_RIGHT_Y
+	stick.axis_value = 1.0
+	var stick_start: float = reloaded.player.camera_pitch
+	reloaded.player.look_invert_y = true
+	Input.parse_input_event(stick)
+	await frames(4)
+	var stick_inverted: float = reloaded.player.camera_pitch - stick_start
+	stick.axis_value = 0.0
+	Input.parse_input_event(stick)
+	await frames(1)
+	stick_start = reloaded.player.camera_pitch
+	reloaded.player.look_invert_y = false
+	stick.axis_value = 1.0
+	Input.parse_input_event(stick)
+	await frames(4)
+	var stick_plain: float = reloaded.player.camera_pitch - stick_start
+	stick.axis_value = 0.0
+	Input.parse_input_event(stick)
+	expect(stick_inverted > 0.02 and absf(stick_inverted - stick_plain) < 0.03, "right stick pitch ignores the mouse invert setting inv=%s plain=%s" % [stick_inverted, stick_plain])
+	reloaded.flow.set_paused(false)
+	reloaded.queue_free()
+	DirAccess.remove_absolute(path)
 	await frames(2)
 
 func _movement() -> void:
@@ -460,6 +607,10 @@ func _tricks() -> void:
 	while not player.is_on_floor():
 		await get_tree().physics_frame
 	player.skating = true
+	var clip_hip: float = player.rig.preview_clip("crouch", 0.62)
+	expect(clip_hip < 0.85 and clip_hip > 0.5, "crouch clip lowers the hips y=%s" % clip_hip)
+	player.rig._idle()
+	player.rig._solve_legs()
 	var y_ground: float = player.global_position.y
 	player.request_trick("ollie")
 	var saw_crouch := false
@@ -473,25 +624,42 @@ func _tricks() -> void:
 			left_floor = true
 			saw_air = player.trick == "ollie" or player.rig.pose_name == "ollie"
 	expect(saw_crouch and left_floor and saw_air, "ollie crouches then leaves the ground crouch=%s air=%s y=%s" % [saw_crouch, saw_air, player.global_position.y])
-	await frames(50)
+	await frames(130)
 	expect(player.is_on_floor() and (player.trick == "" or player.trick == "land" or player.rig.pose_name == "land" or player.rig.pose_name == "skate"), "ollie lands and recovers trick=%s pose=%s" % [player.trick, player.rig.pose_name])
 	player.request_trick("flip")
 	var spun := false
 	var feet_clear := false
 	var caught := false
-	for _i in 50:
+	var full_turn := false
+	for _i in 110:
 		await get_tree().physics_frame
-		if player.flip_turns > 0.25 and not player.board_caught:
+		if player.flip_turns > 0.35 and not player.board_caught:
 			spun = true
 			var gap: float = player.rig.sole_y() - player.rig.deck_top_y()
-			if absf(gap) > 0.08:
+			player.set_meta("flip_gap", gap)
+			player.set_meta("flip_z", player.rig.board.rotation.z)
+			if gap > 0.25:
 				feet_clear = true
-			elif not feet_clear:
-				player.set_meta("flip_gap", gap)
-		if player.board_caught and player.flip_turns >= 0.9:
+			if absf(player.rig.board.rotation.z) > 2.8:
+				full_turn = true
+		if player.board_caught and player.flip_turns >= 0.99:
 			caught = true
-	expect(spun and feet_clear and caught, "kickflip spins the board off the feet then catches spun=%s clear=%s caught=%s gap=%s" % [spun, feet_clear, caught, player.get_meta("flip_gap", 0.0)])
+	expect(spun and feet_clear and full_turn and caught, "kickflip shows a full board turn off the feet then catches gap=%s spin=%s" % [player.get_meta("flip_gap", 0.0), player.get_meta("flip_z", 0.0)])
 	await frames(40)
+	while not player.is_on_floor() or player.trick != "":
+		await get_tree().physics_frame
+	player.request_trick("grab")
+	var saw_grab := false
+	var board_in_hand := false
+	for _i in 100:
+		await get_tree().physics_frame
+		if player.trick == "grab":
+			saw_grab = true
+			var gap_hand: float = player.rig.hand_r.global_position.distance_to(player.rig.board.global_position)
+			if gap_hand < 0.4 and player.rig.board.position.y > 0.65:
+				board_in_hand = true
+	expect(saw_grab and board_in_hand, "grab puts the board in the hand trick=%s pose=%s" % [player.trick, player.rig.pose_name])
+	await frames(80)
 	player.global_position = Vector3(0, 0.5, 0)
 	player.velocity = Vector3.ZERO
 	await frames(12)

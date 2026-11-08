@@ -18,7 +18,8 @@ var external_jump := false
 var external_camera_yaw_delta := 0.0
 var look_captured := false
 var look_sensitivity := 0.0028
-var look_invert_y := false
+var look_invert_y := true
+var look_invert_chosen := false
 var _mouse_pending := Vector2.ZERO
 var spawn_position := Vector3.ZERO
 var spawn_yaw := 0.0
@@ -73,19 +74,56 @@ func adjust_look_sensitivity(step: float) -> void:
 	look_sensitivity = clampf(look_sensitivity + step, 0.0008, 0.008)
 	_save_look()
 
+func choose_invert_y(value: bool) -> void:
+	look_invert_y = value
+	look_invert_chosen = true
+	_save_look()
+
+func camera_flat_forward() -> Vector3:
+	return _camera_flat_axes()[0]
+
+func camera_flat_right() -> Vector3:
+	return _camera_flat_axes()[1]
+
+func _camera_flat_axes() -> Array:
+	var fallback_forward := Vector3(-sin(camera_yaw), 0.0, -cos(camera_yaw))
+	var cam := get_node_or_null("CameraPivot/SpringArm/Camera") as Camera3D
+	if cam == null:
+		return [fallback_forward, Vector3(fallback_forward.z, 0.0, -fallback_forward.x)]
+	var basis := cam.global_transform.basis
+	var forward := Vector3(-basis.z.x, 0.0, -basis.z.z)
+	var right := Vector3(basis.x.x, 0.0, basis.x.z)
+	if forward.length() < 0.001:
+		forward = fallback_forward
+	else:
+		forward = forward.normalized()
+	if right.length() < 0.001:
+		right = Vector3(forward.z, 0.0, -forward.x)
+	else:
+		right = right.normalized()
+	return [forward, right]
+
 func _load_look() -> void:
 	var text := FileAccess.get_file_as_string("user://au-look-v1.json") if FileAccess.file_exists("user://au-look-v1.json") else ""
 	var parsed = JSON.parse_string(text) if text.strip_edges() != "" else null
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
-	look_sensitivity = clampf(float(parsed.get("sensitivity", look_sensitivity)), 0.0008, 0.008)
-	look_invert_y = bool(parsed.get("invert_y", false))
+	if parsed.has("sensitivity"):
+		look_sensitivity = clampf(float(parsed.get("sensitivity", look_sensitivity)), 0.0008, 0.008)
+	# Older saves wrote invert_y false as the implicit default. That is not a choice.
+	if bool(parsed.get("invert_chosen", false)):
+		look_invert_y = bool(parsed.get("invert_y", true))
+		look_invert_chosen = true
 
 func _save_look() -> void:
 	var file := FileAccess.open("user://au-look-v1.json", FileAccess.WRITE)
 	if file == null:
 		return
-	file.store_string(JSON.stringify({"sensitivity": look_sensitivity, "invert_y": look_invert_y}))
+	file.store_string(JSON.stringify({
+		"sensitivity": look_sensitivity,
+		"invert_y": look_invert_y,
+		"invert_chosen": look_invert_chosen,
+	}))
 
 func respawn() -> void:
 	velocity = Vector3.ZERO
@@ -107,7 +145,48 @@ func _physics_process(delta: float) -> void:
 		respawn()
 	_pose(delta)
 
+func start_visual_demo(kind: String) -> void:
+	visual_demo = kind
+	demo_clock = 0.0
+	external_move_active = true
+	external_move = Vector2.ZERO
+	skating = true
+	input_enabled = true
+	Engine.time_scale = 0.5
+	var label := get_node_or_null("NameLabel")
+	if label != null:
+		label.visible = false
+	demo_cam = Camera3D.new()
+	demo_cam.name = "DemoCam"
+	demo_cam.fov = 40.0
+	demo_cam.current = true
+	get_parent().add_child(demo_cam)
+	if kind == "ramp":
+		global_position = Vector3(-51.4, 0.45, -12.0)
+		velocity = Vector3.ZERO
+		rotation.y = 0.0
+		camera_yaw = PI * 0.5
+
+func _demo_drive(delta: float) -> void:
+	if visual_demo == "" or demo_cam == null or rig == null:
+		return
+	demo_clock += delta
+	var focus := rig.global_position + Vector3(0, 0.85, 0)
+	if visual_demo == "ramp":
+		demo_cam.global_position = global_position + Vector3(3.2, 1.5, 4.2)
+		external_move = Vector2(0, 1)
+		if trick == "" and is_on_floor() and global_position.y > 1.05 and demo_clock > 0.35:
+			request_trick("ollie")
+	else:
+		var side: Vector3 = rig.global_transform.basis.x
+		demo_cam.global_position = focus + side * 3.15 + Vector3(0, 0.2, 0)
+		external_move = Vector2(0, 0.4)
+		if trick == "" and demo_clock > 0.4 and demo_clock < 0.55:
+			request_trick(visual_demo)
+	demo_cam.look_at(focus)
+
 func _simulate(delta: float) -> void:
+	_demo_drive(delta)
 	if grind_lockout > 0.0:
 		grind_lockout = max(0.0, grind_lockout - delta)
 	if input_enabled:
@@ -153,21 +232,6 @@ func _fall(delta: float) -> void:
 			velocity.y = -0.2
 	else:
 		velocity.y -= GRAVITY * delta
-
-func camera_flat_forward() -> Vector3:
-	return _camera_flat_axes()[0]
-
-func _camera_flat_axes() -> Array:
-	var fallback := Vector3(-sin(camera_yaw), 0.0, -cos(camera_yaw))
-	var cam := get_node_or_null("CameraPivot/SpringArm/Camera") as Camera3D
-	if cam == null:
-		return [fallback, Vector3(fallback.z, 0.0, -fallback.x)]
-	var basis := cam.global_transform.basis
-	var forward := Vector3(-basis.z.x, 0.0, -basis.z.z)
-	var right := Vector3(basis.x.x, 0.0, basis.x.z)
-	forward = fallback if forward.length() < 0.001 else forward.normalized()
-	right = Vector3(forward.z, 0.0, -forward.x) if right.length() < 0.001 else right.normalized()
-	return [forward, right]
 
 func _wish() -> Vector3:
 	var move := external_move if external_move_active else _hardware_move()
@@ -246,6 +310,9 @@ var flip_turns := 0.0
 var board_caught := true
 var bail_time := 0.0
 var trick_request := ""
+var visual_demo := ""
+var demo_clock := 0.0
+var demo_cam: Camera3D
 
 func request_trick(kind: String) -> void:
 	trick_request = kind
@@ -280,26 +347,31 @@ func _tricks(delta: float) -> void:
 			trick_time = 0.0
 		else:
 			_start_air("flip")
-	elif asked == "grab" and not is_on_floor() and trick != "bail":
-		trick = "grab"
-		board_caught = true
-		trick_time = 0.0
+	elif asked == "grab" and skating and trick != "bail":
+		if is_on_floor() and trick == "":
+			trick = "crouch"
+			trick_next = "grab"
+			trick_time = 0.0
+		elif not is_on_floor():
+			trick = "grab"
+			board_caught = true
+			trick_time = 0.0
 	if trick == "crouch":
 		trick_time += delta
-		if trick_time >= 0.16:
+		if trick_time >= 0.62:
 			_start_air(trick_next if trick_next != "" else "ollie")
 	elif trick == "ollie" or trick == "flip" or trick == "grab":
 		trick_time += delta
 		if trick == "flip" and not board_caught:
-			flip_turns += delta / 0.55
-			if flip_turns >= 0.92:
+			flip_turns += delta / 1.0
+			if flip_turns >= 0.99:
 				board_caught = true
 				flip_turns = 1.0
-		if is_on_floor() and trick_time > 0.18:
+		if is_on_floor() and trick_time > 0.42:
 			_finish_trick()
 	elif trick == "land":
 		trick_time += delta
-		if trick_time > 0.22:
+		if trick_time > 0.5:
 			trick = ""
 	_push_trick()
 
@@ -307,7 +379,7 @@ func _start_air(kind: String) -> void:
 	trick = kind
 	trick_next = ""
 	trick_time = 0.0
-	velocity.y = 7.1
+	velocity.y = 12.0
 	if kind == "flip":
 		board_caught = false
 		flip_turns = 0.0
