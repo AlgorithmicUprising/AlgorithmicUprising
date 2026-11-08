@@ -1,6 +1,5 @@
 extends Node3D
 
-const Builder = preload("res://scripts/fony_mesh.gd")
 const Parts = preload("res://scripts/block_parts.gd")
 
 const THIGH := 0.42
@@ -35,12 +34,7 @@ var _step_r := 0.0
 
 func _ready() -> void:
 	name = "Fony"
-	var built: Dictionary = Builder.attach(self)
-	skeleton = built.skeleton
-	bones = built.bones
-	ankle_l = built.ankle_l
-	ankle_r = built.ankle_r
-	hand_r = built.hand_r
+	_load_body()
 	_build_board()
 	_author_clips()
 	_idle()
@@ -307,6 +301,82 @@ func _rot_keys(clip: Animation, path: String, a: Vector3, b: Vector3) -> void:
 	clip.track_set_path(track, NodePath(path))
 	clip.rotation_track_insert_key(track, 0.0, Quaternion.from_euler(a))
 	clip.rotation_track_insert_key(track, clip.length, Quaternion.from_euler(b))
+
+func _load_body() -> void:
+	var packed: PackedScene = load("res://assets/library/fony/fony.glb")
+	var model := packed.instantiate()
+	model.name = "Model"
+	add_child(model)
+	skeleton = _find_skeleton(model)
+	skeleton.name = "Skeleton"
+	skeleton.reparent(self)
+	var bone_names := ["Hips", "Spine", "Chest", "Neck", "Head", "ArmL", "ForeL", "HandL", "ArmR", "ForeR", "HandR", "LegL", "ShinL", "AnkleL", "LegR", "ShinR", "AnkleR"]
+	for bone_name in bone_names:
+		bones[bone_name] = skeleton.find_bone(bone_name)
+	_paint(model)
+	_paint(skeleton)
+	for inst in _mesh_instances(model):
+		inst.skeleton = inst.get_path_to(skeleton)
+	for inst in _mesh_instances(skeleton):
+		inst.skeleton = NodePath("..")
+	ankle_l = Marker3D.new()
+	ankle_l.name = "AnkleL"
+	add_child(ankle_l)
+	ankle_r = Marker3D.new()
+	ankle_r.name = "AnkleR"
+	add_child(ankle_r)
+	hand_r = Marker3D.new()
+	hand_r.name = "HandR"
+	add_child(hand_r)
+
+func _find_skeleton(node: Node) -> Skeleton3D:
+	if node is Skeleton3D:
+		return node
+	for child in node.get_children():
+		var found := _find_skeleton(child)
+		if found != null:
+			return found
+	return null
+
+func _mesh_instances(node: Node) -> Array:
+	var found: Array = []
+	if node is MeshInstance3D:
+		found.append(node)
+	for child in node.get_children():
+		found.append_array(_mesh_instances(child))
+	return found
+
+func _paint(node: Node) -> void:
+	if node is MeshInstance3D:
+		var color := Color("f0c9a0")
+		var key := str(node.name)
+		if key.contains("Hair"):
+			color = Color("c4622d")
+		elif key.contains("Hoodie"):
+			color = Color("1a1a1e")
+		elif key.contains("Jacket"):
+			color = Color("c46a32")
+		elif key.contains("Pants") or key.contains("Pocket"):
+			color = Color("5c6b3a")
+		elif key.contains("Pad") or key.contains("PatchPink"):
+			color = Color("e23d78")
+		elif key.contains("PatchGray"):
+			color = Color("6a727a")
+		elif key.contains("Shoe"):
+			color = Color("c4b5a0")
+		elif key.contains("Sole") or key.contains("Stripe") or key.contains("Strap"):
+			color = Color("2a211c")
+		elif key.contains("Brow"):
+			color = Color("6a3a22")
+		elif key.contains("Iris"):
+			color = Color("4a2c1c")
+		elif key.contains("Sclera"):
+			color = Color("f4f0ea")
+		elif key.contains("Lip"):
+			color = Color("b85a52")
+		node.material_override = load("res://scripts/world_blocks.gd").cel(color, 3.0, 0.22)
+	for child in node.get_children():
+		_paint(child)
 
 func _build_board() -> void:
 	board = Parts.pivot(self, "Deck", Vector3(0, 0.39, -0.02))
