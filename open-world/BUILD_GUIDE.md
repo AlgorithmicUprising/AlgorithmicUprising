@@ -225,7 +225,7 @@ A future adapter can translate a real cartridge result into `au.minigame_result`
 | One audio owner, catalog disabled until cleared media exists | Met |
 | No music files, no paid or generated art, no final avatar | Met |
 | Browser export actually loaded | Met locally, single-threaded, Chrome |
-| Live Pages URL that keeps the arcade and adds `/open-world/` | Not met. Section 11 |
+| Live Pages URL that keeps the arcade and adds `/open-world/` | Wired into `deploy-main`. It publishes when this branch is merged to `main`. Section 11 |
 | Full city, missions, networking, real Bars per Watt | Out of scope |
 
 ## 11. GitHub Pages
@@ -240,31 +240,31 @@ The repository already has one GitHub Pages site. Inspected with the Pages API a
 - `GET /open-world/` returned **404** at that same check
 - The live root still redirects to `./demo/`, which is the Punk Arcade landing
 
-The only deploy job is `deploy-main` in `.github/workflows/arcade.yml`. It runs only when the ref is `refs/heads/main` and the event is not a pull request. It uploads `arcade/.pages` and calls `actions/deploy-pages`. A Pages deploy replaces the whole site. GitHub Pages does not give this repo a second preview URL.
+There is still one Pages site and one deploy job: `deploy-main` in `.github/workflows/arcade.yml`. It runs only when the ref is `refs/heads/main` and the event is not a pull request. A pull request does not publish. `workflow_dispatch` publishes only if it is started on `main`.
 
-This branch does not change that job and does not call `actions/deploy-pages`. Publishing from here would replace the production site from a non-main branch. The next main arcade deploy would then drop `/open-world/` again unless main's workflow also built the combined tree. That is a production source change, so it was not done.
+The workflow now also runs for changes under `open-world/**`. Every main deploy still builds and stages the arcade, then installs Godot from `GODOT_VERSION.txt` (SHA-512 checked by `tools/install-godot.sh`), runs the headless suite, exports the single-threaded web build, and runs `node tools/stage-composite.mjs --into-staged`. That copies the export to `arcade/.pages/open-world/` and fails the job if any pre-existing arcade file changes or if a new file lands outside that directory. The uploaded path is still `arcade/.pages`, so the arcade root, `demo/`, and `games/` stay the staged arcade output. An arcade-only push to `main` rebuilds the HQ as well, so a later arcade deploy cannot drop `/open-world/`.
 
-What was built and checked locally:
+`deploy-main` still waits for `build-and-browser-test`. A failing arcade check blocks the upload. A failing Godot headless run or a bad export also stops the job before `actions/upload-pages-artifact` and `actions/deploy-pages`. The `github-pages` environment, the Actions source, and the absence of a custom domain are unchanged.
 
-- `tools/stage-composite.mjs` runs the existing `arcade` `stage-pages` script, copies that output, and adds the web export under `open-world/` only
-- It hashes the arcade files before and after the copy and fails if any arcade byte changes or if a new file lands outside `open-world/`
-- It requires `GODOT_THREADS_ENABLED` false and relative HTML asset paths
-- This run: 157 arcade files unchanged, wasm `open-world/index.wasm` at 39,514,754 bytes, pack 63,692 bytes
-- `tools/serve-composite.mjs` serves `.wasm` as `application/wasm`
-- `tools/browser-check.mjs` requested `/`, `/demo/`, the Grind and Tag bundles, Cookie Wall's `page.js`, and the HQ page. The HQ wasm response content type contained `application/wasm`. Chrome then moved the player
+Checked locally after `npm run stage-pages` and `--into-staged`, including a second attach:
 
-`.github/workflows/open-world-pages-composite.yml` repeats that build on pull request and `workflow_dispatch`. Its permissions are `contents: read`. It uploads an Actions artifact named `open-world-pages-composite`. That artifact is a zip, not a site, and the workflow cannot publish Pages.
+- 157 arcade files, zero hash changes, zero deletions
+- 7 files added, all under `open-world/`
+- `index.html` at the site root still redirects to `./demo/`
+- Required arcade paths still present, including Grind, Tag, and Cookie Wall bundles and `games/cookie-wall/demo/page.js`
+- `open-world/index.html` has `GODOT_THREADS_ENABLED` false, `src="index.js"`, and no `<base>` tag
+- wasm 39,514,754 bytes, pack 63,692 bytes
 
-Safe publish, which still needs an explicit main-branch change and is not done here:
+GitHub Pages serves `.wasm` as `application/wasm` from its static MIME map. This repo cannot add cross-origin isolation headers. The single-threaded export is the build that can run there. The local composite server and headless Chrome check in section 2 already confirmed that MIME and that the page boots from a subpath.
 
-1. Keep a single deploy workflow so two jobs cannot overwrite each other
-2. Teach the main-only `deploy-main` job to upload the composite directory instead of `arcade/.pages` alone
-3. Build the Godot web export in that same job, or fail the job before upload if the export is missing
-4. Leave the arcade root redirect and game paths byte-identical to today's `stage-pages` output
-5. Do not change the `github-pages` environment, add a custom domain, or switch the Pages source away from the Actions workflow
-6. After that main deploy, request `/`, `/demo/`, one game bundle, and `/open-world/` and confirm the wasm content type
+`.github/workflows/open-world-pages-composite.yml` still does not deploy. It repeats the pinned install, headless suite, export, and composite staging on pull request so the export is visible before merge. Its permissions remain `contents: read`.
 
-Until that lands, the playable URL is local: `http://127.0.0.1:8090/open-world/` from `serve-composite.mjs`. Do not treat the production host plus `/open-world/` as live. It 404s today.
+Expected public URL after the main deploy from this merge:
+
+- Arcade, unchanged paths: https://algorithmicuprising.github.io/AlgorithmicUprising/ and https://algorithmicuprising.github.io/AlgorithmicUprising/demo/
+- HQ: https://algorithmicuprising.github.io/AlgorithmicUprising/open-world/
+
+Until that main deploy finishes, `/open-world/` on the live host is the previous 404. The local tree is `http://127.0.0.1:8090/open-world/` from `serve-composite.mjs` when the composite directory is served, or the same paths under `arcade/.pages` after `--into-staged`.
 
 ## 12. Limitations
 

@@ -1,9 +1,15 @@
 name: Punk Arcade CI
 on:
   push:
-    paths: ['arcade/**', '.github/workflows/arcade.yml']
+    paths:
+      - 'arcade/**'
+      - 'open-world/**'
+      - '.github/workflows/arcade.yml'
   pull_request:
-    paths: ['arcade/**', '.github/workflows/arcade.yml']
+    paths:
+      - 'arcade/**'
+      - 'open-world/**'
+      - '.github/workflows/arcade.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -52,9 +58,10 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   deploy-main:
-    name: Publish browser-tested arcade production assets from main
+    name: Publish arcade and HQ Pages from main
     needs: build-and-browser-test
-    # The production game player is served from main; feature and arcade branches only run CI.
+    # One Pages site. Feature branches only run CI. Every main deploy rebuilds both
+    # trees so an arcade-only push cannot drop /open-world/.
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
@@ -75,6 +82,22 @@ jobs:
         working-directory: arcade
       - run: npm run stage-pages
         working-directory: arcade
+      - name: Install pinned Godot 4.7.2
+        id: godot
+        run: echo "bin=$(bash open-world/tools/install-godot.sh)" >> "$GITHUB_OUTPUT"
+      - name: Export the single-threaded HQ web build
+        env:
+          GODOT_BIN: ${{ steps.godot.outputs.bin }}
+        run: |
+          set -euo pipefail
+          mkdir -p open-world/node_modules open-world/build
+          : > open-world/node_modules/.gdignore
+          : > open-world/build/.gdignore
+          rm -rf open-world/.godot
+          "$GODOT_BIN" --headless --path open-world res://tests/test_main.tscn
+          node open-world/tools/export-web.mjs
+      - name: Add /open-world/ without changing arcade files
+        run: node open-world/tools/stage-composite.mjs --into-staged
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

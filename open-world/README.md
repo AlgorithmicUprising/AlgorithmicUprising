@@ -16,6 +16,6 @@ Headless checks:
 godot --headless --path open-world res://tests/test_main.tscn
 ```
 
-The web export, the combined arcade-plus-HQ tree, and the reason that tree was not published to GitHub Pages are in [BUILD_GUIDE.md](BUILD_GUIDE.md).
+The web export and the combined Pages tree are in [BUILD_GUIDE.md](BUILD_GUIDE.md). After this branch is merged to `main`, the existing Pages workflow publishes the arcade at its current paths and this slice at `/open-world/`.
 
 Code in this directory is MIT. Branding, character art, and music are not included. See [NOTICE.md](NOTICE.md).

@@ -33,22 +33,9 @@ jobs:
       - name: Install open-world preview tooling
         working-directory: open-world
         run: npm ci --no-audit --no-fund
-      - name: Install Godot 4.7.2 editor and export templates
-        run: |
-          set -euo pipefail
-          editor_sha=$(awk -F= '$1=="editor_sha512"{print $2}' open-world/GODOT_VERSION.txt)
-          templates_sha=$(awk -F= '$1=="templates_sha512"{print $2}' open-world/GODOT_VERSION.txt)
-          curl -fL --retry 3 -o "$RUNNER_TEMP/godot.zip" https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
-          curl -fL --retry 3 -o "$RUNNER_TEMP/templates.tpz" https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz
-          echo "$editor_sha  $RUNNER_TEMP/godot.zip" | sha512sum -c -
-          echo "$templates_sha  $RUNNER_TEMP/templates.tpz" | sha512sum -c -
-          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP"
-          chmod +x "$RUNNER_TEMP/Godot_v4.7.2-stable_linux.x86_64"
-          mkdir -p "$RUNNER_TEMP/templates"
-          unzip -q "$RUNNER_TEMP/templates.tpz" -d "$RUNNER_TEMP/templates"
-          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.2.stable"
-          cp -a "$RUNNER_TEMP/templates/templates/." "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
-          ln -sfn "$RUNNER_TEMP/Godot_v4.7.2-stable_linux.x86_64" "$RUNNER_TEMP/godot"
+      - name: Install pinned Godot 4.7.2
+        id: godot
+        run: echo "bin=$(bash open-world/tools/install-godot.sh)" >> "$GITHUB_OUTPUT"
       - name: Headless project checks
         run: |
           set -euo pipefail
@@ -56,11 +43,13 @@ jobs:
           : > open-world/node_modules/.gdignore
           : > open-world/build/.gdignore
           rm -rf open-world/.godot
-          "$RUNNER_TEMP/godot" --headless --path open-world res://tests/test_main.tscn
+          "${{ steps.godot.outputs.bin }}" --headless --path open-world res://tests/test_main.tscn
       - name: Export web build and stage the composite tree
+        env:
+          GODOT_BIN: ${{ steps.godot.outputs.bin }}
         run: |
           set -euo pipefail
-          GODOT_BIN="$RUNNER_TEMP/godot" node open-world/tools/export-web.mjs
+          node open-world/tools/export-web.mjs
           node open-world/tools/stage-composite.mjs
       - name: Upload composite artifact without deploying Pages
         uses: actions/upload-artifact@v4
