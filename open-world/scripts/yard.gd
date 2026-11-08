@@ -116,20 +116,12 @@ static func _rooms(parent: Node) -> void:
 	Blocks.solid(parent, "Bunks", Vector3(40, 0.45, -68), Vector3(10, 0.9, 3.2), Color("8d5b6e"))
 	Blocks.solid(parent, "KitchenCounter", Vector3(48, 0.5, -58), Vector3(6, 1.0, 1.4), Color("c4896a"))
 	Blocks.label(parent, "RESISTANCE", Vector3(20, 6.2, -63), Palette.LABEL, 48)
-	var zero = load("res://scenes/npc.tscn").instantiate()
+	var zero = load("res://scripts/zero_actor.gd").new()
 	zero.name = "NPCZero"
 	zero.npc_id = "zero"
 	zero.display_name = "Zero"
-	zero.body_color = Palette.ZERO
 	zero.position = Vector3(-6, 0, -62)
 	parent.add_child(zero)
-	var fony = load("res://scenes/npc.tscn").instantiate()
-	fony.name = "NPCFony"
-	fony.npc_id = "fony"
-	fony.display_name = "Fony"
-	fony.body_color = Palette.FONY
-	fony.position = Vector3(16, 0, -62)
-	parent.add_child(fony)
 
 static func _warehouse(parent: Node) -> void:
 	_shell(parent, "WarehouseArcade", 8.0, 70.0, -44.0, -8.0, 9.0, Palette.WAREHOUSE, 28.0, 36.0)

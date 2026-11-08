@@ -290,7 +290,7 @@ func _district() -> void:
 	var main = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await frames(25)
-	for node_name in ["YardWallNorth", "YardWallEast", "YardWallWest", "YardWallSouthWest", "YardWallSouthEast", "MainGate", "Workshop", "ResistanceRooms", "WarehouseArcade", "SolarRoof", "SkateQuarter", "Funbox", "HalfPipeWest", "GrindRail", "BowlFloor", "Cabinet", "NPCZero", "NPCFony", "RustAvenue", "FutureSkyline0"]:
+	for node_name in ["YardWallNorth", "YardWallEast", "YardWallWest", "YardWallSouthWest", "YardWallSouthEast", "MainGate", "Workshop", "ResistanceRooms", "WarehouseArcade", "SolarRoof", "SkateQuarter", "Funbox", "HalfPipeWest", "GrindRail", "BowlFloor", "Cabinet", "NPCZero", "RustAvenue", "FutureSkyline0"]:
 		expect(main.world_sim.get_node_or_null(node_name) != null, "yard has " + node_name)
 	var player = main.player
 	expect(player.input_enabled and main.zone_at(player.global_position) == "SKATE YARD", "spawn is in the skate yard")
@@ -303,14 +303,33 @@ func _district() -> void:
 	player.global_position = zero.global_position + Vector3(1.1, 0, 0)
 	zero.interact(main.flow)
 	expect(main.flow.dialogue_open and not player.input_enabled, "Zero opens dialogue and takes input")
+	await frames(2)
+	expect(zero.rig.pose_name == "talk", "Zero raises a pose while talking")
 	main.flow.advance_dialogue()
 	main.flow.advance_dialogue()
 	expect(not main.flow.dialogue_open and player.input_enabled and main.flow.save.met.zero, "dialogue returns input and records Zero")
-	var fony = main.world_sim.get_node("NPCFony")
-	player.global_position = fony.global_position + Vector3(1.1, 0, 0)
-	fony.interact(main.flow)
-	main.flow.close_dialogue()
-	expect(main.flow.save.met.fony, "Fony meeting is recorded")
+	expect(player.get_node_or_null("Fony") != null, "player visual is the Fony rig")
+	expect(player.get_node("Fony").find_child("Hair", true, false) != null, "Fony rig has hair")
+	expect(zero.find_child("Screen", true, false) != null, "Zero rig has a CRT screen")
+	player.global_position = Vector3(-42, 0.6, 2)
+	player.velocity = Vector3.ZERO
+	await frames(25)
+	expect(player.is_on_floor(), "Fony stands on the yard before skating")
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	player.skating = true
+	await frames(12)
+	expect(player.rig.pose_name == "skate", "skate pose while moving on the board")
+	player.external_jump = true
+	await frames(4)
+	expect(player.rig.pose_name == "jump", "jump pose while airborne")
+	player.external_move = Vector2.ZERO
+	await frames(40)
+	expect(player.rig.pose_name == "land" or player.rig.pose_name == "idle" or player.rig.pose_name == "skate", "landing returns to a grounded pose")
+	var home: Vector3 = player.spawn_position
+	player.global_position = home + Vector3(0, -20, 0)
+	await frames(2)
+	expect(player.global_position.distance_to(home) < 2.0, "falling out of the yard respawns at the start")
 	var audio = get_node("/root/AudioOwner")
 	audio.holder = "other"
 	var blocked: Dictionary = main.flow.open_cabinet()

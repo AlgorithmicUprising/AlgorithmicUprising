@@ -145,14 +145,10 @@ func _apply_story() -> void:
 	var lines = story.get("npc_lines", {})
 	if typeof(lines) != TYPE_DICTIONARY:
 		return
-	for npc_name in ["NPCZero", "NPCFony"]:
-		var npc = world_sim.get_node_or_null(npc_name)
-		if npc == null:
-			continue
-		var key := "zero" if npc_name == "NPCZero" else "fony"
-		var spoken = lines.get(key, [])
-		if typeof(spoken) == TYPE_ARRAY:
-			npc.lines = PackedStringArray(spoken)
+	var npc = world_sim.get_node_or_null("NPCZero")
+	var spoken = lines.get("zero", [])
+	if npc != null and typeof(spoken) == TYPE_ARRAY:
+		npc.lines = PackedStringArray(spoken)
 
 func _hud() -> void:
 	var layer := CanvasLayer.new()

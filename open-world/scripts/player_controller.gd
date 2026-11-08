@@ -16,6 +16,9 @@ var external_move := Vector2.ZERO
 var external_move_active := false
 var external_jump := false
 var external_camera_yaw_delta := 0.0
+var spawn_position := Vector3.ZERO
+var spawn_yaw := 0.0
+var rig: Node3D
 
 func _ready() -> void:
 	collision_layer = 2
@@ -23,30 +26,39 @@ func _ready() -> void:
 	floor_snap_length = 0.3
 	floor_max_angle = deg_to_rad(50.0)
 	camera_yaw = rotation.y
+	spawn_position = global_position
+	spawn_yaw = rotation.y
 	_style_body()
 	_update_camera(0.0)
-	update_board()
 
 func _style_body() -> void:
-	var blocks = load("res://scripts/world_blocks.gd")
 	if has_node("Body"):
-		$Body.material_override = blocks.cel(Color("f4e1b5"), 3.0, 0.35)
+		$Body.visible = false
 	if has_node("Board"):
-		$Board.material_override = blocks.cel(Color("241c18"), 2.0, 0.2)
+		$Board.visible = false
+	rig = load("res://scripts/fony_rig.gd").new()
+	add_child(rig)
 	var label := Label3D.new()
 	label.name = "NameLabel"
-	label.text = "UNNAMED"
-	label.position = Vector3(0, 1.95, 0)
+	label.text = "FONY"
+	label.position = Vector3(0, 2.05, 0)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.font_size = 32
-	label.pixel_size = 0.008
+	label.pixel_size = 0.006
 	label.modulate = Color("fff8ef")
 	label.outline_size = 6
 	add_child(label)
 
 func update_board() -> void:
-	if has_node("Board"):
-		$Board.visible = skating
+	pass
+
+func respawn() -> void:
+	velocity = Vector3.ZERO
+	grind = null
+	grind_lockout = 0.2
+	global_position = spawn_position
+	rotation.y = spawn_yaw
+	camera_yaw = spawn_yaw
 
 func begin_grind(rail, along: float) -> void:
 	grind = rail
@@ -55,6 +67,12 @@ func begin_grind(rail, along: float) -> void:
 	global_position = rail.point_at(along)
 
 func _physics_process(delta: float) -> void:
+	_simulate(delta)
+	if global_position.y < -8.0:
+		respawn()
+	_pose(delta)
+
+func _simulate(delta: float) -> void:
 	if grind_lockout > 0.0:
 		grind_lockout = max(0.0, grind_lockout - delta)
 	if input_enabled:
@@ -86,11 +104,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, wish.x * speed, accel * delta)
 		velocity.z = move_toward(velocity.z, wish.z * speed, accel * delta)
-		if has_node("Body"):
-			var face := atan2(-wish.x, -wish.z)
-			$Body.rotation.y = face
-			if has_node("Board"):
-				$Board.rotation.y = face
+		if rig != null and rig.has_method("face_world"):
+			rig.face_world(atan2(-wish.x, -wish.z))
 	move_and_slide()
 	_try_grind()
 	update_board()
@@ -151,7 +166,8 @@ func _step_grind(delta: float) -> void:
 		return
 	global_position = grind.point_at(grind_progress)
 	velocity = grind.direction * grind.speed
-	update_board()
+	if rig != null and rig.has_method("face_world"):
+		rig.face_world(atan2(-velocity.x, -velocity.z))
 
 func _leave_grind(jumped: bool) -> void:
 	var rail = grind
@@ -165,3 +181,9 @@ func _leave_grind(jumped: bool) -> void:
 		global_position = rail.point_at(1.0) + direction * 0.45
 		velocity = direction * rail.speed
 		velocity.y = 0.4
+
+func _pose(delta: float) -> void:
+	if rig == null or not rig.has_method("drive"):
+		return
+	var speed := Vector2(velocity.x, velocity.z).length()
+	rig.drive(delta, speed, skating, not is_on_floor(), grind != null)

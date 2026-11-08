@@ -1,6 +1,6 @@
 # AU Open World HQ greybox
 
-A small provisional 3D slice: a skate park, an arcade, and the edge of a shopping district. It is not the Punk Arcade, and it does not change that project. The engine and the shipping platform are not locked. This pass uses Godot 4.7.2 and the Compatibility renderer so a modest desktop GPU, and a later browser export, stay possible.
+A provisional 3D yard. Fony, a block-built teen, skates it. Zero, a CRT-headed rig, waits in the resistance rooms. It is not the Punk Arcade, and it does not change that project. The engine and the shipping platform are not locked. This pass uses Godot 4.7.2 and the Compatibility renderer.
 
 Play it locally:
 

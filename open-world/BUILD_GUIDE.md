@@ -110,6 +110,8 @@ Wall centers sit on a **160 m** square (`scripts/yard.gd`, `HALF = 80`). The dia
 
 The bowl is angular plates around a sunken floor, not a smooth concrete bowl. Some bank edges overlap the yard slabs. That is visible in the high shot.
 
+Fony is the player: an articulated block rig in copper, rust, black, olive, and magenta, with the board under the feet while skating. The physics body is still a capsule, so the mesh does not catch on rails or doors. Zero, in the resistance rooms, is a separate CRT-headed rig with a lime screen and a talk pose. Both are described in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). Headless checks include skate, jump, land, respawn if y drops below −8 m, Zero’s talk pose, and the cabinet handoff. On this machine that suite ended `SUMMARY failed=0` with 144 `ok` lines.
+
 ## 4. Module and scene map
 
 District geometry is built in code by `scripts/hq_main.gd` so collisions stay in versioned source. Interactables are scenes.

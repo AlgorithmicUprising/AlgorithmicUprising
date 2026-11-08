@@ -19,7 +19,8 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Outside, not playable | Cool tower blocks, west factory blocks, north rail beam |
 | Plants | Five box planters with box shrubs |
 | Lighting | Procedural sunset sky, warm key light, cool ambient, three-band cel shader, one shadow map |
-| People | Unnamed cream capsule, Zero capsule, Fony capsule. Labels only |
+| Fony, the player | Articulated box rig: copper hair blocks, rust jacket, black hoodie, olive legs, magenta pads, worn shoes. Collision is still a separate capsule. The board is a child of the rig, under the feet while skating and at the side while walking |
+| Zero | Articulated box rig: cream CRT, lime screen bars, knob, vent, leather jacket, red “?” patch, barcode blocks, metal neck, hands, and knees, coiled cable segments. Idle bob and a raised arm while talking |
 
 ## Still needed before this can look like the concept
 
@@ -35,15 +36,19 @@ Original art, made for Algorithmic Uprising, not copied from Grand Theft Auto, J
 - Container markings and the drone-net pattern.
 - A smooth bowl surface if the plate banks are not the desired shape.
 
-## Characters, separate from the yard
+## Characters
 
-Do not treat these as designed:
+Fony is the playable teen. Zero is the NPC in the resistance rooms. The approved drawing was used as direction and is not stored as a texture.
 
-- Protagonist: no name, no face, no clothing, no board graphic.
-- Zero: label and a warm capsule. No portrait and no costume.
-- Fony: label and a warm capsule. No portrait and no costume.
+What these rigs are: separate boxes parented to pivots for hips, chest, head, arms, and legs. Poses are code (idle, walk, skate, jump, land for Fony; idle and talk for Zero). They are not skinned meshes, not weighted to a production skeleton, and not animation clips from another program.
 
-Those three need an original character pass of their own. This yard does not invent them.
+Still missing on the characters:
+
+- A face, hair strands, and cloth folds
+- Finger poses and a real cable curve
+- Zero’s screen as anything beyond three moving bars
+- Board graphics
+- Hit reactions, grinds as a special body pose, and a get-up animation beyond the short land crouch
 
 ## Explicitly not in the repo
 
