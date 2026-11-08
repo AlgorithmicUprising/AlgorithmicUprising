@@ -295,6 +295,23 @@ GitHub Pages serves `.wasm` as `application/wasm` from its static MIME map. This
 
 `.github/workflows/open-world-pages-composite.yml` still does not deploy. It repeats the pinned install, headless suite, export, and composite staging on pull request so the export is visible before merge. Its permissions remain `contents: read`.
 
+## 11c. One combined publication
+
+`deploy-main` checks out the workflow's own commit and builds the arcade and the HQ from that same tree. The Pages artifact is `arcade/.pages` after `stage-composite.mjs --into-staged`. The site root stays the arcade landing (`./demo/`). `/open-world/` is added beside it. The composite step rejects the upload if an arcade file's hash changes or if a new file appears outside `open-world/`.
+
+`actions/deploy-pages` appears only in that job. The pull-request composite workflow uploads a normal Actions artifact and has `contents: read`. It cannot publish the site.
+
+Main runs of Punk Arcade CI share one concurrency group and are not cancelled once started. A later push to `main` waits, then publishes its own SHA. Cancelling the older run is unsafe: a `deploy-pages` step can still complete after the workflow is marked cancelled and replace the newer site. Pull requests keep `cancel-in-progress` so stale CI on a feature branch does not pile up. Those runs are not in the main group because the group includes `github.ref`.
+
+`node open-world/tools/check-pages-workflow.mjs` checks these rules and runs in `build-and-browser-test` before a main publish. A second `deploy-pages` step fails that check.
+
+Nightly release, 21:00 America/Chicago, when that routine is running:
+
+1. Read `origin/main`. Do not publish from a feature branch, and do not `workflow_dispatch` an older SHA.
+2. Merge only the green heads intended for that night, in an order that does not rewrite pushed history. The Pages guard is independent of the gameplay pull requests. Controls (`#9`) and the quarter-pipe (`#10`) both target `main`. Tricks (`#11`) already contain `#9` and `#10` and target the quarter-pipe branch; retarget it onto `main` only after `#10` is there. Do not merge the unapproved Fony look (`#12`).
+3. Let the one `deploy-main` run for the resulting `main` SHA finish. Do not start a second publisher, and do not cancel another in-progress main run.
+4. The live deployment's SHA should be that `main` SHA. The arcade paths and `/open-world/` both come from it.
+
 The live site from pull request 6 is already:
 
 - Arcade: https://algorithmicuprising.github.io/AlgorithmicUprising/ and https://algorithmicuprising.github.io/AlgorithmicUprising/demo/

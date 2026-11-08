@@ -13,11 +13,13 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-# Keep only the newest push per branch when GitHub is backlogged.
-# Cancel outdated builds rather than enqueue one full Pages deploy per commit.
+# One group per ref, so a pull request does not wait behind a main publish.
+# On main, do not cancel the run already in progress. deploy-pages can still
+# finish after Actions marks the job cancelled, and that older publication
+# would replace a newer one. Feature branches still cancel stale CI.
 concurrency:
   group: punk-arcade-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
   build-and-browser-test:
     runs-on: ubuntu-24.04
@@ -31,6 +33,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check combined Pages publish rules
+        working-directory: ${{ github.workspace }}
+        run: node open-world/tools/check-pages-workflow.mjs
       - run: npm install --no-audit --no-fund
       - run: npm run check
       - run: npm test
