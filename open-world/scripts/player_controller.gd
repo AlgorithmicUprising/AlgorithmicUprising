@@ -18,7 +18,8 @@ var external_jump := false
 var external_camera_yaw_delta := 0.0
 var look_captured := false
 var look_sensitivity := 0.0028
-var look_invert_y := false
+var look_invert_y := true
+var look_invert_chosen := false
 var _mouse_pending := Vector2.ZERO
 var spawn_position := Vector3.ZERO
 var spawn_yaw := 0.0
@@ -73,19 +74,56 @@ func adjust_look_sensitivity(step: float) -> void:
 	look_sensitivity = clampf(look_sensitivity + step, 0.0008, 0.008)
 	_save_look()
 
+func choose_invert_y(value: bool) -> void:
+	look_invert_y = value
+	look_invert_chosen = true
+	_save_look()
+
+func camera_flat_forward() -> Vector3:
+	return _camera_flat_axes()[0]
+
+func camera_flat_right() -> Vector3:
+	return _camera_flat_axes()[1]
+
+func _camera_flat_axes() -> Array:
+	var fallback_forward := Vector3(-sin(camera_yaw), 0.0, -cos(camera_yaw))
+	var cam := get_node_or_null("CameraPivot/SpringArm/Camera") as Camera3D
+	if cam == null:
+		return [fallback_forward, Vector3(fallback_forward.z, 0.0, -fallback_forward.x)]
+	var basis := cam.global_transform.basis
+	var forward := Vector3(-basis.z.x, 0.0, -basis.z.z)
+	var right := Vector3(basis.x.x, 0.0, basis.x.z)
+	if forward.length() < 0.001:
+		forward = fallback_forward
+	else:
+		forward = forward.normalized()
+	if right.length() < 0.001:
+		right = Vector3(forward.z, 0.0, -forward.x)
+	else:
+		right = right.normalized()
+	return [forward, right]
+
 func _load_look() -> void:
 	var text := FileAccess.get_file_as_string("user://au-look-v1.json") if FileAccess.file_exists("user://au-look-v1.json") else ""
 	var parsed = JSON.parse_string(text) if text.strip_edges() != "" else null
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
-	look_sensitivity = clampf(float(parsed.get("sensitivity", look_sensitivity)), 0.0008, 0.008)
-	look_invert_y = bool(parsed.get("invert_y", false))
+	if parsed.has("sensitivity"):
+		look_sensitivity = clampf(float(parsed.get("sensitivity", look_sensitivity)), 0.0008, 0.008)
+	# Older saves wrote invert_y false as the implicit default. That is not a choice.
+	if bool(parsed.get("invert_chosen", false)):
+		look_invert_y = bool(parsed.get("invert_y", true))
+		look_invert_chosen = true
 
 func _save_look() -> void:
 	var file := FileAccess.open("user://au-look-v1.json", FileAccess.WRITE)
 	if file == null:
 		return
-	file.store_string(JSON.stringify({"sensitivity": look_sensitivity, "invert_y": look_invert_y}))
+	file.store_string(JSON.stringify({
+		"sensitivity": look_sensitivity,
+		"invert_y": look_invert_y,
+		"invert_chosen": look_invert_chosen,
+	}))
 
 func respawn() -> void:
 	velocity = Vector3.ZERO
@@ -133,14 +171,15 @@ func _simulate(delta: float) -> void:
 	var speed := SKATE_SPEED if skating else WALK_SPEED
 	var accel := 22.0 if skating else 40.0
 	var friction := 7.0 if skating else 30.0
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	if wish.length() < 0.01:
-		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
-		velocity.z = move_toward(velocity.z, 0.0, friction * delta)
+		horizontal = horizontal.move_toward(Vector3.ZERO, friction * delta)
 	else:
-		velocity.x = move_toward(velocity.x, wish.x * speed, accel * delta)
-		velocity.z = move_toward(velocity.z, wish.z * speed, accel * delta)
+		horizontal = horizontal.move_toward(Vector3(wish.x, 0.0, wish.z) * speed, accel * delta)
 		if rig != null and rig.has_method("face_world"):
 			rig.face_world(atan2(-wish.x, -wish.z))
+	velocity.x = horizontal.x
+	velocity.z = horizontal.z
 	move_and_slide()
 	_try_grind()
 	update_board()
@@ -154,8 +193,9 @@ func _fall(delta: float) -> void:
 
 func _wish() -> Vector3:
 	var move := external_move if external_move_active else _hardware_move()
-	var forward := Vector3(-sin(camera_yaw), 0.0, -cos(camera_yaw))
-	var right := Vector3(cos(camera_yaw), 0.0, -sin(camera_yaw))
+	var axes := _camera_flat_axes()
+	var forward: Vector3 = axes[0]
+	var right: Vector3 = axes[1]
 	var wish := right * move.x + forward * move.y
 	if wish.length() > 1.0:
 		wish = wish.normalized()

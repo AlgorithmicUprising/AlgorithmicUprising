@@ -83,34 +83,46 @@ async function checkWorld() {
   await page.waitForFunction(() => window.AU_HQ && window.AU_HQ.session === 'world', { timeout: 45000 });
   const before = await page.evaluate(() => ({ ...window.AU_HQ }));
   await page.click('canvas');
+  await page.waitForTimeout(150);
+  const aimed = await page.evaluate(() => ({ ...window.AU_HQ }));
   await page.keyboard.down('KeyW');
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(500);
   await page.keyboard.up('KeyW');
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(150);
   const after = await page.evaluate(() => ({ ...window.AU_HQ }));
-  const moved = Math.hypot(after.x - before.x, after.z - before.z);
-  console.log('world before', before, 'after', after, 'moved', moved);
-  if (!(moved > 0.4)) failures.push('keyboard did not move the player in the browser');
+  const spawnLeg = heading(aimed, after);
+  console.log('synthetic spawn W', spawnLeg);
+  if (!(spawnLeg.travel > 0.4)) failures.push('keyboard did not move the player in the browser');
+  if (spawnLeg.align < 0.98) failures.push('spawn W diverged from the camera forward ' + JSON.stringify(spawnLeg));
   if (after.session !== 'world') failures.push('session changed during the move check');
-  const yawBefore = after.yaw;
   await page.mouse.move(180, 280);
-  await page.mouse.move(760, 320);
-  await page.waitForTimeout(250);
+  await page.mouse.move(820, 300);
+  await page.waitForTimeout(200);
   const turned = await page.evaluate(() => ({ ...window.AU_HQ }));
-  console.log('synthetic pointer look', after.look, 'yaw', yawBefore, '->', turned.yaw);
-  if (after.look && Math.abs(turned.yaw - yawBefore) < 0.05) {
+  console.log('synthetic pointer look', aimed.look, 'yaw', aimed.yaw, '->', turned.yaw);
+  if (aimed.look && Math.abs(turned.yaw - aimed.yaw) < 0.05) {
     failures.push('captured mouse move did not turn the view');
   }
   await page.keyboard.down('KeyW');
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(500);
   await page.keyboard.up('KeyW');
+  await page.waitForTimeout(150);
   const headed = await page.evaluate(() => ({ ...window.AU_HQ }));
-  const dx = headed.x - turned.x;
-  const dz = headed.z - turned.z;
-  const travel = Math.hypot(dx, dz);
-  const align = travel > 0.01 ? (dx * -Math.sin(turned.yaw) + dz * -Math.cos(turned.yaw)) / travel : 0;
-  console.log('synthetic W after mouse turn', { dx, dz, travel, align, yaw: turned.yaw });
-  if (!(travel > 0.4 && align > 0.7)) failures.push('W did not follow the mouse heading');
+  const turnedLeg = heading(turned, headed);
+  console.log('synthetic W after mouse turn', turnedLeg);
+  if (!(turnedLeg.travel > 0.4 && turnedLeg.align > 0.98)) failures.push('W did not follow the camera forward ' + JSON.stringify(turnedLeg));
+  await page.keyboard.press('ShiftLeft');
+  await page.waitForTimeout(100);
+  const walking = await page.evaluate(() => ({ ...window.AU_HQ }));
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(500);
+  await page.keyboard.up('KeyW');
+  await page.waitForTimeout(150);
+  const walked = await page.evaluate(() => ({ ...window.AU_HQ }));
+  const walkLeg = heading(walking, walked);
+  console.log('synthetic walk W', walkLeg, 'skating', walked.skating);
+  if (walked.skating) failures.push('Shift did not leave skating');
+  if (!(walkLeg.travel > 0.25 && walkLeg.align > 0.98)) failures.push('walk W diverged from the camera forward ' + JSON.stringify(walkLeg));
   const yawE = turned.yaw;
   await page.keyboard.press('KeyE');
   await page.waitForTimeout(200);
@@ -133,6 +145,14 @@ async function checkWorld() {
   console.log('synthetic resume', resumed.paused, resumed.look);
   if (resumed.paused) failures.push('click did not leave pause');
   await page.screenshot({ path: join(outDir, 'hq-browser.png') });
+}
+
+function heading(start, end) {
+  const dx = end.x - start.x;
+  const dz = end.z - start.z;
+  const travel = Math.hypot(dx, dz);
+  const align = travel > 0.01 ? (dx * start.fx + dz * start.fz) / travel : 0;
+  return { dx, dz, travel, align, fx: start.fx, fz: start.fz, yaw: start.yaw };
 }
 
 function waitForServer() {
