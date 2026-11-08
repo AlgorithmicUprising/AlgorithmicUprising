@@ -14,6 +14,9 @@ var prompt_label: Label
 var dialogue_panel: PanelContainer
 var dialogue_text: Label
 var pause_panel: PanelContainer
+var look_catch: Control
+var look_label: Label
+var hint_label: Label
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -46,6 +49,9 @@ func _process(_delta: float) -> void:
 	if player.input_enabled and flow.boundary.phase == "world" and not flow.dialogue_open and not flow.paused:
 		target = _nearest(2.5)
 	prompt_label.text = target.prompt() if target != null and target.has_method("prompt") else ""
+	if player.look_captured and not _can_look():
+		_release_look()
+	_sync_look_catch()
 	_publish_web_state()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -66,11 +72,25 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("pause"):
+		_release_look()
 		flow.set_paused(true)
+		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventMouseMotion and player.look_captured and _can_look():
+		player.push_mouse_look(event.relative)
 		get_viewport().set_input_as_handled()
 		return
 	if not player.input_enabled:
 		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_BRACKETLEFT:
+			player.adjust_look_sensitivity(-0.0004)
+			get_viewport().set_input_as_handled()
+			return
+		if event.physical_keycode == KEY_BRACKETRIGHT:
+			player.adjust_look_sensitivity(0.0004)
+			get_viewport().set_input_as_handled()
+			return
 	if event.is_action_pressed("skate_toggle"):
 		player.skating = not player.skating
 		player.update_board()
@@ -115,23 +135,23 @@ func _environment() -> void:
 	var env := Environment.new()
 	var sky := Sky.new()
 	var proc := ProceduralSkyMaterial.new()
-	proc.sky_top_color = Color("5c4d86")
-	proc.sky_horizon_color = Color("f0a06a")
-	proc.ground_horizon_color = Color("c47858")
+	proc.sky_top_color = Color("6d4f92")
+	proc.sky_horizon_color = Color("f2b07a")
+	proc.ground_horizon_color = Color("e09a6a")
 	proc.ground_bottom_color = Color("6a5348")
 	proc.sun_angle_max = 12.0
 	sky.sky_material = proc
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Palette.AMBIENT
-	env.ambient_light_energy = 0.32
+	env.ambient_light_color = Color("7e92ae")
+	env.ambient_light_energy = 0.36
 	world_env.environment = env
 	add_child(world_env)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-42, -70, 0)
-	sun.light_color = Color("ffc48a")
-	sun.light_energy = 1.7
+	sun.light_color = Color("ffc090")
+	sun.light_energy = 1.85
 	sun.shadow_enabled = true
 	sun.directional_shadow_max_distance = 160.0
 	sun.shadow_bias = 0.08
@@ -165,8 +185,9 @@ func _hud() -> void:
 	margin.add_child(column)
 	zone_label = Label.new()
 	mode_label = Label.new()
-	var hint := Label.new()
-	hint.text = "WASD move    Space jump    Shift skate/walk    E talk or cabinet    Q/E look    Esc pause\nGamepad map: left stick, A jump, Y skate, X interact, right stick look, Start pause"
+	hint_label = Label.new()
+	var hint := hint_label
+	hint.text = "Click to look. Mouse turns the view; W moves that way. [ ] look speed\nWASD move   Space jump   Shift skate/walk   E talk or cabinet   Enter confirm   Esc pause\nGamepad: left stick move, right stick look, A jump, Y skate, X interact, Start pause"
 	prompt_label = Label.new()
 	for label in [zone_label, mode_label, hint, prompt_label]:
 		label.add_theme_font_size_override("font_size", 18)
@@ -180,8 +201,25 @@ func _hud() -> void:
 	layer.add_child(dialogue_panel)
 	pause_panel = _center_panel()
 	var pause_label: Label = pause_panel.get_child(0).get_child(0)
-	pause_label.text = "Paused. Esc or Enter resumes."
+	pause_label.text = "Paused. Click to resume and look. Esc or Enter resumes."
 	layer.add_child(pause_panel)
+	look_catch = Control.new()
+	look_catch.set_anchors_preset(Control.PRESET_FULL_RECT)
+	look_catch.mouse_filter = Control.MOUSE_FILTER_STOP
+	look_catch.gui_input.connect(_on_look_catch)
+	layer.add_child(look_catch)
+	look_label = Label.new()
+	look_label.set_anchors_preset(Control.PRESET_CENTER)
+	look_label.offset_left = -220
+	look_label.offset_right = 220
+	look_label.offset_top = -40
+	look_label.offset_bottom = 40
+	look_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	look_label.add_theme_font_size_override("font_size", 22)
+	look_label.add_theme_color_override("font_color", Color("fff6ea"))
+	look_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	look_label.add_theme_constant_override("outline_size", 6)
+	look_catch.add_child(look_label)
 
 func _center_panel() -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -206,16 +244,72 @@ func _center_panel() -> PanelContainer:
 	box.add_child(label)
 	return panel
 
+func _notification(what: int) -> void:
+	if what != NOTIFICATION_APPLICATION_FOCUS_OUT and what != NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		return
+	if flow == null or player == null:
+		return
+	if player.look_captured:
+		_release_look()
+	if flow.boundary.phase == "world" and not flow.paused and not flow.dialogue_open:
+		flow.set_paused(true)
+
+func _can_look() -> bool:
+	return player != null and flow != null and flow.boundary.phase == "world" and not flow.paused and not flow.dialogue_open and player.input_enabled
+
+func _capture_look() -> void:
+	if not _can_look():
+		return
+	player.look_captured = true
+	player.clear_mouse_look()
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _release_look() -> void:
+	if player != null:
+		player.look_captured = false
+		player.clear_mouse_look()
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _sync_look_catch() -> void:
+	if look_catch == null:
+		return
+	var show := false
+	if flow.boundary.phase == "in_session" or flow.dialogue_open:
+		show = false
+	elif flow.paused:
+		show = true
+		look_label.text = "Paused\nClick to resume and look"
+	elif not player.look_captured:
+		show = true
+		look_label.text = "Click to look"
+	look_catch.visible = show
+	look_catch.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
+	if hint_label != null:
+		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   E talk or cabinet   Enter confirm   Esc pause\nGamepad: left stick move, right stick look, A jump, Y skate, X interact, Start pause" % player.look_sensitivity
+
+func _on_look_catch(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if flow.paused:
+		flow.set_paused(false)
+	if _can_look():
+		_capture_look()
+	look_catch.accept_event()
+
 func _publish_web_state() -> void:
 	if not OS.has_feature("web") or flow == null:
 		return
-	var js := "window.AU_HQ={x:%s,y:%s,z:%s,skating:%s,session:'%s',input:%s,zone:'%s'};" % [
+	var js := "window.AU_HQ={x:%s,y:%s,z:%s,yaw:%s,skating:%s,session:'%s',input:%s,look:%s,paused:%s,zone:'%s'};" % [
 		snapped(player.global_position.x, 0.01),
 		snapped(player.global_position.y, 0.01),
 		snapped(player.global_position.z, 0.01),
+		snapped(player.camera_yaw, 0.001),
 		"true" if player.skating else "false",
 		flow.boundary.phase,
 		"true" if player.input_enabled else "false",
+		"true" if player.look_captured else "false",
+		"true" if flow.paused else "false",
 		zone_at(player.global_position),
 	]
 	JavaScriptBridge.eval(js, true)

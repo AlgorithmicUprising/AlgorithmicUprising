@@ -16,6 +16,10 @@ var external_move := Vector2.ZERO
 var external_move_active := false
 var external_jump := false
 var external_camera_yaw_delta := 0.0
+var look_captured := false
+var look_sensitivity := 0.0028
+var look_invert_y := false
+var _mouse_pending := Vector2.ZERO
 var spawn_position := Vector3.ZERO
 var spawn_yaw := 0.0
 var rig: Node3D
@@ -27,6 +31,7 @@ func _ready() -> void:
 	floor_stop_on_slope = false
 	floor_max_angle = deg_to_rad(76.0)
 	camera_yaw = rotation.y
+	_load_look()
 	spawn_position = global_position
 	spawn_yaw = rotation.y
 	_style_body()
@@ -52,6 +57,35 @@ func _style_body() -> void:
 
 func update_board() -> void:
 	pass
+
+func push_mouse_look(relative: Vector2) -> void:
+	if not look_captured or not input_enabled or external_move_active:
+		return
+	if get_tree() != null and get_tree().paused:
+		return
+	var vertical := -relative.y if look_invert_y else relative.y
+	_mouse_pending += Vector2(relative.x, vertical)
+
+func clear_mouse_look() -> void:
+	_mouse_pending = Vector2.ZERO
+
+func adjust_look_sensitivity(step: float) -> void:
+	look_sensitivity = clampf(look_sensitivity + step, 0.0008, 0.008)
+	_save_look()
+
+func _load_look() -> void:
+	var text := FileAccess.get_file_as_string("user://au-look-v1.json") if FileAccess.file_exists("user://au-look-v1.json") else ""
+	var parsed = JSON.parse_string(text) if text.strip_edges() != "" else null
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+	look_sensitivity = clampf(float(parsed.get("sensitivity", look_sensitivity)), 0.0008, 0.008)
+	look_invert_y = bool(parsed.get("invert_y", false))
+
+func _save_look() -> void:
+	var file := FileAccess.open("user://au-look-v1.json", FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify({"sensitivity": look_sensitivity, "invert_y": look_invert_y}))
 
 func respawn() -> void:
 	velocity = Vector3.ZERO
@@ -132,13 +166,17 @@ func _hardware_move() -> Vector2:
 	return Vector2(vector.x, -vector.y)
 
 func _update_camera(delta: float) -> void:
-	var yaw_input := external_camera_yaw_delta
+	camera_yaw += external_camera_yaw_delta
 	external_camera_yaw_delta = 0.0
 	if not external_move_active:
-		yaw_input += Input.get_action_strength("camera_right") - Input.get_action_strength("camera_left")
-		var pitch_input := Input.get_action_strength("camera_down") - Input.get_action_strength("camera_up")
-		camera_pitch = clampf(camera_pitch + pitch_input * 1.1 * delta, -1.0, 0.45)
-	camera_yaw += yaw_input * 1.7 * delta
+		var stick_right := Input.get_action_strength("camera_right") - Input.get_action_strength("camera_left")
+		var stick_down := Input.get_action_strength("camera_down") - Input.get_action_strength("camera_up")
+		camera_yaw -= stick_right * 1.7 * delta
+		camera_pitch += stick_down * 1.0 * delta
+		camera_yaw -= _mouse_pending.x * look_sensitivity
+		camera_pitch += _mouse_pending.y * look_sensitivity
+	_mouse_pending = Vector2.ZERO
+	camera_pitch = clampf(camera_pitch, -0.95, 0.5)
 	if has_node("CameraPivot"):
 		$CameraPivot.rotation.y = camera_yaw
 		if has_node("CameraPivot/SpringArm"):

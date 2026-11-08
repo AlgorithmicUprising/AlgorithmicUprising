@@ -18,7 +18,8 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Gate yard | Lookout block, posts, a flat net quad, container stack |
 | Outside, not playable | Cool tower blocks, west factory blocks, north rail beam |
 | Plants | Five box planters with box shrubs |
-| Lighting | Procedural sunset sky, warm key light, cool ambient, three-band cel shader, one shadow map |
+| Lighting | Procedural sunset sky, warmer key, cooler ambient, three-band shader with a sharper edge darkening, one shadow map. Still not inked illustration |
+| Park marks | Flat original panels on the warehouse front and workshop face, an arcade marquee, two poster quads, a cabinet face bar, eave lamps, and two crack lines. No collision. Not the reference painting |
 | Fony, the player | Articulated pivots, not a skin rig. Each joint has a sphere and the limb capsule reaches that joint, so the neck, elbows, hips, and knees stay covered in idle, walk, skate, jump, and land. Feet are solved onto the capsule bottom when standing and onto the deck while skating. Collision is still a separate capsule |
 | Zero | Articulated pivots, not a skin rig. Larger cream CRT, lime screen bars, knob, vent, capsule jacket and limbs, red “?” patch, barcode blocks, metal neck, hands, and knees, coiled cable segments. Idle bob and a raised arm while talking |
 

@@ -62,6 +62,8 @@ Verified here, on this Linux machine, with Godot 4.7.2:
 | Browser play | Headless Chrome, SwiftShader, WebGL 2 Compatibility. From the skate-yard spawn, W moved the player about 4.82 m. Zone stayed `SKATE YARD` |
 | Composite tree | 157 arcade files unchanged by hash; 7 files added only under `open-world/` |
 
+The mouse-look pass on this branch re-ran that suite at 166 ok lines. The web pack was 98,880 bytes and the wasm was still 39,514,754 bytes, single-threaded. The composite check still saw 157 arcade files. Headless Chrome drove the page with Playwright, not a physical mouse: a click captured the pointer, a move changed yaw from 1.05 to 0.714, and the following W traveled about 2.62 m with the heading (dot about 0.87). Esc paused and released the pointer. A later click resumed. One favicon 404 remained.
+
 Not verified, and not claimed:
 
 - A physical keyboard beyond the browser `KeyW` hold and the synthetic key events
@@ -166,27 +168,28 @@ Spoken lines now:
 
 ## 6. Input and how to test
 
-Keyboard, checked with synthetic events and with one browser hold of W:
+PC look is the mouse. It is checked with synthetic `InputEventMouseMotion` in the headless suite, and again in headless Chrome with Playwright’s mouse, which is not a physical mouse. Pointer lock starts only after a click. Esc releases it and pauses. A click on the pause cover resumes and captures again. Losing the window releases the pointer and pauses. Dialogue, pause, and the cabinet session ignore look and movement.
 
-- WASD or arrows: move, camera-relative
+- Click: capture the pointer. The game does not capture on launch
+- Mouse: yaw and pitch. Up is up. Pitch stays between about −54° and 29°. `[` and `]` change the speed, saved in `user://au-look-v1.json`
+- W, S, A, D or the arrows: move relative to the view. W moves the way the camera faces
 - Space: jump
 - Shift: toggle skate and walk. The slice starts on the board
-- E: talk or use the cabinet
-- Q and E: yaw. R and F: pitch
+- E: talk or use the cabinet. It does not turn the camera. Q, R, and F are unused
 - Enter: advance dialogue, finish the placeholder session, or resume
 - Backspace or Esc during a session: leave the session
-- Esc in the world: pause
+- Esc in the world: release the pointer and pause
 
-Gamepad mapping, checked with synthetic events only. No physical pad was attached:
+Gamepad mapping, checked with synthetic events only. No physical pad was attached. Mouse events are not fed in as touch, and touch is not emulated from the mouse.
 
-- Left stick: move. Right stick: camera. Deadzone 0.25
+- Left stick: move. Right stick: look. Deadzone 0.25. Stick right turns the view right
 - A: jump, and confirm while a session is open
 - B: leave the session
 - X: interact
 - Y: skate toggle
 - Start: pause
 
-Mouse and touch are not control modes. Do not describe them as supported.
+There is no mobile or touch control path.
 
 The cabinet is a placeholder. Finish or Leave returns world input, unpauses `WorldSim`, and gives the audio owner back to the world. The result field `integration` is `placeholder_not_canvas`. This is not the Punk Arcade Canvas runtime and not Bars per Watt.
 

@@ -15,6 +15,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_contracts()
 	await _input_map()
+	await _look()
 	await _movement()
 	await _grind()
 	await _body()
@@ -187,6 +188,105 @@ func _input_map() -> void:
 	Input.action_release("move_right")
 	Input.action_release("jump")
 	await get_tree().process_frame
+
+func _look() -> void:
+	var camera_keys := 0
+	for action in ["camera_left", "camera_right", "camera_up", "camera_down"]:
+		for event in InputMap.action_get_events(action):
+			if event is InputEventKey:
+				camera_keys += 1
+	expect(camera_keys == 0, "Q/E/R/F are not camera keys")
+	var interact_e := false
+	for event in InputMap.action_get_events("interact"):
+		if event is InputEventKey and event.physical_keycode == KEY_E:
+			interact_e = true
+	expect(interact_e, "E is interact")
+	var stick_look := false
+	for event in InputMap.action_get_events("camera_right"):
+		if event is InputEventJoypadMotion and event.axis == JOY_AXIS_RIGHT_X:
+			stick_look = true
+	expect(stick_look, "right stick still looks")
+	var main = load("res://scenes/main.tscn").instantiate()
+	add_child(main)
+	await frames(20)
+	var player = main.player
+	expect(not player.look_captured, "pointer starts unlocked")
+	var yaw0: float = player.camera_yaw
+	player.push_mouse_look(Vector2(400, 0))
+	await frames(2)
+	expect(is_equal_approx(player.camera_yaw, yaw0), "mouse does nothing before the click")
+	main._capture_look()
+	expect(player.look_captured, "click capture is allowed in the world")
+	player.push_mouse_look(Vector2(400, -30))
+	await frames(2)
+	var yaw1: float = player.camera_yaw
+	expect(yaw1 < yaw0 - 0.8, "mouse right turns the view yaw=%s" % yaw1)
+	expect(player.camera_pitch < -0.18, "mouse up looks up without inversion pitch=%s" % player.camera_pitch)
+	var key_e := InputEventKey.new()
+	key_e.physical_keycode = KEY_E
+	key_e.keycode = KEY_E
+	key_e.pressed = true
+	Input.parse_input_event(key_e)
+	await frames(2)
+	key_e.pressed = false
+	Input.parse_input_event(key_e)
+	await frames(1)
+	expect(is_equal_approx(player.camera_yaw, yaw1), "E does not rotate the view")
+	var key_q := InputEventKey.new()
+	key_q.physical_keycode = KEY_Q
+	key_q.keycode = KEY_Q
+	key_q.pressed = true
+	Input.parse_input_event(key_q)
+	await frames(2)
+	key_q.pressed = false
+	Input.parse_input_event(key_q)
+	expect(is_equal_approx(player.camera_yaw, yaw1), "Q does not rotate the view")
+	var before: Vector3 = player.global_position
+	var forward := Vector3(-sin(yaw1), 0.0, -cos(yaw1))
+	var hold := InputEventKey.new()
+	hold.physical_keycode = KEY_W
+	hold.keycode = KEY_W
+	hold.pressed = true
+	Input.parse_input_event(hold)
+	await frames(25)
+	hold.pressed = false
+	Input.parse_input_event(hold)
+	await frames(2)
+	var flat := Vector3(player.global_position.x - before.x, 0.0, player.global_position.z - before.z)
+	var aligned: float = flat.normalized().dot(forward) if flat.length() > 0.2 else 0.0
+	expect(flat.length() > 0.8 and aligned > 0.8, "W follows the mouse heading moved=%s align=%s" % [flat, aligned])
+	var stick := InputEventJoypadMotion.new()
+	stick.axis = JOY_AXIS_RIGHT_X
+	stick.axis_value = 1.0
+	Input.parse_input_event(stick)
+	var yaw_stick: float = player.camera_yaw
+	await frames(6)
+	stick.axis_value = 0.0
+	Input.parse_input_event(stick)
+	expect(player.camera_yaw < yaw_stick - 0.05, "right stick turns the view without the mouse")
+	var yaw_pause: float = player.camera_yaw
+	main._release_look()
+	main.flow.set_paused(true)
+	player.push_mouse_look(Vector2(500, 0))
+	await frames(3)
+	expect(main.flow.paused and not player.look_captured and is_equal_approx(player.camera_yaw, yaw_pause), "pause releases the pointer and ignores look")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	main._on_look_catch(click)
+	expect(not main.flow.paused and player.look_captured, "click resumes and captures again")
+	main.flow.set_paused(false)
+	player.look_captured = true
+	var zero = main.world_sim.get_node("NPCZero")
+	player.global_position = zero.global_position + Vector3(1.1, 0, 0)
+	zero.interact(main.flow)
+	var yaw_talk: float = player.camera_yaw
+	player.push_mouse_look(Vector2(400, 0))
+	await frames(2)
+	expect(main.flow.dialogue_open and not player.input_enabled and is_equal_approx(player.camera_yaw, yaw_talk), "dialogue blocks look and movement input")
+	main.flow.close_dialogue()
+	main.queue_free()
+	await frames(2)
 
 func _movement() -> void:
 	var host := _host()
