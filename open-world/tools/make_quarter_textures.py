@@ -59,49 +59,38 @@ def dist_to_seg(px, py, ax, ay, bx, by) -> float:
 
 
 def concrete(w=1024, h=512) -> bytes:
-    cream = (232, 214, 190)
-    warm = (214, 186, 156)
-    scuff = (176, 146, 120)
-    crack = (96, 74, 60)
-    teal = (64, 158, 146)
-    rust = (186, 96, 62)
-    seams = []
-    for i in range(1, 8):
-        seams.append(i / 8.0)
+    cream = (236, 214, 186)
+    warm = (214, 176, 140)
+    scuff = (168, 122, 90)
+    ink = (42, 36, 34)
+    teal = (78, 188, 170)
+    teal_deep = (46, 140, 132)
+    rust = (176, 96, 64)
+    seams = [0.18, 0.46, 0.74]
     cracks = [
-        [(0.08, 0.15), (0.22, 0.28), (0.18, 0.46), (0.31, 0.62), (0.28, 0.84)],
-        [(0.72, 0.08), (0.66, 0.24), (0.78, 0.41), (0.71, 0.58), (0.84, 0.77)],
-        [(0.42, 0.05), (0.48, 0.2), (0.44, 0.33)],
-        [(0.9, 0.4), (0.82, 0.55), (0.91, 0.73), (0.86, 0.92)],
+        [(0.12, 0.06), (0.2, 0.14), (0.16, 0.2)],
+        [(0.78, 0.9), (0.7, 0.96)],
     ]
     buf = bytearray(w * h * 3)
     for y in range(h):
         v = y / (h - 1)
         for x in range(w):
             u = x / (w - 1)
-            n = noise(u * 18.0, v * 10.0)
-            n2 = noise(u * 50.0 + 4.0, v * 40.0)
-            col = mix(cream, warm, n * 0.65)
-            if n2 > 0.72:
-                col = mix(col, scuff, (n2 - 0.72) * 2.2)
+            n = noise(u * 14.0, v * 8.0)
+            if v < 0.16 or v > 0.9:
+                col = mix(cream, warm, n * 0.45)
+            elif v < 0.24 or v > 0.82:
+                col = mix(rust, scuff, n * 0.35)
+            else:
+                col = mix(teal, teal_deep, n * 0.35)
             for s in seams:
-                d = abs(v - s)
-                if d < 0.004:
-                    col = mix(col, crack, 0.55)
-                elif d < 0.008:
-                    col = mix(col, scuff, 0.35)
-            if 0.55 < v < 0.72 and (int(u * 18.0) % 5 == 0):
-                col = mix(col, teal, 0.55)
-            if v > 0.72:
-                band = (v - 0.72) / 0.28
-                col = mix(col, teal, 0.38 * band)
-                if hash01(x // 3, y // 2) > 0.8:
-                    col = mix(col, rust, 0.5)
+                if abs(v - s) < 0.006:
+                    col = mix(col, ink, 0.85)
             edge = min(u, 1.0 - u)
-            if edge < 0.045:
-                col = mix(col, crack, (0.045 - edge) / 0.045 * 0.55)
-            if v < 0.03 or v > 0.97:
-                col = mix(col, scuff, 0.4)
+            if edge < 0.018:
+                col = mix(col, ink, (0.018 - edge) / 0.018)
+            elif edge < 0.05:
+                col = mix(col, rust, 0.35)
             buf[(y * w + x) * 3:(y * w + x) * 3 + 3] = bytes(clamp_px(col))
     for poly in cracks:
         pts = [(p[0] * (w - 1), p[1] * (h - 1)) for p in poly]
@@ -118,7 +107,7 @@ def concrete(w=1024, h=512) -> bytes:
                     if d < 2.2:
                         i0 = (y * w + x) * 3
                         cur = (buf[i0], buf[i0 + 1], buf[i0 + 2])
-                        buf[i0:i0 + 3] = bytes(mix(cur, crack, 0.82 if d < 1.1 else 0.45))
+                        buf[i0:i0 + 3] = bytes(mix(cur, ink, 0.7 if d < 1.1 else 0.35))
     return bytes(buf)
 
 

@@ -39,7 +39,7 @@ The HQ uses one at `(-54, 0, -12)`, yaw `PI`, so the approach is from the east. 
 
 | Slot | Node | Texture |
 |---|---|---|
-| Shell | `Shell` | `concrete_albedo.png` through `cel_block.gdshader` |
+| Shell | `Shell` | `concrete_albedo.png`: warm concrete at the lip and deck, teal paint on the transition, dark seam and edge ink, light rust wear |
 | Coping | `Coping` | flat metal colour, same shader, no texture |
 | Graffiti | `GraffitiL`, `GraffitiR` | `graffiti_albedo.png` |
 
