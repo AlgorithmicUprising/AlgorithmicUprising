@@ -44,7 +44,7 @@ func _style_body() -> void:
 	label.position = Vector3(0, 2.05, 0)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.font_size = 32
-	label.pixel_size = 0.006
+	label.pixel_size = 0.0035
 	label.modulate = Color("fff8ef")
 	label.outline_size = 6
 	add_child(label)

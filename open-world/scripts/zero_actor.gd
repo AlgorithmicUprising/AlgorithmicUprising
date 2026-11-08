@@ -19,11 +19,12 @@ func _ready() -> void:
 	rig = load("res://scripts/zero_rig.gd").new()
 	add_child(rig)
 	var label := Label3D.new()
+	label.name = "NameLabel"
 	label.text = "ZERO"
 	label.position = Vector3(0, 2.05, 0)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.font_size = 48
-	label.pixel_size = 0.008
+	label.pixel_size = 0.0032
 	label.modulate = Color("fff8ef")
 	label.outline_size = 8
 	add_child(label)

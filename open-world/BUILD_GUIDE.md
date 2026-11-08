@@ -89,7 +89,7 @@ The liked sunset painting is direction for color and shape, not a measured plan 
 
 This yard is built from meshes. `shaders/cel_block.gdshader` steps the Compatibility renderer into three light bands, darkens grazing edges a little, and lets the directional shadow map cut hard shadows. It is not an ink outline and not the painted concept. The key light is warm and about 42° above the horizon so the ground stays in a lit band. The sky is a procedural sunset. Cool blocks outside the east wall are the future shopping skyline. They have no collision and no gate.
 
-What is still drawn with placeholders is listed in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). Striped quads labeled TEMP TAG are temporary geometry, not graffiti art. Zero, Fony, and the protagonist are still capsules.
+What is still drawn with placeholders is listed in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). Striped quads labeled TEMP TAG are temporary geometry, not graffiti art. Fony is the player. The mesh is capsules, spheres, and cylinders on pivots. It is not a skinned character.
 
 ### Yard size, and where gameplay changed the diagram
 
@@ -99,8 +99,8 @@ Wall centers sit on a **160 m** square (`scripts/yard.gd`, `HALF = 80`). The dia
 |---|---|
 | 200 m square | 160 m between wall centers |
 | Drainage bowl, banks about 3 m | Floor at y = −3 m, four straight bank plates |
-| Mini half-pipe, 2 m | Two facing slopes, crest 2.0 m |
-| Quarter about 2 m | Slope crest 2.2 m |
+| Mini half-pipe, 2 m | Two facing quarter-segments, radius 2.0 m, plus coping |
+| Quarter about 2 m | Five-segment quarter, radius 2.4 m, plus coping. Not a smooth curve |
 | Flat rail | 12 m straight rail, y = 1.05 m, same grind rules as before |
 | Funbox, height not fixed | 0.9 m so the current jump, about 1.1 m, can land on it |
 | Loading docks +1.2 m | 1.2 m decks plus a ride-up slope, because the jump does not clear 1.2 m by itself |
@@ -110,7 +110,7 @@ Wall centers sit on a **160 m** square (`scripts/yard.gd`, `HALF = 80`). The dia
 
 The bowl is angular plates around a sunken floor, not a smooth concrete bowl. Some bank edges overlap the yard slabs. That is visible in the high shot.
 
-Fony is the player: an articulated block rig in copper, rust, black, olive, and magenta, with the board under the feet while skating. The physics body is still a capsule, so the mesh does not catch on rails or doors. Zero, in the resistance rooms, is a separate CRT-headed rig with a lime screen and a talk pose. Both are described in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). Headless checks include skate, jump, land, respawn if y drops below −8 m, Zero’s talk pose, and the cabinet handoff. On this machine that suite ended `SUMMARY failed=0` with 144 `ok` lines.
+Fony is the player: capsules, spheres, and cylinders in copper, rust, black, olive, and magenta, with a readable face and a deck, trucks, and wheels under the feet while skating. The physics body is still a capsule, so the mesh does not catch on rails or doors. Zero, in the resistance rooms, is a separate CRT-headed rig with a lime screen and a talk pose. Both are pivot rigs, not skin-weighted meshes, and both are described in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). Headless checks include skate, jump, land, respawn if y drops below −8 m, Zero’s talk pose, and the cabinet handoff. On this machine that suite ended `SUMMARY failed=0` with 144 `ok` lines.
 
 ## 4. Module and scene map
 
@@ -127,7 +127,7 @@ District geometry is built in code by `scripts/hq_main.gd` so collisions stay in
 | `scripts/player_controller.gd` | Walk, skate, jump, camera, grind |
 | `scripts/hq_flow.gd` | Dialogue, pause, session handoff, save |
 | `scripts/yard.gd` | 160 m yard: walls, bowl, warehouse, rooms, skate obstacles |
-| `scripts/world_blocks.gd` | Cel boxes, labels, slope banks |
+| `scripts/world_blocks.gd` | Cel boxes, labels, slope banks, five-segment quarters |
 | `shaders/cel_block.gdshader` | Three-band Compatibility lighting |
 | `design/hq_yard_map_v1.svg` | Proposed layout diagram. Not packed |
 | `ASSET_MANIFEST.md` | What is modeled, and what original art is still missing |
@@ -301,7 +301,7 @@ Merging this visual branch would replace that HQ with the 160 m yard. Leave the 
 
 ## 12. Limitations
 
-- The protagonist is an unnamed capsule. Zero and Fony are colored capsules with labels. See `ASSET_MANIFEST.md`.
+- Fony is the player and Zero is the NPC. Both are pivot rigs of capsules, spheres, and cylinders, not skin-weighted meshes. See `ASSET_MANIFEST.md`.
 - The cel shader is three light bands plus a little edge darkening. It is not an ink contour and not the painted concept. Shadows are one directional map. On llvmpipe they are visible and not a measured sharpness.
 - The bowl is four flat banks around a floor at −3 m. The plates overlap the yard and do not form a smooth concrete bowl.
 - One straight grind rail. Leaving the end shoves the body forward. There is no grind trick.

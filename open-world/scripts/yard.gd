@@ -108,6 +108,8 @@ static func _workshop(parent: Node) -> void:
 	for i in 5:
 		Blocks.solid(parent, "Battery%d" % i, Vector3(-70.0 + float(i) * 4.2, 0.45, -70), Vector3(2.4, 0.9, 1.4), Color("2bd67b"))
 	Blocks.solid(parent, "WorkBench", Vector3(-48, 0.55, -70), Vector3(6, 1.1, 1.6), Color("5c4034"))
+	for i in 8:
+		Blocks.visual(parent, "ContainerRib%d" % i, Vector3(-71.0 + float(i) * 3.8, 2.6, -51.55), Vector3(0.16, 4.8, 0.06), Color("7a3424"))
 	Blocks.label(parent, "WORKSHOP", Vector3(-57, 5.8, -58), Palette.LABEL, 48)
 
 static func _rooms(parent: Node) -> void:
@@ -133,7 +135,9 @@ static func _warehouse(parent: Node) -> void:
 	parent.add_child(solar)
 	for row in 4:
 		for col in 7:
-			Blocks.visual(solar, "Cell%d_%d" % [row, col], Vector3(18.0 + float(col) * 7.0, 9.45, -40.0 + float(row) * 6.5), Vector3(5.5, 0.18, 4.2), Palette.SOLAR_CELL)
+			var cell := Blocks.visual(solar, "Cell%d_%d" % [row, col], Vector3(18.0 + float(col) * 7.0, 9.55, -40.0 + float(row) * 6.5), Vector3(5.2, 0.12, 3.6), Palette.SOLAR_CELL)
+			cell.rotation.x = -0.22
+	Blocks.visual(parent, "RoofCoping", Vector3(39, 9.45, -7.6), Vector3(62, 0.22, 0.35), Color("241c18"))
 	Blocks.add_slope(parent, "RoofStair", Vector3(74, 0.08, -6), Vector3(74, 9.1, -34), 4.0, Palette.RAMP)
 	Blocks.solid(parent, "RoofRail", Vector3(76.2, 1.2, -20), Vector3(0.2, 0.9, 22), Palette.RAIL)
 	var cabinet = load("res://scenes/cabinet.tscn").instantiate()
@@ -153,10 +157,12 @@ static func _docks(parent: Node) -> void:
 	Blocks.label(parent, "DOCKS +1.2m", Vector3(2, 2.4, -20), Palette.LABEL, 28)
 
 static func _skate(parent: Node) -> void:
-	Blocks.add_slope(parent, "SkateQuarter", Vector3(-58, 0.08, -12), Vector3(-70, 2.2, -12), 8.0, Palette.RAMP)
+	Blocks.add_quarter(parent, "SkateQuarter", Vector3(-54, 0, -12), PI, 2.4, 7.0, Palette.RAMP)
 	Blocks.solid(parent, "Funbox", Vector3(-48, 0.45, -2), Vector3(4.2, 0.9, 4.2), Palette.FUNBOX)
-	Blocks.add_slope(parent, "HalfPipeWest", Vector3(-52, 0.08, -30), Vector3(-60, 2.0, -30), 8.0, Palette.RAMP)
-	Blocks.add_slope(parent, "HalfPipeEast", Vector3(-44, 0.08, -30), Vector3(-36, 2.0, -30), 8.0, Palette.RAMP)
+	Blocks.add_quarter(parent, "HalfPipeWest", Vector3(-50, 0, -30), PI, 2.0, 6.5, Palette.RAMP)
+	Blocks.add_quarter(parent, "HalfPipeEast", Vector3(-44, 0, -30), 0.0, 2.0, 6.5, Palette.RAMP)
+	for i in 4:
+		Blocks.visual(parent, "SkateLane%d" % i, Vector3(-46, 0.03, -18.0 + float(i) * 8.0), Vector3(22, 0.02, 0.7), Color("8d5a48"))
 	var rail = load("res://scenes/grind_rail.tscn").instantiate()
 	rail.name = "GrindRail"
 	rail.length = 12.0

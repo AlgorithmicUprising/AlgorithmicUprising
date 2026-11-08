@@ -112,6 +112,47 @@ static func add_slope(parent: Node, node_name: String, low: Vector3, high: Vecto
 	parent.add_child(body)
 	return body
 
+static func add_quarter(parent: Node, node_name: String, origin: Vector3, yaw: float, radius: float, width: float, color: Color) -> Node3D:
+	var root := Node3D.new()
+	root.name = node_name
+	root.position = origin
+	root.rotation.y = yaw
+	parent.add_child(root)
+	var steps := 5
+	for i in steps:
+		var t0 := float(i) / float(steps)
+		var t1 := float(i + 1) / float(steps)
+		var ang := (t0 + t1) * 0.5 * PI * 0.5
+		var pos := Vector3(radius * (1.0 - cos(ang)), radius * sin(ang), 0.0)
+		var body := StaticBody3D.new()
+		body.position = pos
+		body.rotation.z = ang
+		var seg := radius * (PI * 0.5) / float(steps) * 1.2
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(seg, 0.2, width)
+		var inst := MeshInstance3D.new()
+		inst.mesh = mesh
+		inst.material_override = cel(color, 3.0, 0.4)
+		body.add_child(inst)
+		var shape := BoxShape3D.new()
+		shape.size = mesh.size
+		var col := CollisionShape3D.new()
+		col.shape = shape
+		body.add_child(col)
+		root.add_child(body)
+	var lip := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.07
+	cyl.bottom_radius = 0.07
+	cyl.height = width
+	cyl.radial_segments = 8
+	lip.mesh = cyl
+	lip.position = Vector3(radius * 0.98, radius * 0.98, 0)
+	lip.rotation.x = PI * 0.5
+	lip.material_override = cel(Color("e7e2da"), 2.0, 0.05)
+	root.add_child(lip)
+	return root
+
 static func add_ramp(parent: Node, node_name: String, at: Vector3) -> StaticBody3D:
 	# `at` is the low end on the ground. The wedge climbs toward -Z.
 	var length := 6.0

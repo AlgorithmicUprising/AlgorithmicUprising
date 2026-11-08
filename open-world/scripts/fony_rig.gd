@@ -57,10 +57,10 @@ func _skate(swing: float) -> void:
 	arm_r.rotation = Vector3(0.2, 0.0, -0.7 - swing * 0.15)
 	fore_l.rotation.x = -0.6
 	fore_r.rotation.x = -0.6
-	leg_l.rotation.x = 0.55
-	leg_r.rotation.x = 0.5
-	shin_l.rotation.x = -1.05
-	shin_r.rotation.x = -0.95
+	leg_l.rotation.x = 0.42
+	leg_r.rotation.x = 0.36
+	shin_l.rotation.x = -0.62
+	shin_r.rotation.x = -0.5
 
 func _walk(swing: float) -> void:
 	pose_name = "walk"
@@ -117,7 +117,7 @@ func _idle() -> void:
 func _place_board(under_feet: bool) -> void:
 	board.visible = true
 	if under_feet:
-		board.position = Vector3(0.0, 0.06, 0.05)
+		board.position = Vector3(0.0, 0.045, 0.0)
 		board.rotation = Vector3(0.0, 0.0, 0.0)
 	else:
 		board.position = Vector3(0.34, 1.05, 0.02)
@@ -132,41 +132,54 @@ func _build() -> void:
 	var pads := Color("e23d78")
 	var shoes := Color("8a7564")
 	hips = Parts.pivot(self, "Hips", Vector3(0, 0.92, 0))
-	chest = Parts.pivot(hips, "Chest", Vector3(0, 0.16, 0))
-	Parts.box(chest, "Hoodie", Vector3(0.34, 0.28, 0.18), hoodie, Vector3(0, 0.16, 0.01))
-	Parts.box(chest, "Jacket", Vector3(0.42, 0.32, 0.22), jacket, Vector3(0, 0.18, 0))
-	Parts.box(chest, "Patch", Vector3(0.08, 0.07, 0.03), Color("6a727a"), Vector3(0.12, 0.22, 0.12))
-	Parts.box(chest, "Tape", Vector3(0.06, 0.05, 0.03), pads, Vector3(-0.12, 0.12, 0.12))
-	head = Parts.pivot(chest, "Head", Vector3(0, 0.34, 0))
-	Parts.box(head, "Face", Vector3(0.18, 0.2, 0.16), skin, Vector3(0, 0.08, 0.02))
-	Parts.box(head, "Hair", Vector3(0.22, 0.12, 0.2), hair, Vector3(0, 0.18, -0.01))
-	Parts.box(head, "Tuft", Vector3(0.1, 0.1, 0.1), hair, Vector3(0.06, 0.24, 0.04))
-	Parts.box(head, "Hood", Vector3(0.24, 0.16, 0.18), hoodie, Vector3(0, 0.12, -0.04))
-	arm_l = Parts.pivot(chest, "ArmL", Vector3(-0.24, 0.26, 0))
-	fore_l = Parts.pivot(arm_l, "ForeL", Vector3(0, -0.22, 0))
-	Parts.box(arm_l, "SleeveL", Vector3(0.1, 0.24, 0.1), jacket, Vector3(0, -0.1, 0))
-	Parts.box(fore_l, "HandL", Vector3(0.08, 0.2, 0.08), skin, Vector3(0, -0.1, 0))
-	arm_r = Parts.pivot(chest, "ArmR", Vector3(0.24, 0.26, 0))
-	fore_r = Parts.pivot(arm_r, "ForeR", Vector3(0, -0.22, 0))
-	Parts.box(arm_r, "SleeveR", Vector3(0.1, 0.24, 0.1), jacket, Vector3(0, -0.1, 0))
-	Parts.box(fore_r, "HandR", Vector3(0.08, 0.2, 0.08), skin, Vector3(0, -0.1, 0))
-	leg_l = Parts.pivot(hips, "LegL", Vector3(-0.1, -0.02, 0))
-	shin_l = Parts.pivot(leg_l, "ShinL", Vector3(0, -0.36, 0))
-	Parts.box(leg_l, "ThighL", Vector3(0.12, 0.36, 0.12), pants, Vector3(0, -0.18, 0))
-	Parts.box(shin_l, "ShinMeshL", Vector3(0.1, 0.32, 0.1), pants, Vector3(0, -0.16, 0))
-	Parts.box(shin_l, "PadL", Vector3(0.12, 0.1, 0.08), pads, Vector3(0, -0.08, 0.06))
-	Parts.box(shin_l, "ShoeL", Vector3(0.1, 0.08, 0.2), shoes, Vector3(0, -0.34, 0.04))
-	leg_r = Parts.pivot(hips, "LegR", Vector3(0.1, -0.02, 0))
-	shin_r = Parts.pivot(leg_r, "ShinR", Vector3(0, -0.36, 0))
-	Parts.box(leg_r, "ThighR", Vector3(0.12, 0.36, 0.12), pants, Vector3(0, -0.18, 0))
-	Parts.box(shin_r, "ShinMeshR", Vector3(0.1, 0.32, 0.1), pants, Vector3(0, -0.16, 0))
-	Parts.box(shin_r, "PadR", Vector3(0.12, 0.1, 0.08), pads, Vector3(0, -0.08, 0.06))
-	Parts.box(shin_r, "ShoeR", Vector3(0.1, 0.08, 0.2), shoes, Vector3(0, -0.34, 0.04))
-	board = Parts.pivot(self, "Deck", Vector3(0, 0.06, 0.05))
-	Parts.box(board, "DeckWood", Vector3(0.22, 0.04, 0.72), Color("3a2a22"), Vector3(0, 0, 0))
-	Parts.box(board, "Grip", Vector3(0.2, 0.015, 0.5), Color("2a2a28"), Vector3(0, 0.025, 0))
+	chest = Parts.pivot(hips, "Chest", Vector3(0, 0.18, 0))
+	Parts.capsule(chest, "Hoodie", 0.1, 0.46, hoodie, Vector3(0, 0.02, 0.02))
+	Parts.capsule(chest, "Jacket", 0.15, 0.56, jacket, Vector3(0, 0.02, 0))
+	Parts.sphere(chest, "ShoulderL", 0.08, jacket, Vector3(-0.2, 0.22, 0))
+	Parts.sphere(chest, "ShoulderR", 0.08, jacket, Vector3(0.2, 0.22, 0))
+	Parts.box(chest, "Patch", Vector3(0.07, 0.06, 0.025), Color("6a727a"), Vector3(0.1, 0.24, -0.14))
+	Parts.box(chest, "Tape", Vector3(0.05, 0.045, 0.025), pads, Vector3(-0.1, 0.12, -0.14))
+	head = Parts.pivot(chest, "Head", Vector3(0, 0.36, 0))
+	Parts.sphere(head, "Face", 0.09, skin, Vector3(0, 0.05, -0.04))
+	Parts.sphere(head, "Nose", 0.022, skin, Vector3(0, 0.04, -0.13))
+	Parts.sphere(head, "EyeL", 0.024, Color("2a211c"), Vector3(-0.038, 0.08, -0.125))
+	Parts.sphere(head, "EyeR", 0.024, Color("2a211c"), Vector3(0.038, 0.08, -0.125))
+	Parts.capsule(head, "Mouth", 0.012, 0.05, Color("a56858"), Vector3(0, 0.0, -0.13), Vector3(0, 0, PI * 0.5))
+	Parts.sphere(head, "Hair", 0.1, hair, Vector3(0, 0.14, 0.05))
+	Parts.sphere(head, "Tuft", 0.055, hair, Vector3(0.06, 0.18, 0.0))
+	Parts.sphere(head, "TuftSide", 0.05, hair, Vector3(-0.07, 0.13, 0.02))
+	Parts.sphere(head, "Hood", 0.08, hoodie, Vector3(0, 0.08, 0.08))
+	arm_l = Parts.pivot(chest, "ArmL", Vector3(-0.26, 0.22, 0))
+	fore_l = Parts.pivot(arm_l, "ForeL", Vector3(0, -0.28, 0))
+	Parts.capsule(arm_l, "SleeveL", 0.065, 0.28, jacket, Vector3(0, -0.12, 0))
+	Parts.capsule(fore_l, "ForearmL", 0.05, 0.24, jacket, Vector3(0, -0.1, 0))
+	Parts.sphere(fore_l, "HandL", 0.048, skin, Vector3(0, -0.22, 0))
+	arm_r = Parts.pivot(chest, "ArmR", Vector3(0.26, 0.22, 0))
+	fore_r = Parts.pivot(arm_r, "ForeR", Vector3(0, -0.28, 0))
+	Parts.capsule(arm_r, "SleeveR", 0.065, 0.28, jacket, Vector3(0, -0.12, 0))
+	Parts.capsule(fore_r, "ForearmR", 0.05, 0.24, jacket, Vector3(0, -0.1, 0))
+	Parts.sphere(fore_r, "HandR", 0.048, skin, Vector3(0, -0.22, 0))
+	leg_l = Parts.pivot(hips, "LegL", Vector3(-0.09, -0.02, 0))
+	shin_l = Parts.pivot(leg_l, "ShinL", Vector3(0, -0.46, 0))
+	Parts.capsule(leg_l, "ThighL", 0.065, 0.48, pants, Vector3(0, -0.18, 0))
+	Parts.capsule(shin_l, "ShinMeshL", 0.05, 0.34, pants, Vector3(0, -0.14, 0))
+	Parts.sphere(shin_l, "PadL", 0.06, pads, Vector3(0, -0.02, -0.05))
+	Parts.capsule(shin_l, "ShoeL", 0.05, 0.26, shoes, Vector3(0, -0.32, -0.06), Vector3(PI * 0.5, 0, 0))
+	leg_r = Parts.pivot(hips, "LegR", Vector3(0.09, -0.02, 0))
+	shin_r = Parts.pivot(leg_r, "ShinR", Vector3(0, -0.46, 0))
+	Parts.capsule(leg_r, "ThighR", 0.065, 0.48, pants, Vector3(0, -0.18, 0))
+	Parts.capsule(shin_r, "ShinMeshR", 0.05, 0.34, pants, Vector3(0, -0.14, 0))
+	Parts.sphere(shin_r, "PadR", 0.06, pads, Vector3(0, -0.02, -0.05))
+	Parts.capsule(shin_r, "ShoeR", 0.05, 0.26, shoes, Vector3(0, -0.32, -0.06), Vector3(PI * 0.5, 0, 0))
+	board = Parts.pivot(self, "Deck", Vector3(0, 0.05, 0.08))
+	Parts.box(board, "DeckWood", Vector3(0.32, 0.04, 0.92), Color("4a3428"), Vector3(0, 0.03, 0))
+	Parts.box(board, "Nose", Vector3(0.3, 0.03, 0.12), Color("c46a32"), Vector3(0, 0.045, 0.38))
+	Parts.box(board, "Tail", Vector3(0.3, 0.03, 0.12), Color("c46a32"), Vector3(0, 0.045, -0.38))
+	Parts.box(board, "Grip", Vector3(0.26, 0.012, 0.62), Color("2c2a28"), Vector3(0, 0.055, 0))
+	Parts.box(board, "TruckF", Vector3(0.2, 0.03, 0.06), Color("c8c2b8"), Vector3(0, 0.0, 0.24))
+	Parts.box(board, "TruckB", Vector3(0.2, 0.03, 0.06), Color("c8c2b8"), Vector3(0, 0.0, -0.24))
 	for side in [-1.0, 1.0]:
-		for axle in [-0.22, 0.22]:
-			Parts.box(board, "Wheel", Vector3(0.06, 0.06, 0.06), Color("d8d2c8"), Vector3(side * 0.12, -0.04, axle))
+		for axle in [-0.24, 0.24]:
+			Parts.cylinder(board, "Wheel", 0.045, 0.05, Color("ece7df"), Vector3(side * 0.16, -0.02, axle), Vector3(0, 0, PI * 0.5))
 	_idle()
 	_place_board(true)

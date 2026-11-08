@@ -26,7 +26,7 @@ func _ready() -> void:
 	player = load("res://scenes/player.tscn").instantiate()
 	player.name = "Player"
 	player.position = Vector3(-42.0, 0.5, 2.0)
-	player.rotation.y = -0.85
+	player.rotation.y = 1.05
 	world_sim.add_child(player)
 	var session = load("res://scenes/session_overlay.tscn").instantiate()
 	add_child(session)
