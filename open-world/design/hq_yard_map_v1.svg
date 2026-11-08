@@ -1,0 +1,290 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1280" viewBox="0 0 1720 1280" font-family="DejaVu Sans, Arial, sans-serif">
+<defs>
+<pattern id="solar" width="12" height="8" patternUnits="userSpaceOnUse"><rect width="12" height="8" fill="#1d3557"/><rect x="1" y="1" width="10" height="6" fill="#2f6db5"/></pattern>
+<pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="#3a3330"/><line x1="0" y1="0" x2="0" y2="10" stroke="#4d4440" stroke-width="4"/></pattern>
+<pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#16222e"/><path d="M16 0H0V16" fill="none" stroke="#22374a" stroke-width="1"/></pattern>
+<marker id="arr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L10,5L0,10z" fill="#ff2fb3"/></marker>
+<marker id="arrc" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#39f2ff"/></marker>
+<marker id="arry" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#ffd23f"/></marker>
+</defs>
+<rect width="1720" height="1280" fill="#0e0b14"/>
+<text x="40" y="52" font-size="34" font-weight="bold" fill="#ffd23f">THE YARD — Resistance HQ Section</text>
+<text x="40" y="84" font-size="17" fill="#f2e9e4">Algorithmic Uprising open world · annotated top-down layout · <tspan fill="#ff2fb3" font-weight="bold">CONCEPT v1 — PROPOSED, not the deployed build</tspan></text>
+<text x="40" y="108" font-size="14" fill="#9a8fa8">Reclaimed industrial yard · proposed 200 m × 200 m footprint (scale not final) · HQ = the single-access exception</text>
+<rect x="1116" y="130" width="574" height="1130" rx="10" fill="#17121e" stroke="#3a2f48"/>
+<rect x="22" y="128" width="96" height="1024" fill="url(#hatch)" stroke="none" stroke-width="0" rx="0" />
+<rect x="34" y="160" width="72" height="120" fill="#4a3b33" stroke="#6b5446" stroke-width="1" rx="0" />
+<rect x="34" y="320" width="72" height="120" fill="#4a3b33" stroke="#6b5446" stroke-width="1" rx="0" />
+<rect x="34" y="480" width="72" height="120" fill="#4a3b33" stroke="#6b5446" stroke-width="1" rx="0" />
+<rect x="34" y="640" width="72" height="120" fill="#4a3b33" stroke="#6b5446" stroke-width="1" rx="0" />
+<rect x="34" y="800" width="72" height="120" fill="#4a3b33" stroke="#6b5446" stroke-width="1" rx="0" />
+<rect x="34" y="960" width="72" height="120" fill="#4a3b33" stroke="#6b5446" stroke-width="1" rx="0" />
+<text x="70" y="640" font-size="13" fill="#d9a679" text-anchor="middle" font-weight="bold" transform="rotate(-90 70 640)">WEST: NEGLECTED FACTORIES (future section · TBD)</text>
+<rect x="982" y="128" width="120" height="1024" fill="url(#grid)" stroke="none" stroke-width="0" rx="0" />
+<rect x="998" y="160" width="88" height="104" fill="#10324a" stroke="#39f2ff" stroke-width="1.5" rx="3" />
+<rect x="998" y="296" width="88" height="104" fill="#10324a" stroke="#39f2ff" stroke-width="1.5" rx="3" />
+<rect x="998" y="432" width="88" height="104" fill="#10324a" stroke="#39f2ff" stroke-width="1.5" rx="3" />
+<rect x="998" y="568" width="88" height="104" fill="#10324a" stroke="#39f2ff" stroke-width="1.5" rx="3" />
+<rect x="998" y="704" width="88" height="104" fill="#10324a" stroke="#39f2ff" stroke-width="1.5" rx="3" />
+<rect x="998" y="840" width="88" height="104" fill="#10324a" stroke="#39f2ff" stroke-width="1.5" rx="3" />
+<rect x="998" y="976" width="88" height="104" fill="#10324a" stroke="#39f2ff" stroke-width="1.5" rx="3" />
+<text x="1042" y="640" font-size="13" fill="#39f2ff" text-anchor="middle" font-weight="bold" transform="rotate(90 1042 640)">EAST: CORPORATE SHOPPING DISTRICT (future section · TBD)</text>
+<rect x="22" y="128" width="1080" height="80" fill="#1f1b22" stroke="none" stroke-width="0" rx="0" />
+<line x1="30" y1="152" x2="30" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="54" y1="152" x2="54" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="78" y1="152" x2="78" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="102" y1="152" x2="102" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="126" y1="152" x2="126" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="150" y1="152" x2="150" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="174" y1="152" x2="174" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="198" y1="152" x2="198" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="222" y1="152" x2="222" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="246" y1="152" x2="246" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="270" y1="152" x2="270" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="294" y1="152" x2="294" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="318" y1="152" x2="318" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="342" y1="152" x2="342" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="366" y1="152" x2="366" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="390" y1="152" x2="390" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="414" y1="152" x2="414" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="438" y1="152" x2="438" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="462" y1="152" x2="462" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="486" y1="152" x2="486" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="510" y1="152" x2="510" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="534" y1="152" x2="534" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="558" y1="152" x2="558" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="582" y1="152" x2="582" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="606" y1="152" x2="606" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="630" y1="152" x2="630" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="654" y1="152" x2="654" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="678" y1="152" x2="678" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="702" y1="152" x2="702" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="726" y1="152" x2="726" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="750" y1="152" x2="750" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="774" y1="152" x2="774" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="798" y1="152" x2="798" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="822" y1="152" x2="822" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="846" y1="152" x2="846" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="870" y1="152" x2="870" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="894" y1="152" x2="894" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="918" y1="152" x2="918" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="942" y1="152" x2="942" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="966" y1="152" x2="966" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="990" y1="152" x2="990" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="1014" y1="152" x2="1014" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="1038" y1="152" x2="1038" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="1062" y1="152" x2="1062" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="1086" y1="152" x2="1086" y2="184" stroke="#4b4250" stroke-width="2"/>
+<line x1="22" y1="160" x2="1102" y2="160" stroke="#8a7f8f" stroke-width="2"/><line x1="22" y1="176" x2="1102" y2="176" stroke="#8a7f8f" stroke-width="2"/>
+<text x="550" y="146.0" font-size="12" fill="#c9bfd0" text-anchor="middle" font-weight="bold" >NORTH: ELEVATED RAIL CUT — no access into HQ (future section · TBD)</text>
+<rect x="22" y="1072" width="1080" height="80" fill="#24202a" stroke="none" stroke-width="0" rx="0" />
+<rect x="30" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="78" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="126" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="174" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="222" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="270" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="318" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="366" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="414" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="462" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="510" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="558" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="606" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="654" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="702" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="750" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="798" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="846" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="894" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="942" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="990" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="1038" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<rect x="1086" y="1110.0" width="24" height="4" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<text x="390" y="1096" font-size="12" fill="#f2e9e4" text-anchor="middle" font-weight="bold" >SOUTH: RUST AVENUE (public street → connects to all neighboring sections)</text>
+<rect x="150" y="240" width="800" height="800" fill="#2b2420" stroke="none" stroke-width="0" rx="0" />
+<line x1="150" y1="240" x2="950" y2="240" stroke="#120d10" stroke-width="9" stroke-linecap="square" />
+<line x1="150" y1="240" x2="950" y2="240" stroke="#ff6b35" stroke-width="4" stroke-linecap="square" stroke-dasharray="14 5"/>
+<line x1="950" y1="240" x2="950" y2="1040" stroke="#120d10" stroke-width="9" stroke-linecap="square" />
+<line x1="950" y1="240" x2="950" y2="1040" stroke="#ff6b35" stroke-width="4" stroke-linecap="square" stroke-dasharray="14 5"/>
+<line x1="150" y1="240" x2="150" y2="1040" stroke="#120d10" stroke-width="9" stroke-linecap="square" />
+<line x1="150" y1="240" x2="150" y2="1040" stroke="#ff6b35" stroke-width="4" stroke-linecap="square" stroke-dasharray="14 5"/>
+<line x1="150" y1="1040" x2="790" y2="1040" stroke="#120d10" stroke-width="9" stroke-linecap="square" />
+<line x1="150" y1="1040" x2="790" y2="1040" stroke="#ff6b35" stroke-width="4" stroke-linecap="square" stroke-dasharray="14 5"/>
+<line x1="854" y1="1040" x2="950" y2="1040" stroke="#120d10" stroke-width="9" stroke-linecap="square" />
+<line x1="854" y1="1040" x2="950" y2="1040" stroke="#ff6b35" stroke-width="4" stroke-linecap="square" stroke-dasharray="14 5"/>
+<rect x="190" y="280" width="240" height="168" fill="#4a3a2e" stroke="#ffb347" stroke-width="2" rx="4" />
+<text x="310" y="336" font-size="14" fill="#ffd8a8" text-anchor="middle" font-weight="bold" >WORKSHOP &amp;</text>
+<text x="310" y="368" font-size="14" fill="#ffd8a8" text-anchor="middle" font-weight="bold" >BATTERY ROOM</text>
+<text x="310" y="404" font-size="11" fill="#e8cfb5" text-anchor="middle" >repairs · board shop · power bank</text>
+<rect x="210" y="416" width="28" height="20" fill="#2bd67b" stroke="#0b3" stroke-width="1" rx="0" />
+<rect x="250" y="416" width="28" height="20" fill="#2bd67b" stroke="#0b3" stroke-width="1" rx="0" />
+<rect x="290" y="416" width="28" height="20" fill="#2bd67b" stroke="#0b3" stroke-width="1" rx="0" />
+<rect x="330" y="416" width="28" height="20" fill="#2bd67b" stroke="#0b3" stroke-width="1" rx="0" />
+<rect x="370" y="416" width="28" height="20" fill="#2bd67b" stroke="#0b3" stroke-width="1" rx="0" />
+<rect x="486" y="280" width="416" height="160" fill="#3b2d3d" stroke="#ff2fb3" stroke-width="2.5" rx="4" />
+<text x="694" y="328" font-size="15" fill="#ffb3e6" text-anchor="middle" font-weight="bold" >RESISTANCE ROOMS (private)</text>
+<text x="694" y="364" font-size="11" fill="#f0d6ea" text-anchor="middle" >Zero's command room · Fony's comms lab · bunks · kitchen</text>
+<text x="694" y="400" font-size="11" fill="#f0d6ea" text-anchor="middle" font-style="italic">warm lights, salvaged furniture — the home worth defending</text>
+<rect x="486" y="464" width="416" height="248" fill="url(#solar)" stroke="#ffd23f" stroke-width="3" rx="2" />
+<rect x="518" y="512" width="352" height="160" fill="#2a1f33" stroke="#ffd23f" stroke-width="1.5" rx="3" opacity="0.92"/>
+<text x="694" y="560" font-size="17" fill="#ffd23f" text-anchor="middle" font-weight="bold" >SOLAR WAREHOUSE ARCADE</text>
+<text x="694" y="600" font-size="11" fill="#fff3c4" text-anchor="middle" >public front · retro cabinets · neighborhood hangout</text>
+<text x="694" y="636" font-size="11" fill="#9cc8ff" text-anchor="middle" >roof = solar array (blue)</text>
+<rect x="678" y="438.0" width="32" height="28" fill="#ff2fb3" stroke="none" stroke-width="0" rx="0" />
+<text x="734" y="458.0" font-size="10" fill="#ff9ad8" text-anchor="start" >staff-only door</text>
+<rect x="654" y="706.0" width="80" height="12" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<text x="694" y="740" font-size="10.5" fill="#ffd23f" text-anchor="middle" >ARCADE DOORS (building entrance, inside the yard)</text>
+<rect x="910" y="464" width="32" height="88" fill="#5a4a66" stroke="#c9a0ff" stroke-width="1.5" rx="0" />
+<line x1="910" y1="472.0" x2="942" y2="472.0" stroke="#c9a0ff" stroke-width="1" stroke-linecap="square" />
+<line x1="910" y1="485.6" x2="942" y2="485.6" stroke="#c9a0ff" stroke-width="1" stroke-linecap="square" />
+<line x1="910" y1="499.2" x2="942" y2="499.2" stroke="#c9a0ff" stroke-width="1" stroke-linecap="square" />
+<line x1="910" y1="512.8" x2="942" y2="512.8" stroke="#c9a0ff" stroke-width="1" stroke-linecap="square" />
+<line x1="910" y1="526.4" x2="942" y2="526.4" stroke="#c9a0ff" stroke-width="1" stroke-linecap="square" />
+<line x1="910" y1="540.0" x2="942" y2="540.0" stroke="#c9a0ff" stroke-width="1" stroke-linecap="square" />
+<text x="926" y="576" font-size="10" fill="#c9a0ff" text-anchor="middle" font-weight="bold" >ROOF</text>
+<text x="926" y="596" font-size="10" fill="#c9a0ff" text-anchor="middle" font-weight="bold" >STAIR</text>
+<text x="926" y="616" font-size="9" fill="#c9a0ff" text-anchor="middle" >(internal)</text>
+<rect x="430" y="472" width="56" height="232" fill="#5b4a40" stroke="#e9c46a" stroke-width="1.5" rx="0" />
+<rect x="434" y="484" width="48" height="28" fill="#3a2f29" stroke="#e9c46a" stroke-width="1" rx="0" />
+<rect x="434" y="528" width="48" height="28" fill="#3a2f29" stroke="#e9c46a" stroke-width="1" rx="0" />
+<rect x="434" y="572" width="48" height="28" fill="#3a2f29" stroke="#e9c46a" stroke-width="1" rx="0" />
+<rect x="434" y="616" width="48" height="28" fill="#3a2f29" stroke="#e9c46a" stroke-width="1" rx="0" />
+<rect x="434" y="660" width="48" height="28" fill="#3a2f29" stroke="#e9c46a" stroke-width="1" rx="0" />
+<text x="458" y="732" font-size="11" fill="#e9c46a" text-anchor="middle" font-weight="bold" >LOADING DOCKS</text>
+<text x="458" y="752" font-size="9.5" fill="#e9c46a" text-anchor="middle" >+1.2 m ledges / gaps</text>
+<rect x="190" y="480" width="208" height="248" fill="#3d3a3a" stroke="#39f2ff" stroke-width="1.5" rx="6" />
+<text x="294" y="512" font-size="14" fill="#39f2ff" text-anchor="middle" font-weight="bold" >SKATE YARD</text>
+<path d="M206 544 h56 v40 h-56z" fill="#6c757d" stroke="#fff" stroke-width="1"/>
+<text x="234" y="572" font-size="9" fill="#fff" text-anchor="middle" >quarter</text>
+<path d="M318 544 h64 v56 h-64z" fill="#6c757d" stroke="#fff" stroke-width="1"/>
+<text x="350" y="576" font-size="9" fill="#fff" text-anchor="middle" >funbox</text>
+<rect x="206" y="624" width="176" height="40" fill="#7d6b5d" stroke="#fff" stroke-width="1" rx="20" />
+<text x="294" y="650.0" font-size="9.5" fill="#fff" text-anchor="middle" >mini half-pipe (2 m)</text>
+<line x1="214" y1="696" x2="374" y2="696" stroke="#ff2fb3" stroke-width="3" stroke-linecap="square" />
+<text x="294" y="716" font-size="9" fill="#ff9ad8" text-anchor="middle" >flat rail</text>
+<path d="M166 768 C 310 800, 310 980, 590 992" fill="none" stroke="#1b3a4b" stroke-width="48" stroke-linecap="round"/>
+<path d="M166 768 C 310 800, 310 980, 590 992" fill="none" stroke="#3f7f9b" stroke-width="2" stroke-dasharray="6 6"/>
+<text x="270" y="888" font-size="12" fill="#8fd3f0" text-anchor="middle" font-weight="bold" >DRAINAGE CHANNEL</text>
+<text x="270" y="912" font-size="10" fill="#8fd3f0" text-anchor="middle" >dry bowl, −3 m banks</text>
+<rect x="630" y="752" width="64" height="56" fill="#5c5450" stroke="#fff" stroke-width="1" rx="0" />
+<line x1="630" y1="758.0" x2="694" y2="758.0" stroke="#aaa" stroke-width="1" stroke-linecap="square" />
+<line x1="630" y1="766.0" x2="694" y2="766.0" stroke="#aaa" stroke-width="1" stroke-linecap="square" />
+<line x1="630" y1="774.0" x2="694" y2="774.0" stroke="#aaa" stroke-width="1" stroke-linecap="square" />
+<line x1="630" y1="782.0" x2="694" y2="782.0" stroke="#aaa" stroke-width="1" stroke-linecap="square" />
+<line x1="630" y1="790.0" x2="694" y2="790.0" stroke="#aaa" stroke-width="1" stroke-linecap="square" />
+<line x1="630" y1="798.0" x2="694" y2="798.0" stroke="#aaa" stroke-width="1" stroke-linecap="square" />
+<line x1="630" y1="806.0" x2="694" y2="806.0" stroke="#aaa" stroke-width="1" stroke-linecap="square" />
+<line x1="622" y1="752" x2="622" y2="808" stroke="#ff2fb3" stroke-width="3" stroke-linecap="square" />
+<text x="662" y="828" font-size="9.5" fill="#fff" text-anchor="middle" >STAIR SET 7 + handrail</text>
+<rect x="550" y="840" width="184" height="120" fill="#4a3c32" stroke="#ffb347" stroke-width="1.5" rx="8" />
+<text x="642" y="884" font-size="12" fill="#ffd8a8" text-anchor="middle" font-weight="bold" >HANGOUT PLAZA</text>
+<text x="642" y="912" font-size="9.5" fill="#ffd8a8" text-anchor="middle" >food cart · murals · benches</text>
+<rect x="758" y="896" width="160" height="128" fill="#3b2f2a" stroke="#ff6b35" stroke-width="2" rx="4" />
+<text x="838" y="936" font-size="12" fill="#ffb08a" text-anchor="middle" font-weight="bold" >GATE YARD</text>
+<text x="838" y="964" font-size="9.5" fill="#ffb08a" text-anchor="middle" >lookout · drone net</text>
+<rect x="926" y="752" width="16" height="24" fill="#8a3b2f" stroke="#d76b4f" stroke-width="1" rx="0" />
+<rect x="926" y="784" width="16" height="24" fill="#8a3b2f" stroke="#d76b4f" stroke-width="1" rx="0" />
+<rect x="926" y="816" width="16" height="24" fill="#8a3b2f" stroke="#d76b4f" stroke-width="1" rx="0" />
+<rect x="926" y="848" width="16" height="24" fill="#8a3b2f" stroke="#d76b4f" stroke-width="1" rx="0" />
+<text x="894" y="768" font-size="9" fill="#d76b4f" text-anchor="end" >container</text>
+<text x="894" y="788" font-size="9" fill="#d76b4f" text-anchor="end" >wall ride</text>
+<rect x="790" y="1032" width="64" height="16" fill="#ffd23f" stroke="none" stroke-width="0" rx="0" />
+<polygon points="822,1044 794,1096 850,1096" fill="#ffd23f"/>
+<text x="774" y="1066.0" font-size="12.5" fill="#ffd23f" text-anchor="end" font-weight="bold" >★ MAIN GATE — the ONLY way in/out</text>
+<path d="M822 1024 L822 800 L694 800 L694 724" fill="none" stroke="#ffd23f" stroke-width="5" stroke-dasharray="2 9" stroke-linecap="round" marker-end="url(#arry)"/>
+<path d="M790 1000 L530 1012 L310 900 L182 760 L174 464 L414 460 L462 260 L930 260 L930 448 L894 736 L902 840 L790 872 L790 1000" fill="none" stroke="#ff2fb3" stroke-width="3.5" stroke-linejoin="round" stroke-dasharray="12 6" opacity="0.95"/>
+<line x1="790" y1="1000" x2="660.0" y2="1006.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="530" y1="1012" x2="420.0" y2="956.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="310" y1="900" x2="246.0" y2="830.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="182" y1="760" x2="178.0" y2="612.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="174" y1="464" x2="294.0" y2="462.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="414" y1="460" x2="438.0" y2="360.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="462" y1="260" x2="696.0" y2="260.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="930" y1="260" x2="930.0" y2="354.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="930" y1="448" x2="912.0" y2="592.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="894" y1="736" x2="898.0" y2="788.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="902" y1="840" x2="846.0" y2="856.0" stroke="none" marker-end="url(#arr)"/>
+<line x1="790" y1="872" x2="790.0" y2="936.0" stroke="none" marker-end="url(#arr)"/>
+<rect x="526" y="478" width="48" height="16" rx="8" fill="#0e0b14" stroke="#c9a0ff" stroke-width="1.2"/>
+<text x="550" y="495.2" font-size="10" fill="#c9a0ff" text-anchor="middle" font-weight="bold" >ROOF +9m</text>
+<rect x="434" y="670" width="48" height="16" rx="8" fill="#0e0b14" stroke="#c9a0ff" stroke-width="1.2"/>
+<text x="458" y="687.2" font-size="10" fill="#c9a0ff" text-anchor="middle" font-weight="bold" >+1.2m</text>
+<rect x="286" y="942" width="48" height="16" rx="8" fill="#0e0b14" stroke="#c9a0ff" stroke-width="1.2"/>
+<text x="310" y="959.2" font-size="10" fill="#c9a0ff" text-anchor="middle" font-weight="bold" >−3m</text>
+<rect x="638" y="806" width="48" height="16" rx="8" fill="#0e0b14" stroke="#c9a0ff" stroke-width="1.2"/>
+<text x="662" y="823.2" font-size="10" fill="#c9a0ff" text-anchor="middle" font-weight="bold" >−2m</text>
+<rect x="270" y="598" width="48" height="16" rx="8" fill="#0e0b14" stroke="#c9a0ff" stroke-width="1.2"/>
+<text x="294" y="615.2" font-size="10" fill="#c9a0ff" text-anchor="middle" font-weight="bold" >+2m</text>
+<rect x="670" y="414" width="48" height="16" rx="8" fill="#0e0b14" stroke="#c9a0ff" stroke-width="1.2"/>
+<text x="694" y="431.2" font-size="10" fill="#c9a0ff" text-anchor="middle" font-weight="bold" >0m</text>
+<rect x="814" y="990" width="48" height="16" rx="8" fill="#0e0b14" stroke="#c9a0ff" stroke-width="1.2"/>
+<text x="838" y="1007.2" font-size="10" fill="#c9a0ff" text-anchor="middle" font-weight="bold" >0m</text>
+<g transform="translate(1050,840)"><circle r="9" fill="#ff1f3d" opacity="0.25"/><circle r="4" fill="#ff1f3d"/><line x1="-9" y1="-9" x2="9" y2="9" stroke="#ff1f3d" stroke-width="1.5"/><line x1="9" y1="-9" x2="-9" y2="9" stroke="#ff1f3d" stroke-width="1.5"/></g>
+<g transform="translate(1050,400)"><circle r="9" fill="#ff1f3d" opacity="0.25"/><circle r="4" fill="#ff1f3d"/><line x1="-9" y1="-9" x2="9" y2="9" stroke="#ff1f3d" stroke-width="1.5"/><line x1="9" y1="-9" x2="-9" y2="9" stroke="#ff1f3d" stroke-width="1.5"/></g>
+<g transform="translate(70,960)"><circle r="9" fill="#ff1f3d" opacity="0.25"/><circle r="4" fill="#ff1f3d"/><line x1="-9" y1="-9" x2="9" y2="9" stroke="#ff1f3d" stroke-width="1.5"/><line x1="9" y1="-9" x2="-9" y2="9" stroke="#ff1f3d" stroke-width="1.5"/></g>
+<g transform="translate(630,1128)"><circle r="9" fill="#ff1f3d" opacity="0.25"/><circle r="4" fill="#ff1f3d"/><line x1="-9" y1="-9" x2="9" y2="9" stroke="#ff1f3d" stroke-width="1.5"/><line x1="9" y1="-9" x2="-9" y2="9" stroke="#ff1f3d" stroke-width="1.5"/></g>
+<g transform="translate(1630,175)"><polygon points="0,-20 9,10 0,4 -9,10" fill="#ffd23f"/><text y="28" font-size="14" fill="#ffd23f" text-anchor="middle" font-weight="bold">N</text></g>
+<rect x="1430.0" y="162" width="100" height="8" fill="#f2e9e4" stroke="#f2e9e4"/>
+<rect x="1530.0" y="162" width="100" height="8" fill="#3a3340" stroke="#f2e9e4"/>
+<text x="1430" y="188" font-size="11" fill="#f2e9e4">0</text><text x="1530" y="188" font-size="11" fill="#f2e9e4" text-anchor="middle">25</text><text x="1630" y="188" font-size="11" fill="#f2e9e4" text-anchor="middle">50 m</text>
+<text x="1430" y="156" font-size="11" fill="#9a8fa8">scale (proposed)</text>
+<text x="550" y="1184" font-size="12" fill="#9a8fa8" text-anchor="middle">◄──── 200 m (proposed) ────►</text>
+<text x="1130" y="175" font-size="18" font-weight="bold" fill="#ffd23f">LEGEND</text>
+<line x1="1130" y1="215" x2="1170" y2="215" stroke="#ff6b35" stroke-width="4" stroke-dasharray="14 5"/>
+<text x="1182" y="220" font-size="13" fill="#f2e9e4">HQ boundary wall (solid except gate)</text>
+<rect x="1130" y="236" width="40" height="14" fill="#ffd23f"/>
+<text x="1182" y="248" font-size="13" fill="#f2e9e4">Main gate — single external access</text>
+<line x1="1130" y1="271" x2="1170" y2="271" stroke="#ffd23f" stroke-width="4" stroke-dasharray="2 9"/>
+<text x="1182" y="276" font-size="13" fill="#f2e9e4">Arrival route: gate → arcade doors</text>
+<line x1="1130" y1="299" x2="1170" y2="299" stroke="#ff2fb3" stroke-width="4" stroke-dasharray="12 6"/>
+<text x="1182" y="304" font-size="13" fill="#f2e9e4">Continuous internal skate loop (clockwise)</text>
+<rect x="1130" y="320" width="40" height="14" fill="#2f6db5"/>
+<text x="1182" y="332" font-size="13" fill="#f2e9e4">Rooftop solar (via internal roof stair only)</text>
+<rect x="1130" y="347" width="40" height="16" rx="8" fill="none" stroke="#c9a0ff"/>
+<text x="1182" y="360" font-size="13" fill="#f2e9e4">Height relative to yard (0 m)</text>
+<circle cx="1150" cy="383" r="6" fill="#ff1f3d"/>
+<text x="1182" y="388" font-size="13" fill="#f2e9e4">Corporate drone patrols (outside)</text>
+<text x="1130" y="421" font-size="15" fill="#ffd23f" font-weight="bold">KEY DESIGN RULES (v1)</text>
+<text x="1130" y="441" font-size="12.5" fill="#e6dcef" >• ONE external entrance: Main Gate, SE on Rust Ave.</text>
+<text x="1130" y="461" font-size="12.5" fill="#e6dcef" >  No openings on N, E or W walls.</text>
+<text x="1130" y="481" font-size="12.5" fill="#e6dcef" >• Arcade doors + staff-only door are building doors,</text>
+<text x="1130" y="501" font-size="12.5" fill="#e6dcef" >  NOT section entrances.</text>
+<text x="1130" y="521" font-size="12.5" fill="#e6dcef" >• Public front (arcade, plaza) → private back</text>
+<text x="1130" y="541" font-size="12.5" fill="#e6dcef" >  (resistance rooms) → workshop/batteries NW.</text>
+<text x="1130" y="561" font-size="12.5" fill="#e6dcef" >• Skate loop never leaves the yard; passes docks,</text>
+<text x="1130" y="581" font-size="12.5" fill="#e6dcef" >  roof stair, drainage bowl, stair set, gate yard.</text>
+<text x="1130" y="601" font-size="12.5" fill="#e6dcef" >• Warm salvaged West/inside vs cold neon East.</text>
+<text x="1130" y="635" font-size="15" font-weight="bold" fill="#39f2ff">FUTURE SECTION GRID (schematic, geometry TBD)</text>
+<rect x="1160" y="651" width="92" height="70" rx="6" fill="#14283a" stroke="#39f2ff" stroke-width="1.2"/>
+<text x="1206.0" y="691.0" font-size="12" fill="#bfefff" text-anchor="middle" font-weight="bold">Rail Cut</text>
+<rect x="1276" y="651" width="92" height="70" rx="6" fill="#14283a" stroke="#39f2ff" stroke-width="1.2"/>
+<text x="1322.0" y="691.0" font-size="12" fill="#bfefff" text-anchor="middle" font-weight="bold">North TBD</text>
+<rect x="1392" y="651" width="92" height="70" rx="6" fill="#14283a" stroke="#39f2ff" stroke-width="1.2"/>
+<text x="1438.0" y="691.0" font-size="12" fill="#bfefff" text-anchor="middle" font-weight="bold">Tower Row</text>
+<rect x="1160" y="745" width="92" height="70" rx="6" fill="#14283a" stroke="#39f2ff" stroke-width="1.2"/>
+<text x="1206.0" y="785.0" font-size="12" fill="#bfefff" text-anchor="middle" font-weight="bold">Factories</text>
+<rect x="1276" y="745" width="92" height="70" rx="6" fill="#3b2d22" stroke="#ffd23f" stroke-width="2.5"/>
+<text x="1322.0" y="785.0" font-size="12" fill="#ffd23f" text-anchor="middle" font-weight="bold">HQ YARD</text>
+<rect x="1392" y="745" width="92" height="70" rx="6" fill="#14283a" stroke="#39f2ff" stroke-width="1.2"/>
+<text x="1438.0" y="785.0" font-size="12" fill="#bfefff" text-anchor="middle" font-weight="bold">Shopping</text>
+<rect x="1160" y="839" width="92" height="70" rx="6" fill="#14283a" stroke="#39f2ff" stroke-width="1.2"/>
+<text x="1206.0" y="879.0" font-size="12" fill="#bfefff" text-anchor="middle" font-weight="bold">Canal</text>
+<rect x="1276" y="839" width="92" height="70" rx="6" fill="#14283a" stroke="#39f2ff" stroke-width="1.2"/>
+<text x="1322.0" y="879.0" font-size="12" fill="#bfefff" text-anchor="middle" font-weight="bold">Rust Ave</text>
+<rect x="1392" y="839" width="92" height="70" rx="6" fill="#14283a" stroke="#39f2ff" stroke-width="1.2"/>
+<text x="1438.0" y="879.0" font-size="12" fill="#bfefff" text-anchor="middle" font-weight="bold">Plaza Mall</text>
+<line x1="1254" y1="686.0" x2="1274" y2="686.0" stroke="#39f2ff" stroke-width="2" marker-end="url(#arrc)" marker-start="url(#arrc)"/>
+<line x1="1206.0" y1="723" x2="1206.0" y2="743" stroke="#39f2ff" stroke-width="2" marker-end="url(#arrc)" marker-start="url(#arrc)"/>
+<line x1="1370" y1="686.0" x2="1390" y2="686.0" stroke="#39f2ff" stroke-width="2" marker-end="url(#arrc)" marker-start="url(#arrc)"/>
+<line x1="1438.0" y1="723" x2="1438.0" y2="743" stroke="#39f2ff" stroke-width="2" marker-end="url(#arrc)" marker-start="url(#arrc)"/>
+<line x1="1206.0" y1="817" x2="1206.0" y2="837" stroke="#39f2ff" stroke-width="2" marker-end="url(#arrc)" marker-start="url(#arrc)"/>
+<line x1="1438.0" y1="817" x2="1438.0" y2="837" stroke="#39f2ff" stroke-width="2" marker-end="url(#arrc)" marker-start="url(#arrc)"/>
+<line x1="1254" y1="874.0" x2="1274" y2="874.0" stroke="#39f2ff" stroke-width="2" marker-end="url(#arrc)" marker-start="url(#arrc)"/>
+<line x1="1370" y1="874.0" x2="1390" y2="874.0" stroke="#39f2ff" stroke-width="2" marker-end="url(#arrc)" marker-start="url(#arrc)"/>
+<line x1="1322.0" y1="817" x2="1322.0" y2="837" stroke="#ffd23f" stroke-width="3.5" marker-end="url(#arry)" marker-start="url(#arry)"/>
+<text x="1130" y="939" font-size="12" fill="#bfb3cc">Cyan = 2+ links per standard section (approx. 200 m each).</text>
+<text x="1130" y="957" font-size="12" fill="#bfb3cc">Gold = HQ's only link (Main Gate → Rust Ave).</text>
+<text x="1130" y="975" font-size="12" fill="#bfb3cc">Exact entries/exits per section TBD.</text>
+<text x="40" y="1262" font-size="12" fill="#6f6480">Original concept map · inspired by cyberpunk street / graffiti-skate games, no copied assets · Concept v1, Nov 2026</text>
+</svg>

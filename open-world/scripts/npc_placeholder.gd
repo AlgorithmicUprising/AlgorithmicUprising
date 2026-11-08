@@ -10,11 +10,7 @@ func _ready() -> void:
 	collision_layer = 1
 	collision_mask = 1
 	if has_node("Body"):
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = body_color
-		mat.roughness = 1.0
-		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-		$Body.material_override = mat
+		$Body.material_override = load("res://scripts/world_blocks.gd").cel(body_color, 3.0, 0.4)
 	var label := Label3D.new()
 	label.text = display_name
 	label.position = Vector3(0, 1.55, 0)

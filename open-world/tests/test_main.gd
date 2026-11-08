@@ -17,6 +17,8 @@ func _ready() -> void:
 	await _input_map()
 	await _movement()
 	await _grind()
+	await _body()
+	await _quarter()
 	await _district()
 	print("SUMMARY failed=", fails.size())
 	for item in fails:
@@ -242,6 +244,66 @@ func _movement() -> void:
 	host.queue_free()
 	await frames(2)
 
+func _body() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(30, 1, 30), Palette.GROUND)
+	var player = _player(host, Vector3(0, 0.4, 0))
+	await frames(20)
+	player.skating = false
+	player.external_move_active = true
+	player.external_move = Vector2.ZERO
+	player.rotation.y = 0.0
+	player.rig.rotation.y = 0.0
+	await frames(8)
+	var ground_sole: float = player.global_position.y + 0.325
+	var stand_gap: float = absf(player.rig.sole_y() - ground_sole)
+	expect(stand_gap < 0.05, "standing soles meet the capsule bottom gap=%s" % stand_gap)
+	var ankle: Vector3 = player.rig.ankle_l.global_position
+	var wanted: Vector3 = player.to_global(Vector3(-0.08, 0.40, -0.02))
+	expect(ankle.distance_to(wanted) < 0.04, "standing ankle stays on the leg target d=%s" % ankle.distance_to(wanted))
+	player.skating = true
+	player.camera_yaw = 0.0
+	player.external_move = Vector2(0, 1)
+	await frames(10)
+	expect(player.rig.pose_name == "skate", "contact check uses the skate pose")
+	var board_gap: float = absf(player.rig.sole_y() - player.rig.deck_top_y())
+	expect(board_gap < 0.04, "skate soles sit on the deck gap=%s" % board_gap)
+	host.queue_free()
+	await frames(2)
+
+func _quarter() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(40, 1, 40), Palette.GROUND)
+	Blocks.add_quarter(host, "Quarter", Vector3(0, 0, 0), 0.0, 2.4, 6.0, Palette.RAMP)
+	var player = _player(host, Vector3(-2.2, 0.4, 0))
+	await frames(20)
+	var start_y: float = player.global_position.y
+	player.skating = true
+	player.camera_yaw = -PI * 0.5
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	var max_y: float = start_y
+	var stuck := 0
+	for _i in 150:
+		await get_tree().physics_frame
+		max_y = maxf(max_y, player.global_position.y)
+		var gain: float = player.global_position.y - start_y
+		var speed: float = Vector2(player.velocity.x, player.velocity.z).length()
+		if gain > 0.35 and gain < 1.2 and speed < 0.25:
+			stuck += 1
+	expect(max_y > start_y + 0.8, "quarter is rideable up max_y=%s start=%s pos=%s" % [max_y, start_y, player.global_position])
+	expect(stuck < 12, "quarter face does not snag stuck_frames=%s pos=%s v=%s" % [stuck, player.global_position, player.velocity])
+	var high_y: float = player.global_position.y
+	player.camera_yaw = -PI * 0.5
+	player.external_move = Vector2(0, -1)
+	var low_y: float = high_y
+	for _i in 120:
+		await get_tree().physics_frame
+		low_y = minf(low_y, player.global_position.y)
+	expect(low_y < high_y - 0.45 or low_y < start_y + 0.4, "quarter rides back down low=%s high=%s" % [low_y, high_y])
+	host.queue_free()
+	await frames(2)
+
 func _grind() -> void:
 	var host := _host()
 	Blocks.solid(host, "Pit", Vector3(0, -8, 0), Vector3(40, 1, 40), Palette.GROUND)
@@ -290,24 +352,46 @@ func _district() -> void:
 	var main = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await frames(25)
-	for node_name in ["ZoneSkatePark", "ZoneArcade", "ZoneShoppingEdge", "Ramp", "RampTwo", "Funbox", "GrindRail", "Cabinet", "NPCZero", "NPCFony", "SurveillanceMast"]:
-		expect(main.world_sim.get_node_or_null(node_name) != null, "district has " + node_name)
+	for node_name in ["YardWallNorth", "YardWallEast", "YardWallWest", "YardWallSouthWest", "YardWallSouthEast", "MainGate", "Workshop", "ResistanceRooms", "WarehouseArcade", "SolarRoof", "SkateQuarter", "Funbox", "HalfPipeWest", "GrindRail", "BowlFloor", "Cabinet", "NPCZero", "RustAvenue", "FutureSkyline0"]:
+		expect(main.world_sim.get_node_or_null(node_name) != null, "yard has " + node_name)
 	var player = main.player
-	expect(player.input_enabled and main.zone_at(player.global_position) == "SKATE PARK", "spawn is in the skate park")
-	expect(main.zone_at(Vector3(18, 0, 1)) == "SHOPPING EDGE", "shopping edge zone")
-	expect(main.zone_at(Vector3(0, 0, -12)) == "ARCADE", "arcade zone")
+	expect(player.input_enabled and main.zone_at(player.global_position) == "SKATE YARD", "spawn is in the skate yard")
+	expect(main.zone_at(Vector3(32, 0, -20)) == "ARCADE", "arcade zone")
+	expect(main.zone_at(Vector3(-50, 0, -10)) == "SKATE YARD", "skate yard zone")
+	expect(main.zone_at(Vector3(10, 0, -60)) == "RESISTANCE", "resistance zone")
+	expect(main.zone_at(Vector3(52, 0, 64)) == "GATE", "gate zone")
+	expect(main.zone_at(Vector3(120, 0, 0)) == "OUTSIDE", "east skyline is outside the yard")
 	var zero = main.world_sim.get_node("NPCZero")
 	player.global_position = zero.global_position + Vector3(1.1, 0, 0)
 	zero.interact(main.flow)
 	expect(main.flow.dialogue_open and not player.input_enabled, "Zero opens dialogue and takes input")
+	await frames(2)
+	expect(zero.rig.pose_name == "talk", "Zero raises a pose while talking")
 	main.flow.advance_dialogue()
 	main.flow.advance_dialogue()
 	expect(not main.flow.dialogue_open and player.input_enabled and main.flow.save.met.zero, "dialogue returns input and records Zero")
-	var fony = main.world_sim.get_node("NPCFony")
-	player.global_position = fony.global_position + Vector3(1.1, 0, 0)
-	fony.interact(main.flow)
-	main.flow.close_dialogue()
-	expect(main.flow.save.met.fony, "Fony meeting is recorded")
+	expect(player.get_node_or_null("Fony") != null, "player visual is the Fony rig")
+	expect(player.get_node("Fony").find_child("Hair", true, false) != null, "Fony rig has hair")
+	expect(zero.find_child("Screen", true, false) != null, "Zero rig has a CRT screen")
+	player.global_position = Vector3(-42, 0.6, 2)
+	player.velocity = Vector3.ZERO
+	await frames(25)
+	expect(player.is_on_floor(), "Fony stands on the yard before skating")
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	player.skating = true
+	await frames(12)
+	expect(player.rig.pose_name == "skate", "skate pose while moving on the board")
+	player.external_jump = true
+	await frames(4)
+	expect(player.rig.pose_name == "jump", "jump pose while airborne")
+	player.external_move = Vector2.ZERO
+	await frames(40)
+	expect(player.rig.pose_name == "land" or player.rig.pose_name == "idle" or player.rig.pose_name == "skate", "landing returns to a grounded pose")
+	var home: Vector3 = player.spawn_position
+	player.global_position = home + Vector3(0, -20, 0)
+	await frames(2)
+	expect(player.global_position.distance_to(home) < 2.0, "falling out of the yard respawns at the start")
 	var audio = get_node("/root/AudioOwner")
 	audio.holder = "other"
 	var blocked: Dictionary = main.flow.open_cabinet()
@@ -333,6 +417,10 @@ func _district() -> void:
 	expect(main.flow.save.results.size() == 11, "results stay bounded and recorded")
 	var loaded = SaveScript.new()
 	expect(loaded.load_user(main.flow.save_path).get("ok") == true and loaded.results.size() == 11, "save file reloads")
+	player.global_position = Vector3(0, 0.5, 40)
+	player.velocity = Vector3.ZERO
+	player.camera_yaw = 0.0
+	await frames(8)
 	var z_before: float = player.global_position.z
 	player.external_move_active = true
 	player.external_move = Vector2(0, 1)

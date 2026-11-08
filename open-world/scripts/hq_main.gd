@@ -1,7 +1,7 @@
 extends Node
 
-const Blocks = preload("res://scripts/world_blocks.gd")
 const Palette = preload("res://scripts/palette.gd")
+const Yard = preload("res://scripts/yard.gd")
 const JsonFile = preload("res://scripts/json_file.gd")
 const FlowScript = preload("res://scripts/hq_flow.gd")
 
@@ -22,11 +22,11 @@ func _ready() -> void:
 	world_sim.name = "WorldSim"
 	world_sim.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(world_sim)
-	_district()
+	Yard.build(world_sim)
 	player = load("res://scenes/player.tscn").instantiate()
 	player.name = "Player"
-	player.position = Vector3(0.2, 0.3, 7.5)
-	player.rotation.y = -0.28
+	player.position = Vector3(-42.0, 0.5, 2.0)
+	player.rotation.y = 1.05
 	world_sim.add_child(player)
 	var session = load("res://scenes/session_overlay.tscn").instantiate()
 	add_child(session)
@@ -82,11 +82,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func zone_at(point: Vector3) -> String:
-	if point.z < -9.0:
-		return "ARCADE"
-	if point.x > 14.0:
-		return "SHOPPING EDGE"
-	return "SKATE PARK"
+	return Yard.zone_at(point)
 
 func show_dialogue(speaker: String, line: String) -> void:
 	dialogue_panel.visible = true
@@ -117,72 +113,30 @@ func _nearest(radius: float) -> Node:
 func _environment() -> void:
 	var world_env := WorldEnvironment.new()
 	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Palette.SKY
+	var sky := Sky.new()
+	var proc := ProceduralSkyMaterial.new()
+	proc.sky_top_color = Color("5c4d86")
+	proc.sky_horizon_color = Color("f0a06a")
+	proc.ground_horizon_color = Color("c47858")
+	proc.ground_bottom_color = Color("6a5348")
+	proc.sun_angle_max = 12.0
+	sky.sky_material = proc
+	env.background_mode = Environment.BG_SKY
+	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Palette.AMBIENT
-	env.ambient_light_energy = 0.55
+	env.ambient_light_energy = 0.32
 	world_env.environment = env
 	add_child(world_env)
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-50, -40, 0)
-	sun.light_energy = 1.25
+	sun.rotation_degrees = Vector3(-42, -70, 0)
+	sun.light_color = Color("ffc48a")
+	sun.light_energy = 1.7
 	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 48.0
+	sun.directional_shadow_max_distance = 160.0
+	sun.shadow_bias = 0.08
+	sun.shadow_normal_bias = 1.2
 	add_child(sun)
-
-func _district() -> void:
-	Blocks.solid(world_sim, "Ground", Vector3(0, -0.5, -3), Vector3(54, 1, 50), Palette.GROUND)
-	Blocks.solid(world_sim, "FenceNorth", Vector3(0, 1.1, -23.5), Vector3(50, 2.2, 0.4), Palette.FENCE)
-	Blocks.solid(world_sim, "FenceSouth", Vector3(0, 1.1, 17.5), Vector3(50, 2.2, 0.4), Palette.FENCE)
-	Blocks.solid(world_sim, "FenceWest", Vector3(-23, 1.1, -3), Vector3(0.4, 2.2, 42), Palette.FENCE)
-	Blocks.solid(world_sim, "FenceEast", Vector3(24.5, 1.1, -3), Vector3(0.4, 2.2, 42), Palette.FENCE)
-	Blocks.label(world_sim, "NEIGHBORHOOD NOT BUILT", Vector3(0, 2.5, -23.1), Palette.LABEL_COOL, 42)
-	Blocks.visual(world_sim, "ZoneSkatePark", Vector3(0, 0.03, 1.5), Vector3(18, 0.05, 15), Palette.SKATE)
-	Blocks.solid(world_sim, "Funbox", Vector3(-6.5, 0.4, 0.5), Vector3(3.2, 0.8, 3.2), Palette.FUNBOX)
-	Blocks.add_ramp(world_sim, "Ramp", Vector3(-1.2, 0, -2.2))
-	Blocks.add_ramp(world_sim, "RampTwo", Vector3(5.2, 0, -2.2))
-	Blocks.solid(world_sim, "PaintWall", Vector3(-1.5, 0.7, 6.2), Vector3(0.4, 1.4, 3.4), Palette.PARK_WALL)
-	Blocks.visual(world_sim, "PaintA", Vector3(-1.25, 0.95, 5.7), Vector3(0.08, 0.8, 1.1), Palette.PAINT_A)
-	Blocks.visual(world_sim, "PaintB", Vector3(-1.25, 0.85, 6.9), Vector3(0.08, 0.55, 0.9), Palette.PAINT_B)
-	Blocks.label(world_sim, "SKATE PARK", Vector3(-6.2, 2.5, 6.4))
-	var rail = load("res://scenes/grind_rail.tscn").instantiate()
-	rail.name = "GrindRail"
-	rail.length = 8.0
-	rail.position = Vector3(1.2, 1.05, 4.2)
-	world_sim.add_child(rail)
-	Blocks.label(world_sim, "RAIL", Vector3(1.2, 1.6, 4.2), Palette.LABEL, 32)
-	Blocks.visual(world_sim, "ZoneArcade", Vector3(0, 0.02, -15), Vector3(14, 0.04, 8), Palette.ARCADE_FLOOR)
-	Blocks.solid(world_sim, "ArcadeBack", Vector3(0, 2, -19.2), Vector3(16, 4, 0.45), Palette.ARCADE)
-	Blocks.solid(world_sim, "ArcadeLeft", Vector3(-8, 2, -15.2), Vector3(0.45, 4, 8.2), Palette.ARCADE)
-	Blocks.solid(world_sim, "ArcadeRight", Vector3(8, 2, -15.2), Vector3(0.45, 4, 8.2), Palette.ARCADE)
-	Blocks.solid(world_sim, "ArcadeFrontLeft", Vector3(-5.25, 2, -11.1), Vector3(5.5, 4, 0.45), Palette.ARCADE)
-	Blocks.solid(world_sim, "ArcadeFrontRight", Vector3(5.25, 2, -11.1), Vector3(5.5, 4, 0.45), Palette.ARCADE)
-	Blocks.solid(world_sim, "ArcadeSign", Vector3(0, 3.55, -10.75), Vector3(5.2, 0.9, 0.22), Palette.ARCADE_SIGN)
-	Blocks.label(world_sim, "ARCADE", Vector3(0, 4.35, -10.5))
-	var cabinet = load("res://scenes/cabinet.tscn").instantiate()
-	cabinet.name = "Cabinet"
-	cabinet.position = Vector3(0, 0.85, -12.2)
-	world_sim.add_child(cabinet)
-	Blocks.visual(world_sim, "ZoneShoppingEdge", Vector3(18.2, 0.025, 1), Vector3(7.5, 0.05, 20), Palette.SIDEWALK)
-	Blocks.visual(world_sim, "Curb", Vector3(14.2, 0.08, 1), Vector3(0.35, 0.12, 20), Palette.CURB)
-	Blocks.solid(world_sim, "ShopA", Vector3(20.4, 1.5, -6), Vector3(4.8, 3.0, 4.6), Palette.SHOP_A)
-	Blocks.solid(world_sim, "ShopB", Vector3(20.4, 2.2, 1.2), Vector3(4.8, 4.4, 4.8), Palette.SHOP_B)
-	Blocks.solid(world_sim, "ShopC", Vector3(20.4, 1.15, 8.2), Vector3(4.8, 2.3, 4.2), Palette.SHOP_C)
-	Blocks.solid(world_sim, "SurveillanceMast", Vector3(20.4, 5.15, 1.2), Vector3(0.5, 0.28, 0.4), Palette.SURVEILLANCE)
-	Blocks.label(world_sim, "SHOPPING EDGE", Vector3(16.2, 2.8, 12.2), Palette.LABEL_COOL)
-	Blocks.label(world_sim, "SURVEILLANCE", Vector3(20.4, 6.0, 1.2), Palette.LABEL_COOL, 36)
-	_npc("NPCZero", "zero", "Zero", Palette.ZERO, Vector3(-4.5, 0, 2.4))
-	_npc("NPCFony", "fony", "Fony", Palette.FONY, Vector3(3.4, 0, -10.0))
-
-func _npc(node_name: String, id: String, display_name: String, color: Color, pos: Vector3) -> void:
-	var npc = load("res://scenes/npc.tscn").instantiate()
-	npc.name = node_name
-	npc.npc_id = id
-	npc.display_name = display_name
-	npc.body_color = color
-	npc.position = pos
-	world_sim.add_child(npc)
 
 func _apply_story() -> void:
 	var story = JsonFile.read("res://data/story_working.json")
@@ -191,14 +145,10 @@ func _apply_story() -> void:
 	var lines = story.get("npc_lines", {})
 	if typeof(lines) != TYPE_DICTIONARY:
 		return
-	for npc_name in ["NPCZero", "NPCFony"]:
-		var npc = world_sim.get_node_or_null(npc_name)
-		if npc == null:
-			continue
-		var key := "zero" if npc_name == "NPCZero" else "fony"
-		var spoken = lines.get(key, [])
-		if typeof(spoken) == TYPE_ARRAY:
-			npc.lines = PackedStringArray(spoken)
+	var npc = world_sim.get_node_or_null("NPCZero")
+	var spoken = lines.get("zero", [])
+	if npc != null and typeof(spoken) == TYPE_ARRAY:
+		npc.lines = PackedStringArray(spoken)
 
 func _hud() -> void:
 	var layer := CanvasLayer.new()

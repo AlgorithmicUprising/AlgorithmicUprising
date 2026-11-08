@@ -1,6 +1,6 @@
 # AU Open World HQ greybox
 
-A small provisional 3D slice: a skate park, an arcade, and the edge of a shopping district. It is not the Punk Arcade, and it does not change that project. The engine and the shipping platform are not locked. This pass uses Godot 4.7.2 and the Compatibility renderer so a modest desktop GPU, and a later browser export, stay possible.
+A provisional 3D yard. Fony, an articulated capsule-and-sphere teen with connected joints, skates it. Zero, a CRT-headed rig, waits in the resistance rooms. Neither is a skinned character, and the banded shader is not the painted concept. It is not the Punk Arcade, and it does not change that project. The engine and the shipping platform are not locked. This pass uses Godot 4.7.2 and the Compatibility renderer.
 
 Play it locally:
 
@@ -16,6 +16,6 @@ Headless checks:
 godot --headless --path open-world res://tests/test_main.tscn
 ```
 
-The web export and the combined Pages tree are in [BUILD_GUIDE.md](BUILD_GUIDE.md). After this branch is merged to `main`, the existing Pages workflow publishes the arcade at its current paths and this slice at `/open-world/`.
+The yard, the cel shader, and the list of art still to draw are in [BUILD_GUIDE.md](BUILD_GUIDE.md) and [ASSET_MANIFEST.md](ASSET_MANIFEST.md). Merging to `main` publishes this yard over the live HQ, so that waits for a visual OK.
 
 Code in this directory is MIT. Branding, character art, and music are not included. See [NOTICE.md](NOTICE.md).
