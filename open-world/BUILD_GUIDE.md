@@ -53,13 +53,13 @@ Verified here, on this Linux machine, with Godot 4.7.2:
 | Movement | Skate forward, jump leaves and returns to the floor, a wall stops the body |
 | Ramp | Wedge ramp, max feet height about 1.20 m while still on the floor |
 | Grind | Airborne approach attaches, travels, jump detaches; skating on the ground under the rail does not attach |
-| District | Skate park, arcade, shopping edge, two ramps, rail, cabinet, Zero, Fony, surveillance mast |
+| Yard | 160 m block: one south gate, bowl, half-pipe, quarter, rail, warehouse arcade, workshop, resistance rooms. Headless `SUMMARY failed=0` |
 | Cabinet | Placeholder session pauses world sim and input, holds the single audio owner, finish/abort restores them, 10 re-entries do not stick |
 | Save | `user://au-open-world-save-v1.json` reloaded with 11 results |
 | Catalog | Both placeholders disabled; enabling one without cleared external media is rejected; no playback |
-| Desktop frame | Compatibility renderer, llvmpipe, OpenGL 4.5, 1280×720 PNG. ALSA was absent, so Godot used its dummy audio driver |
-| Web export | Single-threaded. Browser log: `Emscripten 4.0.20, single-threaded`, WebGL 2, Compatibility |
-| Browser play | Headless Chrome via SwiftShader. Keyboard `KeyW` moved the player about 5.52 m. Session stayed `world` |
+| Desktop frames | Compatibility, llvmpipe, OpenGL 4.5, 1280×720. Gameplay camera in the skate yard, plus a higher view across the bowl toward the warehouse and cool towers. No ALSA device, so the dummy audio driver |
+| Web export | Single-threaded. Pack 74,664 bytes after the yard. Wasm still 39,514,754 bytes |
+| Browser play | Headless Chrome, SwiftShader, WebGL 2 Compatibility. From the skate-yard spawn, W moved the player about 4.82 m. Zone stayed `SKATE YARD` |
 | Composite tree | 157 arcade files unchanged by hash; 7 files added only under `open-world/` |
 
 Not verified, and not claimed:
@@ -78,14 +78,37 @@ The desktop screenshot is a real viewport grab of `scenes/main.tscn`. The browse
 
 Confirmed inspiration, not an asset license: cyberpunk streets, Grand Theft Auto as a traversal fantasy, and Jet Set Radio as skating and bold street presentation. Those names describe the target feeling. They are not permission to copy maps, costumes, logos, UI, music, or recognizable silhouettes.
 
-Working visual proposal, not a locked style guide and not built in this pass:
+Working visual proposal:
 
 - Bold cel-shaded silhouettes and original graffiti
 - Streets and obstacles readable at skate speed
 - An original Algorithmic Uprising identity
 - A warm, improvised resistance HQ against a cold corporate surveillance city
 
-This pass uses primitive boxes, wedges, and capsules with flat albedo colors. The skate park and arcade use warm clay, rust, and sand. The shopping edge uses cold blue-greys, plus a small mast labeled SURVEILLANCE. That split is only a palette stand-in so the proposed contrast is legible. There is no cel shader, no graffiti texture, no generated or paid art, and no avatar for the protagonist, Zero, or Fony. Labels are wayfinding, not logos. `icon.svg` is two flat rectangles for the Godot window icon, not a brand mark.
+The liked sunset painting is direction for color and shape, not a measured plan and not a texture in the game. The layout source is `design/hq_yard_map_v1.svg` (concept v1, proposed). Godot ignores that folder so the diagram is not packed into the game.
+
+This yard is built from meshes. `shaders/cel_block.gdshader` steps the Compatibility renderer into three light bands, darkens grazing edges a little, and lets the directional shadow map cut hard shadows. It is not an ink outline and not the painted concept. The key light is warm and about 42° above the horizon so the ground stays in a lit band. The sky is a procedural sunset. Cool blocks outside the east wall are the future shopping skyline. They have no collision and no gate.
+
+What is still drawn with placeholders is listed in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). Striped quads labeled TEMP TAG are temporary geometry, not graffiti art. Zero, Fony, and the protagonist are still capsules.
+
+### Yard size, and where gameplay changed the diagram
+
+Wall centers sit on a **160 m** square (`scripts/yard.gd`, `HALF = 80`). The diagram proposed 200 m. That size is not approved. 160 m is still a city block, and at 9 m/s the loop stays readable. The only playable hole in the HQ wall is the south gate, x = 46 m to 58 m. North, east, and west walls are solid. Rust Avenue is a short apron outside that gate, then a curb labeled FUTURE SECTIONS. Neighbor sections are scenery only.
+
+| Diagram | Built |
+|---|---|
+| 200 m square | 160 m between wall centers |
+| Drainage bowl, banks about 3 m | Floor at y = −3 m, four straight bank plates |
+| Mini half-pipe, 2 m | Two facing slopes, crest 2.0 m |
+| Quarter about 2 m | Slope crest 2.2 m |
+| Flat rail | 12 m straight rail, y = 1.05 m, same grind rules as before |
+| Funbox, height not fixed | 0.9 m so the current jump, about 1.1 m, can land on it |
+| Loading docks +1.2 m | 1.2 m decks plus a ride-up slope, because the jump does not clear 1.2 m by itself |
+| Roof stair | One slope to the solar roof, about 9.1 m, on the east side of the warehouse |
+| Fony at the old arcade door | Fony and Zero stand in the resistance rooms. The cabinet stays in the warehouse |
+| Smooth concrete, plants, murals | Patches, box planters, and TEMP TAG stripes |
+
+The bowl is angular plates around a sunken floor, not a smooth concrete bowl. Some bank edges overlap the yard slabs. That is visible in the high shot.
 
 ## 4. Module and scene map
 
@@ -101,7 +124,11 @@ District geometry is built in code by `scripts/hq_main.gd` so collisions stay in
 | `scenes/session_overlay.tscn` | Placeholder cabinet UI |
 | `scripts/player_controller.gd` | Walk, skate, jump, camera, grind |
 | `scripts/hq_flow.gd` | Dialogue, pause, session handoff, save |
-| `scripts/world_blocks.gd` | Boxes, labels, wedge ramps |
+| `scripts/yard.gd` | 160 m yard: walls, bowl, warehouse, rooms, skate obstacles |
+| `scripts/world_blocks.gd` | Cel boxes, labels, slope banks |
+| `shaders/cel_block.gdshader` | Three-band Compatibility lighting |
+| `design/hq_yard_map_v1.svg` | Proposed layout diagram. Not packed |
+| `ASSET_MANIFEST.md` | What is modeled, and what original art is still missing |
 | `audio/audio_owner.gd` | The only audio owner. It does not play |
 | `contracts/session_boundary.gd` | World versus session focus. No renderer types |
 | `contracts/minigame_result.gd` | `au.minigame_result` v1 |
@@ -225,10 +252,14 @@ A future adapter can translate a real cartridge result into `au.minigame_result`
 | One audio owner, catalog disabled until cleared media exists | Met |
 | No music files, no paid or generated art, no final avatar | Met |
 | Browser export actually loaded | Met locally, single-threaded, Chrome |
-| Live Pages URL that keeps the arcade and adds `/open-world/` | Wired into `deploy-main`. It publishes when this branch is merged to `main`. Section 11 |
+| Live Pages URL that keeps the arcade and adds `/open-world/` | Already true on `main` for the first greybox. This visual branch must not be merged until the yard pictures are approved, because a merge publishes it. Section 11 |
 | Full city, missions, networking, real Bars per Watt | Out of scope |
 
 ## 11. GitHub Pages
+
+The first greybox is already on the live site from the merge of pull request 6. This visual branch changes `open-world/**`. The existing `deploy-main` job runs for those paths on `main` and would replace the live HQ. Do not merge this branch until the in-engine pictures are accepted. Opening the pull request does not deploy.
+
+## 11b. How the combined site is published
 
 The repository already has one GitHub Pages site. Inspected with the Pages API and with HTTP:
 
@@ -259,16 +290,18 @@ GitHub Pages serves `.wasm` as `application/wasm` from its static MIME map. This
 
 `.github/workflows/open-world-pages-composite.yml` still does not deploy. It repeats the pinned install, headless suite, export, and composite staging on pull request so the export is visible before merge. Its permissions remain `contents: read`.
 
-Expected public URL after the main deploy from this merge:
+The live site from pull request 6 is already:
 
-- Arcade, unchanged paths: https://algorithmicuprising.github.io/AlgorithmicUprising/ and https://algorithmicuprising.github.io/AlgorithmicUprising/demo/
-- HQ: https://algorithmicuprising.github.io/AlgorithmicUprising/open-world/
+- Arcade: https://algorithmicuprising.github.io/AlgorithmicUprising/ and https://algorithmicuprising.github.io/AlgorithmicUprising/demo/
+- First greybox HQ: https://algorithmicuprising.github.io/AlgorithmicUprising/open-world/
 
-Until that main deploy finishes, `/open-world/` on the live host is the previous 404. The local tree is `http://127.0.0.1:8090/open-world/` from `serve-composite.mjs` when the composite directory is served, or the same paths under `arcade/.pages` after `--into-staged`.
+Merging this visual branch would replace that HQ with the 160 m yard. Leave the pull request unmerged until the pictures are approved.
 
 ## 12. Limitations
 
-- The protagonist is an unnamed capsule. Zero and Fony are colored capsules with labels.
+- The protagonist is an unnamed capsule. Zero and Fony are colored capsules with labels. See `ASSET_MANIFEST.md`.
+- The cel shader is three light bands plus a little edge darkening. It is not an ink contour and not the painted concept. Shadows are one directional map. On llvmpipe they are visible and not a measured sharpness.
+- The bowl is four flat banks around a floor at −3 m. The plates overlap the yard and do not form a smooth concrete bowl.
 - One straight grind rail. Leaving the end shoves the body forward. There is no grind trick.
 - The cabinet does not load Grind, Tag, Cookie Wall, or Bars per Watt.
 - No networking, no missions, no second neighborhood.

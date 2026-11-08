@@ -290,12 +290,15 @@ func _district() -> void:
 	var main = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await frames(25)
-	for node_name in ["ZoneSkatePark", "ZoneArcade", "ZoneShoppingEdge", "Ramp", "RampTwo", "Funbox", "GrindRail", "Cabinet", "NPCZero", "NPCFony", "SurveillanceMast"]:
-		expect(main.world_sim.get_node_or_null(node_name) != null, "district has " + node_name)
+	for node_name in ["YardWallNorth", "YardWallEast", "YardWallWest", "YardWallSouthWest", "YardWallSouthEast", "MainGate", "Workshop", "ResistanceRooms", "WarehouseArcade", "SolarRoof", "SkateQuarter", "Funbox", "HalfPipeWest", "GrindRail", "BowlFloor", "Cabinet", "NPCZero", "NPCFony", "RustAvenue", "FutureSkyline0"]:
+		expect(main.world_sim.get_node_or_null(node_name) != null, "yard has " + node_name)
 	var player = main.player
-	expect(player.input_enabled and main.zone_at(player.global_position) == "SKATE PARK", "spawn is in the skate park")
-	expect(main.zone_at(Vector3(18, 0, 1)) == "SHOPPING EDGE", "shopping edge zone")
-	expect(main.zone_at(Vector3(0, 0, -12)) == "ARCADE", "arcade zone")
+	expect(player.input_enabled and main.zone_at(player.global_position) == "SKATE YARD", "spawn is in the skate yard")
+	expect(main.zone_at(Vector3(32, 0, -20)) == "ARCADE", "arcade zone")
+	expect(main.zone_at(Vector3(-50, 0, -10)) == "SKATE YARD", "skate yard zone")
+	expect(main.zone_at(Vector3(10, 0, -60)) == "RESISTANCE", "resistance zone")
+	expect(main.zone_at(Vector3(52, 0, 64)) == "GATE", "gate zone")
+	expect(main.zone_at(Vector3(120, 0, 0)) == "OUTSIDE", "east skyline is outside the yard")
 	var zero = main.world_sim.get_node("NPCZero")
 	player.global_position = zero.global_position + Vector3(1.1, 0, 0)
 	zero.interact(main.flow)
@@ -333,6 +336,10 @@ func _district() -> void:
 	expect(main.flow.save.results.size() == 11, "results stay bounded and recorded")
 	var loaded = SaveScript.new()
 	expect(loaded.load_user(main.flow.save_path).get("ok") == true and loaded.results.size() == 11, "save file reloads")
+	player.global_position = Vector3(0, 0.5, 40)
+	player.velocity = Vector3.ZERO
+	player.camera_yaw = 0.0
+	await frames(8)
 	var z_before: float = player.global_position.z
 	player.external_move_active = true
 	player.external_move = Vector2(0, 1)

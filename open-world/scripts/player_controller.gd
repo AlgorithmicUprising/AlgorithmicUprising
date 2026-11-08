@@ -28,17 +28,11 @@ func _ready() -> void:
 	update_board()
 
 func _style_body() -> void:
+	var blocks = load("res://scripts/world_blocks.gd")
 	if has_node("Body"):
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color("f4e1b5")
-		mat.roughness = 1.0
-		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-		$Body.material_override = mat
+		$Body.material_override = blocks.cel(Color("f4e1b5"), 3.0, 0.35)
 	if has_node("Board"):
-		var board_mat := StandardMaterial3D.new()
-		board_mat.albedo_color = Color("241c18")
-		board_mat.roughness = 1.0
-		$Board.material_override = board_mat
+		$Board.material_override = blocks.cel(Color("241c18"), 2.0, 0.2)
 	var label := Label3D.new()
 	label.name = "NameLabel"
 	label.text = "UNNAMED"
