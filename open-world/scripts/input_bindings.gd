@@ -23,7 +23,10 @@ static func install() -> void:
 	_button("interact", JOY_BUTTON_X)
 	_keys("skate_toggle", [KEY_SHIFT])
 	_button("skate_toggle", JOY_BUTTON_Y)
-	# Q and E are not camera keys. E is interact only. Q stays unused.
+	# E stays interact only. Q, R, and F are the first trick keys.
+	_keys("trick_ollie", [KEY_Q])
+	_keys("trick_flip", [KEY_R])
+	_keys("trick_grab", [KEY_F])
 	# Right stick still looks. Keyboard look is the mouse.
 	_axis("camera_left", JOY_AXIS_RIGHT_X, -1.0)
 	_axis("camera_right", JOY_AXIS_RIGHT_X, 1.0)

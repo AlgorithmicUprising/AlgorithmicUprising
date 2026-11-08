@@ -21,6 +21,7 @@ func _ready() -> void:
 	await _body()
 	await _quarter()
 	await _art_quarter()
+	await _tricks()
 	await _district()
 	print("SUMMARY failed=", fails.size())
 	for item in fails:
@@ -243,7 +244,7 @@ func _look() -> void:
 	Input.parse_input_event(key_q)
 	expect(is_equal_approx(player.camera_yaw, yaw1), "Q does not rotate the view")
 	var before: Vector3 = player.global_position
-	var forward := Vector3(-sin(yaw1), 0.0, -cos(yaw1))
+	var forward: Vector3 = player.camera_flat_forward()
 	var hold := InputEventKey.new()
 	hold.physical_keycode = KEY_W
 	hold.keycode = KEY_W
@@ -255,7 +256,7 @@ func _look() -> void:
 	await frames(2)
 	var flat := Vector3(player.global_position.x - before.x, 0.0, player.global_position.z - before.z)
 	var aligned: float = flat.normalized().dot(forward) if flat.length() > 0.2 else 0.0
-	expect(flat.length() > 0.8 and aligned > 0.8, "W follows the mouse heading moved=%s align=%s" % [flat, aligned])
+	expect(flat.length() > 0.8 and aligned > 0.98, "W follows the camera forward moved=%s forward=%s align=%s" % [flat, forward, aligned])
 	var stick := InputEventJoypadMotion.new()
 	stick.axis = JOY_AXIS_RIGHT_X
 	stick.axis_value = 1.0
@@ -448,6 +449,79 @@ func _art_quarter() -> void:
 		expect(reversed and low_y < high_y - 0.25, "library quarter %s comes back down low=%s high=%s" % ["skate" if skating else "walk", low_y, high_y])
 		player.queue_free()
 		await frames(2)
+	host.queue_free()
+	await frames(2)
+
+func _tricks() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(40, 1, 40), Palette.GROUND)
+	var player = _player(host, Vector3(0, 0.4, 0))
+	await frames(16)
+	while not player.is_on_floor():
+		await get_tree().physics_frame
+	player.skating = true
+	var y_ground: float = player.global_position.y
+	player.request_trick("ollie")
+	var saw_crouch := false
+	var saw_air := false
+	var left_floor := false
+	for _i in 50:
+		await get_tree().physics_frame
+		if player.trick == "crouch" or player.rig.pose_name == "crouch":
+			saw_crouch = true
+		if not player.is_on_floor() and player.global_position.y > y_ground + 0.35:
+			left_floor = true
+			saw_air = player.trick == "ollie" or player.rig.pose_name == "ollie"
+	expect(saw_crouch and left_floor and saw_air, "ollie crouches then leaves the ground crouch=%s air=%s y=%s" % [saw_crouch, saw_air, player.global_position.y])
+	await frames(50)
+	expect(player.is_on_floor() and (player.trick == "" or player.trick == "land" or player.rig.pose_name == "land" or player.rig.pose_name == "skate"), "ollie lands and recovers trick=%s pose=%s" % [player.trick, player.rig.pose_name])
+	player.request_trick("flip")
+	var spun := false
+	var feet_clear := false
+	var caught := false
+	for _i in 50:
+		await get_tree().physics_frame
+		if player.flip_turns > 0.25 and not player.board_caught:
+			spun = true
+			var gap: float = player.rig.sole_y() - player.rig.deck_top_y()
+			if absf(gap) > 0.08:
+				feet_clear = true
+			elif not feet_clear:
+				player.set_meta("flip_gap", gap)
+		if player.board_caught and player.flip_turns >= 0.9:
+			caught = true
+	expect(spun and feet_clear and caught, "kickflip spins the board off the feet then catches spun=%s clear=%s caught=%s gap=%s" % [spun, feet_clear, caught, player.get_meta("flip_gap", 0.0)])
+	await frames(40)
+	player.global_position = Vector3(0, 0.5, 0)
+	player.velocity = Vector3.ZERO
+	await frames(12)
+	player.trick = "flip"
+	player.board_caught = false
+	player.flip_turns = 0.2
+	player.trick_time = 0.3
+	player.velocity = Vector3(0, -1, 0)
+	await frames(20)
+	expect(player.trick == "bail" or player.bail_time > 0.0 or player.rig.pose_name == "bail", "early landing bails instead of a silent catch pose=%s trick=%s" % [player.rig.pose_name, player.trick])
+	await frames(50)
+	expect(player.trick == "" and player.skating, "bail recovers to skating")
+	player.queue_free()
+	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	host.add_child(pipe)
+	player = _player(host, Vector3(-2.2, 0.5, 0))
+	await frames(16)
+	player.skating = true
+	player.camera_yaw = -PI * 0.5
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	var popped := false
+	for _i in 80:
+		await get_tree().physics_frame
+		if not popped and player.global_position.y > 0.15:
+			player.request_trick("ollie")
+			popped = true
+		if popped and not player.is_on_floor() and player.trick == "ollie":
+			break
+	expect(popped and player.trick == "ollie" and not player.is_on_floor(), "ollie leaves the quarter surface trick=%s y=%s floor=%s" % [player.trick, player.global_position.y, player.is_on_floor()])
 	host.queue_free()
 	await frames(2)
 

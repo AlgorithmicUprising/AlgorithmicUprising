@@ -129,18 +129,20 @@ func _simulate(delta: float) -> void:
 		velocity.y = JUMP_VELOCITY
 	else:
 		_fall(delta)
+	_tricks(delta)
 	var wish := _wish()
 	var speed := SKATE_SPEED if skating else WALK_SPEED
 	var accel := 22.0 if skating else 40.0
 	var friction := 7.0 if skating else 30.0
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	if wish.length() < 0.01:
-		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
-		velocity.z = move_toward(velocity.z, 0.0, friction * delta)
+		horizontal = horizontal.move_toward(Vector3.ZERO, friction * delta)
 	else:
-		velocity.x = move_toward(velocity.x, wish.x * speed, accel * delta)
-		velocity.z = move_toward(velocity.z, wish.z * speed, accel * delta)
+		horizontal = horizontal.move_toward(Vector3(wish.x, 0.0, wish.z) * speed, accel * delta)
 		if rig != null and rig.has_method("face_world"):
 			rig.face_world(atan2(-wish.x, -wish.z))
+	velocity.x = horizontal.x
+	velocity.z = horizontal.z
 	move_and_slide()
 	_try_grind()
 	update_board()
@@ -152,10 +154,26 @@ func _fall(delta: float) -> void:
 	else:
 		velocity.y -= GRAVITY * delta
 
+func camera_flat_forward() -> Vector3:
+	return _camera_flat_axes()[0]
+
+func _camera_flat_axes() -> Array:
+	var fallback := Vector3(-sin(camera_yaw), 0.0, -cos(camera_yaw))
+	var cam := get_node_or_null("CameraPivot/SpringArm/Camera") as Camera3D
+	if cam == null:
+		return [fallback, Vector3(fallback.z, 0.0, -fallback.x)]
+	var basis := cam.global_transform.basis
+	var forward := Vector3(-basis.z.x, 0.0, -basis.z.z)
+	var right := Vector3(basis.x.x, 0.0, basis.x.z)
+	forward = fallback if forward.length() < 0.001 else forward.normalized()
+	right = Vector3(forward.z, 0.0, -forward.x) if right.length() < 0.001 else right.normalized()
+	return [forward, right]
+
 func _wish() -> Vector3:
 	var move := external_move if external_move_active else _hardware_move()
-	var forward := Vector3(-sin(camera_yaw), 0.0, -cos(camera_yaw))
-	var right := Vector3(cos(camera_yaw), 0.0, -sin(camera_yaw))
+	var axes := _camera_flat_axes()
+	var forward: Vector3 = axes[0]
+	var right: Vector3 = axes[1]
 	var wish := right * move.x + forward * move.y
 	if wish.length() > 1.0:
 		wish = wish.normalized()
@@ -221,8 +239,109 @@ func _leave_grind(jumped: bool) -> void:
 		velocity = direction * rail.speed
 		velocity.y = 0.4
 
+var trick := ""
+var trick_time := 0.0
+var trick_next := ""
+var flip_turns := 0.0
+var board_caught := true
+var bail_time := 0.0
+var trick_request := ""
+
+func request_trick(kind: String) -> void:
+	trick_request = kind
+
+func _tricks(delta: float) -> void:
+	if bail_time > 0.0:
+		bail_time = maxf(0.0, bail_time - delta)
+		trick = "bail"
+		if bail_time <= 0.0 and is_on_floor():
+			trick = ""
+			board_caught = true
+			skating = true
+		_push_trick()
+		return
+	var asked := trick_request
+	trick_request = ""
+	if asked == "" and not external_move_active:
+		if Input.is_action_just_pressed("trick_ollie"):
+			asked = "ollie"
+		elif Input.is_action_just_pressed("trick_flip"):
+			asked = "flip"
+		elif Input.is_action_just_pressed("trick_grab"):
+			asked = "grab"
+	if asked == "ollie" and is_on_floor() and skating and trick == "":
+		trick = "crouch"
+		trick_next = "ollie"
+		trick_time = 0.0
+	elif asked == "flip" and skating and (trick == "" or trick == "ollie" or trick == "crouch"):
+		if is_on_floor() and trick == "":
+			trick = "crouch"
+			trick_next = "flip"
+			trick_time = 0.0
+		else:
+			_start_air("flip")
+	elif asked == "grab" and not is_on_floor() and trick != "bail":
+		trick = "grab"
+		board_caught = true
+		trick_time = 0.0
+	if trick == "crouch":
+		trick_time += delta
+		if trick_time >= 0.16:
+			_start_air(trick_next if trick_next != "" else "ollie")
+	elif trick == "ollie" or trick == "flip" or trick == "grab":
+		trick_time += delta
+		if trick == "flip" and not board_caught:
+			flip_turns += delta / 0.55
+			if flip_turns >= 0.92:
+				board_caught = true
+				flip_turns = 1.0
+		if is_on_floor() and trick_time > 0.18:
+			_finish_trick()
+	elif trick == "land":
+		trick_time += delta
+		if trick_time > 0.22:
+			trick = ""
+	_push_trick()
+
+func _start_air(kind: String) -> void:
+	trick = kind
+	trick_next = ""
+	trick_time = 0.0
+	velocity.y = 7.1
+	if kind == "flip":
+		board_caught = false
+		flip_turns = 0.0
+	else:
+		board_caught = true
+
+func _finish_trick() -> void:
+	if trick == "flip" and not board_caught:
+		trick = "bail"
+		bail_time = 0.6
+		skating = false
+		velocity.x *= 0.35
+		velocity.z *= 0.35
+	else:
+		trick = "land"
+		trick_time = 0.0
+		board_caught = true
+	_push_trick()
+
+func _push_trick() -> void:
+	if rig == null:
+		return
+	rig.trick = trick
+	rig.trick_time = trick_time
+	rig.flip_turns = flip_turns
+	rig.board_caught = board_caught
+	if is_on_floor():
+		rig.floor_normal = get_floor_normal()
+	else:
+		rig.floor_normal = Vector3.UP
+
 func _pose(delta: float) -> void:
 	if rig == null or not rig.has_method("drive"):
 		return
+	_push_trick()
 	var speed := Vector2(velocity.x, velocity.z).length()
 	rig.drive(delta, speed, skating, not is_on_floor(), grind != null)
