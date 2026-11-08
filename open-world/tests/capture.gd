@@ -1,10 +1,19 @@
 extends Node
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	for _i in 20:
 		await get_tree().process_frame
+	var settings := OS.get_environment("AU_SETTINGS")
+	if settings.is_empty():
+		settings = "/tmp/hq-settings.png"
+	main.get_node("Flow").set_paused(true)
+	for _i in 4:
+		await get_tree().process_frame
+	var err_settings := _save(settings)
+	main.get_node("Flow").set_paused(false)
 	var controls := OS.get_environment("AU_CONTROLS")
 	if controls.is_empty():
 		controls = "/tmp/hq-controls.png"
@@ -16,6 +25,17 @@ func _ready() -> void:
 	var label = player.get_node_or_null("NameLabel")
 	if label != null:
 		label.visible = false
+	var chase := OS.get_environment("AU_CHASE")
+	if chase.is_empty():
+		chase = "/tmp/hq-chase.png"
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	player.skating = true
+	for _i in 16:
+		await get_tree().physics_frame
+	player.external_move = Vector2.ZERO
+	var err_chase := _save(chase)
+	player.external_move_active = false
 	var cam := Camera3D.new()
 	cam.fov = 38.0
 	main.add_child(cam)
@@ -106,7 +126,7 @@ func _ready() -> void:
 	for _i in 6:
 		await get_tree().process_frame
 	var err_zero := _save(zero_close)
-	get_tree().quit(0 if err_controls == OK and err_stand == OK and err_skate == OK and err_ramp == OK and err_concept == OK and err_zero == OK else 1)
+	get_tree().quit(0 if err_settings == OK and err_controls == OK and err_chase == OK and err_stand == OK and err_skate == OK and err_ramp == OK and err_concept == OK and err_zero == OK else 1)
 
 func _frame(cam: Camera3D, player: Node3D, eye: Vector3, look: Vector3) -> void:
 	cam.global_position = player.global_position + eye

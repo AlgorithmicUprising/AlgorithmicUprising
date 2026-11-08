@@ -171,7 +171,8 @@ Spoken lines now:
 PC look is the mouse. It is checked with synthetic `InputEventMouseMotion` in the headless suite, and again in headless Chrome with Playwright’s mouse, which is not a physical mouse. Pointer lock starts only after a click. Esc releases it and pauses. A click on the pause cover resumes and captures again. Losing the window releases the pointer and pauses. Dialogue, pause, and the cabinet session ignore look and movement.
 
 - Click: capture the pointer. The game does not capture on launch
-- Mouse: yaw and pitch. Up is up. Pitch stays between about −54° and 29°. `[` and `]` change the speed, saved in `user://au-look-v1.json`
+- Mouse: yaw and pitch. Vertical look is inverted until the pause menu’s Invert mouse Y switch is turned off. That choice is the only thing that overrides the default, and it is stored in `user://au-look-v1.json`. Pitch stays between about −54° and 29°. `[` and `]` change the speed. The right stick’s vertical look is not inverted by that switch
+- W moves along the rendered camera’s horizontal forward, including the player body’s yaw. A and D strafe. S moves straight back. Acceleration is applied to the horizontal velocity as one vector. The old per-axis acceleration ran along a world 45° line until one axis caught up, which is why forward looked diagonal
 - W, S, A, D or the arrows: move relative to the view. W moves the way the camera faces
 - Space: jump
 - Shift: toggle skate and walk. The slice starts on the board
