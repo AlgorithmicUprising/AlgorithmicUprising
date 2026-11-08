@@ -5,6 +5,10 @@ func _ready() -> void:
 	add_child(main)
 	for _i in 20:
 		await get_tree().process_frame
+	var controls := OS.get_environment("AU_CONTROLS")
+	if controls.is_empty():
+		controls = "/tmp/hq-controls.png"
+	var err_controls := _save(controls)
 	for child in main.get_children():
 		if child is CanvasLayer:
 			child.visible = false
@@ -102,7 +106,7 @@ func _ready() -> void:
 	for _i in 6:
 		await get_tree().process_frame
 	var err_zero := _save(zero_close)
-	get_tree().quit(0 if err_stand == OK and err_skate == OK and err_ramp == OK and err_concept == OK and err_zero == OK else 1)
+	get_tree().quit(0 if err_controls == OK and err_stand == OK and err_skate == OK and err_ramp == OK and err_concept == OK and err_zero == OK else 1)
 
 func _frame(cam: Camera3D, player: Node3D, eye: Vector3, look: Vector3) -> void:
 	cam.global_position = player.global_position + eye

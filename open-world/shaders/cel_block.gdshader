@@ -7,7 +7,7 @@ uniform float outline_strength : hint_range(0.0, 1.0) = 0.28;
 
 void fragment() {
 	float facing = clamp(dot(NORMAL, VIEW), 0.0, 1.0);
-	float edge = smoothstep(0.2, 0.55, 1.0 - facing);
+	float edge = smoothstep(0.14, 0.36, 1.0 - facing);
 	ALBEDO = albedo.rgb * mix(1.0, 1.0 - outline_strength, edge);
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;
@@ -15,6 +15,6 @@ void fragment() {
 
 void light() {
 	float ndot = clamp(dot(NORMAL, LIGHT), 0.0, 1.0);
-	float stepped = max(floor(ndot * bands) / max(bands - 1.0, 1.0), 0.34);
+	float stepped = max(floor(ndot * bands) / max(bands - 1.0, 1.0), 0.28);
 	DIFFUSE_LIGHT += ALBEDO * LIGHT_COLOR * ATTENUATION * stepped;
 }

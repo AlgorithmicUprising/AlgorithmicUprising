@@ -92,6 +92,46 @@ async function checkWorld() {
   console.log('world before', before, 'after', after, 'moved', moved);
   if (!(moved > 0.4)) failures.push('keyboard did not move the player in the browser');
   if (after.session !== 'world') failures.push('session changed during the move check');
+  const yawBefore = after.yaw;
+  await page.mouse.move(180, 280);
+  await page.mouse.move(760, 320);
+  await page.waitForTimeout(250);
+  const turned = await page.evaluate(() => ({ ...window.AU_HQ }));
+  console.log('synthetic pointer look', after.look, 'yaw', yawBefore, '->', turned.yaw);
+  if (after.look && Math.abs(turned.yaw - yawBefore) < 0.05) {
+    failures.push('captured mouse move did not turn the view');
+  }
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(700);
+  await page.keyboard.up('KeyW');
+  const headed = await page.evaluate(() => ({ ...window.AU_HQ }));
+  const dx = headed.x - turned.x;
+  const dz = headed.z - turned.z;
+  const travel = Math.hypot(dx, dz);
+  const align = travel > 0.01 ? (dx * -Math.sin(turned.yaw) + dz * -Math.cos(turned.yaw)) / travel : 0;
+  console.log('synthetic W after mouse turn', { dx, dz, travel, align, yaw: turned.yaw });
+  if (!(travel > 0.4 && align > 0.7)) failures.push('W did not follow the mouse heading');
+  const yawE = turned.yaw;
+  await page.keyboard.press('KeyE');
+  await page.waitForTimeout(200);
+  const afterE = await page.evaluate(() => ({ ...window.AU_HQ }));
+  if (Math.abs(afterE.yaw - yawE) > 0.05) failures.push('E rotated the view');
+  if (afterE.session !== 'world') failures.push('E left the world from the open yard');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  const paused = await page.evaluate(() => ({ ...window.AU_HQ }));
+  if (!paused.paused) failures.push('Esc did not pause');
+  if (paused.look) failures.push('Esc left the pointer captured');
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(400);
+  await page.keyboard.up('KeyW');
+  const frozen = await page.evaluate(() => ({ ...window.AU_HQ }));
+  if (Math.hypot(frozen.x - paused.x, frozen.z - paused.z) > 0.2) failures.push('paused yard still accepted movement');
+  await page.mouse.click(640, 360);
+  await page.waitForTimeout(250);
+  const resumed = await page.evaluate(() => ({ ...window.AU_HQ }));
+  console.log('synthetic resume', resumed.paused, resumed.look);
+  if (resumed.paused) failures.push('click did not leave pause');
   await page.screenshot({ path: join(outDir, 'hq-browser.png') });
 }
 

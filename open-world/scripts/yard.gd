@@ -45,6 +45,7 @@ static func build(parent: Node) -> void:
 	_plaza(parent)
 	_gate(parent)
 	_plants(parent)
+	_marks(parent)
 
 static func _ground(parent: Node) -> void:
 	# Slabs stop at the crest of each bowl bank. Corner pads fill the rest so the cut has no open void.
@@ -92,7 +93,12 @@ static func _outside(parent: Node) -> void:
 	Blocks.label(parent, "FUTURE SECTIONS", Vector3(52, 3.2, 100), Palette.LABEL_COOL, 32)
 	for i in 5:
 		var height := 16.0 + float(i) * 6.0
-		Blocks.visual(parent, "FutureSkyline%d" % i, Vector3(108.0 + float(i) * 14.0, height * 0.5, -40.0 + float(i) * 22.0), Vector3(10, height, 12), Palette.SKYLINE if i % 2 == 0 else Palette.SKYLINE_TALL)
+		var tone := Palette.SKYLINE_TALL if i % 2 == 0 else Palette.SKYLINE
+		if i == 1:
+			tone = Palette.SKYLINE_COOL
+		elif i == 3:
+			tone = Palette.SKYLINE_MAGENTA
+		Blocks.visual(parent, "FutureSkyline%d" % i, Vector3(108.0 + float(i) * 14.0, height * 0.5, -40.0 + float(i) * 22.0), Vector3(10, height, 12), tone)
 	Blocks.visual(parent, "FutureFactoryA", Vector3(-112, 6, -20), Vector3(16, 12, 28), Palette.FACTORY)
 	Blocks.visual(parent, "FutureFactoryB", Vector3(-118, 4, 30), Vector3(14, 8, 22), Palette.FACTORY)
 	for i in 8:
@@ -213,6 +219,25 @@ static func _shell(parent: Node, node_name: String, x0: float, x1: float, z0: fl
 	if door_x1 < x1 - 1.0:
 		Blocks.solid(root, "FrontEast", Vector3((door_x1 + x1) * 0.5, y, z1), Vector3(x1 - door_x1, height, t), color)
 	Blocks.solid(root, "Lintel", Vector3((door_x0 + door_x1) * 0.5, height - 0.6, z1), Vector3(door_x1 - door_x0, 1.2, t), color)
+
+static func _marks(parent: Node) -> void:
+	# Original flat marks. Not copies of the reference painting, and not collision.
+	_mark(parent, "ArcadeMark", Vector3(16.5, 3.6, -7.52), Vector3(8.0, 3.0, 0.05))
+	_mark(parent, "ShopMark", Vector3(-63.0, 2.9, -51.58), Vector3(7.0, 2.4, 0.05))
+	Blocks.visual(parent, "ArcadeMarquee", Vector3(39, 7.55, -7.48), Vector3(9.0, 0.7, 0.16), Palette.ARCADE_SIGN)
+	Blocks.visual(parent, "PosterA", Vector3(22.5, 2.4, -16.2), Vector3(0.06, 1.3, 0.9), Color("f0c14a"))
+	Blocks.visual(parent, "PosterB", Vector3(22.62, 2.4, -16.2), Vector3(0.04, 0.7, 0.45), Color("e23e8c"))
+	Blocks.visual(parent, "CabinetFace", Vector3(32.0, 1.55, -17.35), Vector3(0.9, 0.55, 0.04), Color("16343a"))
+	Blocks.visual(parent, "CabinetFaceBar", Vector3(32.0, 1.55, -17.3), Vector3(0.55, 0.12, 0.03), Color("b6ff3b"))
+	for i in 6:
+		Blocks.visual(parent, "EaveLamp%d" % i, Vector3(18.0 + float(i) * 7.0, 5.4, -7.7), Vector3(0.8, 0.12, 0.35), Color("ffe0b8"))
+	Blocks.visual(parent, "YardCrackA", Vector3(10, 0.02, 24), Vector3(6.5, 0.012, 0.05), Color("8a6858"))
+	Blocks.visual(parent, "YardCrackB", Vector3(-8, 0.02, 14), Vector3(0.05, 0.012, 4.5), Color("8a6858"))
+
+static func _mark(parent: Node, node_name: String, origin: Vector3, size: Vector3) -> void:
+	Blocks.visual(parent, node_name + "A", origin, size, Color("e23e8c"))
+	Blocks.visual(parent, node_name + "B", origin + Vector3(size.x * 0.12, 0.15, 0.02), size * Vector3(0.42, 0.38, 1.0), Color("3d7ec4"))
+	Blocks.visual(parent, node_name + "C", origin + Vector3(-size.x * 0.18, -0.25, 0.03), size * Vector3(0.28, 0.46, 1.0), Color("e0a15a"))
 
 static func _temp_tag(parent: Node, origin: Vector3, width: float, height: float) -> void:
 	var colors := [Color("e23e8c"), Color("3d7ec4"), Color("e0a15a"), Color("2f6d66")]
