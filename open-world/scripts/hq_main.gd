@@ -15,6 +15,7 @@ var dialogue_panel: PanelContainer
 var dialogue_text: Label
 var pause_panel: PanelContainer
 var look_catch: Control
+var visual_demo := false
 var look_label: Label
 var hint_label: Label
 var invert_check: CheckButton
@@ -53,6 +54,7 @@ func _process(_delta: float) -> void:
 	if player.look_captured and not _can_look():
 		_release_look()
 	_sync_look_catch()
+	_maybe_demo()
 	_publish_web_state()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -288,6 +290,10 @@ func _release_look() -> void:
 func _sync_look_catch() -> void:
 	if look_catch == null:
 		return
+	if visual_demo:
+		look_catch.visible = false
+		look_catch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		return
 	var show := false
 	if flow.boundary.phase == "in_session" or flow.dialogue_open:
 		show = false
@@ -300,7 +306,7 @@ func _sync_look_catch() -> void:
 	look_catch.visible = show
 	look_catch.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
 	if hint_label != null:
-		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   E talk or cabinet   Enter confirm   Esc pause\nGamepad: left stick move, right stick look, A jump, Y skate, X interact, Start pause. Invert mouse Y is in the pause menu." % player.look_sensitivity
+		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   Q ollie   R kickflip   F grab   E talk\nEnter confirm   Esc pause. Invert mouse Y is in the pause menu." % player.look_sensitivity
 
 func _on_look_catch(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
@@ -311,6 +317,31 @@ func _on_look_catch(event: InputEvent) -> void:
 		_capture_look()
 	look_catch.accept_event()
 
+var demo_armed := false
+
+func _maybe_demo() -> void:
+	if demo_armed or player == null:
+		return
+	var kind := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("demo="):
+			kind = arg.trim_prefix("demo=")
+	if kind == "" and OS.has_feature("web"):
+		var search := str(JavaScriptBridge.eval("window.location.search", true))
+		if "demo=ollie" in search:
+			kind = "ollie"
+		elif "demo=flip" in search:
+			kind = "flip"
+		elif "demo=grab" in search:
+			kind = "grab"
+		elif "demo=ramp" in search:
+			kind = "ramp"
+	demo_armed = true
+	if kind == "":
+		return
+	visual_demo = true
+	player.start_visual_demo(kind)
+
 func _on_invert_y(enabled: bool) -> void:
 	if player == null:
 		return
@@ -320,7 +351,12 @@ func _publish_web_state() -> void:
 	if not OS.has_feature("web") or flow == null:
 		return
 	var ahead: Vector3 = player.camera_flat_forward()
-	var js := "window.AU_HQ={x:%s,y:%s,z:%s,yaw:%s,fx:%s,fz:%s,skating:%s,session:'%s',input:%s,look:%s,paused:%s,invert:%s,zone:'%s'};" % [
+	var spin := 0.0
+	var pose := ""
+	if player.rig != null:
+		spin = player.rig.board.rotation.z if player.rig.board != null else 0.0
+		pose = str(player.rig.pose_name)
+	var js := "window.AU_HQ={x:%s,y:%s,z:%s,yaw:%s,fx:%s,fz:%s,skating:%s,session:'%s',input:%s,look:%s,paused:%s,invert:%s,trick:'%s',pose:'%s',spin:%s,zone:'%s'};" % [
 		snapped(player.global_position.x, 0.01),
 		snapped(player.global_position.y, 0.01),
 		snapped(player.global_position.z, 0.01),
@@ -333,6 +369,9 @@ func _publish_web_state() -> void:
 		"true" if player.look_captured else "false",
 		"true" if flow.paused else "false",
 		"true" if player.look_invert_y else "false",
+		player.trick,
+		pose,
+		snapped(spin, 0.01),
 		zone_at(player.global_position),
 	]
 	JavaScriptBridge.eval(js, true)
