@@ -18,6 +18,7 @@
     "play": "PLAY SONG",
     "paused": "PAUSED",
     "pause_hint": "The meter can wait.",
+    "resume": "RESUME",
     "gameover_title": "METER SETTLED",
     "gameover_any": "Paid in full. Somehow.",
     "hud_score": "BARS BANKED",
