@@ -2,7 +2,7 @@
 
 Game 04 is a four-lane rhythm cartridge for the shared Punk Arcade engine. Its first catalog entry is Algorithmic Uprising's **The Human Zoo** (`AU-001`, explicit). The master in Drive's `Zero - Audio Masters` is 48 kHz stereo PCM, about 5:18.8, SHA-256 `54dcf056e2e5073b12a7fb38809a99ecba5c77ca72bd3111860e81ab806ee18c`. It remains outside this repository.
 
-This branch is a timing and integration vertical slice. The published catalog contains metadata only, so the title screen deliberately cannot start a run yet. The guide requires three reviewed **human-authored** charts and a separately hosted, cleared compressed playback copy. No automatic chart is generated from the master. Synthetic notes and audio live only inside tests. A private 160 kb/s AAC playback encode was measured at 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`; it has not been published.
+This branch is a timing and integration vertical slice. The committed catalog contains metadata only, so the public title screen deliberately cannot start a run yet. The guide requires three reviewed **human-authored** charts and a separately hosted, cleared compressed playback copy for release. With the author's permission, Easy/Medium/Hard draft steps were created from offline onset analysis for an owner-only timing and aesthetic playtest. Those generated charts and media are kept outside this public repository and are not release charts. A private 160 kb/s AAC playback encode was measured at 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`; it is used only in the owner-only preview.
 
 ## Run and embed
 
