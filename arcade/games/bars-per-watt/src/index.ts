@@ -27,7 +27,7 @@ const profile: CartridgeProfile = {
 
 type Element = HTMLElement & {
   action(action: string, source: string, down: boolean, atMs?: number): void;
-  pause(reason?: string): void; reset(): void; muted: boolean; state: string;
+  pause(reason?: string): void; reset(): void; muted: boolean; state: string; best: number;
 };
 const laneIndex: Record<string, Lane> = { left: 0, down: 1, up: 2, right: 3 };
 const timeLabel = (time: number) => Math.floor(time / 60) + ':' + String(Math.floor(time % 60)).padStart(2, '0');
@@ -119,7 +119,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       emit('game:loading', { songId: song.id, phase: 'ready' });
     } catch (error) {
       if (current !== generation || abort.signal.aborted || disposed) return;
-      chart = null; transport.reset();
+      chart = null; transport.unload();
       status('Could not load song: ' + String(error));
       emit('game:transport-error', { songId: song.id, reason: String(error) });
     } finally {
@@ -128,7 +128,8 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   }
   loadButton.addEventListener('click', () => void loadSelection(), { signal });
   difficulty.addEventListener('change', () => {
-    ++generation; selectionAbort?.abort(); transport.reset();
+    ++generation; selectionAbort?.abort(); selectionAbort = null;
+    transport.unload(); busy = false; loadButton.disabled = false;
     chart = null; button.disabled = true; status('Load ' + difficulty.value.toUpperCase() + ' to play.');
   }, { signal });
   choose.addEventListener('click', () => {
@@ -137,7 +138,9 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   host.addEventListener('game:over', () => {
     if (!session) return;
     bill.hidden = false; choose.hidden = false;
+    judge.textContent = 'METER SETTLED';
     root.querySelector<HTMLOutputElement>('[data-bill-score]')!.textContent = String(session.score);
+    root.querySelector<HTMLOutputElement>('[data-bill-best]')!.textContent = String(element.best);
     root.querySelector<HTMLOutputElement>('[data-bill-total]')!.textContent = String(session.score);
     root.querySelector<HTMLOutputElement>('[data-bill-accuracy]')!.textContent = session.accuracy + '%';
     root.querySelector<HTMLOutputElement>('[data-bill-combo]')!.textContent = String(session.maxCombo);
@@ -177,7 +180,8 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   }
   transport.onEnd = () => session?.finish();
   transport.onState = () => {
-    if (element.state === 'playing' && !transport.playing) judge.textContent = 'BUFFERING / PAUSED';
+    if (element.state === 'playing' && !transport.playing && !session?.complete)
+      judge.textContent = 'BUFFERING / PAUSED';
   };
   const keyForCode = (code: string) => ({
     KeyD: 'left', KeyF: 'down', KeyJ: 'up', KeyK: 'right',
@@ -244,8 +248,9 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       element.pause('audio-error');
     }); },
     onReset: () => {
-      ++generation; selectionAbort?.abort(); transport.reset(); session = null; chart = null;
-      button.disabled = true; bill.hidden = true; choose.hidden = true;
+      ++generation; selectionAbort?.abort(); selectionAbort = null;
+      transport.unload(); session = null; chart = null; busy = false;
+      button.disabled = true; loadButton.disabled = false; bill.hidden = true; choose.hidden = true;
       status('Choose a difficulty, then load The Human Zoo.');
     },
     setMuted: muted => transport.setMuted(muted),

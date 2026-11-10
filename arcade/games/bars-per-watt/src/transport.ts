@@ -23,8 +23,8 @@ export class MediaTransport {
     !this.stalled && this.audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA; }
   setMuted(muted: boolean) { this.audio.muted = muted; }
   async load(url: URL, signal?: AbortSignal) {
+    this.unload();
     const generation = ++this.generation;
-    this.audio.pause(); this.audio.removeAttribute('src'); this.audio.load();
     this.stalled = true; this.audio.src = url.href; this.audio.load();
     try {
       await new Promise<void>((resolve, reject) => {
@@ -62,6 +62,11 @@ export class MediaTransport {
     this.audio.pause();
     if (this.audio.readyState) this.audio.currentTime = 0;
   }
+  unload() {
+    ++this.generation;
+    this.audio.pause(); this.audio.removeAttribute('src'); this.audio.load();
+    this.stalled = true;
+  }
   /** Map event time to the current media position. Device/output calibration is applied by the caller. */
   atEvent(timestamp: number) {
     const now = performance.now();
@@ -69,7 +74,6 @@ export class MediaTransport {
     return Math.max(0, this.time + Math.max(-0.25, Math.min(0.25, (normalized - now) / 1000)));
   }
   dispose() {
-    this.disposed = true; ++this.generation; this.onEnd = null; this.onState = null;
-    this.audio.pause(); this.audio.removeAttribute('src'); this.audio.load();
+    this.disposed = true; this.onEnd = null; this.onState = null; this.unload();
   }
 }

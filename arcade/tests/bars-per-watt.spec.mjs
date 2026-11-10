@@ -60,6 +60,8 @@ test('Human Zoo catalog selection, native song clock, pause, resume and bill', a
   await expect(game).toHaveJSProperty('state','over',{timeout:12000});
   await expect(game.locator('.bill')).toBeVisible();
   await expect(game.locator('.bill')).toContainText('FICTIONAL POINTS. NOT MONEY.');
+  const card=await game.locator('.card').boundingBox(), bill=await game.locator('.bill').boundingBox();
+  expect(contained(card,bill)).toBe(true);
   expect(errors).toEqual([]);
   await game.screenshot({path:'test-results/screenshots/bars-bill-'+info.project.name+'.png'});
 });
