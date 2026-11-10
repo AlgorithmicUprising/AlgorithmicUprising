@@ -20,7 +20,7 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Plants | Five box planters with box shrubs |
 | Lighting | Procedural sunset sky, warmer key, cooler ambient, three-band shader with a sharper edge darkening, one shadow map. Still not inked illustration |
 | Park marks | Flat original panels on the warehouse front and workshop face, an arcade marquee, two poster quads, a cabinet face bar, eave lamps, and two crack lines. No collision. Not the reference painting |
-| Fony, the player | Articulated pivots, not a skin rig. Each joint has a sphere and the limb capsule reaches that joint, so the neck, elbows, hips, and knees stay covered in idle, walk, skate, jump, and land. Feet are solved onto the capsule bottom when standing and onto the deck while skating. Collision is still a separate capsule |
+| Fony, the player | CC0 Quaternius superhero male, rebound onto the 17-bone trick skeleton, with a painted hoodie, rust jacket, cargos, pads, and shoes. Hair is Hair_Long reshaped into copper spikes. Collision is still a separate capsule. Not a finished illustration |
 | Zero | Articulated pivots, not a skin rig. Larger cream CRT, lime screen bars, knob, vent, capsule jacket and limbs, red “?” patch, barcode blocks, metal neck, hands, and knees, coiled cable segments. Idle bob and a raised arm while talking |
 
 ## Still needed before this can look like the concept
@@ -41,12 +41,12 @@ Original art, made for Algorithmic Uprising, not copied from Grand Theft Auto, J
 
 Fony is the playable teen. Zero is the NPC in the resistance rooms. The approved drawing was used as direction and is not stored as a texture.
 
-What these rigs are: capsules, spheres, and cylinders parented to pivots. Fony’s legs are a two-bone solve so the shoes meet the ground or the deck. Poses are code (idle, walk, skate, jump, land for Fony; idle and talk for Zero). They are not skinned meshes and not animation clips from another program. The face and hair are still primitive geometry.
+Fony is a skinned human on the trick skeleton. Zero is still capsules, spheres, and cylinders on pivots. Fony’s legs are a two-bone solve so the shoes meet the ground or the deck. Poses are code (idle, walk, skate, jump, and the trick clips for Fony; idle and talk for Zero). They are not animation clips from another program.
 
 Still missing on the characters:
 
-- Hair strands, ears, cloth folds, and a jacket that is not a single capsule
-- Finger poses and a real cable curve
+- A sculpted teen face and a real spike groom. Hair is reshaped Hair_Long. The jacket is an open shell, not cloth
+- Separate finger poses and a real cable curve on Zero
 - Zero’s screen as anything beyond three moving bars
 - Board graphics
 - Hit reactions, grinds as a special body pose, and a get-up animation beyond the short land crouch
