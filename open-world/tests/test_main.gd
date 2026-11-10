@@ -761,6 +761,8 @@ func _district() -> void:
 	expect(not main.flow.dialogue_open and player.input_enabled and main.flow.save.met.zero, "dialogue returns input and records Zero")
 	expect(player.get_node_or_null("Fony") != null, "player visual is the Fony rig")
 	expect(player.get_node("Fony").find_child("Hair", true, false) != null, "Fony rig has hair")
+	expect(player.get_node("Fony").find_child("Body", true, false) != null, "Fony rig has the human body")
+	expect(player.rig.skeleton.get_bone_count() == 17, "Fony keeps the 17 trick bones")
 	expect(zero.find_child("Screen", true, false) != null, "Zero rig has a CRT screen")
 	player.global_position = Vector3(-42, 0.6, 2)
 	player.velocity = Vector3.ZERO
