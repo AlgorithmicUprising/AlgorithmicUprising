@@ -1,0 +1,38 @@
+{
+  "id": "placeholder",
+  "game": "bars-per-watt",
+  "name": "Bars per Watt — procedural",
+  "procedural": true,
+  "palette": {
+    "bg": "#111319",
+    "panel": "#242530",
+    "ink": "#f4f1e7",
+    "accent": "#c8f250",
+    "secondary": "#ed5d9e",
+    "muted": "#a9acb6",
+    "grid": "#4d5360"
+  },
+  "strings": {
+    "title": "BARS PER WATT",
+    "subtitle": "Drop bars. Not the grid.",
+    "play": "PLAY SONG",
+    "paused": "PAUSED",
+    "pause_hint": "The meter can wait.",
+    "gameover_title": "METER SETTLED",
+    "gameover_any": "Paid in full. Somehow.",
+    "hud_score": "BARS BANKED",
+    "best": "BEST",
+    "retry": "RUN IT AGAIN",
+    "share": "SHARE",
+    "sound_on": "SOUND ON",
+    "sound_off": "SOUND OFF",
+    "perfect": "CLEAN HIT",
+    "good": "IN THE POCKET",
+    "miss": "OFF THE GRID",
+    "max_combo": "MAX COMBO",
+    "accuracy": "ACCURACY",
+    "perfect_count": "CLEAN",
+    "good_count": "POCKET",
+    "miss_count": "MISSED"
+  }
+}

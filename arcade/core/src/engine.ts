@@ -5,7 +5,7 @@ export type GameAPI = {
   start(): void;
   update(dt: number): void;
   draw(ctx: CanvasRenderingContext2D, width: number, height: number): void;
-  input(key: string, down: boolean): void;
+  input(key: string, down: boolean, atMs?: number, source?: string): void;
   score(): number;
   over(): boolean;
   setSkin?(url: string | null): void | Promise<void>;
@@ -15,6 +15,14 @@ export type GameAPI = {
   result?(): Record<string, unknown>;
   presentation?(): Presentation;
   dispose?(): void;
+  /** Optional hooks; older cartridges continue to use the original contract. */
+  canStart?(): boolean;
+  keyForCode?(code: string): string | undefined;
+  onPause?(): void;
+  onResume?(): void;
+  onReset?(): void;
+  setMuted?(muted: boolean): void;
+  bestKey?(): string;
 };
 
 const tagControlsStyle=`
@@ -48,7 +56,8 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
   private idlePadTimer?: number;
   private storageKey(suffix: string) {
     const prefix = profile ? this.getAttribute('storage-key') || 'au-arcade' : 'au-arcade';
-    return prefix + ':v1:' + tag + ':' + suffix;
+    const scoped = suffix === 'best' ? this.game?.bestKey?.() : undefined;
+    return prefix + ':v1:' + tag + ':' + (scoped || suffix);
   }
   private readStorage() {
     const initialMute = !profile || !['false', '0', 'off'].includes(this.getAttribute('muted') || '');
@@ -123,6 +132,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
        this.notify(name, { version: this.version, skin: this.getAttribute('skin') || 'placeholder', ...detail });
      }
    }, this);
+    this.game.setMuted?.(this.muted);
    this.loadSkin(this.getAttribute('skin'));
    this.updateSoundLabel();
    this.startButton.addEventListener('click', () => this.start());
@@ -181,21 +191,26 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
    this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(this);this.observer=new IntersectionObserver(entries=>{if(entries[0]&&entries[0].intersectionRatio<.25)this.pause('offscreen')},{threshold:[0,.25,1]});this.observer.observe(this);document.addEventListener('visibilitychange',this.onVisibility);window.addEventListener('blur',this.onBlur);this.resize();this.game.draw(this.ctx,this.canvas.width,this.canvas.height);if (!profile) this.dispatchEvent(new CustomEvent('game:ready',{detail:{game:tag,skin:'placeholder',version:'0.2.0-dev',usingPlaceholder:true},bubbles:true,composed:true}));
   }
   private focusGame(){const focused=this.shadowRoot?.activeElement;if(focused instanceof HTMLElement)focused.blur();this.focus()}
-   private sendInput(key:string,source:string,down:boolean){
-    if(!profile && tag!=='grind-the-terms'){this.game.input(key,down);return}
+   private sendInput(key:string,source:string,down:boolean,atMs=performance.now()){
+    if(!profile && tag!=='grind-the-terms'){this.game.input(key,down,atMs,source);return}
     const sources=this.inputSources.get(key)??new Set<string>(),wasDown=sources.size>0;
     if(down)sources.add(source);else sources.delete(source);
     if(sources.size)this.inputSources.set(key,sources);else this.inputSources.delete(key);
-    const isDown=sources.size>0;if(wasDown!==isDown)this.game.input(key,isDown);
+    const isDown=sources.size>0;if(wasDown!==isDown)this.game.input(key,isDown,atMs,source);
+   }
+   /** Allows a cartridge's independent touch pads to use the shared source aggregation. */
+   action(key:string,source:string,down:boolean,atMs=performance.now()){
+     if(!this.active||this.paused)return;
+     this.sendInput(key,source,down,atMs);
    }
    private releaseHeldInputs(){
-    for(const [key,sources] of this.inputSources)if(sources.size)this.game.input(key,false);
+    for(const [key,sources] of this.inputSources)if(sources.size)this.game.input(key,false,performance.now(),'release');
     this.releasePointer?.();this.inputSources.clear();this.padHeld=[false,false,false];this.game.releaseInput?.();
    }
   private onKey = (e: KeyboardEvent) => {
     const path = e.composedPath();
     if (document.activeElement !== this || path.some(n => n instanceof HTMLInputElement || n instanceof HTMLSelectElement || n instanceof HTMLDialogElement)) return;
-    const key = this.key(e.key);
+    const key = this.game.keyForCode?.(e.code) || this.key(e.key);
     const inButton = path.some(n => n instanceof HTMLButtonElement);
     if (!key || (inButton && (!profile || (key !== 'pause' && key !== 'mute')))) return;
     e.preventDefault();
@@ -204,17 +219,17 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     if (key === 'mute') { this.setSound(!this.muted); return; }
     if (!this.active && (!profile || key === profile.primary)) {
       this.start();
-      if (!profile) return;
+      if (!profile || profile.consumeStartInput) return;
     }
-    if (this.active && !this.paused) this.sendInput(key, 'keyboard:' + e.code, true);
+    if (this.active && !this.paused) this.sendInput(key, 'keyboard:' + e.code, true, e.timeStamp);
   };
   private onUp = (event: KeyboardEvent) => {
     if (document.activeElement !== this) return;
-    const action = this.key(event.key);
+    const action = this.game.keyForCode?.(event.code) || this.key(event.key);
     if (!action) return;
     const inControl = event.composedPath().some(node => node instanceof HTMLButtonElement || node instanceof HTMLInputElement || node instanceof HTMLSelectElement || node instanceof HTMLDialogElement);
     if (!profile || !inControl) event.preventDefault();
-    this.sendInput(action, 'keyboard:' + event.code, false);
+     this.sendInput(action, 'keyboard:' + event.code, false, event.timeStamp);
   };
   private key(k:string){if(profile)return profile.keys[k.length===1?k.toLowerCase():k] || '';if(tag==='tag-before-training'&&k.length===1)k=k.toLowerCase();if(tag==='grind-the-terms')return ({' ':'trick','ArrowUp':'up','w':'up','W':'up','u':'up','U':'up','a':'trick','A':'trick','r':'boost','R':'boost','Escape':'pause','p':'pause','m':'mute','M':'mute'} as Record<string,string>)[k]||'';return ({' ':'tap','ArrowUp':'up','ArrowDown':'down','ArrowLeft':'left','ArrowRight':'right','w':'up','a':'left','s':'down','d':'right','Escape':'pause','p':'pause','m':'mute','M':'mute'} as Record<string,string>)[k]||''}
   private onVisibility=()=>{if(document.hidden)this.pause('hidden')};private onBlur=()=>this.pause('blur');
@@ -232,6 +247,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
   get muted() { return this.mutedValue; }
   set muted(value: boolean) {
     this.mutedValue = value;
+    this.game?.setMuted?.(value);
     if (tag === 'tag-before-training') this.toggleAttribute('data-sound-on', !value);
     if (profile) {
       this.updateSoundLabel();
@@ -271,7 +287,8 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     root.querySelector('[part=again]')!.addEventListener('click', () => this.start(), { signal });
     root.querySelector('[part=resume]')!.addEventListener('click', () => this.resume(), { signal });
     root.querySelector('[part=share]')!.addEventListener('click', () => void this.shareScore(this.game.score(), label), { signal });
-    const launch = root.querySelector<HTMLButtonElement>('[data-primary]')!;
+    const launch = root.querySelector<HTMLButtonElement>('[data-primary]');
+    if (launch) {
     const press = (source: string) => {
       if (this.paused) return;
       if (!this.active) this.start();
@@ -290,6 +307,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
       if (event.detail !== 0) return;
       press('accessible-launch'); this.sendInput(profile!.primary, 'accessible-launch', false);
     }, { signal });
+    }
     this.addEventListener('focusout', () => queueMicrotask(() => {
       if (this.isConnected && document.activeElement !== this) this.pause('blur');
     }), { signal });
@@ -319,8 +337,13 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
         if (pressed && document.activeElement === this) this.paused ? this.resume('player') : this.pause();
       } else {
         if (pressed && !this.active && action === profile!.primary && document.activeElement === this) this.start();
-        if (this.phase === 'playing' || !pressed) this.sendInput(action, 'pad:' + index, pressed);
+        if (this.phase === 'playing' || !pressed) this.sendInput(action, 'pad:' + index, pressed, performance.now());
       }
+    }
+    for (const mapping of profile!.padAxes || []) {
+      const value = pad?.axes[mapping.index] || 0, deadzone = mapping.deadzone ?? 0.35;
+      this.sendInput(mapping.negative, 'pad-axis:' + mapping.index + '-', value < -deadzone && this.phase === 'playing', performance.now());
+      this.sendInput(mapping.positive, 'pad-axis:' + mapping.index + '+', value > deadzone && this.phase === 'playing', performance.now());
     }
     const axis = pad?.axes[0] || 0;
     this.game.setMoveAxis?.(this.phase === 'playing' && Math.abs(axis) > 0.16 ? axis : 0, 0);
@@ -328,7 +351,9 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
   private playTone(event:string){if(this.muted)return;try{this.audio??=new AudioContext();const time=this.audio.currentTime;const osc=this.audio.createOscillator(),gain=this.audio.createGain();const pitches:Record<string,number>={'game:grind-start':610,'game:grind-end':390,'game:power':870,'game:near-miss':720,'game:bail':140,'game:player-scan':960,'game:identified':240,'game:police-arrived':330,'game:arrested':130};const f=pitches[event]||550;osc.type=event==='game:bail'?'sawtooth':'square';osc.frequency.setValueAtTime(f,time);osc.frequency.exponentialRampToValueAtTime(Math.max(65,f*.55),time+.12);gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(.035,time+.01);gain.gain.exponentialRampToValueAtTime(.0001,time+.14);osc.connect(gain);gain.connect(this.audio.destination);osc.start(time);osc.stop(time+.15)}catch{}}
   private pollGamepad(){try{const pad=navigator.getGamepads?.().find(p=>p?.connected);if(profile){this.readProfilePad(pad ?? null);return}if(!pad)return;if(tag==='grind-the-terms'){const keys=['up','trick','boost'];keys.forEach((key,i)=>{const pressed=!!pad.buttons[i]?.pressed;if(pressed!==this.padHeld[i]){this.sendInput(key,'gamepad:'+key,pressed);this.padHeld[i]=pressed}})}else{const pressed=!!pad.buttons[0]?.pressed;if(pressed!==this.padHeld[0]){const key=tag==='tag-before-training'?'spray':'tap';this.sendInput(key,'gamepad:'+key,pressed);this.padHeld[0]=pressed}}if(tag==='tag-before-training'){const x=pad.axes[0]||0,y=pad.axes[1]||0;this.game.input('left',x<-.35);this.game.input('right',x>.35);this.game.input('up',y<-.35);this.game.input('down',y>.35)}}catch{}}
   start() {
+    if (this.game.canStart && !this.game.canStart()) return;
     this.releaseHeldInputs(); this.game.start(); this.padHeld = [false,false,false];
+    this.bestScore = Number(readLocal(this.storageKey('best'))) || 0;
     this.active = true; this.paused = false; this.phase = 'playing'; this.focusGame();
     this.runStartedAt = performance.now(); this.pausedMs = 0;
     const overlay = this.shadowRoot!.querySelector<HTMLElement>('.overlay')!;
@@ -337,7 +362,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     this.notify('game:start', profile ? { seed: Number.isFinite(seed) ? seed | 0 : 1 } : {});
     this.last = performance.now(); cancelAnimationFrame(this.frame); this.frame = requestAnimationFrame(this.tick);
   }
-  private tick=(now:number)=>{if(!this.active||this.paused)return;const dt=Math.min((now-this.last)/1000,.05);this.last=now;this.pollGamepad();if(this.paused)return;this.game.update(dt);this.game.draw(this.ctx,this.canvas.width,this.canvas.height);if(this.game.over()){this.active=false;this.phase='over';const score=this.game.score(),isNewBest=score>this.bestScore;this.bestScore=Math.max(this.bestScore,score);writeLocal(this.storageKey('best'),String(this.bestScore));const result=this.game.result?.()||{};this.live.textContent=`Game over. ${typeof result.causeLine==='string'?result.causeLine:''} Score ${score}. Best ${this.bestScore}`;const overlay=this.shadowRoot!.querySelector('.overlay') as HTMLElement;overlay.dataset.phase='over';overlay.hidden=false;overlay.style.display='grid';
+  private tick=(now:number)=>{if(!this.active||this.paused)return;const dt=Math.min((now-this.last)/1000,.05);this.last=now;this.pollGamepad();if(this.paused)return;this.game.update(dt);this.game.draw(this.ctx,this.canvas.width,this.canvas.height);if(this.game.over()){this.active=false;this.phase='over';const score=this.game.score();this.bestScore=Number(readLocal(this.storageKey('best'))) || 0;const isNewBest=score>this.bestScore;this.bestScore=Math.max(this.bestScore,score);writeLocal(this.storageKey('best'),String(this.bestScore));const result=this.game.result?.()||{};this.live.textContent=`Game over. ${typeof result.causeLine==='string'?result.causeLine:''} Score ${score}. Best ${this.bestScore}`;const overlay=this.shadowRoot!.querySelector('.overlay') as HTMLElement;overlay.dataset.phase='over';overlay.hidden=false;overlay.style.display='grid';
     if (profile) { if(isNewBest)this.playCue('new_best'); this.refreshPanel(); overlay.querySelector<HTMLButtonElement>('[part=again]')?.focus({preventScroll:true}); }
     else { overlay.innerHTML=`<h2>${tag==='tag-before-training'?(result.cause==='arrested'?'BUSTED':'TRAINING COMPLETE'):'GAME OVER'}</h2><p>${typeof result.causeLine==='string'?result.causeLine:'TERMS ACCEPTED. OOPS.'}</p><p>SCORE ${score} • BEST ${this.bestScore}</p><p>${tag==='tag-before-training'?(isNewBest?'NEW STYLE RECORD.':'YOUR ALLEY. YOUR STYLE.'):(isNewBest?'NEW RECORD. STILL UNREAD.':'SKIM AGAIN?')}</p><button part="again">${tag==='tag-before-training'?'ROLL AGAIN':'SKIM AGAIN'}</button><button part="share">SHARE</button>`;overlay.querySelector('[part=again]')!.addEventListener('click',()=>this.start());overlay.querySelector('[part=share]')!.addEventListener('click',()=>{void this.shareScore(score,label)});}
     this.notify('game:over', {score, best:this.bestScore, isNewBest, durationMs:Math.round(performance.now()-this.runStartedAt-this.pausedMs), ...result});return;}this.frame=requestAnimationFrame(this.tick)};
@@ -358,13 +383,13 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     if (field) { field.hidden = false; field.value = combined; field.focus(); field.select(); }
     this.live.textContent = field ? 'Select and copy your score.' : 'Share unavailable here; copy the page URL to share your score.';
   }
-  pause(reason='player'){if(!this.active||this.paused)return;this.releaseHeldInputs();this.paused=true;this.phase='paused';this.pauseClock=performance.now();
+  pause(reason='player'){if(!this.active||this.paused)return;this.game.onPause?.();this.releaseHeldInputs();this.paused=true;this.phase='paused';this.pauseClock=performance.now();
    if (profile && this.audio?.state === 'running') void this.audio.suspend().catch(() => {});
    this.game.releaseInput?.();cancelAnimationFrame(this.frame);const overlay=this.shadowRoot!.querySelector('.overlay') as HTMLElement;overlay.dataset.phase='paused';overlay.removeAttribute('hidden');overlay.style.display='grid';
    if (profile) { this.refreshPanel(); if (reason === 'player') overlay.querySelector<HTMLButtonElement>('[part=resume]')?.focus({preventScroll:true}); }
    else { overlay.innerHTML=tag==='tag-before-training'?'<h2>PAUSED</h2><p>The alley can wait.</p><button part="resume">RESUME</button>':'<h2>PAUSED</h2><p>Take your time. The fine print can wait.</p><button part="resume">RESUME</button>';overlay.querySelector('[part=resume]')!.addEventListener('click',()=>this.resume());} this.notify('game:pause',{reason})}
-  resume(reason='player'){if(!this.active||!this.paused)return;this.pausedMs+=performance.now()-this.pauseClock;this.paused=false;this.phase='playing';const overlay=this.shadowRoot!.querySelector('.overlay') as HTMLElement;overlay.style.display='none';overlay.setAttribute('hidden','');this.focusGame();this.last=performance.now();this.frame=requestAnimationFrame(this.tick);this.notify('game:resume',{reason})}
-  reset(){this.releaseHeldInputs();this.active=false;this.paused=false;this.phase='title';cancelAnimationFrame(this.frame);this.game.start();const overlay=this.shadowRoot!.querySelector('.overlay') as HTMLElement;overlay.dataset.phase='title';overlay.style.display='grid';overlay.removeAttribute('hidden');if(profile){this.refreshPanel();this.resize();return}overlay.innerHTML=`<h2>${label}</h2><p>${tag==='grind-the-terms'?'PRESS U / ↑ TO START':'PRESS SPACE / TAP TO START'}</p>${tag==='tag-before-training'?'<p>10s without fresh art: drones hunt you. Escape their scan or tag the police.</p>':''}<button part="start">START</button>`;overlay.querySelector('[part=start]')!.addEventListener('click',()=>this.start());}
+  resume(reason='player'){if(!this.active||!this.paused)return;this.pausedMs+=performance.now()-this.pauseClock;this.paused=false;this.phase='playing';this.game.onResume?.();const overlay=this.shadowRoot!.querySelector<HTMLElement>('.overlay')!;overlay.style.display='none';overlay.setAttribute('hidden','');this.focusGame();this.last=performance.now();this.frame=requestAnimationFrame(this.tick);this.notify('game:resume',{reason})}
+  reset(){this.releaseHeldInputs();this.active=false;this.paused=false;this.phase='title';cancelAnimationFrame(this.frame);if(this.game.onReset)this.game.onReset();else this.game.start();const overlay=this.shadowRoot!.querySelector('.overlay') as HTMLElement;overlay.dataset.phase='title';overlay.style.display='grid';overlay.removeAttribute('hidden');if(profile){this.refreshPanel();this.resize();return}overlay.innerHTML=`<h2>${label}</h2><p>${tag==='grind-the-terms'?'PRESS U / ↑ TO START':'PRESS SPACE / TAP TO START'}</p>${tag==='tag-before-training'?'<p>10s without fresh art: drones hunt you. Escape their scan or tag the police.</p>':''}<button part="start">START</button>`;overlay.querySelector('[part=start]')!.addEventListener('click',()=>this.start());}
   get state(){return this.phase}get best(){return this.bestScore}get version(){return profile?.version ?? '0.2.0-dev'}
   disconnectedCallback(){this.releaseHeldInputs();this.lifetime.abort();this.game?.dispose?.();
    this.skinSequence++;this.readySent=false;this.gesture=false;this.active=false;this.paused=false;this.phase='title';

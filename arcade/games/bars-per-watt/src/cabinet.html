@@ -1,0 +1,56 @@
+<div class="viewport" part="viewport">
+  <header class="header">
+    <div class="brand"><b>Ø</b><span>BARS<br>PER WATT</span></div>
+    <div class="hud"><div><small>BARS BANKED</small><output data-score>0</output></div>
+      <div><small>COMBO</small><output data-combo>0</output></div>
+      <div><small>ACCURACY</small><output data-accuracy>0%</output></div></div>
+  </header>
+  <div class="screen">
+    <canvas role="img" aria-label="Four-lane rhythm highway: left, down, up, right"></canvas>
+    <div class="overlay" data-phase="title">
+      <section class="card">
+        <span class="eyebrow">ZERO GAME THING 2000 / 04</span>
+        <h2>BARS PER WATT</h2><p data-detail>Drop bars. Not the grid.</p><p data-summary hidden></p>
+        <div class="song-picker">
+          <strong>THE HUMAN ZOO</strong><span>ALGORITHMIC UPRISING · 5:18</span>
+          <label>CHART <select data-difficulty><option value="easy">EASY</option><option value="medium">MEDIUM</option><option value="hard">HARD</option></select></label>
+          <button type="button" data-load>LOAD SONG</button>
+          <p data-loading role="status">Select a chart to load the song.</p>
+        </div>
+        <div class="bill" hidden><strong>ELECTRIC BILL / THE HUMAN ZOO</strong>
+          <div><span>BEAT CHARGE</span><output data-bill-score>0</output></div>
+          <div><span>ACCURACY</span><output data-bill-accuracy>0%</output></div>
+          <div><span>MAX COMBO</span><output data-bill-combo>0</output></div>
+          <div class="total"><span>TOTAL POINTS</span><output data-bill-total>0</output></div>
+          <small>FICTIONAL POINTS. NOT MONEY.</small>
+        </div>
+        <div class="actions"><button type="button" part="start" disabled>PLAY SONG</button>
+          <button type="button" part="resume" hidden>RESUME</button>
+          <button type="button" part="again" hidden>RUN IT AGAIN</button>
+          <button type="button" part="share" hidden>SHARE</button>
+          <button type="button" data-choose hidden>CHOOSE CHART</button></div>
+        <input data-share-fallback type="text" aria-label="Score to copy" readonly hidden>
+      </section>
+    </div>
+  </div>
+  <aside class="rack"><div class="meter"><span>RACK LOAD</span><div class="meter-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <b data-meter>READY</b></div><p data-judge aria-live="off">HIT THE LINE</p>
+    <div class="progress"><span>TRACK</span><progress data-progress max="318.8" value="0"></progress><time data-time>0:00</time></div></aside>
+  <nav class="touch-pads" part="mobile-controls" aria-label="Rhythm lanes">
+    <button type="button" data-lane="left" aria-label="Left lane">←</button>
+    <button type="button" data-lane="down" aria-label="Down lane">↓</button>
+    <button type="button" data-lane="up" aria-label="Up lane">↑</button>
+    <button type="button" data-lane="right" aria-label="Right lane">→</button>
+  </nav>
+  <div class="top"><button type="button" part="pause" aria-label="Pause game">Ⅱ</button>
+    <button type="button" part="sound" aria-pressed="false">SOUND OFF</button>
+    <button type="button" part="settings">⚙ SETTINGS</button></div>
+  <dialog class="settings"><form method="dialog"><h2>SETTINGS</h2>
+    <label>VISUAL OFFSET <input data-visual-offset type="range" min="-150" max="150" step="5" value="0"><output data-visual-value>0 ms</output></label>
+    <label>INPUT OFFSET <input data-input-offset type="range" min="-150" max="150" step="5" value="0"><output data-input-value>0 ms</output></label>
+    <label>HIGH CONTRAST <input data-contrast type="checkbox"></label>
+    <label>REDUCED MOTION <input data-motion type="checkbox"></label>
+    <p>Offsets are local to this device. The song clock always controls scoring.</p>
+    <button type="submit">DONE</button></form></dialog>
+  <span class="live" aria-live="polite" aria-atomic="true"></span>
+</div>
