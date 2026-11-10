@@ -46,7 +46,12 @@ func _process(_delta: float) -> void:
 	if player == null:
 		return
 	zone_label.text = zone_at(player.global_position)
-	mode_label.text = "SKATE" if player.skating else "WALK"
+	var mode := "SKATE" if player.skating else "WALK"
+	if player.sprite_frame.begins_with("kickup"):
+		mode = "KICK UP"
+	elif player.sprite_frame.begins_with("dropin"):
+		mode = "DROP IN"
+	mode_label.text = mode
 	var target = null
 	if player.input_enabled and flow.boundary.phase == "world" and not flow.dialogue_open and not flow.paused:
 		target = _nearest(2.5)
@@ -215,6 +220,14 @@ func _hud() -> void:
 	invert_check.set_pressed_no_signal(player.look_invert_y)
 	invert_check.toggled.connect(_on_invert_y)
 	pause_panel.get_child(0).add_child(invert_check)
+	var sprite_check := CheckButton.new()
+	sprite_check.name = "PaintedSprite"
+	sprite_check.text = "Painted sprite"
+	sprite_check.focus_mode = Control.FOCUS_NONE
+	sprite_check.process_mode = Node.PROCESS_MODE_ALWAYS
+	sprite_check.set_pressed_no_signal(player.use_painted_sprite)
+	sprite_check.toggled.connect(_on_painted_sprite)
+	pause_panel.get_child(0).add_child(sprite_check)
 	pause_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	layer.add_child(pause_panel)
 	look_catch = Control.new()
@@ -242,7 +255,7 @@ func _center_panel() -> PanelContainer:
 	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	panel.offset_left = -280
 	panel.offset_right = 280
-	panel.offset_top = -180
+	panel.offset_top = -230
 	panel.offset_bottom = -36
 	panel.visible = false
 	var style := StyleBoxFlat.new()
@@ -347,6 +360,11 @@ func _on_invert_y(enabled: bool) -> void:
 		return
 	player.choose_invert_y(enabled)
 
+func _on_painted_sprite(enabled: bool) -> void:
+	if player == null:
+		return
+	player.set_painted_sprite(enabled)
+
 func _publish_web_state() -> void:
 	if not OS.has_feature("web") or flow == null:
 		return
@@ -356,7 +374,7 @@ func _publish_web_state() -> void:
 	if player.rig != null:
 		spin = player.rig.board.rotation.z if player.rig.board != null else 0.0
 		pose = str(player.rig.pose_name)
-	var js := "window.AU_HQ={x:%s,y:%s,z:%s,yaw:%s,fx:%s,fz:%s,skating:%s,session:'%s',input:%s,look:%s,paused:%s,invert:%s,trick:'%s',pose:'%s',spin:%s,zone:'%s'};" % [
+	var js := "window.AU_HQ={x:%s,y:%s,z:%s,yaw:%s,fx:%s,fz:%s,skating:%s,session:'%s',input:%s,look:%s,paused:%s,invert:%s,trick:'%s',pose:'%s',spin:%s,zone:'%s',frame:'%s',sprite:%s};" % [
 		snapped(player.global_position.x, 0.01),
 		snapped(player.global_position.y, 0.01),
 		snapped(player.global_position.z, 0.01),
@@ -373,5 +391,7 @@ func _publish_web_state() -> void:
 		pose,
 		snapped(spin, 0.01),
 		zone_at(player.global_position),
+		player.sprite_frame,
+		"true" if player.use_painted_sprite else "false",
 	]
 	JavaScriptBridge.eval(js, true)

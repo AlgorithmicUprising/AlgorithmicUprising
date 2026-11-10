@@ -1,0 +1,295 @@
+{
+  "atlas": "fony2d_atlas.png",
+  "cell_w": 212,
+  "cell_h": 272,
+  "anchor_x": 106,
+  "anchor_y": 262,
+  "pixel_size": 0.007674,
+  "foot_local_y": 0.325,
+  "gutter": 2,
+  "dirs": [
+    "front",
+    "front_right",
+    "right",
+    "back_right",
+    "back",
+    "back_left",
+    "left",
+    "front_left"
+  ],
+  "frames": {
+    "dropin_1_drop": {
+      "x": 2,
+      "y": 2,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "dropin_2_step": {
+      "x": 216,
+      "y": 2,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "dropin_3_plant": {
+      "x": 430,
+      "y": 2,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "idle_back": {
+      "x": 644,
+      "y": 2,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "idle_back_left": {
+      "x": 858,
+      "y": 2,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "idle_back_right": {
+      "x": 1072,
+      "y": 2,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "idle_front": {
+      "x": 1286,
+      "y": 2,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "idle_front_left": {
+      "x": 1500,
+      "y": 2,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "idle_front_right": {
+      "x": 2,
+      "y": 276,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "idle_left": {
+      "x": 216,
+      "y": 276,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "idle_right": {
+      "x": 430,
+      "y": 276,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "kickup_1_hook": {
+      "x": 644,
+      "y": 276,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "kickup_2_rise": {
+      "x": 858,
+      "y": 276,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "kickup_3_catch": {
+      "x": 1072,
+      "y": 276,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_back": {
+      "x": 1286,
+      "y": 276,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_back_left": {
+      "x": 1500,
+      "y": 276,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_back_right": {
+      "x": 2,
+      "y": 550,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_cycle_left_1": {
+      "x": 216,
+      "y": 550,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_cycle_left_2": {
+      "x": 430,
+      "y": 550,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_cycle_left_3": {
+      "x": 644,
+      "y": 550,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_front": {
+      "x": 858,
+      "y": 550,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_front_left": {
+      "x": 1072,
+      "y": 550,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_front_right": {
+      "x": 1286,
+      "y": 550,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_left": {
+      "x": 1500,
+      "y": 550,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "push_right": {
+      "x": 2,
+      "y": 824,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "skate_back": {
+      "x": 216,
+      "y": 824,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "skate_back_left": {
+      "x": 430,
+      "y": 824,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "skate_back_right": {
+      "x": 644,
+      "y": 824,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "skate_front": {
+      "x": 858,
+      "y": 824,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "skate_front_left": {
+      "x": 1072,
+      "y": 824,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "skate_front_right": {
+      "x": 1286,
+      "y": 824,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "skate_left": {
+      "x": 1500,
+      "y": 824,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "skate_right": {
+      "x": 2,
+      "y": 1098,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "trick_crouch_front": {
+      "x": 216,
+      "y": 1098,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "trick_grab_front": {
+      "x": 430,
+      "y": 1098,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.42
+    },
+    "trick_kickflip_front": {
+      "x": 644,
+      "y": 1098,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.4
+    },
+    "trick_land_front": {
+      "x": 858,
+      "y": 1098,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.0
+    },
+    "trick_ollie_front": {
+      "x": 1072,
+      "y": 1098,
+      "w": 212,
+      "h": 272,
+      "lift_m": 0.46
+    }
+  },
+  "notes": [
+    "Direction suffix is the way Fony faces on screen.",
+    "anchor_x/anchor_y is the shared ground point in every cell.",
+    "lift_m raises airborne trick poses above that ground point.",
+    "Transitions and tricks are front-only in the runtime.",
+    "face_front was not in the delivered PNG set."
+  ]
+}
