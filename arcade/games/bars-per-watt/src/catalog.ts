@@ -2,12 +2,14 @@ import type { Difficulty } from './chart';
 
 export interface Song {
   id: string; title: string; durationSec: number; explicit: boolean;
+  rightsStatus: 'pending' | 'cleared';
   audioVersion?: string; audio?: string;
   charts?: Partial<Record<Difficulty, string>>;
 }
 export interface Catalog { version: 1; songs: Song[] }
 export const humanZoo: Song = {
-  id: 'AU-001', title: 'The Human Zoo', durationSec: 318.8, explicit: false
+  id: 'AU-001', title: 'The Human Zoo', durationSec: 318.8,
+  explicit: true, rightsStatus: 'pending'
 };
 
 function allowed(url: URL, base: URL) {
@@ -41,7 +43,8 @@ export async function loadCatalog(url: URL, signal: AbortSignal): Promise<Catalo
   for (const song of catalog.songs) {
     if (!/^[A-Za-z0-9-]{1,80}$/.test(song.id) || typeof song.title !== 'string' ||
         song.title.length > 120 || !Number.isFinite(song.durationSec) || song.durationSec <= 0 ||
-        song.durationSec > 900 || typeof song.explicit !== 'boolean')
+        song.durationSec > 900 || typeof song.explicit !== 'boolean' ||
+        !['pending', 'cleared'].includes(song.rightsStatus))
       throw Error('Invalid song metadata');
     if (song.audio) assetUrl(song.audio, url);
     if (song.audio && !/^[a-z0-9-]{1,100}$/.test(song.audioVersion || ''))

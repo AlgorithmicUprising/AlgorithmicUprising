@@ -5,7 +5,8 @@
       "id": "AU-001",
       "title": "The Human Zoo",
       "durationSec": 318.8,
-      "explicit": false
+      "explicit": true,
+      "rightsStatus": "pending"
     }
   ]
 }

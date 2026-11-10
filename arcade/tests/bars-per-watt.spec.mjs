@@ -23,7 +23,7 @@ async function boot(page) {
   const audio = wav();
   await page.route('**/games/bars-per-watt/catalog.json', route => route.fulfill({
     contentType:'application/json',body:JSON.stringify({version:1,songs:[{
-      id:'AU-001',title:'The Human Zoo',durationSec:4,explicit:false,
+      id:'AU-001',title:'The Human Zoo',durationSec:4,explicit:true,rightsStatus:'cleared',
       audioVersion:'browser-test',audio:'./preview.wav',
       charts:{easy:'./preview-easy.json',medium:'./preview-easy.json',hard:'./preview-easy.json'}
     }]})
@@ -96,4 +96,22 @@ test('a missing licensed catalog leaves a readable, unplayable placeholder', asy
   await expect(game.locator('[data-loading]')).toContainText('reviewed chart and playback copy');
   await expect(game.locator('[part=start]')).toBeDisabled();
   await expect(game.locator('canvas')).toBeVisible();
+});
+
+test('a song with pending rights never requests its media', async ({page}) => {
+  let mediaRequested=false;
+  page.on('request',request=>{if(request.url().endsWith('/pending.wav'))mediaRequested=true;});
+  await page.route('**/games/bars-per-watt/catalog.json',route=>route.fulfill({
+    contentType:'application/json',body:JSON.stringify({version:1,songs:[{
+      id:'AU-001',title:'The Human Zoo',durationSec:4,explicit:true,
+      rightsStatus:'pending',audioVersion:'test-1',audio:'./pending.wav',
+      charts:{easy:'./pending.json'}
+    }]})
+  }));
+  await page.goto(demo);
+  const game=page.locator('bars-per-watt');
+  await game.locator('[data-load]').click();
+  await expect(game.locator('[data-loading]')).toContainText('cleared rights');
+  await expect(game.locator('[part=start]')).toBeDisabled();
+  expect(mediaRequested).toBe(false);
 });

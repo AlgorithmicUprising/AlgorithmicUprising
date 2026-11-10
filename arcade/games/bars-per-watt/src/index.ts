@@ -78,7 +78,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const status = (text: string) => { loading.textContent = text; root.querySelector<HTMLElement>('.live')!.textContent = text; };
   const catalogReady = loadCatalog(catalogUrl, catalogAbort.signal).then(data => {
     song = data.songs.find(item => item.id === 'AU-001') || humanZoo;
-    status(song.audio ? 'Choose a difficulty, then load The Human Zoo.' :
+    status(song.audio && song.rightsStatus === 'cleared' ? 'Choose a difficulty, then load The Human Zoo.' :
       'The Human Zoo is selected. A reviewed chart and playback copy are needed.');
     progress.max = song.durationSec;
   }).catch(error => {
@@ -88,8 +88,8 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     await catalogReady;
     const level = difficulty.value as Difficulty;
     const chartPath = song.charts?.[level], audioPath = song.audio;
-    if (!audioPath || !chartPath || !song.audioVersion) {
-      status('This difficulty needs a reviewed chart and licensed playback copy.');
+    if (song.rightsStatus !== 'cleared' || !audioPath || !chartPath || !song.audioVersion) {
+      status('This difficulty needs cleared rights, a reviewed chart and playback copy.');
       return;
     }
     selectionAbort?.abort(); selectionAbort = new AbortController();

@@ -1,6 +1,6 @@
 # Bars per Watt · The Human Zoo
 
-Game 04 is a four-lane rhythm cartridge for the shared Punk Arcade engine. Its first catalog entry is Algorithmic Uprising's **The Human Zoo** (`AU-001`). The master in Drive's `Zero - Audio Masters` is 48 kHz stereo PCM, about 5:18.8, SHA-256 `54dcf056e2e5073b12a7fb38809a99ecba5c77ca72bd3111860e81ab806ee18c`. It remains outside this repository.
+Game 04 is a four-lane rhythm cartridge for the shared Punk Arcade engine. Its first catalog entry is Algorithmic Uprising's **The Human Zoo** (`AU-001`, explicit). The master in Drive's `Zero - Audio Masters` is 48 kHz stereo PCM, about 5:18.8, SHA-256 `54dcf056e2e5073b12a7fb38809a99ecba5c77ca72bd3111860e81ab806ee18c`. It remains outside this repository.
 
 This branch is a timing and integration vertical slice. The published catalog contains metadata only, so the title screen deliberately cannot start a run yet. The guide requires three reviewed **human-authored** charts and a separately hosted, cleared compressed playback copy. No automatic chart is generated from the master. Synthetic notes and audio live only inside tests. A private 160 kb/s AAC playback encode was measured at 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`; it has not been published.
 
@@ -21,7 +21,7 @@ The audio element's position controls note animation and scoring. The render loo
 
 1. Confirm recording/cover rights and identify a private immutable master version. Encode one web playback copy from the master outside Git, inspect duration and encoder padding, and verify HTTPS, CORS, MIME, range/seek and cache behavior on first-party storage. Do not put a master or compressed song in `arcade/` or a GitHub release.
 2. A person measures BPM and offset against that exact playback copy, authors Easy/Medium/Hard charts in a reviewed editor, and playtests each on keyboard, pad and touch. Record separate chart rights. The normalized JSON below describes one chart; the example has **no notes** and is a format example, not a playable chart.
-3. Publish immutable chart JSON beside the playback catalog on first-party storage. Set `audioVersion`, `audio` and each difficulty path in the separate catalog. Each chart's `audioVersion` and `durationSec` must match the catalog and actual playback copy. Runtime validation rejects mismatches, missing charts, unsupported timing, duplicate/overlapping notes and cross-origin media paths.
+3. Publish immutable chart JSON beside the playback catalog on first-party storage. Set `rightsStatus` to `"cleared"`, `audioVersion`, `audio` and each difficulty path in the separate catalog only after the rights check. Each chart's `audioVersion` and `durationSec` must match the catalog and actual playback copy. Runtime validation rejects mismatches, missing charts, unsupported timing, duplicate/overlapping notes and cross-origin media paths.
 4. Point the component at that catalog with `<bars-per-watt catalog="https://algorithmicuprising.com/arcade-media/catalog.json"></bars-per-watt>`. The Pages demo and embed accept a percent-encoded `catalog` query value for the same first-party catalog; local HTTP is allowed only on localhost. Add another first-party storage origin to the explicit allowlist in `src/catalog.ts` if hosting moves. Media and chart files remain on the catalog origin.
 
 ```json
