@@ -2,7 +2,7 @@
 
 Low-poly skinned human for the HQ player. Intermediate model: shaped head, painted face, copper hair, jacket, hoodie, cargo legs, pads, shoes, and simple hands on one skeleton. Elbows and knees deform. It is not the approved illustration and not a finished character. Zero is unchanged. The game builds the mesh in `scripts/fony_mesh.gd`. It does not load `fony.glb`.
 
-The park test currently draws Fony as the painted sprite in `scripts/fony_sprite.gd` (`assets/library/fony2d/`). The mesh is still built and the pause menu can show it again. Rebuild the atlas with `python3 tools/prepare_fony_sprites.py`.
+The park draws Fony as the painted sprite in `scripts/fony_sprite.gd`. v2 cycles live in `assets/library/fony2d/fony2d_v2_atlas.png` and `frames_v2.json`. v1 stills fill the gaps. The mesh is still built and the pause menu can show it again.
 
 ## What is authored here
 

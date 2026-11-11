@@ -1,70 +1,30 @@
 extends Node3D
 
-## Painted Fony, as a Y-locked billboard inside the 3D park.
-## The mesh rig stays in the tree so it can be shown again. This node does not
-## move the body or the board collider.
+## Painted Fony as a Y-locked billboard. v2 clips animate the views that move.
+## v1 stills remain for the directions v2 does not cover. The mesh rig stays
+## in the tree so the pause menu can show it again.
 
 const AnimScript = preload("res://scripts/fony_sprite_anim.gd")
+const V2_PIXEL := 0.005972
+const V1_PIXEL := 0.007674
 
 var anim = AnimScript.new()
 var sprite: Sprite3D
-var frames := {}
-var pixel_size := 0.0077
+var tex_v1: Texture2D
+var tex_v2: Texture2D
 var foot_local_y := 0.325
-var anchor := Vector2(106, 262)
-var cell := Vector2(212, 272)
 var _prev_speed := 0.0
-var shown := ""
 
 func _ready() -> void:
 	name = "FonySprite"
-	_load_atlas()
-
-func _physics_process(delta: float) -> void:
-	var body = get_parent()
-	if body == null or sprite == null:
-		return
-	var velocity: Vector3 = body.velocity
-	var speed := Vector2(velocity.x, velocity.z).length()
-	var accel := (speed - _prev_speed) / maxf(delta, 0.0001)
-	_prev_speed = speed
-	var bail := str(body.trick) == "bail" or float(body.bail_time) > 0.0
-	anim.notify_mode(bool(body.skating), bail)
-	var grinding: bool = body.grind != null
-	var want_push: bool = float(body.wish_len) > 0.2 and bool(body.skating) and body.is_on_floor() and not grinding and str(body.trick) == ""
-	anim.update_push(speed, accel, want_push)
-	anim.advance(delta)
-	var cam := get_viewport().get_camera_3d() if get_viewport() != null else null
-	var camera_x := global_position.x
-	var camera_z := global_position.z + 4.0
-	if cam != null:
-		camera_x = cam.global_position.x
-		camera_z = cam.global_position.z
-	var facing := 0.0
-	if body.rig != null:
-		facing = body.rig.global_rotation.y
-	var rising := velocity.y > 0.8
-	var key: String = anim.choose(facing, camera_x, camera_z, global_position.x, global_position.z, str(body.trick), not body.is_on_floor(), rising)
-	_show(key)
-	body.sprite_frame = key
-
-func _load_atlas() -> void:
-	var text := FileAccess.get_file_as_string("res://assets/library/fony2d/frames.json")
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		push_error("Fony sprite atlas metadata missing")
-		return
-	frames = parsed.get("frames", {})
-	pixel_size = float(parsed.get("pixel_size", pixel_size))
-	foot_local_y = float(parsed.get("foot_local_y", foot_local_y))
-	anchor = Vector2(float(parsed.get("anchor_x", anchor.x)), float(parsed.get("anchor_y", anchor.y)))
-	cell = Vector2(float(parsed.get("cell_w", cell.x)), float(parsed.get("cell_h", cell.y)))
-	var texture: Texture2D = load("res://assets/library/fony2d/fony2d_atlas.png")
+	anim.ensure_loaded()
+	tex_v1 = load("res://assets/library/fony2d/fony2d_atlas.png")
+	tex_v2 = load("res://assets/library/fony2d/fony2d_v2_atlas.png")
 	sprite = Sprite3D.new()
 	sprite.name = "Card"
-	sprite.texture = texture
+	sprite.texture = tex_v2 if tex_v2 != null else tex_v1
 	sprite.centered = true
-	sprite.pixel_size = pixel_size
+	sprite.pixel_size = V2_PIXEL
 	sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	sprite.shaded = false
 	sprite.double_sided = true
@@ -75,20 +35,70 @@ func _load_atlas() -> void:
 	sprite.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	sprite.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 	sprite.region_enabled = true
-	# The shared foot pixel sits on the capsule bottom. Image Y grows downward.
+	add_child(sprite)
+
+func _physics_process(delta: float) -> void:
+	var body = get_parent()
+	if body == null or sprite == null:
+		return
+	var velocity: Vector3 = body.velocity
+	var speed := Vector2(velocity.x, velocity.z).length()
+	var accel := (speed - _prev_speed) / maxf(delta, 0.0001)
+	_prev_speed = speed
+	var cam := get_viewport().get_camera_3d() if get_viewport() != null else null
+	var camera_x := global_position.x
+	var camera_z := global_position.z + 4.0
+	if cam != null:
+		camera_x = cam.global_position.x
+		camera_z = cam.global_position.z
+	var facing := 0.0
+	if body.rig != null:
+		facing = body.rig.global_rotation.y
+	var ctx := {
+		"facing_yaw": facing,
+		"camera_x": camera_x,
+		"camera_z": camera_z,
+		"origin_x": global_position.x,
+		"origin_z": global_position.z,
+		"skating": bool(body.skating),
+		"speed": speed,
+		"accel": accel,
+		"wish": float(body.wish_len),
+		"on_floor": body.is_on_floor(),
+		"vy": velocity.y,
+		"trick": str(body.trick),
+		"trick_time": float(body.trick_time),
+		"flip_turns": float(body.flip_turns),
+		"bail_time": float(body.bail_time),
+		"grind": body.grind != null,
+	}
+	var frame_key: String = anim.step(delta, ctx)
+	_apply(not body.is_on_floor())
+	body.sprite_frame = frame_key
+
+func _apply(airborne: bool) -> void:
+	var fr := anim.current_frame()
+	if fr.is_empty() or sprite == null:
+		return
+	var rect: Array = fr.get("rect", [0, 0, 1, 1])
+	var off: Array = fr.get("anchor_offset", [0.0, 0.0])
+	var w := float(rect[2])
+	var h := float(rect[3])
+	var use_v2 := str(fr.get("source", "v1")) == "v2"
+	var ps := V2_PIXEL if use_v2 else V1_PIXEL
+	sprite.texture = tex_v2 if use_v2 else tex_v1
+	sprite.pixel_size = ps
+	sprite.region_rect = Rect2(float(rect[0]), float(rect[1]), w, h)
+	# anchor_offset is the rect top-left relative to the ground anchor, y down.
+	var anchor_x := -float(off[0])
+	var anchor_y := -float(off[1])
+	var lift := float(fr.get("lift_atlas", 0.0))
+	# The painting already raises airborne poses. The capsule is rising too,
+	# so drop that gap while the body is in the air.
+	if airborne:
+		anchor_y -= lift
 	sprite.position = Vector3(
-		-(anchor.x - cell.x * 0.5) * pixel_size,
-		foot_local_y + (anchor.y - cell.y * 0.5) * pixel_size,
+		-(anchor_x - w * 0.5) * ps,
+		foot_local_y + (anchor_y - h * 0.5) * ps,
 		0.0
 	)
-	add_child(sprite)
-	_show("skate_front")
-
-func _show(key: String) -> void:
-	if sprite == null or key == shown:
-		return
-	var frame = frames.get(key)
-	if typeof(frame) != TYPE_DICTIONARY:
-		return
-	sprite.region_rect = Rect2(float(frame.get("x", 0)), float(frame.get("y", 0)), float(frame.get("w", cell.x)), float(frame.get("h", cell.y)))
-	shown = key
