@@ -115,3 +115,29 @@ test('a song with pending rights never requests its media', async ({page}) => {
   await expect(game.locator('[part=start]')).toBeDisabled();
   expect(mediaRequested).toBe(false);
 });
+
+test('owner-only same-origin catalog, chart and audio use the signed-in session', async ({page}) => {
+  await page.context().addCookies([{name:'playtest_auth',value:'owner',url:'http://127.0.0.1:8080/'}]);
+  const authorized = route => (route.request().headers().cookie || '').includes('playtest_auth=owner');
+  let mediaAuthorized = false;
+  await page.route('**/games/bars-per-watt/catalog.json', route => route.fulfill(authorized(route) ? {
+    contentType:'application/json',body:JSON.stringify({version:1,songs:[{
+      id:'AU-001',title:'The Human Zoo',durationSec:4,explicit:true,rightsStatus:'cleared',
+      audioVersion:'browser-test',audio:'./preview.wav',charts:{easy:'./preview-easy.json'}
+    }]})
+  } : {status:403,body:'Sign in required'}));
+  await page.route('**/games/bars-per-watt/preview-easy.json', route => route.fulfill(authorized(route) ? {
+    contentType:'application/json',body:JSON.stringify(chart)
+  } : {status:403,body:'Sign in required'}));
+  await page.route('**/games/bars-per-watt/preview.wav', route => {
+    mediaAuthorized = authorized(route);
+    return route.fulfill(mediaAuthorized ? {contentType:'audio/wav',body:wav()} :
+      {status:403,body:'Sign in required'});
+  });
+  await page.goto(demo);
+  const game=page.locator('bars-per-watt');
+  await game.locator('[data-load]').click();
+  await expect(game.locator('[data-loading]')).toContainText('Ready. Enable sound');
+  await expect(game.locator('[part=start]')).toBeEnabled();
+  expect(mediaAuthorized).toBe(true);
+});
