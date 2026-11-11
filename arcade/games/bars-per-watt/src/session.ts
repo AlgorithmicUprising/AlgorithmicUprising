@@ -9,8 +9,9 @@ export class RhythmSession {
   readonly notes: SessionNote[];
   score = 0; combo = 0; maxCombo = 0;
   totals = { perfect: 0, good: 0, miss: 0, holds: 0 };
-  latest: Judgement | null = null;
+  latest: Judgement | 'hold' | null = null;
   latestAt = 0;
+  readonly pressed = new Set<Lane>();
   complete = false;
   private pendingCursor = 0;
   private holding = new Set<SessionNote>();
@@ -23,6 +24,8 @@ export class RhythmSession {
   get accuracy() {
     return this.maximum ? Math.round(this.score / this.maximum * 10000) / 100 : 0;
   }
+  get activeHolds(): readonly Note[] { return Array.from(this.holding, item => item.note); }
+  clearPressed() { this.pressed.clear(); }
   private judge(kind: Judgement, at: number) {
     this.totals[kind]++;
     this.latest = kind; this.latestAt = at;
@@ -49,6 +52,7 @@ export class RhythmSession {
   }
   input(lane: Lane, down: boolean, at: number) {
     if (this.complete || !Number.isFinite(at)) return;
+    if (down) this.pressed.add(lane); else this.pressed.delete(lane);
     this.advance(at);
     if (down) {
       const item = this.notes.find(n => n.note.lane === lane && n.state === 'pending' &&
@@ -63,6 +67,7 @@ export class RhythmSession {
       if (!item || item.note.endTime === undefined) return;
       if (Math.abs(at - item.note.endTime) <= WINDOWS.holdRelease) {
         item.state = 'done'; this.holding.delete(item); this.score += 500; this.totals.holds++;
+        this.latest = 'hold'; this.latestAt = at;
       } else if (at < item.note.endTime - WINDOWS.holdRelease) {
         item.state = 'missed'; this.holding.delete(item); this.judge('miss', at);
       }
@@ -75,6 +80,7 @@ export class RhythmSession {
         item.state = 'missed'; this.judge('miss', this.chart.durationSec);
       }
     this.holding.clear();
+    this.pressed.clear();
     this.complete = true;
   }
 }

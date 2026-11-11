@@ -2,7 +2,7 @@
 
 Game 04 is a four-lane rhythm cartridge for the shared Punk Arcade engine. Its first catalog entry is Algorithmic Uprising's **The Human Zoo** (`AU-001`, explicit). The master in Drive's `Zero - Audio Masters` is 48 kHz stereo PCM, about 5:18.8, SHA-256 `54dcf056e2e5073b12a7fb38809a99ecba5c77ca72bd3111860e81ab806ee18c`. It remains outside this repository.
 
-This branch is a timing and integration vertical slice. The committed catalog contains metadata only, so the public title screen deliberately cannot start a run yet. The guide requires three reviewed **human-authored** charts and a separately hosted, cleared compressed playback copy for release. With the author's permission, Easy/Medium/Hard draft steps were created from offline onset analysis for an owner-only timing and aesthetic playtest. Those generated charts and media are kept outside this public repository and are not release charts. A private 160 kb/s AAC playback encode was measured at 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`; it is used only in the owner-only preview.
+This branch is a timing and integration vertical slice. The committed catalog contains metadata only, so the public title screen deliberately cannot start a run yet. With the author's permission, Easy/Medium/Hard draft steps were created for a private timing and aesthetic playtest. The second chart pass uses offline beat and harmonic-attack analysis, phrase patterns, sustained-sound candidates and two-thumb lane checks. These are assisted drafts that still need musical playtesting, not verified vocal transcriptions. Charts and media remain outside this public repository. A private 160 kb/s AAC playback encode was measured at 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`; it is used only in the owner-only preview.
 
 ## Run and embed
 
@@ -14,6 +14,8 @@ From `arcade/`, run `npm ci`, `npm run stage-pages`, then `node tools/serve.mjs 
 | Start | Space or Play Song | Play Song | Button 8 |
 | Pause / resume | Esc, P or button | Visible Pause / Resume | Button 9 |
 | Sound | M or button | Sound button | Sound button |
+
+Active holds stay attached to the receptor, with a visible end cap and an explicit release cue. Release when the cap reaches the line; a completed hold has separate visual feedback. Settings include persisted 0.75–1.75× scroll speed, which changes note spacing without changing playback rate, note timestamps or scoring. Note heads are height-limited to keep shorter subdivisions readable in portrait. The shared timing and judgement code is the same on desktop and mobile.
 
 The audio element's position controls note animation and scoring. The render loop never advances musical time. A full decoded 5:18.8 stereo 48 kHz float buffer would take roughly 122 MiB before other game memory, above the guide's proposed 96 MiB buffer cap; this first pass uses one native stream. Focus loss, tab hide, offscreen host, parent pause and ejection pause or dispose the stream. Sound starts muted. Settings persist local visual and input offsets (±150 ms), contrast and reduced motion. The result is a fictional points bill, with per-song/chart/difficulty/input-mode best scores. The iframe forwards existing `game:*` events to the exact parent origin and accepts `pause`, `resume`, `mute` and `unmute` commands from that parent. The website still needs a receiving bridge and mini-player handoff before activating the live cartridge.
 

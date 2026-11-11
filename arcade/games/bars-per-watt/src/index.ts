@@ -11,7 +11,7 @@ import css from './cabinet.css';
 import markup from './cabinet.html';
 
 const profile: CartridgeProfile = {
-  version: '0.1.0-preview', shell: '<style>' + css + '</style>' + markup,
+  version: '0.2.0-preview', shell: '<style>' + css + '</style>' + markup,
   landscape: [640, 360], portrait: [360, 640], primary: 'start',
   consumeStartInput: true,
   keys: { ' ': 'start', ArrowLeft: 'left', ArrowDown: 'down',
@@ -52,22 +52,26 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const dialog = root.querySelector<HTMLDialogElement>('dialog')!;
   const visualControl = root.querySelector<HTMLInputElement>('[data-visual-offset]')!;
   const inputControl = root.querySelector<HTMLInputElement>('[data-input-offset]')!;
+  const scrollControl = root.querySelector<HTMLInputElement>('[data-scroll-speed]')!;
   const contrastControl = root.querySelector<HTMLInputElement>('[data-contrast]')!;
   const motionControl = root.querySelector<HTMLInputElement>('[data-motion]')!;
   const settingsKey = () => (host.getAttribute('storage-key') || 'au-arcade') + ':v1:bars-per-watt:settings';
-  let settings = { visualOffsetMs: 0, inputOffsetMs: 0, contrast: false, reducedMotion: false };
+  let settings = { visualOffsetMs: 0, inputOffsetMs: 0, scrollSpeed: 1, contrast: false, reducedMotion: false };
   try {
     const saved = JSON.parse(readLocal(settingsKey()) || '{}');
     if (Number.isFinite(saved.visualOffsetMs)) settings.visualOffsetMs = Math.max(-150, Math.min(150, saved.visualOffsetMs));
     if (Number.isFinite(saved.inputOffsetMs)) settings.inputOffsetMs = Math.max(-150, Math.min(150, saved.inputOffsetMs));
+    if (Number.isFinite(saved.scrollSpeed)) settings.scrollSpeed = Math.max(.75, Math.min(1.75, saved.scrollSpeed));
     settings.contrast = saved.contrast === true; settings.reducedMotion = saved.reducedMotion === true;
   } catch { /* A blocked or stale preference leaves the defaults. */ }
   visualControl.value = String(settings.visualOffsetMs);
   inputControl.value = String(settings.inputOffsetMs);
+  scrollControl.value = String(settings.scrollSpeed);
   contrastControl.checked = settings.contrast; motionControl.checked = settings.reducedMotion;
   const updateValues = () => {
     root.querySelector<HTMLOutputElement>('[data-visual-value]')!.textContent = settings.visualOffsetMs + ' ms';
     root.querySelector<HTMLOutputElement>('[data-input-value]')!.textContent = settings.inputOffsetMs + ' ms';
+    root.querySelector<HTMLOutputElement>('[data-scroll-value]')!.textContent = settings.scrollSpeed.toFixed(2) + '×';
   };
   updateValues();
   const catalogUrl = new URL(host.getAttribute('catalog') || '../catalog.json', import.meta.url);
@@ -157,6 +161,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   }, { signal });
   dialog.querySelector('form')!.addEventListener('change', () => {
     settings = { visualOffsetMs: Number(visualControl.value), inputOffsetMs: Number(inputControl.value),
+      scrollSpeed: Number(scrollControl.value),
       contrast: contrastControl.checked, reducedMotion: motionControl.checked };
     writeLocal(settingsKey(), JSON.stringify(settings)); updateValues();
   }, { signal });
@@ -218,13 +223,20 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     draw(ctx, w, h) {
       const at = transport.time;
       drawHighway(ctx, w, h, session, at, skin.palette, settings.visualOffsetMs,
-        settings.contrast, settings.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches);
+        settings.contrast, settings.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches,
+        settings.scrollSpeed);
       if (!session) return;
       score.textContent = String(session.score); combo.textContent = String(session.combo);
       accuracy.textContent = session.accuracy + '%';
       progress.value = Math.min(at, song.durationSec); time.textContent = timeLabel(at);
-      if (transport.playing) judge.textContent = session.latest && at - session.latestAt < .55 ?
-        skin.current.strings[session.latest] : 'HIT THE LINE';
+      if (transport.playing) {
+        const holds = session.activeHolds;
+        const release = holds.filter(note => note.endTime! - at <= .35);
+        const arrows = (notes: readonly { lane: Lane }[]) => notes.map(note => ['←', '↓', '↑', '→'][note.lane]).join(' ');
+        judge.textContent = release.length ? skin.current.strings.release_cue + ' ' + arrows(release) :
+          session.latest && at - session.latestAt < .55 ? skin.current.strings[session.latest] :
+          holds.length ? skin.current.strings.hold_cue + ' ' + arrows(holds) : skin.current.strings.hit_line;
+      }
     },
     input(action, down, atMs = performance.now(), source = '') {
       if (!session || !transport.playing || !(action in laneIndex)) return;
@@ -237,7 +249,10 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       }
       session.input(laneIndex[action], down, transport.atEvent(atMs) - settings.inputOffsetMs / 1000);
     },
-    releaseInput() { /* The shared engine releases every held lane before pause. */ },
+    releaseInput() {
+      session?.clearPressed();
+      root.querySelectorAll('[data-lane]').forEach(pad => pad.classList.remove('is-down'));
+    },
     score: () => session?.score || 0,
     over: () => session?.complete || false,
     bestKey: () => chart ? 'best:' + song.id + ':' + chart.id + ':' + chart.difficulty + ':' + inputMode : 'best',

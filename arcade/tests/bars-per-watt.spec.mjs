@@ -42,6 +42,29 @@ async function boot(page) {
 const contained = (outer, inner) => inner.x >= outer.x-1 && inner.y >= outer.y-1 &&
   inner.x+inner.width <= outer.x+outer.width+1 && inner.y+inner.height <= outer.y+outer.height+1;
 
+test('scroll speed persists independently of timing offsets and the song clock', async ({page}) => {
+  let game=await boot(page);
+  await game.locator('[part=settings]').click();
+  const speed=game.locator('[data-scroll-speed]');
+  await speed.focus();
+  await page.keyboard.press('End');
+  for(let i=0;i<5;i++)await page.keyboard.press('ArrowLeft');
+  await expect(game.locator('[data-scroll-value]')).toHaveText('1.50×');
+  await expect(game.locator('[data-input-offset]')).toHaveValue('0');
+  await expect(game.locator('[data-visual-offset]')).toHaveValue('0');
+  await game.locator('dialog button[type=submit]').click();
+  await page.reload();
+  game=page.locator('bars-per-watt');
+  await game.locator('[part=settings]').click();
+  await expect(game.locator('[data-scroll-speed]')).toHaveValue('1.5');
+  await game.locator('dialog button[type=submit]').click();
+  await game.locator('[data-load]').click();
+  await expect(game.locator('[part=start]')).toBeEnabled();
+  await game.locator('[part=start]').click();
+  await expect(game).toHaveJSProperty('state','over',{timeout:10000});
+  await expect(game.locator('[data-time]')).toHaveText('0:04');
+});
+
 test('Human Zoo catalog selection, native song clock, pause, resume and bill', async ({page}, info) => {
   const errors=[]; page.on('pageerror',error=>errors.push(error.message));
   const game=await boot(page);

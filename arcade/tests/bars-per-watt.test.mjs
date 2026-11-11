@@ -9,6 +9,7 @@ async function sourceModule(path) {
 }
 const { compileChart } = await sourceModule('games/bars-per-watt/src/chart.ts');
 const { RhythmSession } = await sourceModule('games/bars-per-watt/src/session.ts');
+const { drawHighway } = await sourceModule('games/bars-per-watt/src/render.ts');
 const source = {
   format: 'bars-per-watt-chart-v1', id: 'human-zoo-test', songId: 'AU-001',
   difficulty: 'easy', audioVersion: 'test-1', durationSec: 12, offsetSec: .1,
@@ -65,4 +66,49 @@ test('an early release misses the hold; an empty tap never scores', () => {
   assert.equal(session.combo,0);
   session.finish(); session.finish();
   assert.equal(session.totals.miss,1);
+});
+
+test('a sustained note allows opposite-hand taps and scores its release exactly once', () => {
+  const session = new RhythmSession(compileChart({...source, notes:[
+    {beat:'4',lane:0,endBeat:'10'}, {beat:'6',lane:3}, {beat:'7',lane:2}
+  ]}));
+  session.input(0,true,2.1);
+  session.advance(4.0);
+  assert.equal(session.activeHolds.length,1);
+  assert.equal(session.pressed.has(0),true);
+  session.input(3,true,4.1); session.input(3,false,4.2);
+  session.input(2,true,5.1); session.input(2,false,5.2);
+  session.input(0,false,8.1); session.input(0,false,8.1);
+  assert.equal(session.latest,'hold');
+  assert.equal(session.activeHolds.length,0);
+  assert.equal(session.pressed.size,0);
+  assert.equal(session.score,3500);
+  assert.equal(session.totals.holds,1);
+  assert.equal(session.accuracy,100);
+});
+
+test('long hold heads stay on the receptor while tails approach at any scroll speed', () => {
+  const session = new RhythmSession(compileChart({...source,notes:[
+    {beat:'4',lane:0,endBeat:'10'}
+  ]}));
+  session.input(0,true,2.1);
+  const capture = (at,speed) => {
+    const heads=[],fills=[];
+    const ctx = new Proxy({
+      createLinearGradient:()=>({addColorStop(){}}),
+      roundRect:(...args)=>heads.push(args),
+      fillRect:(...args)=>fills.push(args)
+    },{get:(target,key)=>target[key]??(()=>{}),set:(target,key,value)=>{target[key]=value;return true;}});
+    drawHighway(ctx,360,600,session,at,{},0,false,true,speed);
+    return {heads,fills};
+  };
+  for(const speed of [.75,1,1.75]) {
+    const early=capture(3,speed),late=capture(7,speed),end=capture(8.1,speed);
+    assert.equal(early.heads.length,1);
+    assert.equal(late.heads[0][1]+late.heads[0][3]/2,480);
+    assert.deepEqual(early.heads,late.heads);
+    assert.ok(end.fills.some(([x,y,w,h])=>x===18&&y===477&&w===54&&h===6),
+      'release cap must remain visible at the hit line');
+  }
+  assert.equal(session.score,1000,'drawing never changes judgement');
 });
