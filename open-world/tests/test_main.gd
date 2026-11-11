@@ -1003,13 +1003,12 @@ func _fony_sprite() -> void:
 	facing_bail.bail_time = 0.3
 	front_bail.step(0.016, facing_bail)
 	expect(front_bail.clip == "bail_front" and front_bail.frame_index == 3, "a front bail plays the fall got %s#%s" % [front_bail.clip, front_bail.frame_index])
-	var tex: Texture2D = load("res://assets/library/fony2d/fony2d_v3_atlas.png")
-	var atlas_w := 0
-	var atlas_h := 0
-	if tex != null:
-		atlas_w = tex.get_width()
-		atlas_h = tex.get_height()
-	expect(tex != null and atlas_w == 4096 and atlas_h == 1768, "v3 atlas is 4096x1768 got %sx%s" % [atlas_w, atlas_h])
+	var image := Image.new()
+	var loaded := image.load("res://assets/library/fony2d/fony2d_v3_atlas.png")
+	var atlas_w := image.get_width()
+	var atlas_h := image.get_height()
+	expect(loaded == OK and atlas_w == 4096 and atlas_h == 1768, "v3 atlas is 4096x1768 got %s %sx%s" % [loaded, atlas_w, atlas_h])
+	expect(anim.atlas_size == Vector2i(atlas_w, atlas_h), "catalog atlas size matches the png")
 	var outside := 0
 	for clip_name in anim.clips:
 		var info: Dictionary = anim.clips[clip_name]
