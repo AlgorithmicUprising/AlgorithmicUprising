@@ -32,7 +32,10 @@ export async function loadCatalog(url: URL, signal: AbortSignal): Promise<Catalo
   if (url.origin !== page.origin && !firstPartyCatalogOrigins.has(url.origin))
     throw Error('Catalog origin is not allowed');
   allowed(url, url);
-  const response = await fetch(url, { signal, credentials: 'omit' });
+  // Owner-only same-origin previews need their sign-in cookie for static assets.
+  // Keep credentials off the approved cross-origin public catalog hosts.
+  const response = await fetch(url, { signal,
+    credentials: url.origin === page.origin ? 'same-origin' : 'omit' });
   if (!response.ok) throw Error('Catalog HTTP ' + response.status);
   if (Number(response.headers.get('content-length')) > 256000) throw Error('Catalog too large');
   const raw = await response.text();
