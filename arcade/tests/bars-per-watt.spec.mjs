@@ -117,7 +117,11 @@ test('a song with pending rights never requests its media', async ({page}) => {
 });
 
 test('owner-only same-origin catalog, chart and audio use the signed-in session', async ({page}) => {
+  // WebKit first establishes the origin before accepting a test session cookie.
+  await page.goto(demo);
   await page.context().addCookies([{name:'playtest_auth',value:'owner',url:'http://127.0.0.1:8080/'}]);
+  expect(await page.context().cookies('http://127.0.0.1:8080/')).toEqual(
+    expect.arrayContaining([expect.objectContaining({name:'playtest_auth',value:'owner'})]));
   const authorized = route => (route.request().headers().cookie || '').includes('playtest_auth=owner');
   let mediaAuthorized = false;
   await page.route('**/games/bars-per-watt/catalog.json', route => route.fulfill(authorized(route) ? {
@@ -134,7 +138,7 @@ test('owner-only same-origin catalog, chart and audio use the signed-in session'
     return route.fulfill(mediaAuthorized ? {contentType:'audio/wav',body:wav()} :
       {status:403,body:'Sign in required'});
   });
-  await page.goto(demo);
+  await page.reload();
   const game=page.locator('bars-per-watt');
   await game.locator('[data-load]').click();
   await expect(game.locator('[data-loading]')).toContainText('Ready. Enable sound');
