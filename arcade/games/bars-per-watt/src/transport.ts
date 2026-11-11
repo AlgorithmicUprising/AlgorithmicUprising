@@ -8,7 +8,6 @@ export class MediaTransport {
   onState: (() => void) | null = null;
   constructor() {
     this.audio.preload = 'auto';
-    this.audio.crossOrigin = 'anonymous';
     this.audio.addEventListener('ended', () => this.onEnd?.());
     for (const event of ['waiting', 'stalled', 'seeking', 'pause']) {
       this.audio.addEventListener(event, () => { this.stalled = true; this.onState?.(); });
@@ -25,6 +24,10 @@ export class MediaTransport {
   async load(url: URL, signal?: AbortSignal) {
     this.unload();
     const generation = ++this.generation;
+    // A private same-origin preview serves audio behind the page's sign-in cookie.
+    // Cross-origin playback remains anonymous on approved first-party hosts.
+    if (url.origin === location.origin) this.audio.removeAttribute('crossorigin');
+    else this.audio.crossOrigin = 'anonymous';
     this.stalled = true; this.audio.src = url.href; this.audio.load();
     try {
       await new Promise<void>((resolve, reject) => {
