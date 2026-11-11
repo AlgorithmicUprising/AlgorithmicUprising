@@ -1,8 +1,8 @@
 extends RefCounted
 
 ## Names a painted frame for the Y-locked billboard.
-## v2 clips cover the moving views. v1 stills fill the directions v2 does not
-## have. Nothing is mirrored: the magenta patch stays on his left chest.
+## v3 clips cover every direction that was painted. Nothing is mirrored:
+## the magenta patch stays on his left chest.
 
 const DIRS := ["front", "front_right", "right", "back_right", "back", "back_left", "left", "front_left"]
 const FALLBACK := {
@@ -15,8 +15,8 @@ const FALLBACK := {
 	"front_left": ["front_left", "front"],
 	"front_right": ["front_right", "front", "right"],
 }
-const V2_PIXEL := 0.005972
-const V1_PIXEL := 0.007674
+const ATLAS_SCALE := 0.5
+const POP_VY := 12.0
 const PUSH_START_SPEED := 7.2
 const PUSH_STOP_SPEED := 8.4
 const SKATE_SPEED := 9.0
@@ -34,7 +34,8 @@ var push_phase := -1.0
 var cruise_gap := 0.0
 var land_hold := 0.0
 var skating := true
-var source := "v1"
+var source := "v3"
+var atlas_size := Vector2i(4096, 1768)
 var _prev_bail := false
 var _ready_mode := false
 var _loaded := false
@@ -58,45 +59,32 @@ func ensure_loaded() -> void:
 	if _loaded:
 		return
 	_loaded = true
-	var v2 = JSON.parse_string(FileAccess.get_file_as_string("res://assets/library/fony2d/frames_v2.json"))
-	if typeof(v2) == TYPE_DICTIONARY:
-		for anim_name in v2.get("animations", {}):
-			var anim: Dictionary = v2.animations[anim_name]
-			var frames: Array = []
-			for fr in anim.get("frames", []):
-				var rect: Array = fr.get("atlas_rect", [0, 0, 1, 1])
-				var off: Array = fr.get("anchor_offset", [0, 0])
-				frames.append({
-					"rect": rect,
-					"anchor_offset": off,
-					"lift_atlas": float(fr.get("lift_px", 0.0)) * 0.6,
-				})
-			clips[str(anim_name)] = {
-				"source": "v2",
-				"fps": float(anim.get("fps", 8.0)),
-				"loop": bool(anim.get("loop", false)),
-				"frames": frames,
-			}
-	var v1 = JSON.parse_string(FileAccess.get_file_as_string("res://assets/library/fony2d/frames.json"))
-	if typeof(v1) != TYPE_DICTIONARY:
+	var catalog = JSON.parse_string(FileAccess.get_file_as_string("res://assets/library/fony2d/frames_v3.json"))
+	if typeof(catalog) != TYPE_DICTIONARY:
 		return
-	var anchor_x := float(v1.get("anchor_x", 106))
-	var anchor_y := float(v1.get("anchor_y", 262))
-	var pixel := float(v1.get("pixel_size", V1_PIXEL))
-	for frame_name in v1.get("frames", {}):
-		if clips.has(frame_name):
-			continue
-		var fr: Dictionary = v1.frames[frame_name]
-		var lift_m := float(fr.get("lift_m", 0.0))
-		clips[str(frame_name)] = {
-			"source": "v1",
-			"fps": 1.0,
-			"loop": false,
-			"frames": [{
-				"rect": [fr.get("x", 0), fr.get("y", 0), fr.get("w", 1), fr.get("h", 1)],
-				"anchor_offset": [-anchor_x, -anchor_y],
-				"lift_atlas": lift_m / pixel,
-			}],
+	var size: Array = catalog.get("atlas", {}).get("size", [4096, 1768])
+	if size.size() >= 2:
+		atlas_size = Vector2i(int(size[0]), int(size[1]))
+	for anim_name in catalog.get("animations", {}):
+		var anim: Dictionary = catalog.animations[anim_name]
+		var frames: Array = []
+		for fr in anim.get("frames", []):
+			var rect: Array = fr.get("atlas_rect", [0, 0, 1, 1])
+			var off: Array = fr.get("anchor_offset", [0, 0])
+			frames.append({
+				"rect": rect,
+				"anchor_offset": off,
+				"lift_atlas": float(fr.get("lift_px", 0.0)) * ATLAS_SCALE,
+			})
+		var phases: Dictionary = {}
+		if typeof(anim.get("phases", null)) == TYPE_DICTIONARY:
+			phases = anim.phases
+		clips[str(anim_name)] = {
+			"source": "v3",
+			"fps": float(anim.get("fps", 8.0)),
+			"loop": bool(anim.get("loop", false)),
+			"frames": frames,
+			"phases": phases,
 		}
 
 func step(delta: float, ctx: Dictionary) -> String:
@@ -120,8 +108,6 @@ func step(delta: float, ctx: Dictionary) -> String:
 		clip = name
 		if state != visual_state:
 			clip_time = 0.0
-	elif state == visual_state or state == "kickup" or state == "dropin":
-		pass
 	visual_state = state
 	if state != "kickup" and state != "dropin":
 		clip_time += delta
@@ -131,7 +117,7 @@ func step(delta: float, ctx: Dictionary) -> String:
 		cruise_gap = CRUISE_GAP
 		_end_push = false
 	var info := _clip(clip)
-	source = str(info.get("source", "v1"))
+	source = str(info.get("source", "v3"))
 	key = "%s#%d" % [clip, frame_index]
 	return key
 
@@ -143,7 +129,7 @@ func current_frame() -> Dictionary:
 		return {}
 	var fr: Dictionary = frames[clampi(frame_index, 0, frames.size() - 1)]
 	var out := fr.duplicate()
-	out["source"] = info.get("source", "v1")
+	out["source"] = info.get("source", "v3")
 	return out
 
 func _notify(ctx: Dictionary) -> void:
@@ -197,8 +183,12 @@ func _state(ctx: Dictionary) -> String:
 			return "kickflip"
 		if trick == "grab":
 			return "grab"
-		if trick == "land" and land_hold > 0.25:
-			return "cruise" if bool(ctx.get("skating", true)) else "idle"
+		if trick == "crouch":
+			var nxt := str(ctx.get("trick_next", ""))
+			if nxt == "grab":
+				return "grab"
+			if nxt == "flip":
+				return "kickflip"
 		return "ollie"
 	# A kick-up or drop-in keeps playing if the body leaves the floor for a frame.
 	if phase != "":
@@ -215,32 +205,26 @@ func _dir(ctx: Dictionary) -> String:
 	return direction_name(float(ctx.get("facing_yaw", 0.0)), float(ctx.get("camera_x", 0.0)), float(ctx.get("camera_z", 4.0)), float(ctx.get("origin_x", 0.0)), float(ctx.get("origin_z", 0.0)))
 
 func _resolve(state: String, dir: String) -> String:
-	# A right-facing grind has no painting. grind_left would turn him around
-	# and put the chest patch on the wrong side, so the right view keeps the
-	# still skate frame. Back and left use the new grind cycles.
-	if state == "grind":
-		if dir == "back" or dir.begins_with("back_"):
-			return "grind_back" if clips.has("grind_back") else _still("skate_", dir)
-		if dir == "left":
-			return "grind_left" if clips.has("grind_left") else _still("skate_", dir)
-		return _still("skate_", dir)
 	for candidate in FALLBACK.get(dir, ["front"]):
 		var anim_name: String = "%s_%s" % [state, candidate]
 		if clips.has(anim_name):
 			return anim_name
-	if state == "cruise" or state == "push":
-		return _still("skate_", dir)
-	return _still("idle_", dir)
+	# A few facings were never painted (front grind, side bail). Borrow another
+	# clip of the same action. Right-facing views never take a left painting.
+	for candidate in _last_resort(dir):
+		var fallback_name: String = "%s_%s" % [state, str(candidate)]
+		if clips.has(fallback_name):
+			return fallback_name
+	return "%s_%s" % [state, dir]
 
-func _still(prefix: String, dir: String) -> String:
-	var direct := prefix + dir
-	if clips.has(direct):
-		return direct
-	for candidate in FALLBACK.get(dir, ["front"]):
-		var alt: String = prefix + str(candidate)
-		if clips.has(alt):
-			return alt
-	return direct
+func _last_resort(dir: String) -> Array:
+	if dir == "right" or dir == "front_right" or dir == "back_right":
+		return ["right", "back_right", "back", "front"]
+	if dir == "left" or dir == "front_left" or dir == "back_left":
+		return ["left", "back_left", "back", "front"]
+	if dir.begins_with("front"):
+		return ["front", "back"]
+	return ["back", "front"]
 
 func _index(state: String, ctx: Dictionary) -> int:
 	var count := _count(clip)
@@ -255,50 +239,74 @@ func _index(state: String, ctx: Dictionary) -> int:
 	if state == "push":
 		return clampi(int(push_phase * float(count)), 0, count - 1)
 	if state == "bail":
-		if count == 1:
-			return 0
 		var u := 1.0 - clampf(float(ctx.get("bail_time", 0.6)) / 0.6, 0.0, 1.0)
 		return clampi(int(u * float(count)), 0, count - 1)
 	if state == "kickup" or state == "dropin":
 		return clampi(int(trans_time * _fps(clip)), 0, count - 1)
-	if state == "idle" or str(_clip(clip).get("source", "")) == "v1":
-		return 0
 	var fps := _playback_fps(state, ctx)
 	if bool(_clip(clip).get("loop", false)):
 		return posmod(int(clip_time * fps), count)
 	return clampi(int(clip_time * fps), 0, count - 1)
 
 func _ollie_index(count: int, ctx: Dictionary) -> int:
+	var phases: Dictionary = _clip(clip).get("phases", {})
+	if phases.is_empty():
+		return 0
 	var trick := str(ctx.get("trick", ""))
 	var vy := float(ctx.get("vy", 0.0))
 	var t := float(ctx.get("trick_time", 0.0))
 	if trick == "crouch":
-		return 0
+		return clampi(_phase_one(phases, "crouch"), 0, count - 1)
 	if trick == "land":
-		return count - 1
-	if trick == "":
-		return mini(3, count - 1) if vy > 0.0 else mini(4, count - 1)
-	if t < 0.1:
-		return mini(1, count - 1)
+		if phases.has("recover") and land_hold >= 0.25:
+			return clampi(_phase_one(phases, "recover"), 0, count - 1)
+		return clampi(_phase_one(phases, "land"), 0, count - 1)
+	if trick != "" and t < 0.1:
+		return clampi(_phase_one(phases, "pop"), 0, count - 1)
 	if vy > 0.0:
-		return 2 if t < 0.28 else mini(3, count - 1)
-	return mini(4, count - 1)
+		var along := 1.0 - clampf(vy / POP_VY, 0.0, 1.0)
+		return clampi(_phase_at(phases, "rise", along), 0, count - 1)
+	return clampi(_phase_one(phases, "fall"), 0, count - 1)
 
 func _grab_index(count: int, ctx: Dictionary) -> int:
-	if float(ctx.get("vy", 0.0)) < -3.0:
-		return count - 1
+	var phases: Dictionary = _clip(clip).get("phases", {})
+	if phases.is_empty():
+		return 0
+	var trick := str(ctx.get("trick", ""))
+	var vy := float(ctx.get("vy", 0.0))
 	var t := float(ctx.get("trick_time", 0.0))
-	if t < 0.3:
-		return clampi(int(t * 10.0), 0, mini(2, count - 1))
-	return clampi(count / 2, 0, count - 1)
+	if trick == "crouch":
+		return clampi(_phase_one(phases, "crouch"), 0, count - 1)
+	if vy < -3.0:
+		return clampi(_phase_one(phases, "release"), 0, count - 1)
+	if t < 0.1:
+		return clampi(_phase_one(phases, "pop"), 0, count - 1)
+	if t < 0.22:
+		return clampi(_phase_one(phases, "reach"), 0, count - 1)
+	var along := clampf((t - 0.22) / 0.45, 0.0, 0.999)
+	return clampi(_phase_at(phases, "hold", along), 0, count - 1)
+
+func _phase_list(phases: Dictionary, key: String) -> Array:
+	var raw = phases.get(key, 0)
+	if typeof(raw) == TYPE_ARRAY:
+		return raw
+	return [raw]
+
+func _phase_at(phases: Dictionary, key: String, along: float) -> int:
+	var frames := _phase_list(phases, key)
+	if frames.is_empty():
+		return 0
+	var i := clampi(int(clampf(along, 0.0, 0.999) * float(frames.size())), 0, frames.size() - 1)
+	return int(frames[i])
+
+func _phase_one(phases: Dictionary, key: String) -> int:
+	return _phase_at(phases, key, 0.0)
 
 func _playback_fps(state: String, ctx: Dictionary) -> float:
 	if state == "walk":
-		return clampf(8.0 * float(ctx.get("speed", 0.0)) / 4.5, 4.0, 10.0)
-	if state == "cruise":
-		return 6.0
-	if state == "grind":
-		return 8.0
+		var scale := float(maxi(_count(clip), 1)) / 6.0
+		var speed_ratio := float(ctx.get("speed", 0.0)) / 4.5
+		return clampf(scale * 8.0 * speed_ratio, scale * 4.0, scale * 10.0)
 	return _fps(clip)
 
 func _clip(name: String) -> Dictionary:

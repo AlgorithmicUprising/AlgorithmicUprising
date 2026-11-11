@@ -855,9 +855,18 @@ func _fony_sprite() -> void:
 	expect(anim.direction_name(PI * 0.75, 0.0, 4.0, 0.0, 0.0) == "front_left", "sprite front-left")
 	var boundary: String = anim.direction_name(-PI + PI / 8.0, 0.0, 4.0, 0.0, 0.0)
 	expect(boundary == "front_right", "sprite sector boundary rounds away from front got %s" % boundary)
-	expect(anim.clips.has("cruise_back") and anim.clips["cruise_back"].frames.size() >= 4, "v2 cruise away has a cycle")
-	expect(anim.clips.has("walk_back") and anim.clips.has("walk_left") and anim.clips.has("walk_right"), "v2 walk covers back and both sides")
-	expect(anim.clips.has("ollie_back") and anim.clips.has("kickflip_back") and anim.clips.has("grind_back") and anim.clips.has("bail_back"), "v2 has away-facing trick, grind, and bail clips")
+	expect(anim.clips.has("cruise_back") and anim.clips["cruise_back"].frames.size() == 8, "v3 cruise away is an 8-frame sway")
+	expect(anim.clips.has("cruise_left") and anim.clips.has("cruise_right") and anim.clips.has("cruise_front"), "v3 cruise covers the sides and the front")
+	expect(anim.clips["push_back"].frames.size() == 8, "v3 push away is an 8-frame stroke")
+	expect(anim.clips["walk_back"].frames.size() == 6 and anim.clips["walk_front"].frames.size() == 8 and anim.clips["walk_left"].frames.size() == 8 and anim.clips["walk_right"].frames.size() == 8, "v3 walks are 6 frames from behind and 8 from the front and sides")
+	expect(anim.clips["ollie_back"].frames.size() == 7 and anim.clips.has("ollie_back_left") and anim.clips.has("ollie_back_right"), "v3 ollie covers the back and both back diagonals")
+	expect(anim.clips.has("kickflip_left") and anim.clips.has("kickflip_right") and anim.clips["kickflip_left"].frames.size() == 6, "v3 kickflip has both sides")
+	expect(anim.clips["grab_back"].frames.size() == 6 and anim.clips.has("grab_left") and anim.clips.has("grab_right"), "v3 grab is 6 frames, including both sides")
+	expect(anim.clips.has("grind_right") and anim.clips["grind_right"].frames.size() == 6, "v3 grind has a right-side loop")
+	expect(anim.clips.has("kickup_right") and anim.clips.has("dropin_right"), "v3 kick-up and drop-in have a right side")
+	expect(anim.clips["bail_front"].frames.size() == 6 and anim.clips.has("bail_back"), "v3 front bail is a 6-frame fall")
+	for dir_name in anim.DIRS:
+		expect(anim.clips.has("idle_" + dir_name) and anim.clips["idle_" + dir_name].frames.size() == 6, "v3 idle breathes in %s" % dir_name)
 	var away := _ride_ctx(0.0)
 	away.speed = 9.0
 	away.wish = 1.0
@@ -908,7 +917,32 @@ func _fony_sprite() -> void:
 	air.vy = 5.0
 	air.trick_time = 0.2
 	ollie.step(0.016, air)
-	expect(ollie.clip == "ollie_back" and ollie.frame_index == 2, "an ollie seen from behind uses ollie_back got %s#%s" % [ollie.clip, ollie.frame_index])
+	expect(ollie.clip == "ollie_back" and ollie.frame_index == 3, "an ollie seen from behind steps through the rise got %s#%s" % [ollie.clip, ollie.frame_index])
+	air.trick = "land"
+	air.on_floor = true
+	air.vy = -1.0
+	air.trick_time = 0.0
+	ollie.step(0.05, air)
+	expect(ollie.frame_index == 5, "landing from behind holds the land frame got %s" % ollie.frame_index)
+	ollie.step(0.25, air)
+	expect(ollie.frame_index == 6, "the away ollie plays its recover frame got %s" % ollie.frame_index)
+	var grabber = load("res://scripts/fony_sprite_anim.gd").new()
+	var grabbing := _ride_ctx(0.0)
+	grabbing.trick = "crouch"
+	grabbing.trick_next = "grab"
+	grabbing.on_floor = true
+	grabber.step(0.016, grabbing)
+	expect(grabber.clip == "grab_back" and grabber.frame_index == 0, "a grab crouch uses the grab phase got %s#%s" % [grabber.clip, grabber.frame_index])
+	grabbing.trick = "grab"
+	grabbing.trick_next = ""
+	grabbing.on_floor = false
+	grabbing.vy = 4.0
+	grabbing.trick_time = 0.4
+	grabber.step(0.016, grabbing)
+	expect(grabber.frame_index == 3 or grabber.frame_index == 4, "an airborne grab holds the grab frames got %s" % grabber.frame_index)
+	grabbing.vy = -4.0
+	grabber.step(0.016, grabbing)
+	expect(grabber.frame_index == 5, "a falling grab releases got %s" % grabber.frame_index)
 	var flip = load("res://scripts/fony_sprite_anim.gd").new()
 	air.trick = "flip"
 	air.flip_turns = 0.5
@@ -943,7 +977,64 @@ func _fony_sprite() -> void:
 	var facing := _ride_ctx(PI)
 	facing.speed = 9.0
 	front_glide.step(0.05, facing)
-	expect(front_glide.clip == "skate_front", "a front cruise with no v2 clip keeps the v1 still got %s" % front_glide.clip)
+	expect(front_glide.clip == "cruise_front", "riding toward the camera uses cruise_front got %s" % front_glide.clip)
+	var diagonal = load("res://scripts/fony_sprite_anim.gd").new()
+	var front_left := _ride_ctx(PI * 0.75)
+	front_left.speed = 9.0
+	diagonal.step(0.05, front_left)
+	expect(diagonal.clip == "cruise_front", "front-left cruise falls back to cruise_front got %s" % diagonal.clip)
+	var side_flip = load("res://scripts/fony_sprite_anim.gd").new()
+	var side_air := _ride_ctx(PI * 0.5)
+	side_air.trick = "flip"
+	side_air.on_floor = false
+	side_air.flip_turns = 0.5
+	side_flip.step(0.016, side_air)
+	expect(side_flip.clip == "kickflip_left" and side_flip.frame_index == 3, "a left kickflip uses the side strip got %s#%s" % [side_flip.clip, side_flip.frame_index])
+	var right_grind = load("res://scripts/fony_sprite_anim.gd").new()
+	var right_rail := _ride_ctx(-PI * 0.5)
+	right_rail.grind = true
+	right_rail.on_floor = false
+	right_grind.step(0.05, right_rail)
+	expect(right_grind.clip == "grind_right", "grinding to the right uses grind_right got %s" % right_grind.clip)
+	var front_bail = load("res://scripts/fony_sprite_anim.gd").new()
+	var facing_bail := _ride_ctx(PI)
+	facing_bail.skating = false
+	facing_bail.trick = "bail"
+	facing_bail.bail_time = 0.3
+	front_bail.step(0.016, facing_bail)
+	expect(front_bail.clip == "bail_front" and front_bail.frame_index == 3, "a front bail plays the fall got %s#%s" % [front_bail.clip, front_bail.frame_index])
+	var tex: Texture2D = load("res://assets/library/fony2d/fony2d_v3_atlas.png")
+	var atlas_w := 0
+	var atlas_h := 0
+	if tex != null:
+		atlas_w = tex.get_width()
+		atlas_h = tex.get_height()
+	expect(tex != null and atlas_w == 4096 and atlas_h == 1768, "v3 atlas is 4096x1768 got %sx%s" % [atlas_w, atlas_h])
+	var outside := 0
+	for clip_name in anim.clips:
+		var info: Dictionary = anim.clips[clip_name]
+		var frames: Array = info.get("frames", [])
+		for fr in frames:
+			var rect: Array = fr.rect
+			var x := float(rect[0])
+			var y := float(rect[1])
+			var w := float(rect[2])
+			var h := float(rect[3])
+			if x < 0.0 or y < 0.0 or x + w > float(atlas_w) or y + h > float(atlas_h) or w <= 0.0 or h <= 0.0:
+				outside += 1
+	expect(outside == 0, "every frame rect lies inside the atlas outside=%s" % outside)
+	var states := ["idle", "walk", "cruise", "push", "kickup", "dropin", "ollie", "kickflip", "grab", "grind", "bail"]
+	var unresolved := 0
+	var borrowed_left := 0
+	for state_name in states:
+		for dir_name in anim.DIRS:
+			var resolved: String = anim._resolve(str(state_name), str(dir_name))
+			if not anim.clips.has(resolved):
+				unresolved += 1
+			if (str(dir_name) == "right" or str(dir_name) == "front_right" or str(dir_name) == "back_right") and resolved.contains("_left"):
+				borrowed_left += 1
+	expect(unresolved == 0, "every state resolves in all 8 directions unresolved=%s" % unresolved)
+	expect(borrowed_left == 0, "right-facing views never use a left painting borrowed=%s" % borrowed_left)
 	var kick = load("res://scripts/fony_sprite_anim.gd").new()
 	var stopped := _ride_ctx(0.0)
 	stopped.skating = true
@@ -958,10 +1049,8 @@ func _fony_sprite() -> void:
 	stopped.skating = true
 	var drop_key: String = kick.step(0.016, stopped)
 	expect(drop_key.begins_with("dropin_back#"), "starting while seen from behind plays dropin_back got %s" % drop_key)
-	var catalog = JSON.parse_string(FileAccess.get_file_as_string("res://assets/library/fony2d/frames.json"))
-	expect(typeof(catalog) == TYPE_DICTIONARY and catalog.get("frames", {}).size() == 38, "v1 sprite catalog stays available")
-	var v2 = JSON.parse_string(FileAccess.get_file_as_string("res://assets/library/fony2d/frames_v2.json"))
-	expect(typeof(v2) == TYPE_DICTIONARY and v2.get("animations", {}).size() == 32, "v2 catalog has 32 animations")
+	var catalog = JSON.parse_string(FileAccess.get_file_as_string("res://assets/library/fony2d/frames_v3.json"))
+	expect(typeof(catalog) == TYPE_DICTIONARY and catalog.get("animations", {}).size() == 52, "v3 catalog has 52 animations")
 	var host := _host()
 	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(20, 1, 20), Palette.GROUND)
 	var player = _player(host, Vector3(0, 0.4, 0))

@@ -20,7 +20,7 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Plants | Five box planters with box shrubs |
 | Lighting | Procedural sunset sky, warmer key, cooler ambient, three-band shader with a sharper edge darkening, one shadow map. Still not inked illustration |
 | Park marks | Flat original panels on the warehouse front and workshop face, an arcade marquee, two poster quads, a cabinet face bar, eave lamps, and two crack lines. No collision. Not the reference painting |
-| Fony, the player | Painted sprite billboard. v2 cycles cover riding away, pushing, walking, tricks, grinds, and bails; v1 stills fill directions that have no new cycle. The pivot mesh can be shown from the pause menu. Collision is still a separate capsule |
+| Fony, the player | Painted sprite billboard from the v3 atlas. Idle, walk, cruise, push, tricks, grinds, and bails use direction-matched clips. The pivot mesh can be shown from the pause menu. Collision is still a separate capsule |
 | Zero | Articulated pivots, not a skin rig. Larger cream CRT, lime screen bars, knob, vent, capsule jacket and limbs, red “?” patch, barcode blocks, metal neck, hands, and knees, coiled cable segments. Idle bob and a raised arm while talking |
 
 ## Still needed before this can look like the concept

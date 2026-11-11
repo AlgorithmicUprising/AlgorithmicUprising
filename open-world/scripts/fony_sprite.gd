@@ -1,30 +1,25 @@
 extends Node3D
 
-## Painted Fony as a Y-locked billboard. v2 clips animate the views that move.
-## v1 stills remain for the directions v2 does not cover. The mesh rig stays
-## in the tree so the pause menu can show it again.
+## Painted Fony as a Y-locked billboard. v3 is the only atlas.
 
 const AnimScript = preload("res://scripts/fony_sprite_anim.gd")
-const V2_PIXEL := 0.005972
-const V1_PIXEL := 0.007674
+const PIXEL := 0.007167
 
 var anim = AnimScript.new()
 var sprite: Sprite3D
-var tex_v1: Texture2D
-var tex_v2: Texture2D
+var tex: Texture2D
 var foot_local_y := 0.325
 var _prev_speed := 0.0
 
 func _ready() -> void:
 	name = "FonySprite"
 	anim.ensure_loaded()
-	tex_v1 = load("res://assets/library/fony2d/fony2d_atlas.png")
-	tex_v2 = load("res://assets/library/fony2d/fony2d_v2_atlas.png")
+	tex = load("res://assets/library/fony2d/fony2d_v3_atlas.png")
 	sprite = Sprite3D.new()
 	sprite.name = "Card"
-	sprite.texture = tex_v2 if tex_v2 != null else tex_v1
+	sprite.texture = tex
 	sprite.centered = true
-	sprite.pixel_size = V2_PIXEL
+	sprite.pixel_size = PIXEL
 	sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	sprite.shaded = false
 	sprite.double_sided = true
@@ -67,6 +62,7 @@ func _physics_process(delta: float) -> void:
 		"on_floor": body.is_on_floor(),
 		"vy": velocity.y,
 		"trick": str(body.trick),
+		"trick_next": str(body.trick_next),
 		"trick_time": float(body.trick_time),
 		"flip_turns": float(body.flip_turns),
 		"bail_time": float(body.bail_time),
@@ -84,10 +80,8 @@ func _apply(airborne: bool) -> void:
 	var off: Array = fr.get("anchor_offset", [0.0, 0.0])
 	var w := float(rect[2])
 	var h := float(rect[3])
-	var use_v2 := str(fr.get("source", "v1")) == "v2"
-	var ps := V2_PIXEL if use_v2 else V1_PIXEL
-	sprite.texture = tex_v2 if use_v2 else tex_v1
-	sprite.pixel_size = ps
+	sprite.texture = tex
+	sprite.pixel_size = PIXEL
 	sprite.region_rect = Rect2(float(rect[0]), float(rect[1]), w, h)
 	# anchor_offset is the rect top-left relative to the ground anchor, y down.
 	var anchor_x := -float(off[0])
@@ -98,7 +92,7 @@ func _apply(airborne: bool) -> void:
 	if airborne:
 		anchor_y -= lift
 	sprite.position = Vector3(
-		-(anchor_x - w * 0.5) * ps,
-		foot_local_y + (anchor_y - h * 0.5) * ps,
+		-(anchor_x - w * 0.5) * PIXEL,
+		foot_local_y + (anchor_y - h * 0.5) * PIXEL,
 		0.0
 	)
