@@ -73,6 +73,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const catalogUrl = new URL(host.getAttribute('catalog') || '../catalog.json', import.meta.url);
   let catalogAbort = new AbortController(), selectionAbort: AbortController | null = null;
   let song: Song = humanZoo, chart: Chart | null = null, session: RhythmSession | null = null;
+  let catalogError: string | null = null;
   let inputMode: 'unclassified' | 'keyboard' | 'touch' | 'gamepad' | 'mixed' = 'unclassified';
   let generation = 0, busy = false, disposed = false;
   const status = (text: string) => { loading.textContent = text; root.querySelector<HTMLElement>('.live')!.textContent = text; };
@@ -82,10 +83,14 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       'The Human Zoo is selected. A reviewed chart and playback copy are needed.');
     progress.max = song.durationSec;
   }).catch(error => {
-    if (!catalogAbort.signal.aborted) status('Catalog unavailable: ' + String(error));
+    if (!catalogAbort.signal.aborted) {
+      catalogError = String(error);
+      status('Catalog unavailable: ' + catalogError);
+    }
   });
   async function loadSelection() {
     await catalogReady;
+    if (catalogError) { status('Catalog unavailable: ' + catalogError); return; }
     const level = difficulty.value as Difficulty;
     const chartPath = song.charts?.[level], audioPath = song.audio;
     if (song.rightsStatus !== 'cleared' || !audioPath || !chartPath || !song.audioVersion) {
@@ -100,7 +105,8 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     emit('game:loading', { songId: song.id, phase: 'media' });
     try {
       const chartUrl = assetUrl(chartPath, catalogUrl);
-      const response = await fetch(chartUrl, { signal: abort.signal, credentials: 'omit' });
+      const response = await fetch(chartUrl, { signal: abort.signal,
+        credentials: chartUrl.origin === location.origin ? 'same-origin' : 'omit' });
       if (!response.ok || Number(response.headers.get('content-length')) > 256000) throw Error('Chart unavailable');
       const raw = await response.text();
       if (raw.length > 256000) throw Error('Chart too large');
