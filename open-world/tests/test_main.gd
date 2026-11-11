@@ -821,8 +821,29 @@ func _district() -> void:
 	await frames(20)
 	expect(not main.get_tree().paused and player.global_position.z < z_before - 0.15, "resume lets the player skate")
 
+func _ride_ctx(facing_yaw: float) -> Dictionary:
+	return {
+		"facing_yaw": facing_yaw,
+		"camera_x": 0.0,
+		"camera_z": 4.0,
+		"origin_x": 0.0,
+		"origin_z": 0.0,
+		"skating": true,
+		"speed": 0.0,
+		"accel": 0.0,
+		"wish": 0.0,
+		"on_floor": true,
+		"vy": 0.0,
+		"trick": "",
+		"trick_time": 0.0,
+		"flip_turns": 0.0,
+		"bail_time": 0.0,
+		"grind": false,
+	}
+
 func _fony_sprite() -> void:
 	var anim = load("res://scripts/fony_sprite_anim.gd").new()
+	anim.ensure_loaded()
 	# Camera sits on +Z. Facing yaw is the rig yaw, whose -Z axis is forward.
 	expect(anim.direction_name(PI, 0.0, 4.0, 0.0, 0.0) == "front", "sprite front faces the camera")
 	expect(anim.direction_name(-PI * 0.75, 0.0, 4.0, 0.0, 0.0) == "front_right", "sprite front-right")
@@ -834,76 +855,234 @@ func _fony_sprite() -> void:
 	expect(anim.direction_name(PI * 0.75, 0.0, 4.0, 0.0, 0.0) == "front_left", "sprite front-left")
 	var boundary: String = anim.direction_name(-PI + PI / 8.0, 0.0, 4.0, 0.0, 0.0)
 	expect(boundary == "front_right", "sprite sector boundary rounds away from front got %s" % boundary)
-	anim.notify_mode(false, false)
-	expect(anim.phase == "kickup" and anim.transition_frame() == "kickup_1_hook", "shift off the board starts the kick-up")
-	expect(anim.choose(0.0, 0.0, 4.0, 0.0, 0.0, "", false, false) == "kickup_1_hook", "kick-up stays on the front frames at any angle")
-	anim.advance(anim.TRANSITION_FRAME)
-	expect(anim.transition_frame() == "kickup_2_rise", "kick-up rises on the second frame")
-	anim.advance(anim.TRANSITION_FRAME)
-	expect(anim.transition_frame() == "kickup_3_catch", "kick-up catches on the third frame")
-	anim.advance(anim.TRANSITION_FRAME)
-	expect(anim.phase == "" and anim.choose(PI, 0.0, 4.0, 0.0, 0.0, "", false, false) == "idle_front", "kick-up hands off to idle")
-	anim.notify_mode(true, false)
-	expect(anim.phase == "dropin" and anim.transition_frame() == "dropin_1_drop", "shift onto the board starts the drop-in")
-	anim.advance(anim.TRANSITION_FRAME)
-	expect(anim.transition_frame() == "dropin_2_step", "drop-in steps on the second frame")
-	anim.advance(anim.TRANSITION_FRAME * 2.0)
-	expect(anim.phase == "" and anim.choose(PI, 0.0, 4.0, 0.0, 0.0, "", false, false) == "skate_front", "drop-in hands off to the skate stance")
-	var bail = load("res://scripts/fony_sprite_anim.gd").new()
-	bail.notify_mode(false, true)
-	expect(bail.phase == "" and not bail.skating, "a bail does not play the kick-up")
-	bail.notify_mode(true, false)
-	expect(bail.phase == "" and bail.skating, "leaving a bail does not play the drop-in")
-	bail.notify_mode(false, false)
-	expect(bail.phase == "kickup", "a later stop still kicks the board up")
-	var ride = load("res://scripts/fony_sprite_anim.gd").new()
-	ride.update_push(2.0, 0.4, true)
-	expect(ride.pushing, "a slow push uses the push frames")
-	expect(ride.choose(PI * 0.5, 0.0, 4.0, 0.0, 0.0, "", false, false) == "push_cycle_left_1", "left push plays the real cycle")
-	ride.push_time = ride.PUSH_FRAME
-	expect(ride.choose(PI * 0.5, 0.0, 4.0, 0.0, 0.0, "", false, false) == "push_cycle_left_2", "left push cycle reaches the extended foot")
-	expect(ride.choose(-PI * 0.5, 0.0, 4.0, 0.0, 0.0, "", false, false) == "push_right", "right push uses the painted frame and not a mirror")
-	ride.update_push(9.0, 0.0, true)
-	expect(not ride.pushing, "cruise speed leaves the push")
-	expect(ride.choose(PI, 0.0, 4.0, 0.0, 0.0, "", false, false) == "skate_front", "cruising uses the skate stance")
-	ride.update_push(4.0, -0.4, false)
-	expect(not ride.pushing, "coasting without input stays on the skate stance")
-	expect(ride.choose(PI, 0.0, 4.0, 0.0, 0.0, "crouch", false, false) == "trick_crouch_front", "crouch maps to the crouch frame")
-	expect(ride.choose(0.0, 0.0, 4.0, 0.0, 0.0, "ollie", true, true) == "trick_ollie_front", "ollie maps to the ollie frame")
-	expect(ride.choose(0.0, 0.0, 4.0, 0.0, 0.0, "flip", true, false) == "trick_kickflip_front", "kickflip maps to the flip frame")
-	expect(ride.choose(0.0, 0.0, 4.0, 0.0, 0.0, "grab", true, false) == "trick_grab_front", "grab maps to the grab frame")
-	expect(ride.choose(0.0, 0.0, 4.0, 0.0, 0.0, "land", false, false) == "trick_land_front", "landing maps to the land frame")
-	var catalog = JSON.parse_string(FileAccess.get_file_as_string("res://assets/library/fony2d/frames.json"))
-	expect(typeof(catalog) == TYPE_DICTIONARY and catalog.get("frames", {}).size() == 38, "sprite catalog has the painted set")
-	var same_anchor := true
-	var cell_w := int(catalog.get("cell_w", 0))
-	var cell_h := int(catalog.get("cell_h", 0))
-	for key in catalog.get("frames", {}):
-		var frame = catalog.frames[key]
-		if int(frame.get("w", 0)) != cell_w or int(frame.get("h", 0)) != cell_h:
-			same_anchor = false
-	expect(same_anchor and cell_w > 0, "every frame shares the foot-anchor cell")
-	expect(float(catalog.frames.idle_front.lift_m) == 0.0 and float(catalog.frames.skate_left.lift_m) == 0.0, "grounded frames sit on the shared foot line")
-	expect(float(catalog.frames.trick_ollie_front.lift_m) > 0.3 and float(catalog.frames.trick_kickflip_front.lift_m) > 0.3, "air tricks keep a lift")
-	expect(catalog.frames.has("push_cycle_left_2") and not catalog.frames.has("push_cycle_right_1"), "push cycle is the left art only")
+	expect(anim.clips.has("cruise_back") and anim.clips["cruise_back"].frames.size() == 8, "v3 cruise away is an 8-frame sway")
+	expect(anim.clips.has("cruise_left") and anim.clips.has("cruise_right") and anim.clips.has("cruise_front"), "v3 cruise covers the sides and the front")
+	expect(anim.clips["push_back"].frames.size() == 8, "v5 push away is an 8-frame stroke")
+	expect(anim.clips["push_back_left"].frames.size() == 8 and anim.clips["push_back_right"].frames.size() == 8, "v5 back-diagonal pushes are 8 frames")
+	expect(anim.clips["push_left"].frames.size() == 8 and anim.clips["push_right"].frames.size() == 8, "v5 side pushes are 8 frames")
+	expect(anim.clips["push_front"].frames.size() == 6, "v5 front push stays 6 frames")
+	expect(anim.clips["push_back"].frames[0].rect == anim.clips["cruise_back"].frames[0].rect, "push away starts on the cruise drawing")
+	expect(anim.clips["push_left"].frames[0].rect == anim.clips["cruise_left"].frames[0].rect, "left push starts on the cruise drawing")
+	expect(anim.clips["push_right"].frames[0].rect == anim.clips["cruise_right"].frames[0].rect, "right push starts on the cruise drawing")
+	expect(anim.clips["push_front"].frames[0].rect == anim.clips["cruise_front"].frames[0].rect, "front push starts on the cruise drawing")
+	expect(anim.clips["push_back_left"].frames[0].rect == anim.clips["cruise_back_left"].frames[0].rect, "back-left push starts on the cleaned cruise drawing")
+	expect(anim.clips["push_back_right"].frames[0].rect == anim.clips["cruise_back_right"].frames[1].rect, "back-right push starts on the cleaned cruise drawing")
+	expect(anim.clips["walk_back"].frames.size() == 6 and anim.clips["walk_front"].frames.size() == 8 and anim.clips["walk_left"].frames.size() == 8 and anim.clips["walk_right"].frames.size() == 8, "v3 walks are 6 frames from behind and 8 from the front and sides")
+	expect(anim.clips["ollie_back"].frames.size() == 7 and anim.clips.has("ollie_back_left") and anim.clips.has("ollie_back_right"), "v3 ollie covers the back and both back diagonals")
+	expect(anim.clips.has("kickflip_left") and anim.clips.has("kickflip_right") and anim.clips["kickflip_left"].frames.size() == 6, "v3 kickflip has both sides")
+	expect(anim.clips["grab_back"].frames.size() == 6 and anim.clips.has("grab_left") and anim.clips.has("grab_right"), "v3 grab is 6 frames, including both sides")
+	expect(anim.clips.has("grind_right") and anim.clips["grind_right"].frames.size() == 6, "v3 grind has a right-side loop")
+	expect(anim.clips.has("kickup_right") and anim.clips.has("dropin_right"), "v3 kick-up and drop-in have a right side")
+	expect(anim.clips["bail_front"].frames.size() == 6 and anim.clips.has("bail_back"), "v3 front bail is a 6-frame fall")
+	for dir_name in anim.DIRS:
+		expect(anim.clips.has("idle_" + dir_name) and anim.clips["idle_" + dir_name].frames.size() == 6, "v3 idle breathes in %s" % dir_name)
+	var away := _ride_ctx(0.0)
+	away.speed = 9.0
+	away.wish = 1.0
+	var glide = load("res://scripts/fony_sprite_anim.gd").new()
+	var glide_key: String = glide.step(0.05, away)
+	expect(glide_key.begins_with("cruise_back#"), "riding away cruises on the new back cycle got %s" % glide_key)
+	var cruise_frame: int = glide.frame_index
+	glide.step(0.25, away)
+	expect(glide.frame_index != cruise_frame, "the away cruise advances got %s then %s" % [cruise_frame, glide.frame_index])
+	var stroke = load("res://scripts/fony_sprite_anim.gd").new()
+	var pushing := _ride_ctx(0.0)
+	pushing.speed = 2.0
+	pushing.wish = 1.0
+	pushing.accel = 1.0
+	var push_key: String = stroke.step(0.05, pushing)
+	expect(push_key.begins_with("push_back#"), "a push from a stop, seen from behind, uses push_back got %s" % push_key)
+	pushing.speed = 9.0
+	pushing.accel = 0.0
+	push_key = stroke.step(0.08, pushing)
+	expect(push_key.begins_with("push_back#"), "a started push stroke finishes at top speed got %s" % push_key)
+	var returned := false
+	for _i in 30:
+		stroke.step(0.05, pushing)
+		if stroke.key.begins_with("cruise_back#"):
+			returned = true
+			break
+	expect(returned and stroke.cruise_gap > 0.0, "the stroke returns to the away cruise and holds got %s gap=%s" % [stroke.key, stroke.cruise_gap])
+	stroke.step(0.02, pushing)
+	expect(stroke.key.begins_with("cruise_"), "cruise holds between push strokes got %s" % stroke.key)
+	var left_push = load("res://scripts/fony_sprite_anim.gd").new()
+	var left_ctx := _ride_ctx(PI * 0.5)
+	left_ctx.speed = 2.0
+	left_ctx.wish = 1.0
+	left_ctx.accel = 1.0
+	left_push.step(0.05, left_ctx)
+	var right_push = load("res://scripts/fony_sprite_anim.gd").new()
+	var right_ctx := _ride_ctx(-PI * 0.5)
+	right_ctx.speed = 2.0
+	right_ctx.wish = 1.0
+	right_ctx.accel = 1.0
+	right_push.step(0.05, right_ctx)
+	expect(left_push.clip == "push_left" and right_push.clip == "push_right", "both sides have their own push clip left=%s right=%s" % [left_push.clip, right_push.clip])
+	expect(int(left_push.clips["push_left"].frames[0].rect[0]) != int(right_push.clips["push_right"].frames[0].rect[0]), "left and right push frames are different paintings")
+	var ollie = load("res://scripts/fony_sprite_anim.gd").new()
+	var air := _ride_ctx(0.0)
+	air.trick = "ollie"
+	air.on_floor = false
+	air.vy = 5.0
+	air.trick_time = 0.2
+	ollie.step(0.016, air)
+	expect(ollie.clip == "ollie_back" and ollie.frame_index == 3, "an ollie seen from behind steps through the rise got %s#%s" % [ollie.clip, ollie.frame_index])
+	air.trick = "land"
+	air.on_floor = true
+	air.vy = -1.0
+	air.trick_time = 0.0
+	ollie.step(0.05, air)
+	expect(ollie.frame_index == 5, "landing from behind holds the land frame got %s" % ollie.frame_index)
+	ollie.step(0.25, air)
+	expect(ollie.frame_index == 6, "the away ollie plays its recover frame got %s" % ollie.frame_index)
+	var grabber = load("res://scripts/fony_sprite_anim.gd").new()
+	var grabbing := _ride_ctx(0.0)
+	grabbing.trick = "crouch"
+	grabbing.trick_next = "grab"
+	grabbing.on_floor = true
+	grabber.step(0.016, grabbing)
+	expect(grabber.clip == "grab_back" and grabber.frame_index == 0, "a grab crouch uses the grab phase got %s#%s" % [grabber.clip, grabber.frame_index])
+	grabbing.trick = "grab"
+	grabbing.trick_next = ""
+	grabbing.on_floor = false
+	grabbing.vy = 4.0
+	grabbing.trick_time = 0.4
+	grabber.step(0.016, grabbing)
+	expect(grabber.frame_index == 3 or grabber.frame_index == 4, "an airborne grab holds the grab frames got %s" % grabber.frame_index)
+	grabbing.vy = -4.0
+	grabber.step(0.016, grabbing)
+	expect(grabber.frame_index == 5, "a falling grab releases got %s" % grabber.frame_index)
+	var flip = load("res://scripts/fony_sprite_anim.gd").new()
+	air.trick = "flip"
+	air.flip_turns = 0.5
+	air.vy = 2.0
+	flip.step(0.016, air)
+	expect(flip.clip == "kickflip_back" and flip.frame_index == 3, "a kickflip seen from behind tracks the spin got %s#%s" % [flip.clip, flip.frame_index])
+	var walker = load("res://scripts/fony_sprite_anim.gd").new()
+	var walking := _ride_ctx(0.0)
+	walking.skating = false
+	walking.speed = 3.0
+	walker.step(0.02, walking)
+	var walk_frame: int = walker.frame_index
+	expect(walker.clip == "walk_back", "walking away uses the walk cycle got %s" % walker.clip)
+	walker.step(0.3, walking)
+	expect(walker.frame_index != walk_frame, "the walk cycle advances")
+	var grinder = load("res://scripts/fony_sprite_anim.gd").new()
+	var grinding := _ride_ctx(0.0)
+	grinding.grind = true
+	grinding.on_floor = false
+	grinding.speed = 8.0
+	grinder.step(0.05, grinding)
+	expect(grinder.clip == "grind_back", "grinding away uses grind_back got %s" % grinder.clip)
+	var bailer = load("res://scripts/fony_sprite_anim.gd").new()
+	var bailing := _ride_ctx(0.0)
+	bailing.skating = false
+	bailing.trick = "bail"
+	bailing.bail_time = 0.6
+	bailing.on_floor = true
+	bailer.step(0.016, bailing)
+	expect(bailer.clip == "bail_back", "a bail seen from behind uses bail_back got %s" % bailer.clip)
+	var front_glide = load("res://scripts/fony_sprite_anim.gd").new()
+	var facing := _ride_ctx(PI)
+	facing.speed = 9.0
+	front_glide.step(0.05, facing)
+	expect(front_glide.clip == "cruise_front", "riding toward the camera uses cruise_front got %s" % front_glide.clip)
+	var diagonal = load("res://scripts/fony_sprite_anim.gd").new()
+	var front_left := _ride_ctx(PI * 0.75)
+	front_left.speed = 9.0
+	diagonal.step(0.05, front_left)
+	expect(diagonal.clip == "cruise_front", "front-left cruise falls back to cruise_front got %s" % diagonal.clip)
+	var side_flip = load("res://scripts/fony_sprite_anim.gd").new()
+	var side_air := _ride_ctx(PI * 0.5)
+	side_air.trick = "flip"
+	side_air.on_floor = false
+	side_air.flip_turns = 0.5
+	side_flip.step(0.016, side_air)
+	expect(side_flip.clip == "kickflip_left" and side_flip.frame_index == 3, "a left kickflip uses the side strip got %s#%s" % [side_flip.clip, side_flip.frame_index])
+	var right_grind = load("res://scripts/fony_sprite_anim.gd").new()
+	var right_rail := _ride_ctx(-PI * 0.5)
+	right_rail.grind = true
+	right_rail.on_floor = false
+	right_grind.step(0.05, right_rail)
+	expect(right_grind.clip == "grind_right", "grinding to the right uses grind_right got %s" % right_grind.clip)
+	var front_bail = load("res://scripts/fony_sprite_anim.gd").new()
+	var facing_bail := _ride_ctx(PI)
+	facing_bail.skating = false
+	facing_bail.trick = "bail"
+	facing_bail.bail_time = 0.3
+	front_bail.step(0.016, facing_bail)
+	expect(front_bail.clip == "bail_front" and front_bail.frame_index == 3, "a front bail plays the fall got %s#%s" % [front_bail.clip, front_bail.frame_index])
+	var image := Image.new()
+	var loaded := image.load("res://assets/library/fony2d/fony2d_v3_atlas.png")
+	var atlas_w := image.get_width()
+	var atlas_h := image.get_height()
+	expect(loaded == OK and atlas_w == 4096 and atlas_h == 1791, "v5 atlas is 4096x1791 got %s %sx%s" % [loaded, atlas_w, atlas_h])
+	expect(anim.atlas_size == Vector2i(atlas_w, atlas_h), "catalog atlas size matches the png")
+	var outside := 0
+	for clip_name in anim.clips:
+		var info: Dictionary = anim.clips[clip_name]
+		var frames: Array = info.get("frames", [])
+		for fr in frames:
+			var rect: Array = fr.rect
+			var x := float(rect[0])
+			var y := float(rect[1])
+			var w := float(rect[2])
+			var h := float(rect[3])
+			if x < 0.0 or y < 0.0 or x + w > float(atlas_w) or y + h > float(atlas_h) or w <= 0.0 or h <= 0.0:
+				outside += 1
+	expect(outside == 0, "every frame rect lies inside the atlas outside=%s" % outside)
+	var states := ["idle", "walk", "cruise", "push", "kickup", "dropin", "ollie", "kickflip", "grab", "grind", "bail"]
+	var unresolved := 0
+	var borrowed_left := 0
+	for state_name in states:
+		for dir_name in anim.DIRS:
+			var resolved: String = anim._resolve(str(state_name), str(dir_name))
+			if not anim.clips.has(resolved):
+				unresolved += 1
+			if (str(dir_name) == "right" or str(dir_name) == "front_right" or str(dir_name) == "back_right") and resolved.contains("_left"):
+				borrowed_left += 1
+	expect(unresolved == 0, "every state resolves in all 8 directions unresolved=%s" % unresolved)
+	expect(borrowed_left == 0, "right-facing views never use a left painting borrowed=%s" % borrowed_left)
+	var kick = load("res://scripts/fony_sprite_anim.gd").new()
+	var stopped := _ride_ctx(0.0)
+	stopped.skating = true
+	kick.step(0.01, stopped)
+	stopped.skating = false
+	stopped.speed = 0.0
+	stopped.wish = 0.0
+	var kick_key: String = kick.step(0.016, stopped)
+	expect(kick_key.begins_with("kickup_back#"), "stopping while seen from behind plays kickup_back got %s" % kick_key)
+	kick.step(0.7, stopped)
+	expect(kick.phase == "" and kick.clip.begins_with("idle_"), "kick-up hands off to idle got %s" % kick.clip)
+	stopped.skating = true
+	var drop_key: String = kick.step(0.016, stopped)
+	expect(drop_key.begins_with("dropin_back#"), "starting while seen from behind plays dropin_back got %s" % drop_key)
+	var catalog = JSON.parse_string(FileAccess.get_file_as_string("res://assets/library/fony2d/frames_v3.json"))
+	expect(typeof(catalog) == TYPE_DICTIONARY and catalog.get("animations", {}).size() == 52, "v3 catalog has 52 animations")
 	var host := _host()
 	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(20, 1, 20), Palette.GROUND)
 	var player = _player(host, Vector3(0, 0.4, 0))
-	await frames(8)
+	for _i in 40:
+		await get_tree().physics_frame
+		if player.is_on_floor():
+			break
+	player.velocity = Vector3.ZERO
+	await frames(4)
 	expect(player.get_node_or_null("Fony") != null and player.get_node_or_null("FonySprite") != null, "mesh rig and painted sprite both exist")
 	expect(not player.rig.visible and player.painted_sprite.visible, "the test shows the sprite and keeps the rig")
-	expect(player.sprite_frame.begins_with("skate_"), "standing on the board uses a skate frame got %s" % player.sprite_frame)
+	expect(player.sprite_frame.begins_with("cruise_") or player.sprite_frame.begins_with("skate_"), "standing on the board uses a ride frame got %s" % player.sprite_frame)
+	expect(not player.get_node("FonySprite/Card").flip_h, "the sprite is never mirrored")
 	player.set_painted_sprite(false)
 	expect(player.rig.visible and not player.painted_sprite.visible, "the pause toggle brings the mesh rig back")
 	player.set_painted_sprite(true)
 	player.skating = false
 	await frames(1)
-	expect(player.sprite_frame == "kickup_1_hook", "the live body plays kick-up when skating stops got %s" % player.sprite_frame)
-	player.sprite_frame = ""
-	player.painted_sprite.anim.advance(player.painted_sprite.anim.TRANSITION_FRAME * 3.0)
+	expect(player.sprite_frame.begins_with("kickup_"), "the live body plays a kick-up when skating stops got %s" % player.sprite_frame)
+	player.painted_sprite.anim.phase = ""
+	player.painted_sprite.anim.trans_time = 0.0
 	player.skating = true
 	await frames(1)
-	expect(player.sprite_frame == "dropin_1_drop", "the live body plays drop-in when skating starts got %s" % player.sprite_frame)
+	expect(player.sprite_frame.begins_with("dropin_"), "the live body plays a drop-in when skating starts got %s" % player.sprite_frame)
 	host.queue_free()
 	await frames(2)
 

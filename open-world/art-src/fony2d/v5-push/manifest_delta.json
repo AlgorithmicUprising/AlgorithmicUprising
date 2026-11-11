@@ -1,0 +1,849 @@
+{
+ "version": "v5-push (delta on v3)",
+ "base_manifest": "../v3/manifest.json",
+ "master_cell": [
+  510,
+  648
+ ],
+ "anchor": [
+  255,
+  632
+ ],
+ "changed_animations": {
+  "push_back": {
+   "state": "push",
+   "direction": "back",
+   "fps": 12,
+   "loop": true,
+   "status": "new",
+   "note": "v5-push. Same stroke as v4 (plant beside the rear wheels, drag, toe-off, low recovery). The dip/lean is now eased: head moves at most 8px between frames (v4 jumped 23px at 1->2 and 5->6). The board is widened to match the v3 board.",
+   "phases": {
+    "ground_contact": [
+     2,
+     3,
+     4
+    ]
+   },
+   "frames": [
+    {
+     "file": "frames/push_back_00.png",
+     "source": "v3:cruise_back_00",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      2,
+      2,
+      99,
+      258
+     ],
+     "anchor_offset": [
+      -49.5,
+      -255.0
+     ]
+    },
+    {
+     "file": "frames/push_back_01.png",
+     "source": "v5-push/work/gen/back/pb_7a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      303,
+      2,
+      98,
+      255
+     ],
+     "anchor_offset": [
+      -48.5,
+      -253.0
+     ]
+    },
+    {
+     "file": "frames/push_back_02.png",
+     "source": "v5-push/work/gen/back/pb_2b.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      517,
+      2,
+      98,
+      252
+     ],
+     "anchor_offset": [
+      -41.5,
+      -250.0
+     ]
+    },
+    {
+     "file": "frames/push_back_03.png",
+     "source": "v5-push/work/gen/back/pb_drive_a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      717,
+      2,
+      98,
+      250
+     ],
+     "anchor_offset": [
+      -42.5,
+      -248.0
+     ]
+    },
+    {
+     "file": "frames/push_back_04.png",
+     "source": "v5-push/work/gen/back/pb_5b.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      817,
+      2,
+      98,
+      250
+     ],
+     "anchor_offset": [
+      -42.5,
+      -248.0
+     ]
+    },
+    {
+     "file": "frames/push_back_05.png",
+     "source": "v5-push/work/gen/back/pb_6b.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      617,
+      2,
+      98,
+      252
+     ],
+     "anchor_offset": [
+      -43.5,
+      -250.0
+     ]
+    },
+    {
+     "file": "frames/push_back_06.png",
+     "source": "v5-push/work/gen/back/pb_6a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      203,
+      2,
+      98,
+      256
+     ],
+     "anchor_offset": [
+      -48.5,
+      -253.0
+     ]
+    },
+    {
+     "file": "frames/push_back_07.png",
+     "source": "v5-push/work/gen/back/pb_7a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      103,
+      2,
+      98,
+      257
+     ],
+     "anchor_offset": [
+      -49.5,
+      -255.0
+     ]
+    }
+   ],
+   "replaces": {
+    "v3_frames": 8,
+    "v4_frames": 8
+   }
+  },
+  "push_back_left": {
+   "state": "push",
+   "direction": "back_left",
+   "fps": 12,
+   "loop": true,
+   "status": "new",
+   "note": "v5-push. Same stroke as v4. The torso drift is reduced and eased (head x 256->272->260; v4 went to 291 and snapped back 33px at the loop). The plant is still beside/behind the deck, not up by the front trucks.",
+   "phases": {
+    "ground_contact": [
+     3,
+     4,
+     5,
+     6
+    ]
+   },
+   "frames": [
+    {
+     "file": "frames/push_back_left_00.png",
+     "source": "v3:cruise_back_left_00 (blob cleaned)",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      403,
+      2,
+      112,
+      254
+     ],
+     "anchor_offset": [
+      -42.5,
+      -251.0
+     ]
+    },
+    {
+     "file": "frames/push_back_left_01.png",
+     "source": "v5-push/work/gen/back_left/pbl_1a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      917,
+      2,
+      112,
+      250
+     ],
+     "anchor_offset": [
+      -41.5,
+      -247.0
+     ]
+    },
+    {
+     "file": "frames/push_back_left_02.png",
+     "source": "v5-push/work/gen/back_left/pbl_2b.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1526,
+      2,
+      107,
+      242
+     ],
+     "anchor_offset": [
+      -36.5,
+      -239.0
+     ]
+    },
+    {
+     "file": "frames/push_back_left_03.png",
+     "source": "v5-push/work/gen/back_left/pbl_2a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1753,
+      2,
+      114,
+      241
+     ],
+     "anchor_offset": [
+      -35.5,
+      -238.0
+     ]
+    },
+    {
+     "file": "frames/push_back_left_04.png",
+     "source": "v5-push/work/gen/back_left/pbl_3a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1278,
+      2,
+      118,
+      244
+     ],
+     "anchor_offset": [
+      -34.5,
+      -241.0
+     ]
+    },
+    {
+     "file": "frames/push_back_left_05.png",
+     "source": "v5-push/work/gen/back_left/pbl_4a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1145,
+      2,
+      131,
+      245
+     ],
+     "anchor_offset": [
+      -32.5,
+      -239.0
+     ]
+    },
+    {
+     "file": "frames/push_back_left_06.png",
+     "source": "v5-push/work/gen/back_left/pbl_5b.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1398,
+      2,
+      126,
+      244
+     ],
+     "anchor_offset": [
+      -32.5,
+      -241.0
+     ]
+    },
+    {
+     "file": "frames/push_back_left_07.png",
+     "source": "v5-push/work/gen/back_left/pbl_1a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1031,
+      2,
+      112,
+      250
+     ],
+     "anchor_offset": [
+      -41.5,
+      -247.0
+     ]
+    }
+   ],
+   "replaces": {
+    "v3_frames": 5,
+    "v4_frames": 8
+   }
+  },
+  "push_back_right": {
+   "state": "push",
+   "direction": "back_right",
+   "fps": 12,
+   "loop": true,
+   "status": "new",
+   "note": "v5-push. New plant frames: the push foot swings in and plants on the ground in front of the tail beside the rear wheel (near side), drags back behind the tail, toe-off, extends, lifts. Built by rotating the lower leg about the knee from a clean v4 frame (the generator kept putting it behind the tail). v3 white blob removed from frame 0; no double boards.",
+   "phases": {
+    "ground_contact": [
+     2,
+     3,
+     4,
+     5
+    ]
+   },
+   "frames": [
+    {
+     "file": "frames/push_back_right_00.png",
+     "source": "v3:cruise_back_right_01 (blob cleaned)",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1635,
+      2,
+      116,
+      242
+     ],
+     "anchor_offset": [
+      -79.5,
+      -239.0
+     ]
+    },
+    {
+     "file": "frames/push_back_right_01.png",
+     "source": "v5-push/work/comp/pbr_hover.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      287,
+      262,
+      106,
+      238
+     ],
+     "anchor_offset": [
+      -73.5,
+      -236.0
+     ]
+    },
+    {
+     "file": "frames/push_back_right_02.png",
+     "source": "v5-push/work/comp/pbr_plant.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      395,
+      262,
+      107,
+      238
+     ],
+     "anchor_offset": [
+      -74.5,
+      -236.0
+     ]
+    },
+    {
+     "file": "frames/push_back_right_03.png",
+     "source": "v5-push/work/comp/pbr_plant_mid.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      961,
+      262,
+      115,
+      236
+     ],
+     "anchor_offset": [
+      -82.5,
+      -234.0
+     ]
+    },
+    {
+     "file": "frames/push_back_right_04.png",
+     "source": "v5-push/work/gen/back_right/pbr_3d.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1078,
+      262,
+      125,
+      236
+     ],
+     "anchor_offset": [
+      -92.5,
+      -234.0
+     ]
+    },
+    {
+     "file": "frames/push_back_right_05.png",
+     "source": "v5-push/work/gen/back_right/pbr_4c.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1205,
+      262,
+      134,
+      236
+     ],
+     "anchor_offset": [
+      -102.5,
+      -234.0
+     ]
+    },
+    {
+     "file": "frames/push_back_right_06.png",
+     "source": "v5-push/work/gen/back_right/pbr_5d.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1341,
+      262,
+      135,
+      236
+     ],
+     "anchor_offset": [
+      -103.5,
+      -234.0
+     ]
+    },
+    {
+     "file": "frames/push_back_right_07.png",
+     "source": "v5-push/work/gen/back_right/pbr_6e.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      626,
+      262,
+      137,
+      237
+     ],
+     "anchor_offset": [
+      -104.5,
+      -235.0
+     ]
+    }
+   ],
+   "replaces": {
+    "v3_frames": 5,
+    "v4_frames": 6
+   }
+  },
+  "push_left": {
+   "state": "push",
+   "direction": "left",
+   "fps": 12,
+   "loop": true,
+   "status": "new",
+   "note": "v5-push. New plant frames: the push foot plants on the far side of the board between the wheels (shoe seen above the deck and under it between the wheels), then drags back behind the tail, extends, lifts. Built by rotating the whole push leg about the hip from a v4 frame.",
+   "phases": {
+    "ground_contact": [
+     2,
+     3,
+     4,
+     5
+    ]
+   },
+   "frames": [
+    {
+     "file": "frames/push_left_00.png",
+     "source": "v3:cruise_left_00",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      504,
+      262,
+      120,
+      238
+     ],
+     "anchor_offset": [
+      -47.5,
+      -235.0
+     ]
+    },
+    {
+     "file": "frames/push_left_01.png",
+     "source": "v5-push/work/comp/pl_hover.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1605,
+      262,
+      121,
+      233
+     ],
+     "anchor_offset": [
+      -47.5,
+      -231.0
+     ]
+    },
+    {
+     "file": "frames/push_left_02.png",
+     "source": "v5-push/work/comp/pl_plant.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1883,
+      262,
+      121,
+      229
+     ],
+     "anchor_offset": [
+      -47.5,
+      -227.0
+     ]
+    },
+    {
+     "file": "frames/push_left_03.png",
+     "source": "v5-push/work/comp/pl_plant_mid.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      2,
+      505,
+      122,
+      229
+     ],
+     "anchor_offset": [
+      -47.5,
+      -226.0
+     ]
+    },
+    {
+     "file": "frames/push_left_04.png",
+     "source": "v5-push/work/gen/left/pl_3b.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      126,
+      505,
+      145,
+      229
+     ],
+     "anchor_offset": [
+      -47.5,
+      -226.0
+     ]
+    },
+    {
+     "file": "frames/push_left_05.png",
+     "source": "v5-push/work/gen/left/pl_5a.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      273,
+      505,
+      155,
+      229
+     ],
+     "anchor_offset": [
+      -47.5,
+      -226.0
+     ]
+    },
+    {
+     "file": "frames/push_left_06.png",
+     "source": "v5-push/work/gen/left/pl_6b.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      430,
+      505,
+      158,
+      229
+     ],
+     "anchor_offset": [
+      -47.5,
+      -226.0
+     ]
+    },
+    {
+     "file": "frames/push_left_07.png",
+     "source": "v5-push/work/gen/left/pl_7e.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1728,
+      262,
+      153,
+      232
+     ],
+     "anchor_offset": [
+      -46.5,
+      -229.0
+     ]
+    }
+   ],
+   "replaces": {
+    "v3_frames": 6,
+    "v4_frames": 7
+   }
+  },
+  "push_right": {
+   "state": "push",
+   "direction": "right",
+   "fps": 12,
+   "loop": true,
+   "status": "new",
+   "note": "v5-push. Redrawn with a committed push: deep front-knee bend and forward lean (new render family; the body was dropped 17px so the front shoe sits on the deck). The plant is on the ground beside the rear truck on the near side, built by rotating the push leg about the hip. Frames 1 and 7 ease the crouch in and out.",
+   "phases": {
+    "ground_contact": [
+     2,
+     3,
+     4,
+     5,
+     6
+    ]
+   },
+   "frames": [
+    {
+     "file": "frames/push_right_00.png",
+     "source": "v3:cruise_right_00",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1478,
+      262,
+      125,
+      235
+     ],
+     "anchor_offset": [
+      -73.5,
+      -232.0
+     ]
+    },
+    {
+     "file": "frames/push_right_01.png",
+     "source": "v5-push/work/comp/pr5_hover.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      590,
+      505,
+      128,
+      226
+     ],
+     "anchor_offset": [
+      -73.5,
+      -222.0
+     ]
+    },
+    {
+     "file": "frames/push_right_02.png",
+     "source": "v5-push/work/comp/pr5_plant_fwd.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1168,
+      505,
+      128,
+      216
+     ],
+     "anchor_offset": [
+      -72.5,
+      -212.0
+     ]
+    },
+    {
+     "file": "frames/push_right_03.png",
+     "source": "v5-push/work/comp/pr5_plant.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1298,
+      505,
+      128,
+      216
+     ],
+     "anchor_offset": [
+      -72.5,
+      -212.0
+     ]
+    },
+    {
+     "file": "frames/push_right_04.png",
+     "source": "v5-push/work/comp/pr5_plant_mid.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      873,
+      505,
+      137,
+      217
+     ],
+     "anchor_offset": [
+      -81.5,
+      -214.0
+     ]
+    },
+    {
+     "file": "frames/push_right_05.png",
+     "source": "v5-push/work/gen/right/pr5_drag.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1012,
+      505,
+      154,
+      217
+     ],
+     "anchor_offset": [
+      -98.5,
+      -214.0
+     ]
+    },
+    {
+     "file": "frames/push_right_06.png",
+     "source": "v5-push/work/gen/right/pr5_ext.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1428,
+      505,
+      158,
+      213
+     ],
+     "anchor_offset": [
+      -102.5,
+      -210.0
+     ]
+    },
+    {
+     "file": "frames/push_right_07.png",
+     "source": "v5-push/work/gen/right/pr5_lift.jpg",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      720,
+      505,
+      151,
+      225
+     ],
+     "anchor_offset": [
+      -96.5,
+      -222.0
+     ]
+    }
+   ],
+   "replaces": {
+    "v3_frames": 6,
+    "v4_frames": 7
+   }
+  },
+  "push_front": {
+   "state": "push",
+   "direction": "front",
+   "fps": 12,
+   "loop": true,
+   "status": "new",
+   "note": "v5-push. Built directly from the v3 cruise_front_00 frame, so the board is pixel-identical to cruise frame 0 (no pop). Only the push leg moves: lift, plant on the ground line beside the board's rear end, drag back behind the deck, lift behind, return. The deck under the lifted shoe is inpainted.",
+   "phases": {
+    "ground_contact": [
+     2,
+     3
+    ]
+   },
+   "frames": [
+    {
+     "file": "frames/push_front_00.png",
+     "source": "v3:cruise_front_00",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      1869,
+      2,
+      93,
+      241
+     ],
+     "anchor_offset": [
+      -35.5,
+      -238.0
+     ]
+    },
+    {
+     "file": "frames/push_front_01.png",
+     "source": "v5-push/work/cells/front_lift.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      2,
+      262,
+      93,
+      241
+     ],
+     "anchor_offset": [
+      -35.5,
+      -238.0
+     ]
+    },
+    {
+     "file": "frames/push_front_02.png",
+     "source": "v5-push/work/cells/front_plant.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      765,
+      262,
+      99,
+      237
+     ],
+     "anchor_offset": [
+      -41.5,
+      -234.0
+     ]
+    },
+    {
+     "file": "frames/push_front_03.png",
+     "source": "v5-push/work/cells/front_drag.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      866,
+      262,
+      93,
+      237
+     ],
+     "anchor_offset": [
+      -35.5,
+      -234.0
+     ]
+    },
+    {
+     "file": "frames/push_front_04.png",
+     "source": "v5-push/work/cells/front_back.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      97,
+      262,
+      93,
+      241
+     ],
+     "anchor_offset": [
+      -35.5,
+      -238.0
+     ]
+    },
+    {
+     "file": "frames/push_front_05.png",
+     "source": "v5-push/work/cells/front_return.png",
+     "lift_px": 0.0,
+     "atlas_rect": [
+      192,
+      262,
+      93,
+      241
+     ],
+     "anchor_offset": [
+      -35.5,
+      -238.0
+     ]
+    }
+   ],
+   "replaces": {
+    "v3_frames": 6,
+    "v4_frames": 5
+   }
+  }
+ },
+ "unchanged": "All other v3 animations, including every cruise_* and idle_*. push_front_left / push_front_right are still not authored (PR18 fallback uses push_front / push_right).",
+ "v3_fixes_carried": {
+  "cruise_back_right_01": "white shadow blob removed inside push_back_right_00 only (v3 file untouched)",
+  "cruise_back_left_00": "white speck removed inside push_back_left_00 only"
+ },
+ "atlas": {
+  "file": "fony2d_v5_push_atlas.png",
+  "scale_from_master": 0.5,
+  "size": [
+   2048,
+   736
+  ],
+  "unique_drawings": 46,
+  "note": "Standalone atlas with only the push frames, v3 convention. Repack with v3/build.py logic to ship in one atlas, replacing the six push_* entries. Frame 0 of front/left/right/back/back_left is the v3 cruise frame; back_right frame 0 is cruise_back_right_01 with the blob removed (so it differs from the cruise art by that blob only)."
+ }
+}
