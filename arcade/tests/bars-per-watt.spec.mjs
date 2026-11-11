@@ -117,11 +117,10 @@ test('a song with pending rights never requests its media', async ({page}) => {
 });
 
 test('owner-only same-origin catalog, chart and audio use the signed-in session', async ({page}) => {
-  // WebKit first establishes the origin before accepting a test session cookie.
+  // Set a first-party session on the page before it requests protected assets.
   await page.goto(demo);
-  await page.context().addCookies([{name:'playtest_auth',value:'owner',url:'http://127.0.0.1:8080/'}]);
-  expect(await page.context().cookies('http://127.0.0.1:8080/')).toEqual(
-    expect.arrayContaining([expect.objectContaining({name:'playtest_auth',value:'owner'})]));
+  await page.evaluate(() => { document.cookie = 'playtest_auth=owner; SameSite=Lax; Path=/'; });
+  expect(await page.evaluate(() => document.cookie)).toContain('playtest_auth=owner');
   const authorized = route => (route.request().headers().cookie || '').includes('playtest_auth=owner');
   let mediaAuthorized = false;
   await page.route('**/games/bars-per-watt/catalog.json', route => route.fulfill(authorized(route) ? {
