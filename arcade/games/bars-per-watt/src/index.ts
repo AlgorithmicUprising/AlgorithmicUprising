@@ -4,14 +4,14 @@ import type { CartridgeProfile } from '../../../core/src/cartridge';
 import { assetUrl, humanZoo, loadCatalog, type Song } from './catalog';
 import { compileChart, type Chart, type Difficulty, type Lane } from './chart';
 import { drawHighway } from './render';
-import { RhythmSession } from './session';
+import { PRECISION_THRESHOLD, SCORE_VERSION, RhythmSession } from './session';
 import { Skin } from './skin';
 import { MediaTransport } from './transport';
 import css from './cabinet.css';
 import markup from './cabinet.html';
 
 const profile: CartridgeProfile = {
-  version: '0.2.0-preview', shell: '<style>' + css + '</style>' + markup,
+  version: '0.3.0-preview', shell: '<style>' + css + '</style>' + markup,
   landscape: [640, 360], portrait: [360, 640], primary: 'start',
   consumeStartInput: true,
   keys: { ' ': 'start', ArrowLeft: 'left', ArrowDown: 'down',
@@ -20,8 +20,8 @@ const profile: CartridgeProfile = {
     12: 'up', 13: 'down', 14: 'left', 15: 'right' },
   padAxes: [{ index: 0, negative: 'left', positive: 'right' },
     { index: 1, negative: 'up', positive: 'down' }],
-  resultStats: { perfect: 'perfect_count', good: 'good_count',
-    miss: 'miss_count', maxCombo: 'max_combo', accuracy: 'accuracy' },
+  resultStats: { perfect: 'perfect_count', good: 'good_count', ok: 'ok_count',
+    miss: 'miss_count', maxCombo: 'max_combo', maxPrecision: 'max_precision', accuracy: 'accuracy' },
   cues: {}
 };
 
@@ -47,6 +47,15 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const score = root.querySelector<HTMLElement>('[data-score]')!;
   const combo = root.querySelector<HTMLElement>('[data-combo]')!;
   const accuracy = root.querySelector<HTMLElement>('[data-accuracy]')!;
+  const hit = root.querySelector<HTMLElement>('[data-hit]')!;
+  const timing = root.querySelector<HTMLElement>('[data-timing]')!;
+  const precision = root.querySelector<HTMLElement>('[data-precision]')!;
+  const screen = root.querySelector<HTMLElement>('.screen')!;
+  const comboStat = root.querySelector<HTMLElement>('.combo-stat')!;
+  const meter = root.querySelector<HTMLElement>('.meter')!;
+  const meterLabel = root.querySelector<HTMLElement>('[data-meter]')!;
+  const meterBars = Array.from(root.querySelectorAll<HTMLElement>('.meter-bars i'));
+  let feedbackAnimation: Animation | null = null, seenMilestone = 0;
   const bill = root.querySelector<HTMLElement>('.bill')!;
   const choose = root.querySelector<HTMLButtonElement>('[data-choose]')!;
   const dialog = root.querySelector<HTMLDialogElement>('dialog')!;
@@ -81,6 +90,45 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   let inputMode: 'unclassified' | 'keyboard' | 'touch' | 'gamepad' | 'mixed' = 'unclassified';
   let generation = 0, busy = false, disposed = false;
   const status = (text: string) => { loading.textContent = text; root.querySelector<HTMLElement>('.live')!.textContent = text; };
+  const resetFeedback = () => {
+    feedbackAnimation?.cancel(); feedbackAnimation = null; seenMilestone = 0;
+    hit.textContent = skin.current.strings.hit_line; delete hit.dataset.grade; timing.textContent = '';
+    precision.textContent = skin.current.strings.precision + ' 0/' + PRECISION_THRESHOLD;
+    precision.dataset.active = 'false'; screen.classList.remove('is-overclocked');
+    meter.classList.remove('is-overclocked'); comboStat.classList.remove('is-streak');
+    meterLabel.textContent = 'READY'; meterBars.forEach(bar => bar.classList.remove('is-lit'));
+  };
+  const drawFeedback = (at: number, reducedMotion: boolean) => {
+    if (!session) return;
+    const strings = skin.current.strings, recent = session.latestFeedback;
+    const visible = recent && at - recent.at < .55;
+    hit.textContent = visible ? strings[recent.kind] : strings.hit_line;
+    hit.dataset.grade = visible ? recent.kind : '';
+    timing.textContent = visible && (recent.kind === 'good' || recent.kind === 'ok') ?
+      strings[recent.errorSec! < 0 ? 'early' : 'late'] : '';
+    precision.textContent = session.overclocked ? strings.overclocked + ' ×' + session.precision :
+      strings.precision + ' ' + session.precision + '/' + PRECISION_THRESHOLD;
+    precision.dataset.active = String(session.overclocked);
+    screen.classList.toggle('is-overclocked', session.overclocked);
+    meter.classList.toggle('is-overclocked', session.overclocked);
+    comboStat.classList.toggle('is-streak', session.combo >= 10);
+    meterLabel.textContent = session.overclocked ? strings.overclocked : 'COMBO ×' + session.combo;
+    const litBars = session.overclocked ? meterBars.length : Math.ceil(session.combo / 5);
+    meterBars.forEach((bar, index) => bar.classList.toggle('is-lit', index < litBars));
+    const milestone = session.milestone;
+    if (reducedMotion) feedbackAnimation?.cancel();
+    if (!milestone) { feedbackAnimation?.cancel(); return; }
+    if (milestone.id === seenMilestone) return;
+    seenMilestone = milestone.id;
+    if (milestone.kind === 'precision' && milestone.count === PRECISION_THRESHOLD)
+      root.querySelector<HTMLElement>('.live')!.textContent = strings.overclocked + ' Five perfect hits.';
+    if (!reducedMotion && at - milestone.at < .55) {
+      feedbackAnimation?.cancel();
+      feedbackAnimation = (milestone.kind === 'precision' ? precision : combo).animate(
+        [{ transform: 'scale(1)' }, { transform: 'scale(1.12)', offset: .3 }, { transform: 'scale(1)' }],
+        { duration: 360, easing: 'ease-out' });
+    }
+  };
   const catalogReady = loadCatalog(catalogUrl, catalogAbort.signal).then(data => {
     song = data.songs.find(item => item.id === 'AU-001') || humanZoo;
     status(song.audio && song.rightsStatus === 'cleared' ? 'Choose a difficulty, then load The Human Zoo.' :
@@ -154,6 +202,10 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     root.querySelector<HTMLOutputElement>('[data-bill-total]')!.textContent = String(session.score);
     root.querySelector<HTMLOutputElement>('[data-bill-accuracy]')!.textContent = session.accuracy + '%';
     root.querySelector<HTMLOutputElement>('[data-bill-combo]')!.textContent = String(session.maxCombo);
+    root.querySelector<HTMLOutputElement>('[data-bill-precision]')!.textContent = String(session.maxPrecision);
+    root.querySelector<HTMLOutputElement>('[data-bill-hits]')!.textContent =
+      [session.totals.perfect, session.totals.good, session.totals.ok].join(' / ');
+    root.querySelector<HTMLOutputElement>('[data-bill-miss]')!.textContent = String(session.totals.miss);
   }, { signal });
   root.querySelector<HTMLButtonElement>('[part=settings]')!.addEventListener('click', () => {
     if (element.state === 'playing') element.pause('settings');
@@ -205,6 +257,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     start() {
       if (!chart) return;
       transport.reset(); session = new RhythmSession(chart);
+      resetFeedback();
       inputMode = 'unclassified';
       bill.hidden = true; choose.hidden = true;
       score.textContent = '0'; combo.textContent = '0'; accuracy.textContent = '0%';
@@ -222,10 +275,12 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     },
     draw(ctx, w, h) {
       const at = transport.time;
+      const reducedMotion = settings.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      host.dataset.reducedMotion = String(reducedMotion);
       drawHighway(ctx, w, h, session, at, skin.palette, settings.visualOffsetMs,
-        settings.contrast, settings.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches,
-        settings.scrollSpeed);
+        settings.contrast, reducedMotion, settings.scrollSpeed);
       if (!session) return;
+      drawFeedback(at, reducedMotion);
       score.textContent = String(session.score); combo.textContent = String(session.combo);
       accuracy.textContent = session.accuracy + '%';
       progress.value = Math.min(at, song.durationSec); time.textContent = timeLabel(at);
@@ -234,7 +289,6 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
         const release = holds.filter(note => note.endTime! - at <= .35);
         const arrows = (notes: readonly { lane: Lane }[]) => notes.map(note => ['←', '↓', '↑', '→'][note.lane]).join(' ');
         judge.textContent = release.length ? skin.current.strings.release_cue + ' ' + arrows(release) :
-          session.latest && at - session.latestAt < .55 ? skin.current.strings[session.latest] :
           holds.length ? skin.current.strings.hold_cue + ' ' + arrows(holds) : skin.current.strings.hit_line;
       }
     },
@@ -247,7 +301,8 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
         if (mode) inputMode = inputMode === 'unclassified' ? mode :
           inputMode === mode ? inputMode : 'mixed';
       }
-      session.input(laneIndex[action], down, transport.atEvent(atMs) - settings.inputOffsetMs / 1000);
+      const eventTime = transport.atEvent(atMs);
+      session.input(laneIndex[action], down, eventTime - settings.inputOffsetMs / 1000, eventTime);
     },
     releaseInput() {
       session?.clearPressed();
@@ -255,12 +310,14 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     },
     score: () => session?.score || 0,
     over: () => session?.complete || false,
-    bestKey: () => chart ? 'best:' + song.id + ':' + chart.id + ':' + chart.difficulty + ':' + inputMode : 'best',
+    bestKey: () => chart ? 'best:' + SCORE_VERSION + ':' + song.id + ':' + chart.id + ':' + chart.difficulty + ':' + inputMode : 'best:' + SCORE_VERSION,
     result: () => ({
       cause: 'complete', causeLine: skin.current.strings.gameover_any,
       songId: song.id, chartId: chart?.id, audioVersion: chart?.audioVersion, difficulty: chart?.difficulty,
-      inputMode, accuracy: session?.accuracy || 0, maxCombo: session?.maxCombo || 0,
-      stats: { ...session?.totals, maxCombo: session?.maxCombo || 0, accuracy: session?.accuracy || 0 },
+      inputMode, scoreVersion: SCORE_VERSION, accuracy: session?.accuracy || 0, maxCombo: session?.maxCombo || 0,
+      maxPrecision: session?.maxPrecision || 0,
+      stats: { ...session?.totals, maxCombo: session?.maxCombo || 0,
+        maxPrecision: session?.maxPrecision || 0, accuracy: session?.accuracy || 0 },
       shareText: 'I banked {score} fictional points in BARS PER WATT · The Human Zoo: {url}'
     }),
     onPause: () => transport.pause(),
@@ -271,6 +328,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     onReset: () => {
       ++generation; selectionAbort?.abort(); selectionAbort = null;
       transport.unload(); session = null; chart = null; busy = false;
+      resetFeedback();
       button.disabled = true; loadButton.disabled = false; bill.hidden = true; choose.hidden = true;
       status('Choose a difficulty, then load The Human Zoo.');
     },
@@ -279,7 +337,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     presentation: () => skin.current,
     dispose: () => {
       disposed = true; ++generation; catalogAbort.abort(); selectionAbort?.abort();
-      lifetime.abort(); skin.dispose(); transport.dispose();
+      feedbackAnimation?.cancel(); lifetime.abort(); skin.dispose(); transport.dispose();
     }
   };
   return game;

@@ -2,11 +2,15 @@
   <header class="header">
     <div class="brand"><b>Ø</b><span>BARS<br>PER WATT</span></div>
     <div class="hud"><div><small>BARS BANKED</small><output data-score>0</output></div>
-      <div><small>COMBO</small><output data-combo>0</output></div>
+      <div class="combo-stat"><small>COMBO</small><output data-combo>0</output></div>
       <div><small>ACCURACY</small><output data-accuracy>0%</output></div></div>
   </header>
   <div class="screen">
     <canvas role="img" aria-label="Four-lane rhythm highway: left, down, up, right"></canvas>
+    <div class="feedback-strip" aria-live="off">
+      <div class="hit-readout"><b data-hit>HIT THE LINE</b><small data-timing></small></div>
+      <span data-precision>PRECISION 0/5</span>
+    </div>
     <div class="overlay" data-phase="title">
       <section class="card">
         <span class="eyebrow">ZERO GAME THING 2000 / 04</span>
@@ -22,6 +26,9 @@
           <div><span>BEST</span><output data-bill-best>0</output></div>
           <div><span>ACCURACY</span><output data-bill-accuracy>0%</output></div>
           <div><span>MAX COMBO</span><output data-bill-combo>0</output></div>
+          <div><span>BEST PRECISION</span><output data-bill-precision>0</output></div>
+          <div><span>ROOT / SYNC / ROUGH</span><output data-bill-hits>0 / 0 / 0</output></div>
+          <div><span>DESYNC</span><output data-bill-miss>0</output></div>
           <div class="total"><span>TOTAL POINTS</span><output data-bill-total>0</output></div>
           <small>FICTIONAL POINTS. NOT MONEY.</small>
         </div>
@@ -36,6 +43,7 @@
   </div>
   <aside class="rack"><div class="meter"><span>RACK LOAD</span><div class="meter-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <b data-meter>READY</b></div><p data-judge aria-live="off">HIT THE LINE</p>
+    <div class="timing-key"><span>ROOT ACCESS <small>PERFECT</small></span><span>IN SYNC <small>GOOD</small></span><span>BIT ROUGH <small>OK</small></span></div>
     <div class="progress"><span>TRACK</span><progress data-progress max="318.8" value="0"></progress><time data-time>0:00</time></div></aside>
   <nav class="touch-pads" part="mobile-controls" aria-label="Rhythm lanes">
     <button type="button" data-lane="left" aria-label="Left lane">←</button>
@@ -53,6 +61,7 @@
     <label>HIGH CONTRAST <input data-contrast type="checkbox"></label>
     <label>REDUCED MOTION <input data-motion type="checkbox"></label>
     <p>Scroll speed changes arrow spacing. Song speed and scoring stay the same. Hold an arrow until its end cap meets the hit line, then release.</p>
+    <p>ROOT ACCESS: within 50 ms. IN SYNC: within 90 ms. BIT ROUGH: within 120 ms. Five perfect hits in a row: OVERCLOCKED! A Good or OK hit keeps your combo but resets precision. A miss or dropped hold breaks both.</p>
     <p>Offsets are local to this device. The song clock always controls scoring.</p>
     <button type="submit">DONE</button></form></dialog>
   <span class="live" aria-live="polite" aria-atomic="true"></span>

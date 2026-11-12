@@ -5,7 +5,7 @@ export function drawHighway(ctx: CanvasRenderingContext2D, width: number, height
   session: RhythmSession | null, time: number, palette: Record<string, string>,
   visualOffsetMs: number, contrast: boolean, reducedMotion: boolean, scrollSpeed = 1) {
   const w = Math.max(1, width), h = Math.max(1, height), laneW = w / 4;
-  const strike = h * .80, speed = h * .48 * Math.max(.75, Math.min(1.75, scrollSpeed));
+  const strike = h * .84, speed = h * .48 * Math.max(.75, Math.min(1.75, scrollSpeed));
   const headH = Math.max(10, Math.min(laneW * .64, h * .075));
   const bg = palette.bg || '#111319', grid = contrast ? '#ffffff' : palette.grid || '#4d5360';
   const accent = palette.accent || '#d7ff00', secondary = palette.secondary || '#e0287a';
@@ -71,8 +71,46 @@ export function drawHighway(ctx: CanvasRenderingContext2D, width: number, height
       ctx.fillStyle = '#f4f1e7'; ctx.fillText(symbols[lane], lane * laneW + laneW / 2, strike);
     }
   }
-  if (session?.latest && !reducedMotion && time - session.latestAt < .22) {
-    ctx.fillStyle = secondary; ctx.fillRect(0, strike + headH * .8, w, 3);
+  // Four bounded slots preserve both sides of a chord. Effects use the audio
+  // clock, never the visual offset, and cannot alter judgement.
+  for (const hit of session?.laneFeedback || []) {
+    if (!hit) continue;
+    const age = Math.max(0, time - hit.at), duration = reducedMotion ? .55 : .24;
+    if (age >= duration) continue;
+    const phase = reducedMotion ? 0 : age / duration;
+    const x = (hit.lane + .5) * laneW, size = Math.min(laneW * .65, headH * 1.3);
+    ctx.save(); ctx.globalAlpha = reducedMotion ? 1 : 1 - phase * .8;
+    ctx.lineWidth = contrast ? 3 : 2;
+    ctx.strokeStyle = hit.kind === 'perfect' ? accent : hit.kind === 'good' || hit.kind === 'hold' ? '#ffffff' : secondary;
+    if (hit.kind === 'perfect' || hit.kind === 'good') {
+      const radius = size / 2 + phase * (hit.kind === 'perfect' ? 9 : 4);
+      ctx.strokeRect(x - radius, strike - radius, radius * 2, radius * 2);
+      if (hit.kind === 'perfect' && !reducedMotion) {
+        ctx.fillStyle = accent;
+        for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+          const reach = size / 2 + 4 + phase * 9;
+          ctx.fillRect(x + dx * reach - 1.5, strike + dy * reach - 1.5, 3, 3);
+        }
+      }
+    } else {
+      const r = size / 2;
+      ctx.beginPath();
+      if (hit.kind === 'miss') {
+        ctx.moveTo(x - r, strike - r); ctx.lineTo(x + r, strike + r);
+        ctx.moveTo(x + r, strike - r); ctx.lineTo(x - r, strike + r);
+      } else if (hit.kind === 'hold') {
+        ctx.moveTo(x - r, strike); ctx.lineTo(x - r / 4, strike + r / 2);
+        ctx.lineTo(x + r, strike - r / 2);
+      } else {
+        for (const side of [-1, 1]) {
+          ctx.moveTo(x + side * r / 2, strike - r);
+          ctx.lineTo(x + side * r, strike - r); ctx.lineTo(x + side * r, strike + r);
+          ctx.lineTo(x + side * r / 2, strike + r);
+        }
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
   }
   if (!session) {
     ctx.fillStyle = accent; ctx.font = `900 ${Math.max(16, Math.floor(w / 18))}px system-ui`;

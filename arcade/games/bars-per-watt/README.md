@@ -17,7 +17,22 @@ From `arcade/`, run `npm ci`, `npm run stage-pages`, then `node tools/serve.mjs 
 
 Active holds stay attached to the receptor, with a visible end cap and an explicit release cue. Release when the cap reaches the line; a completed hold has separate visual feedback. Settings include persisted 0.75–1.75× scroll speed, which changes note spacing without changing playback rate, note timestamps or scoring. Note heads are height-limited to keep shorter subdivisions readable in portrait. The shared timing and judgement code is the same on desktop and mobile.
 
-The audio element's position controls note animation and scoring. The render loop never advances musical time. A full decoded 5:18.8 stereo 48 kHz float buffer would take roughly 122 MiB before other game memory, above the guide's proposed 96 MiB buffer cap; this first pass uses one native stream. Focus loss, tab hide, offscreen host, parent pause and ejection pause or dispose the stream. Sound starts muted. Settings persist local visual and input offsets (±150 ms), contrast and reduced motion. The result is a fictional points bill, with per-song/chart/difficulty/input-mode best scores. The iframe forwards existing `game:*` events to the exact parent origin and accepts `pause`, `resume`, `mute` and `unmute` commands from that parent. The website still needs a receiving bridge and mini-player handoff before activating the live cartridge.
+The audio element's position controls note animation and scoring. The render loop never advances musical time. A full decoded 5:18.8 stereo 48 kHz float buffer would take roughly 122 MiB before other game memory, above the guide's proposed 96 MiB buffer cap; this first pass uses one native stream. Focus loss, tab hide, offscreen host, parent pause and ejection pause or dispose the stream. Sound starts muted. Settings persist local visual and input offsets (±150 ms), contrast and reduced motion. The result is a fictional points bill, with score-version/song/chart/difficulty/input-mode best scores. The iframe forwards existing `game:*` events to the exact parent origin and accepts `pause`, `resume`, `mute` and `unmute` commands from that parent. The website still needs a receiving bridge and mini-player handoff before activating the live cartridge.
+
+## Timing feedback · 0.3.0-preview
+
+The strike line and receptors sit at 84% of highway height. Timing labels and the precision badge occupy the gutter below the targets, outside the incoming note path.
+
+| Grade | Absolute timing error | Points | Feedback |
+| --- | --- | --- | --- |
+| ROOT ACCESS (perfect) | ≤50 ms | 1000 | Expanding square and four pixel sparks |
+| IN SYNC (good) | >50–90 ms | 750 | Small outline pulse, EARLY/LATE |
+| BIT ROUGH (OK) | >90–120 ms | 500 | Brackets, EARLY/LATE |
+| DESYNC (miss) | Outside ±120 ms or failed hold | 0 | Outlined X; both streaks reset |
+
+All successful heads increase combo. Five consecutive perfect heads activate **OVERCLOCKED!**; Good/OK keeps combo but resets precision. A successful hold release adds 500 points and a check cue without increasing either streak. Dropped or overdue holds reset both. Combo and precision milestones at 10, 25, 50 and subsequent multiples of 50 pulse their counter. The rack meter tracks combo and lights fully while overclocked. Each chord lane retains its own cue. Effects last 240 ms; the readable grade stays for 550 ms. Reduced motion uses static shapes and labels, with no particles or scaling. No screen shake or full-screen flash is used.
+
+The new scoring rules use the `timing-v2` best-score namespace; previous two-grade scores do not compete with these scores. Settings and chart/audio versions are unchanged. Results include all three hit totals, misses, max combo and best precision.
 
 ## Add the reviewed song media and charts
 

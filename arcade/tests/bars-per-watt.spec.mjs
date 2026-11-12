@@ -19,7 +19,7 @@ function wav() {
   for(let i=0;i<samples;i++)buffer.writeInt16LE(Math.round(Math.sin(i*2*Math.PI*220/rate)*600),44+i*2);
   return buffer;
 }
-async function boot(page) {
+async function boot(page,fixture=chart) {
   const audio = wav();
   await page.route('**/games/bars-per-watt/catalog.json', route => route.fulfill({
     contentType:'application/json',body:JSON.stringify({version:1,songs:[{
@@ -29,7 +29,7 @@ async function boot(page) {
     }]})
   }));
   await page.route('**/games/bars-per-watt/preview-easy.json', route =>
-    route.fulfill({contentType:'application/json',body:JSON.stringify(chart)}));
+    route.fulfill({contentType:'application/json',body:JSON.stringify(fixture)}));
   await page.route('**/games/bars-per-watt/preview.wav', route =>
     route.fulfill({contentType:'audio/wav',body:audio}));
   await page.goto(demo);
@@ -168,4 +168,47 @@ test('owner-only same-origin catalog, chart and audio use the signed-in session'
   await expect(game.locator('[data-loading]')).toContainText('Ready. Enable sound');
   await expect(game.locator('[part=start]')).toBeEnabled();
   expect(mediaAuthorized).toBe(true);
+});
+
+test('five perfect heads show OVERCLOCKED, a miss clears it, and reduced motion stays static',async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.addInitScript(()=>{
+    const NativeAudio=window.Audio;
+    window.Audio=function(...args){const audio=new NativeAudio(...args);window.__rhythmTestAudio=audio;return audio;};
+    window.Audio.prototype=NativeAudio.prototype;
+  });
+  const fixture={...chart,notes:[.4,.7,1,1.3,1.6,3].map((at,i)=>({beat:String(at*2),lane:i%4}))};
+  const game=await boot(page,fixture);
+  await game.evaluate(el=>{
+    const targets=[.4,.7,1,1.3,1.6],actions=['left','down','up','right'];
+    el.addEventListener('game:start',()=>{
+      let next=0;
+      const step=()=>{
+        const at=window.__rhythmTestAudio.currentTime;
+        if(at>=targets[next]-.02){
+          // Exercise timestamped shared input against the native audio clock.
+          // Unit replay tests cover exact grade boundaries independently.
+          const stamp=performance.now()-(at-targets[next])*1000;
+          el.action(actions[next%4],'keyboard:fixture',true,stamp);
+          el.action(actions[next%4],'keyboard:fixture',false,stamp);next++;
+        }
+        if(next<targets.length)setTimeout(step,8);
+      };setTimeout(step,8);
+    },{once:true});
+  });
+  await game.locator('[part=start]').click();
+  await expect(game.locator('[data-precision]')).toHaveText('OVERCLOCKED! ×5');
+  await expect(game.locator('[data-hit]')).toHaveText('ROOT ACCESS');
+  await expect(game.locator('[data-combo]')).toHaveText('5');
+  await expect(game.locator('.screen')).toHaveClass(/is-overclocked/);
+  expect(await game.locator('[data-precision]').evaluate(el=>el.getAnimations().length)).toBe(0);
+  const screen=await game.locator('.screen').boundingBox(),feedback=await game.locator('.feedback-strip').boundingBox();
+  expect(contained(screen,feedback)).toBe(true);
+  await expect(game.locator('[data-combo]')).toHaveText('0',{timeout:5000});
+  await expect(game.locator('[data-precision]')).toHaveText('PRECISION 0/5');
+  await expect(game.locator('.screen')).not.toHaveClass(/is-overclocked/);
+  await expect(game).toHaveJSProperty('state','over');
+  await expect(game.locator('[data-bill-precision]')).toHaveText('5');
+  await expect(game.locator('[data-bill-hits]')).toHaveText('5 / 0 / 0');
+  expect(await page.evaluate(()=>Object.keys(localStorage).some(key=>key.includes('best:timing-v2:')))).toBe(true);
 });

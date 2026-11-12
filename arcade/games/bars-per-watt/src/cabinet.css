@@ -59,3 +59,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
 :host([data-orientation=portrait]) .song-picker{margin:5px 0;padding:7px}
 :host([data-orientation=portrait]) .overlay{padding:2%}
 @media(pointer:coarse){:host([data-orientation=landscape]) .touch-pads{display:grid;position:absolute;right:2%;top:38%;width:27%;height:30%;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px}:host([data-orientation=landscape]) .touch-pads button{min-width:0;padding:0;font-size:22px}:host([data-orientation=landscape]) .rack{height:24%}}
+.feedback-strip{position:absolute;left:2%;right:2%;top:90%;bottom:1%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;line-height:1.05}
+.hit-readout{display:flex;justify-content:center;align-items:baseline;gap:6px;white-space:nowrap}
+[data-hit]{font:900 clamp(10px,1.65cqw,18px)/1.05 system-ui;color:var(--bpw-ink)}
+[data-hit][data-grade=perfect]{color:var(--bpw-accent)}[data-hit][data-grade=ok],[data-hit][data-grade=miss]{color:var(--bpw-secondary)}
+[data-timing]{font-size:clamp(8px,1.1cqw,12px);color:var(--bpw-muted)}
+[data-precision]{font:800 clamp(8px,1.2cqw,13px)/1.05 ui-monospace,monospace;color:var(--bpw-muted);white-space:nowrap}
+[data-precision][data-active=true]{color:var(--bpw-accent)}
+.screen.is-overclocked{border-color:var(--bpw-accent);box-shadow:0 8px 0 #08080c,0 0 16px #d7ff0030}
+.combo-stat.is-streak{border-color:var(--bpw-accent)}
+.meter-bars i{opacity:.15}.meter-bars i.is-lit{opacity:1}.meter.is-overclocked .meter-bars i{background:var(--bpw-secondary)}
+.timing-key{display:grid;gap:4px;font-size:clamp(8px,1.25cqw,13px);color:var(--bpw-ink)}.timing-key span{display:flex;justify-content:space-between;gap:6px}.timing-key small{color:var(--bpw-muted);font-size:.85em}
+:host([data-orientation=portrait]) [data-hit]{font-size:clamp(10px,3.6cqw,16px)}
+:host([data-orientation=portrait]) [data-timing]{font-size:clamp(8px,2.5cqw,11px)}
+:host([data-orientation=portrait]) [data-precision]{font-size:clamp(8px,2.8cqw,12px)}
+:host([data-orientation=portrait]) .timing-key{display:none}
+:host([data-reduced-motion=true]) .touch-pads button.is-down{transform:none}
+@media(prefers-reduced-motion:reduce){.touch-pads button.is-down{transform:none!important}}
+@media(pointer:coarse){:host([data-orientation=landscape]) .timing-key{display:none}}
