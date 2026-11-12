@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "songs": [
+    {
+      "id": "AU-001",
+      "title": "The Human Zoo",
+      "durationSec": 318.8,
+      "explicit": true,
+      "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-052",
+      "title": "Known Issues",
+      "durationSec": 177.2,
+      "explicit": false,
+      "rightsStatus": "pending"
+    }
+  ]
+}

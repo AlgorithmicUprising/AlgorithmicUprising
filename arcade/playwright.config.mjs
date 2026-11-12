@@ -6,7 +6,7 @@ export default defineConfig({
  projects:[
   {name:'desktop-chromium',use:{...devices['Desktop Chrome'],viewport:{width:1280,height:900}}},
   {name:'mobile-chromium',use:{...devices['Desktop Chrome'],viewport:{width:390,height:844},hasTouch:true,isMobile:true,deviceScaleFactor:2}},
-  {name:'mobile-webkit',testMatch:['**/standalone-mobile.spec.mjs','**/tag-before-training.spec.mjs','**/cookie-wall.spec.mjs'],use:{...devices['iPhone 13'],viewport:{width:390,height:844}}}
+  {name:'mobile-webkit',testMatch:['**/standalone-mobile.spec.mjs','**/tag-before-training.spec.mjs','**/cookie-wall.spec.mjs','**/bars-per-watt.spec.mjs'],use:{...devices['iPhone 13'],viewport:{width:390,height:844}}}
  ],
  webServer:{command:'npm run stage-pages && node tools/serve.mjs --staged',url:'http://127.0.0.1:8080/demo/',reuseExistingServer:!process.env.CI,timeout:30_000},
 });

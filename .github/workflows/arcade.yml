@@ -60,6 +60,7 @@ jobs:
             arcade/games/*/dist/
             arcade/games/*/skins/
             arcade/games/*/demo/
+            arcade/games/bars-per-watt/catalog.json
           if-no-files-found: error
           retention-days: 14
   deploy-main:
