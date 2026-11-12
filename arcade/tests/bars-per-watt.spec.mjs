@@ -104,6 +104,7 @@ test('desktop and phone controls fit; host pause and eject stop the game', async
       expect(contained(host,box)).toBe(true);
     }
   }
+  for(const button of await game.locator('.top button').all())expect(contained(host,await button.boundingBox())).toBe(true);
   await game.locator('[part=start]').click();
   if(phone)await game.locator('[data-lane=left]').tap();
   else await page.keyboard.press('d');

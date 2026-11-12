@@ -49,10 +49,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 :host([data-orientation=portrait]) .rack{left:4%;right:auto;top:76%;width:92%;height:4%;display:block}
 :host([data-orientation=portrait]) .meter,:host([data-orientation=portrait]) .progress{display:none}
 :host([data-orientation=portrait]) .rack p{text-align:center;font-size:clamp(11px,3cqw,16px);min-height:0}
-:host([data-orientation=portrait]) .touch-pads{position:absolute;left:4%;top:81%;width:92%;height:12%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding-bottom:env(safe-area-inset-bottom)}
+:host([data-orientation=portrait]) .touch-pads{position:absolute;left:4%;top:81%;width:92%;height:11%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding-bottom:env(safe-area-inset-bottom)}
 :host([data-orientation=portrait]) .touch-pads button{min-width:0;min-height:48px;font:900 clamp(24px,9cqw,42px) system-ui;background:var(--bpw-accent);color:#111316;border-color:#fff8}
 :host([data-orientation=portrait]) .touch-pads button.is-down{background:var(--bpw-secondary);transform:translateY(3px)}
-:host([data-orientation=portrait]) .top{left:4%;right:auto;bottom:1%;width:92%;height:5%;gap:4px}
+:host([data-orientation=portrait]) .top{left:4%;right:auto;bottom:1%;width:92%;height:5%;min-height:38px;gap:4px}
 :host([data-orientation=portrait]) .top button{min-height:38px;font-size:clamp(10px,2.7cqw,13px)}
 :host([data-orientation=portrait]) .card{width:100%;max-height:100%;padding:9px}
 :host([data-orientation=portrait]) .card h2{font-size:clamp(24px,8cqw,36px)}
