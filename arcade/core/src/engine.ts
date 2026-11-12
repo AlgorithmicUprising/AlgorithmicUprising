@@ -17,6 +17,7 @@ export type GameAPI = {
   dispose?(): void;
   /** Optional hooks; older cartridges continue to use the original contract. */
   canStart?(): boolean;
+  menuPad?(button: number): boolean;
   keyForCode?(code: string): string | undefined;
   onPause?(): void;
   onResume?(): void;
@@ -333,6 +334,8 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
       const button = Number(index), pressed = Boolean(pad?.buttons[button]?.pressed);
       if (pressed) this.profilePad.add(button);
       if (pressed === previous.has(button)) continue;
+      if (pressed && this.phase === 'title' && document.activeElement === this &&
+          this.game.menuPad?.(button)) continue;
       if (action === 'pause') {
         if (pressed && document.activeElement === this) this.paused ? this.resume('player') : this.pause();
       } else {

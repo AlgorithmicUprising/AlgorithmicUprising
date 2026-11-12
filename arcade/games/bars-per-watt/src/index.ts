@@ -11,7 +11,7 @@ import css from './cabinet.css';
 import markup from './cabinet.html';
 
 const profile: CartridgeProfile = {
-  version: '0.3.0-preview', shell: '<style>' + css + '</style>' + markup,
+  version: '0.4.0-preview', shell: '<style>' + css + '</style>' + markup,
   landscape: [640, 360], portrait: [360, 640], primary: 'start',
   consumeStartInput: true,
   keys: { ' ': 'start', ArrowLeft: 'left', ArrowDown: 'down',
@@ -27,7 +27,7 @@ const profile: CartridgeProfile = {
 
 type Element = HTMLElement & {
   action(action: string, source: string, down: boolean, atMs?: number): void;
-  pause(reason?: string): void; reset(): void; muted: boolean; state: string; best: number;
+  start(): void; pause(reason?: string): void; reset(): void; muted: boolean; state: string; best: number;
 };
 const laneIndex: Record<string, Lane> = { left: 0, down: 1, up: 2, right: 3 };
 const timeLabel = (time: number) => Math.floor(time / 60) + ':' + String(Math.floor(time % 60)).padStart(2, '0');
@@ -39,7 +39,15 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const signal = lifetime.signal;
   const button = root.querySelector<HTMLButtonElement>('[part=start]')!;
   const loadButton = root.querySelector<HTMLButtonElement>('[data-load]')!;
-  const difficulty = root.querySelector<HTMLSelectElement>('[data-difficulty]')!;
+  const titleMenu = root.querySelector<HTMLElement>('[data-title]')!;
+  const songMenu = root.querySelector<HTMLElement>('[data-song-menu]')!;
+  const playfield = root.querySelector<HTMLElement>('.playfield')!;
+  const songList = root.querySelector<HTMLElement>('[data-song-list]')!;
+  const sleeve = root.querySelector<HTMLImageElement>('[data-sleeve]')!;
+  const menuSound = root.querySelector<HTMLButtonElement>('[data-menu-sound]')!;
+  const playLabel = root.querySelector<HTMLElement>('[data-play-label]')!;
+  const difficultyButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-difficulty]'));
+  const countIn = root.querySelector<HTMLElement>('[data-count-in]')!;
   const loading = root.querySelector<HTMLElement>('[data-loading]')!;
   const judge = root.querySelector<HTMLElement>('[data-judge]')!;
   const progress = root.querySelector<HTMLProgressElement>('[data-progress]')!;
@@ -86,7 +94,11 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const catalogUrl = new URL(host.getAttribute('catalog') || '../catalog.json', import.meta.url);
   let catalogAbort = new AbortController(), selectionAbort: AbortController | null = null;
   let song: Song = humanZoo, chart: Chart | null = null, session: RhythmSession | null = null;
-  let catalogError: string | null = null;
+  let menu: 'title' | 'songs' | null = 'title';
+  let songs: Song[] = [humanZoo], level: Difficulty = 'easy';
+  let countdownTimer = 0;
+  const lastDifficulty = new Map<string, Difficulty>();
+  let catalogError: string | null = null, catalogPending = true;
   let inputMode: 'unclassified' | 'keyboard' | 'touch' | 'gamepad' | 'mixed' = 'unclassified';
   let generation = 0, busy = false, disposed = false;
   const status = (text: string) => { loading.textContent = text; root.querySelector<HTMLElement>('.live')!.textContent = text; };
@@ -129,32 +141,100 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
         { duration: 360, easing: 'ease-out' });
     }
   };
-  const catalogReady = loadCatalog(catalogUrl, catalogAbort.signal).then(data => {
-    song = data.songs.find(item => item.id === 'AU-001') || humanZoo;
-    status(song.audio && song.rightsStatus === 'cleared' ? 'Choose a difficulty, then load The Human Zoo.' :
-      'The Human Zoo is selected. A reviewed chart and playback copy are needed.');
+  const showMenu = (view: typeof menu, focus = true) => {
+    menu = view;
+    titleMenu.hidden = view !== 'title';
+    songMenu.hidden = view !== 'songs';
+    playfield.inert = view !== null;
+    if (!focus) return;
+    if (view === 'title') titleMenu.querySelector<HTMLButtonElement>('[data-open-songs]')!.focus();
+    if (view === 'songs') songList.querySelector<HTMLButtonElement>('[aria-pressed=true]')?.focus();
+  };
+  const canLoad = () => !catalogPending && !catalogError && song.rightsStatus === 'cleared' &&
+    Boolean(song.audio && song.audioVersion && song.charts?.[level]);
+  function cancelLoad() {
+    ++generation;
+    selectionAbort?.abort();
+    selectionAbort = null;
+    transport.unload();
+    chart = null;
+    busy = false;
+    button.disabled = true;
+    songMenu.removeAttribute('aria-busy');
+  }
+  function updateDifficulty() {
+    for (const option of difficultyButtons) {
+      const available = song.rightsStatus === 'cleared' && !!song.charts?.[option.dataset.difficulty as Difficulty];
+      option.disabled = !available;
+      option.setAttribute('aria-pressed', String(option.dataset.difficulty === level));
+    }
+    loadButton.disabled = busy || !canLoad();
+    playLabel.textContent = busy ? 'LOADING…' : 'PLAY SONG';
+    status(catalogError ? 'Could not load the song catalog.' :
+      catalogPending ? 'Loading songs…' :
+      canLoad() ? '' : 'A playable chart and cleared playback copy are needed.');
+  }
+  function selectSong(next: Song) {
+    cancelLoad();
+    song = next;
+    const available = difficultyButtons.map(option => option.dataset.difficulty as Difficulty)
+      .filter(option => song.charts?.[option]);
+    const last = lastDifficulty.get(song.id);
+    level = last && available.includes(last) ? last : available[0] || 'easy';
+    for (const item of Array.from(songList.querySelectorAll<HTMLButtonElement>('button')))
+      item.setAttribute('aria-pressed', String(item.dataset.song === song.id));
+    root.querySelector<HTMLElement>('[data-song-title]')!.textContent = song.title;
+    root.querySelector<HTMLElement>('[data-artist]')!.textContent = song.artist || 'Algorithmic Uprising';
+    root.querySelector<HTMLElement>('[data-song-meta]')!.textContent =
+      timeLabel(song.durationSec) + (song.explicit ? ' · EXPLICIT' : '');
+    sleeve.hidden = true;
+    sleeve.removeAttribute('src');
+    if (song.sleeve) {
+      sleeve.src = assetUrl(song.sleeve, catalogUrl).href;
+      sleeve.hidden = false;
+    }
     progress.max = song.durationSec;
+    updateDifficulty();
+  }
+  function populateSongs() {
+    songList.replaceChildren(...songs.map(item => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.dataset.song = item.id;
+      row.textContent = item.title;
+      row.addEventListener('click', () => selectSong(item), { signal });
+      return row;
+    }));
+    selectSong(songs.find(item => item.id === song.id) || songs[0]);
+  }
+  const catalogReady = loadCatalog(catalogUrl, catalogAbort.signal).then(data => {
+    if (disposed) return;
+    catalogPending = false;
+    if (data.songs.length) songs = data.songs;
+    if (menu === 'songs') populateSongs();
   }).catch(error => {
     if (!catalogAbort.signal.aborted) {
+      catalogPending = false;
       catalogError = String(error);
-      status('Catalog unavailable: ' + catalogError);
+      if (menu === 'songs') updateDifficulty();
     }
   });
   async function loadSelection() {
     await catalogReady;
-    if (catalogError) { status('Catalog unavailable: ' + catalogError); return; }
-    const level = difficulty.value as Difficulty;
-    const chartPath = song.charts?.[level], audioPath = song.audio;
-    if (song.rightsStatus !== 'cleared' || !audioPath || !chartPath || !song.audioVersion) {
-      status('This difficulty needs cleared rights, a reviewed chart and playback copy.');
-      return;
-    }
-    selectionAbort?.abort(); selectionAbort = new AbortController();
+    if (menu !== 'songs' || !canLoad() || busy) return;
+    selectionAbort = new AbortController();
     const current = ++generation;
     const abort = selectionAbort;
-    button.disabled = true; loadButton.disabled = true; busy = true;
-    status('Loading chart and song…');
-    emit('game:loading', { songId: song.id, phase: 'media' });
+    const selectedSong = song;
+    const selectedLevel = level;
+    const chartPath = selectedSong.charts![selectedLevel]!;
+    const audioPath = selectedSong.audio!;
+    button.disabled = true;
+    busy = true;
+    songMenu.setAttribute('aria-busy', 'true');
+    updateDifficulty();
+    status('Loading chart and audio…');
+    emit('game:loading', { songId: selectedSong.id, phase: 'media' });
     try {
       const chartUrl = assetUrl(chartPath, catalogUrl);
       const response = await fetch(chartUrl, { signal: abort.signal,
@@ -163,39 +243,98 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       const raw = await response.text();
       if (raw.length > 256000) throw Error('Chart too large');
       const candidate = compileChart(JSON.parse(raw));
-      if (candidate.songId !== song.id || candidate.difficulty !== level ||
-          candidate.audioVersion !== song.audioVersion ||
-          Math.abs(candidate.durationSec - song.durationSec) > .1)
+      if (candidate.songId !== selectedSong.id || candidate.difficulty !== selectedLevel ||
+          candidate.audioVersion !== selectedSong.audioVersion ||
+          Math.abs(candidate.durationSec - selectedSong.durationSec) > .1)
         throw Error('Chart does not match this audio version');
       await transport.load(assetUrl(audioPath, catalogUrl), abort.signal);
       if (Number.isFinite(transport.duration) &&
           Math.abs(transport.duration - candidate.durationSec) > .5)
         throw Error('Playback copy duration does not match the chart');
       if (current !== generation || disposed) return;
-      chart = candidate; button.disabled = false;
-      status('Ready. Enable sound, then play ' + level.toUpperCase() + '.');
-      emit('game:loading', { songId: song.id, phase: 'ready' });
+      chart = candidate;
+      busy = false;
+      songMenu.removeAttribute('aria-busy');
+      button.disabled = false;
+      status('');
+      emit('game:loading', { songId: selectedSong.id, phase: 'ready' });
+      element.start();
     } catch (error) {
       if (current !== generation || abort.signal.aborted || disposed) return;
-      chart = null; transport.unload();
-      status('Could not load song: ' + String(error));
-      emit('game:transport-error', { songId: song.id, reason: String(error) });
-    } finally {
-      if (current === generation) { busy = false; loadButton.disabled = false; }
+      cancelLoad();
+      updateDifficulty();
+      status('Could not load this song. Try Play Song again.');
+      emit('game:transport-error', { songId: selectedSong.id, reason: String(error) });
     }
   }
+  titleMenu.querySelector('[data-open-songs]')!.addEventListener('click', () => {
+    populateSongs();
+    showMenu('songs');
+  }, { signal });
+  songMenu.querySelector('[data-back]')!.addEventListener('click', () => {
+    cancelLoad();
+    showMenu('title');
+  }, { signal });
+  sleeve.addEventListener('error', () => { sleeve.hidden = true; }, { signal });
+  menuSound.addEventListener('click', () => root.querySelector<HTMLButtonElement>('[part=sound]')!.click(), { signal });
   loadButton.addEventListener('click', () => void loadSelection(), { signal });
-  difficulty.addEventListener('change', () => {
-    ++generation; selectionAbort?.abort(); selectionAbort = null;
-    transport.unload(); busy = false; loadButton.disabled = false;
-    chart = null; button.disabled = true; status('Load ' + difficulty.value.toUpperCase() + ' to play.');
+  for (const option of difficultyButtons) option.addEventListener('click', () => {
+    const next = option.dataset.difficulty as Difficulty;
+    if (level === next) return;
+    cancelLoad();
+    level = next;
+    lastDifficulty.set(song.id, level);
+    updateDifficulty();
   }, { signal });
   choose.addEventListener('click', () => {
-    choose.hidden = true; element.reset();
+    choose.hidden = true;
+    element.reset();
+    showMenu('songs');
   }, { signal });
+  const menuButtons = () => Array.from(
+    (menu === 'title' ? titleMenu : songMenu).querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+  function moveMenu(delta: number) {
+    const items = menuButtons();
+    const at = items.findIndex(item => item === root.activeElement);
+    const next = at < 0 ? (delta < 0 ? items.length - 1 : 0) : (at + delta + items.length) % items.length;
+    items[next]?.focus();
+  }
+  const activateMenu = () => {
+    const items = menuButtons();
+    (items.find(item => item === root.activeElement) ||
+      (menu === 'title' ? items[0] : songList.querySelector<HTMLButtonElement>('[aria-pressed=true]')))?.click();
+  };
+  const backMenu = () => {
+    if (menu === 'songs') songMenu.querySelector<HTMLButtonElement>('[data-back]')!.click();
+  };
+  host.addEventListener('keydown', event => {
+    if (!menu || dialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
+    const moves: Record<string, number> = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 };
+    if (event.key in moves) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      moveMenu(moves[event.key]);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      backMenu();
+    } else if ((event.key === 'Enter' || event.key === ' ') && !root.activeElement) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (!event.repeat) activateMenu();
+    }
+  }, { capture: true, signal });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden || !busy) return;
+    cancelLoad();
+    updateDifficulty();
+  }, { signal });
+  host.addEventListener('game:pause', () => { choose.hidden = false; }, { signal });
+  host.addEventListener('game:resume', () => { choose.hidden = true; }, { signal });
   host.addEventListener('game:over', () => {
     if (!session) return;
     bill.hidden = false; choose.hidden = false;
+    root.querySelector<HTMLElement>('[data-bill-song]')!.textContent = song.title.toUpperCase();
     judge.textContent = 'METER SETTLED';
     root.querySelector<HTMLOutputElement>('[data-bill-score]')!.textContent = String(session.score);
     root.querySelector<HTMLOutputElement>('[data-bill-best]')!.textContent = String(element.best);
@@ -207,14 +346,16 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       [session.totals.perfect, session.totals.good, session.totals.ok].join(' / ');
     root.querySelector<HTMLOutputElement>('[data-bill-miss]')!.textContent = String(session.totals.miss);
   }, { signal });
-  root.querySelector<HTMLButtonElement>('[part=settings]')!.addEventListener('click', () => {
-    if (element.state === 'playing') element.pause('settings');
-    dialog.showModal();
-  }, { signal });
+  for (const settingsButton of Array.from(root.querySelectorAll('[part=settings], [data-menu-settings]')))
+    settingsButton.addEventListener('click', () => {
+      if (element.state === 'playing') element.pause('settings');
+      dialog.showModal();
+    }, { signal });
   dialog.querySelector('form')!.addEventListener('change', () => {
     settings = { visualOffsetMs: Number(visualControl.value), inputOffsetMs: Number(inputControl.value),
       scrollSpeed: Number(scrollControl.value),
       contrast: contrastControl.checked, reducedMotion: motionControl.checked };
+    host.dataset.reducedMotion = String(settings.reducedMotion);
     writeLocal(settingsKey(), JSON.stringify(settings)); updateValues();
   }, { signal });
   for (const pad of Array.from(root.querySelectorAll<HTMLButtonElement>('[data-lane]'))) {
@@ -241,6 +382,29 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       element.action(action, source, false, performance.now());
     }, { signal });
   }
+  function stopCountdown() {
+    clearTimeout(countdownTimer);
+    countIn.hidden = true;
+  }
+  function playAudio(fromStart = false) {
+    const current = session;
+    void transport.play(fromStart).catch(error => {
+      if (disposed || session !== current || element.state !== 'playing') return;
+      emit('game:transport-error', { songId: song.id, reason: String(error) });
+      element.pause('audio-error');
+      root.querySelector<HTMLElement>('[data-detail]')!.textContent = 'Press Resume to start audio.';
+    });
+  }
+  function countdown(remaining: number) {
+    if (remaining === 0) {
+      countIn.hidden = true;
+      playAudio(true);
+      return;
+    }
+    countIn.hidden = false;
+    countIn.textContent = String(remaining);
+    countdownTimer = window.setTimeout(() => countdown(remaining - 1), 400);
+  }
   transport.onEnd = () => session?.finish();
   transport.onState = () => {
     if (element.state === 'playing' && !transport.playing && !session?.complete)
@@ -254,8 +418,18 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const game: GameAPI = {
     canStart: () => Boolean(chart) && !busy,
     keyForCode,
+    menuPad(buttonIndex) {
+      if (!menu) return false;
+      if ([12, 14].includes(buttonIndex)) moveMenu(-1);
+      if ([13, 15].includes(buttonIndex)) moveMenu(1);
+      if ([0, 8].includes(buttonIndex)) activateMenu();
+      if (buttonIndex === 1) backMenu();
+      return true;
+    },
     start() {
       if (!chart) return;
+      showMenu(null, false);
+      stopCountdown();
       transport.reset(); session = new RhythmSession(chart);
       resetFeedback();
       inputMode = 'unclassified';
@@ -263,11 +437,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       score.textContent = '0'; combo.textContent = '0'; accuracy.textContent = '0%';
       progress.value = 0; time.textContent = '0:00';
       judge.textContent = 'HIT THE LINE';
-      void transport.play(true).catch(error => {
-        status('Playback blocked: enable sound and retry.');
-        emit('game:transport-error', { songId: song.id, reason: String(error) });
-        element.pause('audio-error');
-      });
+      countdown(3);
     },
     update() {
       if (!session || !transport.playing) return;
@@ -318,27 +488,32 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       maxPrecision: session?.maxPrecision || 0,
       stats: { ...session?.totals, maxCombo: session?.maxCombo || 0,
         maxPrecision: session?.maxPrecision || 0, accuracy: session?.accuracy || 0 },
-      shareText: 'I banked {score} fictional points in BARS PER WATT · The Human Zoo: {url}'
+      shareText: 'I banked {score} fictional points in BARS PER WATT · ' + song.title + ': {url}'
     }),
-    onPause: () => transport.pause(),
-    onResume: () => { void transport.play().catch(error => {
-      emit('game:transport-error', { songId: song.id, reason: String(error) });
-      element.pause('audio-error');
-    }); },
+    onPause: () => { stopCountdown(); transport.pause(); },
+    onResume: () => playAudio(),
     onReset: () => {
-      ++generation; selectionAbort?.abort(); selectionAbort = null;
-      transport.unload(); session = null; chart = null; busy = false;
+      stopCountdown();
+      cancelLoad();
+      session = null;
       resetFeedback();
-      button.disabled = true; loadButton.disabled = false; bill.hidden = true; choose.hidden = true;
-      status('Choose a difficulty, then load The Human Zoo.');
+      bill.hidden = true;
+      choose.hidden = true;
+      updateDifficulty();
+      showMenu('title', false);
     },
-    setMuted: muted => transport.setMuted(muted),
+    setMuted: muted => {
+      transport.setMuted(muted);
+      menuSound.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
+      menuSound.setAttribute('aria-pressed', String(!muted));
+    },
     setSkin: path => skin.load(path),
     presentation: () => skin.current,
     dispose: () => {
       disposed = true; ++generation; catalogAbort.abort(); selectionAbort?.abort();
-      feedbackAnimation?.cancel(); lifetime.abort(); skin.dispose(); transport.dispose();
+      stopCountdown(); feedbackAnimation?.cancel(); lifetime.abort(); skin.dispose(); transport.dispose();
     }
   };
+  host.dataset.reducedMotion = String(settings.reducedMotion);
   return game;
 }, profile);

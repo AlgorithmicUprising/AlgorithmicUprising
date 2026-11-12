@@ -34,9 +34,8 @@ async function boot(page,fixture=chart) {
     route.fulfill({contentType:'audio/wav',body:audio}));
   await page.goto(demo);
   const game = page.locator('bars-per-watt');
-  await expect(game.locator('[part=start]')).toBeVisible();
-  await game.locator('[data-load]').click();
-  await expect(game.locator('[part=start]')).toBeEnabled();
+  await game.locator('[data-open-songs]').click();
+  await expect(game.locator('[data-load]')).toBeEnabled();
   return game;
 }
 const contained = (outer, inner) => inner.x >= outer.x-1 && inner.y >= outer.y-1 &&
@@ -44,7 +43,8 @@ const contained = (outer, inner) => inner.x >= outer.x-1 && inner.y >= outer.y-1
 
 test('scroll speed persists independently of timing offsets and the song clock', async ({page}) => {
   let game=await boot(page);
-  await game.locator('[part=settings]').click();
+  await game.locator('[data-back]').click();
+  await game.locator('[data-menu-settings]').click();
   const speed=game.locator('[data-scroll-speed]');
   await speed.focus();
   await page.keyboard.press('End');
@@ -55,12 +55,11 @@ test('scroll speed persists independently of timing offsets and the song clock',
   await game.locator('dialog button[type=submit]').click();
   await page.reload();
   game=page.locator('bars-per-watt');
-  await game.locator('[part=settings]').click();
+  await game.locator('[data-menu-settings]').click();
   await expect(game.locator('[data-scroll-speed]')).toHaveValue('1.5');
   await game.locator('dialog button[type=submit]').click();
+  await game.locator('[data-open-songs]').click();
   await game.locator('[data-load]').click();
-  await expect(game.locator('[part=start]')).toBeEnabled();
-  await game.locator('[part=start]').click();
   await expect(game).toHaveJSProperty('state','over',{timeout:10000});
   await expect(game.locator('[data-time]')).toHaveText('0:04');
 });
@@ -69,8 +68,8 @@ test('Human Zoo catalog selection, native song clock, pause, resume and bill', a
   const errors=[]; page.on('pageerror',error=>errors.push(error.message));
   const game=await boot(page);
   await mkdir('test-results/screenshots',{recursive:true});
-  await game.screenshot({path:'test-results/screenshots/bars-title-'+info.project.name+'.png'});
-  await game.locator('[part=start]').click();
+  await game.screenshot({path:'test-results/screenshots/bars-song-select-'+info.project.name+'.png'});
+  await game.locator('[data-load]').click();
   await expect(game).toHaveJSProperty('state','playing');
   await expect.poll(()=>game.locator('[data-time]').textContent()).not.toBe('0:00');
   await game.locator('[part=pause]').click();
@@ -93,7 +92,15 @@ test('desktop and phone controls fit; host pause and eject stop the game', async
   const phone=info.project.name.startsWith('mobile');
   if(phone)await page.setViewportSize({width:320,height:740});
   const game=await boot(page);
-  const host=await game.boundingBox(), screen=await game.locator('.screen').boundingBox();
+  const host=await game.boundingBox();
+  for(const button of await game.locator('.song-menu button:not(:disabled)').all()){
+    const box=await button.boundingBox();
+    expect(contained(host,box)).toBe(true);
+    expect(box.height).toBeGreaterThanOrEqual(48);
+  }
+  await game.locator('[data-load]').click();
+  await expect(game).toHaveJSProperty('state','playing');
+  const screen=await game.locator('.screen').boundingBox();
   expect(contained(host,screen)).toBe(true);
   await expect(game).toHaveAttribute('data-orientation',phone?'portrait':'landscape');
   if(phone){
@@ -105,7 +112,6 @@ test('desktop and phone controls fit; host pause and eject stop the game', async
     }
   }
   for(const button of await game.locator('.top button').all())expect(contained(host,await button.boundingBox())).toBe(true);
-  await game.locator('[part=start]').click();
   if(phone)await game.locator('[data-lane=left]').tap();
   else await page.keyboard.press('d');
   await game.evaluate(el=>el.pause('host'));
@@ -117,9 +123,10 @@ test('desktop and phone controls fit; host pause and eject stop the game', async
 test('a missing licensed catalog leaves a readable, unplayable placeholder', async ({page}) => {
   await page.goto(demo);
   const game=page.locator('bars-per-watt');
-  await expect(game.locator('[data-loading]')).toContainText('reviewed chart and playback copy');
-  await expect(game.locator('[part=start]')).toBeDisabled();
-  await expect(game.locator('canvas')).toBeVisible();
+  await game.locator('[data-open-songs]').click();
+  await expect(game.locator('[data-loading]')).toContainText('playable chart and cleared playback copy');
+  await expect(game.locator('[data-load]')).toBeDisabled();
+  await expect(game.locator('[data-song-title]')).toHaveText('The Human Zoo');
 });
 
 test('a song with pending rights never requests its media', async ({page}) => {
@@ -134,9 +141,9 @@ test('a song with pending rights never requests its media', async ({page}) => {
   }));
   await page.goto(demo);
   const game=page.locator('bars-per-watt');
-  await game.locator('[data-load]').click();
-  await expect(game.locator('[data-loading]')).toContainText('cleared rights');
-  await expect(game.locator('[part=start]')).toBeDisabled();
+  await game.locator('[data-open-songs]').click();
+  await expect(game.locator('[data-loading]')).toContainText('cleared playback copy');
+  await expect(game.locator('[data-load]')).toBeDisabled();
   expect(mediaRequested).toBe(false);
 });
 
@@ -165,9 +172,9 @@ test('owner-only same-origin catalog, chart and audio use the signed-in session'
   });
   await page.reload();
   const game=page.locator('bars-per-watt');
+  await game.locator('[data-open-songs]').click();
   await game.locator('[data-load]').click();
-  await expect(game.locator('[data-loading]')).toContainText('Ready. Enable sound');
-  await expect(game.locator('[part=start]')).toBeEnabled();
+  await expect(game).toHaveJSProperty('state','playing');
   expect(mediaAuthorized).toBe(true);
 });
 
@@ -197,7 +204,7 @@ test('five perfect heads show OVERCLOCKED, a miss clears it, and reduced motion 
       };setTimeout(step,8);
     },{once:true});
   });
-  await game.locator('[part=start]').click();
+  await game.locator('[data-load]').click();
   await expect(game.locator('[data-precision]')).toHaveText('OVERCLOCKED! ×5');
   await expect(game.locator('[data-hit]')).toHaveText('ROOT ACCESS');
   await expect(game.locator('[data-combo]')).toHaveText('5');
@@ -212,4 +219,34 @@ test('five perfect heads show OVERCLOCKED, a miss clears it, and reduced motion 
   await expect(game.locator('[data-bill-precision]')).toHaveText('5');
   await expect(game.locator('[data-bill-hits]')).toHaveText('5 / 0 / 0');
   expect(await page.evaluate(()=>Object.keys(localStorage).some(key=>key.includes('best:timing-v2:')))).toBe(true);
+});
+
+test('song select requests only the chosen track and restores difficulty after pausing', async ({page}) => {
+  const audioPaths = [];
+  const songs = [
+    {id:'AU-001', title:'The Human Zoo', audio:'./zoo.wav', charts:{easy:'./zoo.json'}},
+    {id:'AU-052', title:'Known Issues', audio:'./issues.wav', charts:{hard:'./issues.json'}}
+  ].map(song => ({durationSec:4, explicit:false, rightsStatus:'cleared', audioVersion:'browser-test', ...song}));
+  await page.route('**/games/bars-per-watt/catalog.json', route => route.fulfill({json:{version:1, songs}}));
+  await page.route('**/games/bars-per-watt/issues.json', route =>
+    route.fulfill({json:{...chart, songId:'AU-052', difficulty:'hard', id:'known-issues-test'}}));
+  await page.route('**/games/bars-per-watt/*.wav', route => {
+    audioPaths.push(new URL(route.request().url()).pathname.split('/').at(-1));
+    return route.fulfill({contentType:'audio/wav', body:wav()});
+  });
+  await page.goto(demo);
+  const game = page.locator('bars-per-watt');
+  await game.locator('[data-open-songs]').click();
+  await game.locator('[data-song="AU-052"]').click();
+  await expect(game.locator('[data-difficulty="hard"]')).toHaveAttribute('aria-pressed','true');
+  expect(audioPaths).toEqual([]);
+  await game.locator('[data-load]').click();
+  await expect(game).toHaveJSProperty('state','playing');
+  await expect(game.locator('[data-count-in]')).toBeVisible();
+  expect(audioPaths).toContain('issues.wav');
+  expect(audioPaths).not.toContain('zoo.wav');
+  await game.locator('[part=pause]').click();
+  await game.locator('[data-choose]').click();
+  await expect(game.locator('[data-song="AU-052"]')).toHaveAttribute('aria-pressed','true');
+  await expect(game.locator('[data-difficulty="hard"]')).toHaveAttribute('aria-pressed','true');
 });

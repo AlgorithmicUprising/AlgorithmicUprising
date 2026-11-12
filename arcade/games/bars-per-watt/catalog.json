@@ -7,6 +7,13 @@
       "durationSec": 318.8,
       "explicit": true,
       "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-052",
+      "title": "Known Issues",
+      "durationSec": 177.2,
+      "explicit": false,
+      "rightsStatus": "pending"
     }
   ]
 }

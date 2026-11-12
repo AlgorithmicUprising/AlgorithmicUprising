@@ -4,6 +4,7 @@ export interface Song {
   id: string; title: string; durationSec: number; explicit: boolean;
   rightsStatus: 'pending' | 'cleared';
   audioVersion?: string; audio?: string;
+  artist?: string; sleeve?: string;
   charts?: Partial<Record<Difficulty, string>>;
 }
 export interface Catalog { version: 1; songs: Song[] }
@@ -49,6 +50,9 @@ export async function loadCatalog(url: URL, signal: AbortSignal): Promise<Catalo
         song.durationSec > 900 || typeof song.explicit !== 'boolean' ||
         !['pending', 'cleared'].includes(song.rightsStatus))
       throw Error('Invalid song metadata');
+    if (song.artist !== undefined && (typeof song.artist !== 'string' || song.artist.length > 120))
+      throw Error('Invalid artist');
+    if (song.sleeve !== undefined) assetUrl(song.sleeve, url);
     if (song.audio) assetUrl(song.audio, url);
     if (song.audio && !/^[a-z0-9-]{1,100}$/.test(song.audioVersion || ''))
       throw Error('Missing audio version');
