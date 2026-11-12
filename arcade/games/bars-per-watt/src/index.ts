@@ -6,12 +6,13 @@ import { compileChart, type Chart, type Difficulty, type Lane } from './chart';
 import { drawHighway } from './render';
 import { PRECISION_THRESHOLD, SCORE_VERSION, RhythmSession } from './session';
 import { Skin } from './skin';
+import { TrackVisual } from './track-visual';
 import { MediaTransport } from './transport';
 import css from './cabinet.css';
 import markup from './cabinet.html';
 
 const profile: CartridgeProfile = {
-  version: '0.4.0-preview', shell: '<style>' + css + '</style>' + markup,
+  version: '0.5.0-preview', shell: '<style>' + css + '</style>' + markup,
   landscape: [640, 360], portrait: [360, 640], primary: 'start',
   consumeStartInput: true,
   keys: { ' ': 'start', ArrowLeft: 'left', ArrowDown: 'down',
@@ -37,6 +38,9 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const transport = new MediaTransport(), skin = new Skin(host, emit);
   const lifetime = new AbortController();
   const signal = lifetime.signal;
+  const trackVisual = new TrackVisual(root.querySelector<HTMLElement>('[data-track-visual]')!, signal);
+  const systemMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const touchPointer = matchMedia('(pointer: coarse)');
   const button = root.querySelector<HTMLButtonElement>('[part=start]')!;
   const loadButton = root.querySelector<HTMLButtonElement>('[data-load]')!;
   const titleMenu = root.querySelector<HTMLElement>('[data-title]')!;
@@ -72,19 +76,25 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const scrollControl = root.querySelector<HTMLInputElement>('[data-scroll-speed]')!;
   const contrastControl = root.querySelector<HTMLInputElement>('[data-contrast]')!;
   const motionControl = root.querySelector<HTMLInputElement>('[data-motion]')!;
+  const backgroundControl = root.querySelector<HTMLInputElement>('[data-background-video]')!;
   const settingsKey = () => (host.getAttribute('storage-key') || 'au-arcade') + ':v1:bars-per-watt:settings';
-  let settings = { visualOffsetMs: 0, inputOffsetMs: 0, scrollSpeed: 1, contrast: false, reducedMotion: false };
+  let settings = {
+    visualOffsetMs: 0, inputOffsetMs: 0, scrollSpeed: 1, contrast: false, reducedMotion: false,
+    backgroundVideo: true
+  };
   try {
     const saved = JSON.parse(readLocal(settingsKey()) || '{}');
     if (Number.isFinite(saved.visualOffsetMs)) settings.visualOffsetMs = Math.max(-150, Math.min(150, saved.visualOffsetMs));
     if (Number.isFinite(saved.inputOffsetMs)) settings.inputOffsetMs = Math.max(-150, Math.min(150, saved.inputOffsetMs));
     if (Number.isFinite(saved.scrollSpeed)) settings.scrollSpeed = Math.max(.75, Math.min(1.75, saved.scrollSpeed));
     settings.contrast = saved.contrast === true; settings.reducedMotion = saved.reducedMotion === true;
+    settings.backgroundVideo = saved.backgroundVideo !== false;
   } catch { /* A blocked or stale preference leaves the defaults. */ }
   visualControl.value = String(settings.visualOffsetMs);
   inputControl.value = String(settings.inputOffsetMs);
   scrollControl.value = String(settings.scrollSpeed);
   contrastControl.checked = settings.contrast; motionControl.checked = settings.reducedMotion;
+  backgroundControl.checked = settings.backgroundVideo;
   const updateValues = () => {
     root.querySelector<HTMLOutputElement>('[data-visual-value]')!.textContent = settings.visualOffsetMs + ' ms';
     root.querySelector<HTMLOutputElement>('[data-input-value]')!.textContent = settings.inputOffsetMs + ' ms';
@@ -102,6 +112,16 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   let inputMode: 'unclassified' | 'keyboard' | 'touch' | 'gamepad' | 'mixed' = 'unclassified';
   let generation = 0, busy = false, disposed = false;
   const status = (text: string) => { loading.textContent = text; root.querySelector<HTMLElement>('.live')!.textContent = text; };
+  const prefersReducedMotion = () => settings.reducedMotion || systemMotion.matches;
+  function syncTrackVisual(reducedMotion = prefersReducedMotion()) {
+    const enabled = settings.backgroundVideo && !reducedMotion && !touchPointer.matches &&
+      host.dataset.orientation === 'landscape';
+    const playing = element.state === 'playing' && !document.hidden && transport.playing &&
+      session !== null && !session.complete;
+    trackVisual.sync(enabled, playing);
+  }
+  for (const media of [systemMotion, touchPointer])
+    media.addEventListener('change', () => syncTrackVisual(), { signal });
   const resetFeedback = () => {
     feedbackAnimation?.cancel(); feedbackAnimation = null; seenMilestone = 0;
     hit.textContent = skin.current.strings.hit_line; delete hit.dataset.grade; timing.textContent = '';
@@ -156,6 +176,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     ++generation;
     selectionAbort?.abort();
     selectionAbort = null;
+    trackVisual.setTrack();
     transport.unload();
     chart = null;
     busy = false;
@@ -332,6 +353,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   host.addEventListener('game:pause', () => { choose.hidden = false; }, { signal });
   host.addEventListener('game:resume', () => { choose.hidden = true; }, { signal });
   host.addEventListener('game:over', () => {
+    trackVisual.stop();
     if (!session) return;
     bill.hidden = false; choose.hidden = false;
     root.querySelector<HTMLElement>('[data-bill-song]')!.textContent = song.title.toUpperCase();
@@ -354,8 +376,10 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   dialog.querySelector('form')!.addEventListener('change', () => {
     settings = { visualOffsetMs: Number(visualControl.value), inputOffsetMs: Number(inputControl.value),
       scrollSpeed: Number(scrollControl.value),
-      contrast: contrastControl.checked, reducedMotion: motionControl.checked };
+      contrast: contrastControl.checked, reducedMotion: motionControl.checked,
+      backgroundVideo: backgroundControl.checked };
     host.dataset.reducedMotion = String(settings.reducedMotion);
+    syncTrackVisual();
     writeLocal(settingsKey(), JSON.stringify(settings)); updateValues();
   }, { signal });
   for (const pad of Array.from(root.querySelectorAll<HTMLButtonElement>('[data-lane]'))) {
@@ -407,6 +431,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   }
   transport.onEnd = () => session?.finish();
   transport.onState = () => {
+    syncTrackVisual();
     if (element.state === 'playing' && !transport.playing && !session?.complete)
       judge.textContent = 'BUFFERING / PAUSED';
   };
@@ -431,6 +456,10 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       showMenu(null, false);
       stopCountdown();
       transport.reset(); session = new RhythmSession(chart);
+      trackVisual.setTrack(
+        song.sleeve ? assetUrl(song.sleeve, catalogUrl) : null,
+        song.backgroundVideo ? assetUrl(song.backgroundVideo, catalogUrl) : null
+      );
       resetFeedback();
       inputMode = 'unclassified';
       bill.hidden = true; choose.hidden = true;
@@ -445,8 +474,9 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     },
     draw(ctx, w, h) {
       const at = transport.time;
-      const reducedMotion = settings.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reducedMotion = prefersReducedMotion();
       host.dataset.reducedMotion = String(reducedMotion);
+      syncTrackVisual(reducedMotion);
       drawHighway(ctx, w, h, session, at, skin.palette, settings.visualOffsetMs,
         settings.contrast, reducedMotion, settings.scrollSpeed);
       if (!session) return;
@@ -490,7 +520,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
         maxPrecision: session?.maxPrecision || 0, accuracy: session?.accuracy || 0 },
       shareText: 'I banked {score} fictional points in BARS PER WATT · ' + song.title + ': {url}'
     }),
-    onPause: () => { stopCountdown(); transport.pause(); },
+    onPause: () => { stopCountdown(); trackVisual.pause(); transport.pause(); },
     onResume: () => playAudio(),
     onReset: () => {
       stopCountdown();
@@ -511,6 +541,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     presentation: () => skin.current,
     dispose: () => {
       disposed = true; ++generation; catalogAbort.abort(); selectionAbort?.abort();
+      trackVisual.setTrack();
       stopCountdown(); feedbackAnimation?.cancel(); lifetime.abort(); skin.dispose(); transport.dispose();
     }
   };

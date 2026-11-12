@@ -19,6 +19,8 @@ Active holds stay attached to the receptor, with a visible end cap and an explic
 
 The audio element's position controls note animation and scoring. The render loop never advances musical time. A full decoded 5:18.8 stereo 48 kHz float buffer would take roughly 122 MiB before other game memory, above the guide's proposed 96 MiB buffer cap; this first pass uses one native stream. Focus loss, tab hide, offscreen host, parent pause and ejection pause or dispose the stream. Sound starts muted. Settings persist local visual and input offsets (±150 ms), contrast and reduced motion. The result is a fictional points bill, with score-version/song/chart/difficulty/input-mode best scores. The iframe forwards existing `game:*` events to the exact parent origin and accepts `pause`, `resume`, `mute` and `unmute` commands from that parent. The website still needs a receiving bridge and mini-player handoff before activating the live cartridge.
 
+A catalog entry can include a same-origin `backgroundVideo` path to a short silent loop. The desktop cabinet requests it when the song starts and pauses it with the audio. The sleeve is shown on touch layouts, in reduced-motion mode, when Background Video is off, and if a clip cannot play.
+
 ## Timing feedback · 0.3.0-preview
 
 The strike line and receptors sit at 84% of highway height. Timing labels and the precision badge occupy the gutter below the targets, outside the incoming note path.

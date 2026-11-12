@@ -1,6 +1,10 @@
 <div class="viewport" part="viewport">
   <div class="playfield" inert>
   <header class="header">
+    <div class="track-visual" data-track-visual aria-hidden="true" hidden>
+      <img alt="" hidden>
+      <video muted playsinline loop preload="none" disablepictureinpicture disableremoteplayback></video>
+    </div>
     <div class="brand"><b>Ø</b><span>BARS<br>PER WATT</span></div>
     <div class="hud"><div><small>BARS BANKED</small><output data-score>0</output></div>
       <div class="combo-stat"><small>COMBO</small><output data-combo>0</output></div>
@@ -102,6 +106,7 @@
     <label>INPUT OFFSET <input data-input-offset type="range" min="-150" max="150" step="5" value="0"><output data-input-value>0 ms</output></label>
     <label>HIGH CONTRAST <input data-contrast type="checkbox"></label>
     <label>REDUCED MOTION <input data-motion type="checkbox"></label>
+    <label>BACKGROUND VIDEO <input data-background-video type="checkbox" checked></label>
     <p>Scroll speed changes arrow spacing. Song speed and scoring stay the same. Hold an arrow until its end cap meets the hit line, then release.</p>
     <p>ROOT ACCESS: within 50 ms. IN SYNC: within 90 ms. BIT ROUGH: within 120 ms. Five perfect hits in a row: OVERCLOCKED! A Good or OK hit keeps your combo but resets precision. A miss or dropped hold breaks both.</p>
     <p>Offsets are local to this device. The song clock always controls scoring.</p>

@@ -19,13 +19,14 @@ function wav() {
   for(let i=0;i<samples;i++)buffer.writeInt16LE(Math.round(Math.sin(i*2*Math.PI*220/rate)*600),44+i*2);
   return buffer;
 }
-async function boot(page,fixture=chart) {
+async function boot(page,fixture=chart,songVisuals={}) {
   const audio = wav();
   await page.route('**/games/bars-per-watt/catalog.json', route => route.fulfill({
     contentType:'application/json',body:JSON.stringify({version:1,songs:[{
       id:'AU-001',title:'The Human Zoo',durationSec:4,explicit:true,rightsStatus:'cleared',
       audioVersion:'browser-test',audio:'./preview.wav',
-      charts:{easy:'./preview-easy.json',medium:'./preview-easy.json',hard:'./preview-easy.json'}
+      charts:{easy:'./preview-easy.json',medium:'./preview-easy.json',hard:'./preview-easy.json'},
+      ...songVisuals
     }]})
   }));
   await page.route('**/games/bars-per-watt/preview-easy.json', route =>
@@ -250,3 +251,35 @@ test('song select requests only the chosen track and restores difficulty after p
   await expect(game.locator('[data-song="AU-052"]')).toHaveAttribute('aria-pressed','true');
   await expect(game.locator('[data-difficulty="hard"]')).toHaveAttribute('aria-pressed','true');
 });
+
+for (const reducedMotion of ['no-preference', 'reduce']) {
+  test(`optional video uses the sleeve on failure, on phones and with motion set to ${reducedMotion}`, async ({page}, info) => {
+    await page.emulateMedia({reducedMotion});
+    let requests = 0;
+    await page.route('**/games/bars-per-watt/preview-loop.mp4', route => {
+      requests++;
+      return route.fulfill({status:404});
+    });
+    await page.route('**/games/bars-per-watt/preview-sleeve.svg', route => route.fulfill({
+      contentType:'image/svg+xml',
+      body:'<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#292"/></svg>'
+    }));
+    const game = await boot(page, chart, {
+      sleeve:'./preview-sleeve.svg', backgroundVideo:'./preview-loop.mp4'
+    });
+    const visual = game.locator('[data-track-visual]');
+    const clip = visual.locator('video');
+    expect(requests).toBe(0);
+    await expect(clip).not.toHaveAttribute('src', /.+/);
+    await game.locator('[data-load]').click();
+    await expect(visual.locator('img')).toBeVisible();
+    await expect.poll(() => game.locator('[data-progress]').evaluate(el => el.value)).toBeGreaterThan(.15);
+    const shouldRequest = info.project.name === 'desktop-chromium' && reducedMotion === 'no-preference';
+    if (shouldRequest) await expect.poll(() => requests).toBeGreaterThan(0);
+    await expect(clip).not.toHaveAttribute('src', /.+/);
+    await expect(visual.locator('img')).toBeVisible();
+    await expect(game).toHaveJSProperty('state','over',{timeout:12000});
+    await expect(game.locator('[data-time]')).toHaveText('0:04');
+    if (!shouldRequest) expect(requests).toBe(0);
+  });
+}
