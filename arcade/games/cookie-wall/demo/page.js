@@ -1,18 +1,19 @@
+import { connectArcadeEmbed, httpOrigin } from '../../../demo/embed-bridge.js';
+
 const game = document.querySelector('cookie-wall');
 const query = new URLSearchParams(location.search);
 const embed = document.body.hasAttribute('data-embed');
 const events = ['ready', 'skin-loaded', 'start', 'pause', 'resume', 'wall', 'over', 'share', 'sound', 'error'];
-function originOf(raw, originOnly = false) {
+function explicitOrigin(raw) {
   if (!raw) return null;
   try {
     const url = new URL(raw);
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
-    if (originOnly && (url.pathname !== '/' || url.search || url.hash)) return null;
-    return url.origin;
+    if (url.pathname !== '/' || url.search || url.hash) return null;
+    return httpOrigin(url.href);
   } catch { return null; }
 }
-const referrer = originOf(document.referrer);
-const explicit = originOf(query.get('parent-origin'), true);
+const referrer = httpOrigin(document.referrer);
+const explicit = explicitOrigin(query.get('parent-origin'));
 const validParent = embed && parent !== window && (!explicit || !referrer || explicit === referrer);
 const parentOrigin = validParent ? referrer || explicit : null;
 const firstParty = parentOrigin === 'https://algorithmicuprising.com' || parentOrigin === 'https://www.algorithmicuprising.com';
@@ -34,10 +35,12 @@ if (menu) {
   menu.addEventListener('change', () => selectSkin(menu.value));
 }
 const log = document.querySelector('#events');
-for (const name of events) game.addEventListener('game:' + name, event => {
-  if (log) log.textContent = (event.type + ' ' + JSON.stringify(event.detail) + '\n' + log.textContent).slice(0, 6000);
-  if (parentOrigin) parent.postMessage({ source: 'punk-arcade', type: event.type, detail: event.detail }, parentOrigin);
-});
+if (log) {
+  for (const name of events) game.addEventListener('game:' + name, event => {
+    log.textContent = (event.type + ' ' + JSON.stringify(event.detail) + '\n' + log.textContent).slice(0, 6000);
+  });
+}
+connectArcadeEmbed(game, events, parentOrigin);
 if (parentOrigin) window.addEventListener('message', event => {
   if (event.source !== parent || event.origin !== parentOrigin || event.data?.source !== 'punk-arcade') return;
   switch (event.data.type) {
@@ -47,4 +50,4 @@ if (parentOrigin) window.addEventListener('message', event => {
     case 'unmute': game.muted = false; break;
   }
 });
-await import('../dist/cookie-wall.js');
+await import('../dist/cookie-wall.js?v=20261113-scores');

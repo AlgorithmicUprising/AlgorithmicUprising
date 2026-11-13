@@ -62,9 +62,30 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     const identity = profile ? { game: tag, version: profile.version, skin: this.game?.presentation?.().id || 'placeholder' } : { game: tag };
     return this.dispatchEvent(new CustomEvent(name, { detail: { ...identity, ...detail }, bubbles: true, composed: true, cancelable }));
   }
+  private addSaveScoreButton(overlay: HTMLElement) {
+    if (!this.hasAttribute('save-score') || overlay.querySelector('[part=save-score]')) return;
+    let actions = overlay.querySelector('.actions');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'score-actions';
+      actions.append(overlay.querySelector('[part=again]')!, overlay.querySelector('[part=share]')!);
+      overlay.append(actions);
+    }
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.setAttribute('part', 'save-score');
+    button.textContent = 'SAVE SCORE';
+    button.addEventListener('click', () => this.notify('game:save-score'));
+    actions.append(button);
+  }
   private refreshPanel() {
     const view = this.game?.presentation?.();
-    if (profile && view) showPanel(this.shadowRoot!, this.phase, view.strings, this.game.score(), this.bestScore, this.game.result?.() || {}, profile.resultStats);
+    if (profile && view) {
+      const root = this.shadowRoot!;
+      showPanel(root, this.phase, view.strings, this.game.score(), this.bestScore, this.game.result?.() || {}, profile.resultStats);
+      if (this.phase === 'over') this.addSaveScoreButton(root.querySelector<HTMLElement>('.overlay')!);
+      else root.querySelector('[part=save-score]')?.remove();
+    }
   }
   private loadSkin(url: string | null) {
     const sequence = ++this.skinSequence;
@@ -108,7 +129,11 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
 .deck .right-zone .labeled{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;max-width:100%}
 .deck .note{font-size:9px;color:#a8a3b0;text-align:center}
 }
-@media(pointer:fine){.controls{display:none}}@media(max-width:600px){.top{top:3px;right:3px;gap:3px}.top button{font-size:10px;padding:5px 6px;min-width:44px;min-height:40px}.overlay{font-size:12px;padding:4px;gap:3px;place-content:center;grid-template-columns:minmax(0,1fr);justify-items:center;box-sizing:border-box;overflow:hidden}.overlay h2{font-size:14px;margin:1px}.overlay p{font-size:11px;line-height:1.25;margin:1px;max-width:290px;overflow-wrap:anywhere;text-align:center}.overlay button{font-size:11px;min-height:32px;min-width:110px;width:150px;max-width:80%;padding:5px 8px}}${tag==='tag-before-training'?tagControlsStyle:''}${tag==='grind-the-terms'?grindArtStyle:''}</style><div class="screen"><canvas role="img" aria-label="${label} game"></canvas><div class="top"><button part="sound" aria-label="Toggle sound">SOUND OFF</button><button part="pause" aria-label="Pause">Ⅱ</button></div>${tag==='tag-before-training'?'':'<div class="controls"></div>'}<div class="overlay" data-phase="title"><h2>${label}</h2><p>${tag==='grind-the-terms'?'PRESS U / ↑ TO START':'PRESS SPACE / TAP TO START'}</p>${tag==='tag-before-training'?'<p>10s without fresh art: drones hunt you. Escape their scan or tag the police.</p>':''}<button part="start">START</button></div></div>${tag==='grind-the-terms'?'<div class="deck" part="mobile-controls" aria-label="Zero Algorithmic Uprising arcade controls"><div class="zero-zone"><button type="button" class="zero" data-key="boost" aria-label="Ø, hold spray boost"><svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="49" cy="50" rx="29" ry="39" fill="none" stroke="#d7ff00" stroke-width="12"/><path d="M54 4 L32 51 H49 L39 91 L76 41 H57 L70 4 Z" fill="#e0287a" stroke="#100b17" stroke-width="3"/></svg></button><span class="caption">Ø / BOOST</span><span class="note">GRIND + TRICKS FILL</span></div><div class="right-zone"><div class="labeled"><button type="button" class="letter trick" data-key="trick" aria-label="A, perform a trick">A</button><span class="caption">TRICK</span></div><div class="labeled"><button type="button" class="letter jump" data-key="jump" aria-label="U, jump and hold to grind">U</button><span class="caption">JUMP / GRIND</span></div></div></div>':tag==='tag-before-training'?'<div class="tag-deck" part="mobile-controls"><div class="controls tag-controls" aria-label="Skate and spray controls"></div></div>':''}<span aria-live="polite" style="position:absolute;left:-9999px" class="live"></span>`;
+@media(pointer:fine){.controls{display:none}}@media(max-width:600px){.top{top:3px;right:3px;gap:3px}.top button{font-size:10px;padding:5px 6px;min-width:44px;min-height:40px}.overlay{font-size:12px;padding:4px;gap:3px;place-content:center;grid-template-columns:minmax(0,1fr);justify-items:center;box-sizing:border-box;overflow:hidden}.overlay h2{font-size:14px;margin:1px}.overlay p{font-size:11px;line-height:1.25;margin:1px;max-width:290px;overflow-wrap:anywhere;text-align:center}.overlay button{font-size:11px;min-height:32px;min-width:110px;width:150px;max-width:80%;padding:5px 8px}}${tag==='tag-before-training'?tagControlsStyle:''}${tag==='grind-the-terms'?grindArtStyle:''}
+.score-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:5px;max-width:100%}
+.overlay .score-actions button{width:auto;min-width:0;min-height:44px;padding:5px 9px;white-space:nowrap}
+.overlay .score-actions [part=save-score]{background:#d7ff00;color:#151711}
+</style><div class="screen"><canvas role="img" aria-label="${label} game"></canvas><div class="top"><button part="sound" aria-label="Toggle sound">SOUND OFF</button><button part="pause" aria-label="Pause">Ⅱ</button></div>${tag==='tag-before-training'?'':'<div class="controls"></div>'}<div class="overlay" data-phase="title"><h2>${label}</h2><p>${tag==='grind-the-terms'?'PRESS U / ↑ TO START':'PRESS SPACE / TAP TO START'}</p>${tag==='tag-before-training'?'<p>10s without fresh art: drones hunt you. Escape their scan or tag the police.</p>':''}<button part="start">START</button></div></div>${tag==='grind-the-terms'?'<div class="deck" part="mobile-controls" aria-label="Zero Algorithmic Uprising arcade controls"><div class="zero-zone"><button type="button" class="zero" data-key="boost" aria-label="Ø, hold spray boost"><svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="49" cy="50" rx="29" ry="39" fill="none" stroke="#d7ff00" stroke-width="12"/><path d="M54 4 L32 51 H49 L39 91 L76 41 H57 L70 4 Z" fill="#e0287a" stroke="#100b17" stroke-width="3"/></svg></button><span class="caption">Ø / BOOST</span><span class="note">GRIND + TRICKS FILL</span></div><div class="right-zone"><div class="labeled"><button type="button" class="letter trick" data-key="trick" aria-label="A, perform a trick">A</button><span class="caption">TRICK</span></div><div class="labeled"><button type="button" class="letter jump" data-key="jump" aria-label="U, jump and hold to grind">U</button><span class="caption">JUMP / GRIND</span></div></div></div>':tag==='tag-before-training'?'<div class="tag-deck" part="mobile-controls"><div class="controls tag-controls" aria-label="Skate and spray controls"></div></div>':''}<span aria-live="polite" style="position:absolute;left:-9999px" class="live"></span>`;
    this.canvas=root.querySelector('canvas')!;this.ctx=this.canvas.getContext('2d')!;this.live=root.querySelector('.live')!;this.controls=root.querySelector('.controls')!;this.startButton=root.querySelector('[part=start]')!;
    this.readStorage();
    this.game = create((name, detail = {}) => {
@@ -340,6 +365,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
   private tick=(now:number)=>{if(!this.active||this.paused)return;const dt=Math.min((now-this.last)/1000,.05);this.last=now;this.pollGamepad();if(this.paused)return;this.game.update(dt);this.game.draw(this.ctx,this.canvas.width,this.canvas.height);if(this.game.over()){this.active=false;this.phase='over';const score=this.game.score(),isNewBest=score>this.bestScore;this.bestScore=Math.max(this.bestScore,score);writeLocal(this.storageKey('best'),String(this.bestScore));const result=this.game.result?.()||{};this.live.textContent=`Game over. ${typeof result.causeLine==='string'?result.causeLine:''} Score ${score}. Best ${this.bestScore}`;const overlay=this.shadowRoot!.querySelector('.overlay') as HTMLElement;overlay.dataset.phase='over';overlay.hidden=false;overlay.style.display='grid';
     if (profile) { if(isNewBest)this.playCue('new_best'); this.refreshPanel(); overlay.querySelector<HTMLButtonElement>('[part=again]')?.focus({preventScroll:true}); }
     else { overlay.innerHTML=`<h2>${tag==='tag-before-training'?(result.cause==='arrested'?'BUSTED':'TRAINING COMPLETE'):'GAME OVER'}</h2><p>${typeof result.causeLine==='string'?result.causeLine:'TERMS ACCEPTED. OOPS.'}</p><p>SCORE ${score} • BEST ${this.bestScore}</p><p>${tag==='tag-before-training'?(isNewBest?'NEW STYLE RECORD.':'YOUR ALLEY. YOUR STYLE.'):(isNewBest?'NEW RECORD. STILL UNREAD.':'SKIM AGAIN?')}</p><button part="again">${tag==='tag-before-training'?'ROLL AGAIN':'SKIM AGAIN'}</button><button part="share">SHARE</button>`;overlay.querySelector('[part=again]')!.addEventListener('click',()=>this.start());overlay.querySelector('[part=share]')!.addEventListener('click',()=>{void this.shareScore(score,label)});}
+    if (!profile) this.addSaveScoreButton(overlay);
     this.notify('game:over', {score, best:this.bestScore, isNewBest, durationMs:Math.round(performance.now()-this.runStartedAt-this.pausedMs), ...result});return;}this.frame=requestAnimationFrame(this.tick)};
   private async shareScore(score: number, label: string) {
     const result = this.game.result?.();
