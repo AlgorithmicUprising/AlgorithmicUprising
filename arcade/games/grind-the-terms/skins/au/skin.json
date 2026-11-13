@@ -2,7 +2,7 @@
   "id": "au",
   "game": "grind-the-terms",
   "name": "Algorithmic Uprising — approved punk-comic gameplay art",
-  "version": "0.11.0-cookie-eye",
+  "version": "0.11.1-fony-air-poses",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -78,14 +78,12 @@
       "sheet": "skater"
     },
     "ollie": {
-      "start": 6,
-      "frames": 5,
-      "fps": 9,
+      "frames": [11, 12, 12, 10, 13, 13],
+      "fps": 12,
       "sheet": "skaterActions"
     },
     "land": {
-      "start": 11,
-      "frames": 4,
+      "frames": [14, 43, 39, 42],
       "fps": 12,
       "sheet": "skaterActions"
     },
@@ -120,16 +118,14 @@
       "sheet": "skaterActions"
     },
     "grind": {
-      "start": 39,
-      "frames": 4,
-      "fps": 10,
+      "frames": [39, 42],
+      "fps": 8,
       "loop": true,
       "sheet": "skaterActions"
     },
     "railpop": {
-      "start": 43,
-      "frames": 4,
-      "fps": 10,
+      "frames": [12, 10, 13],
+      "fps": 12,
       "sheet": "skaterActions"
     },
     "bail": {

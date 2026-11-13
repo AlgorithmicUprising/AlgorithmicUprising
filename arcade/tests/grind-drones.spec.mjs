@@ -142,6 +142,75 @@ test('the Cookie Eye only lights and labels the stomp pad once it locks', async 
   expect(frames.retracting.labels).toEqual([]);
 });
 
+test('an ollie onto the Cookie Eye uses airborne poses until the board lands', async ({ page }) => {
+  const game = await openPractice(page);
+  const result = await game.evaluate(el => {
+    const game = el.game;
+    const screen = el.shadowRoot.querySelector('canvas');
+    const canvas = document.createElement('canvas');
+    canvas.width = screen.width;
+    canvas.height = screen.height;
+    const ctx = canvas.getContext('2d');
+    const image = ctx.drawImage.bind(ctx);
+    const fill = ctx.fillRect.bind(ctx);
+    let pose;
+    let pad;
+    ctx.drawImage = (asset, ...args) => {
+      if (args.length === 8 && asset.src?.includes('fony_gameplay_atlas_')) {
+        pose = {
+          cell: (args[1] / 128) * 8 + args[0] / 128,
+          actionAtlas: asset.src.endsWith('fony_gameplay_atlas_v2.webp'),
+          boardY: args[5] + 117
+        };
+      }
+      return image(asset, ...args);
+    };
+    ctx.fillRect = (x, y, w, h) => {
+      if (w === 46 && h === 4 && ctx.fillStyle === '#d7ff00') {
+        const { a, d, e, f } = ctx.getTransform();
+        pad = { left: x + (e - origin.e) / a, right: x + w + (e - origin.e) / a, top: y + (f - origin.f) / d };
+      }
+      return fill(x, y, w, h);
+    };
+    let origin;
+    const setTransform = ctx.setTransform.bind(ctx);
+    ctx.setTransform = (...args) => {
+      setTransform(...args);
+      origin = ctx.getTransform();
+    };
+    const read = () => game.result().stats;
+    game.start();
+    for (let i = 0; i < 1200 && !read().eye?.padReady && !game.over(); i++) game.update(1 / 120);
+    const ready = read();
+    game.draw(ctx, canvas.width, canvas.height);
+    const target = pad;
+    game.input('up', true);
+    game.input('up', false);
+    const airborne = [];
+    let landing;
+    for (let i = 0; i < 180 && !game.over(); i++) {
+      game.update(1 / 120);
+      const stats = read();
+      if (i % 4 !== 0 && !stats.eyesStomped && stats.boardY < ready.boardY) continue;
+      game.draw(ctx, canvas.width, canvas.height);
+      if (stats.eyesStomped) landing ??= pose;
+      if (stats.boardY === ready.boardY) break;
+      if (!stats.eyesStomped) airborne.push(pose);
+    }
+    return { ready, target, airborne, landing, ground: pose, after: read() };
+  });
+  expect(result.ready.eye.padReady).toBe(true);
+  expect(result.ready.scansHit).toBe(1);
+  expect(result.target.left).toBeLessThan(140 + 14);
+  expect(result.target.right).toBeGreaterThan(140);
+  expect(result.airborne.every(pose => pose.actionAtlas)).toBe(true);
+  expect([...new Set(result.airborne.map(pose => pose.cell))]).toEqual([11, 12, 10, 13]);
+  expect(result.landing).toMatchObject({ actionAtlas: true, cell: 12 });
+  expect(result.landing.boardY).toBeCloseTo(result.target.top - 2, 4);
+  expect(result.ground).toMatchObject({ actionAtlas: true, cell: 14, boardY: result.ready.boardY });
+  expect(result.after.eyesStomped).toBe(1);
+});
+
 test('two early dodges teach the next Eye to scan high', async ({ page }) => {
   const game = await openPractice(page);
   const result = await game.evaluate(el => {

@@ -16,8 +16,9 @@ type Chunk = { id: string; tier: number; width: number; objects: Array<{at:numbe
 type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; pickupY?:number; scored:boolean; collected:boolean; deflected:boolean; cargoCollected?:boolean; phase?:number; hoverHeight?:number; arriveAt?:number; intro?:boolean };
 type Anim = 'run'|'idle'|'land'|'ollie'|'bail'|'grind'|'railpop'|'kickflip'|'heelflip'|'flip360'|'varial'|'hardflip'|'laserflip';
 type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number;boardIncluded?:boolean};
+type AnimationSpec={start?:number;frames:number|readonly number[];fps:number;loop?:boolean;sheet?:string};
 type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
-type Art = { images:Record<string,HTMLImageElement>; cloudRaster:Record<string,HTMLCanvasElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,{start:number;frames:number;fps:number;loop?:boolean;sheet?:string}>; name:string };
+type Art = { images:Record<string,HTMLImageElement>; cloudRaster:Record<string,HTMLCanvasElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,AnimationSpec>; name:string };
 const chunks = chunksData as Chunk[];
 const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
 
@@ -102,6 +103,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     o.x+(o.kind==='drone'?courierDeck.right:o.w)>playerX-16;
   const state=(animation:Anim)=>{if(currentAnim!==animation){currentAnim=animation;stateTime=0}};
   const isTrickAnimation=(animation:Anim)=>animation==='kickflip'||animation==='heelflip'||animation==='flip360'||animation==='varial'||animation==='hardflip'||animation==='laserflip';
+  const isAirAnimation=(animation:Anim)=>animation==='ollie'||animation==='railpop'||isTrickAnimation(animation);
   const playerBody=():Bounds=>({left:playerX-14,right:playerX+14,top:boardY-(grinding||isTrickAnimation(currentAnim)?76:96),bottom:boardY});
   const reset=()=>{
     boardY=ground;lastBoardY=ground;vy=0;elapsed=0;distance=0;bonus=0;extraClauses=0;
@@ -150,7 +152,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const railPop=()=>{
     const from=support?.kind||'rail';support=null;grinding=false;grindCharge=0;boostTriggered=false;
     if(from==='drone')tricksUsed=0;
-    vy=railPopVelocity;boardY-=3;lastSurface='air';jumpCount=1;comboAction(1);
+    vy=railPopVelocity;boardY-=3;lastSurface='air';jumpCount=1;landTimer=0;comboAction(1);
     state('railpop');emit('game:grind-end',{surface:from,distancePx:Math.floor(grindDistance),grindMs:Math.floor(grindMs),combo,tricksReset:from==='drone',tricksUsed});
   };
   const input=(key:string,down:boolean)=>{
@@ -392,7 +394,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         grinding=false;
         emit('game:grind-end',{surface:previous.kind,distancePx:Math.floor(grindDistance),grindMs:Math.floor(grindMs)});
       }
-      vy=0;coyoteLeft=.1;lastSurface='air';
+      vy=0;coyoteLeft=.1;landTimer=0;lastSurface='air';
     }
     if(support){
       boardY=surfaceY(support);vy=0;
@@ -462,9 +464,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
     if(eye&&alive)updateEye(eye,dt);
     if(!support&&boardY>=ground){land()}
-    if(!support&&boardY<ground-1&&landTimer===0&&alive){
-      if(currentAnim!=='ollie'&&!isTrickAnimation(currentAnim)&&currentAnim!=='railpop')state('ollie');
-    }
+    if(!support&&boardY<ground-1&&alive&&!isAirAnimation(currentAnim))state('ollie');
     if(!support&&boardY>=ground&&landTimer===0)state('idle');
     if(support&&!grinding&&landTimer===0)state('idle');
     for(const o of objects){
@@ -562,29 +562,35 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     let animation=currentAnim;
     if(!alive)animation='bail';
     else if(grinding)animation='grind';
+    else if(!support&&(boardY<ground-1||vy<0)){
+      if(!isAirAnimation(animation))animation='ollie';
+    }
     else if(landTimer>0)animation='land';
-    else if(support||boardY>=ground-1)animation='idle';
+    else animation='idle';
     // The approved v1 sheet keeps the six-frame cruise cycle; generated v2 cells cover action poses.
-    const fallbackMap:Record<Anim,{sheet:string;start:number;frames:number;fps:number;loop?:boolean}>={
+    const fallbackMap:Record<Anim,AnimationSpec & {sheet:string}>={
       run:{sheet:'skater',start:0,frames:6,fps:12,loop:true},idle:{sheet:'skater',start:0,frames:6,fps:12,loop:true},
-      ollie:{sheet:'skaterActions',start:6,frames:5,fps:9},land:{sheet:'skaterActions',start:11,frames:4,fps:12},
+      ollie:{sheet:'skaterActions',frames:[11,12,12,10,13,13],fps:12},land:{sheet:'skaterActions',frames:[14,43,39,42],fps:12},
       kickflip:{sheet:'skaterActions',start:15,frames:4,fps:8},heelflip:{sheet:'skaterActions',start:19,frames:4,fps:8},
       flip360:{sheet:'skaterActions',start:23,frames:4,fps:8},varial:{sheet:'skaterActions',start:27,frames:4,fps:8},
       hardflip:{sheet:'skaterActions',start:31,frames:4,fps:8},laserflip:{sheet:'skaterActions',start:35,frames:4,fps:8},
-      grind:{sheet:'skaterActions',start:39,frames:4,fps:10,loop:true},railpop:{sheet:'skaterActions',start:43,frames:4,fps:10},
+      grind:{sheet:'skaterActions',frames:[39,42],fps:8,loop:true},railpop:{sheet:'skaterActions',frames:[12,10,13],fps:12},
       bail:{sheet:'skaterActions',start:47,frames:4,fps:8}
     };
     const fallback=fallbackMap[animation],metadata=art?.anims?.[animation];
-    const sheet=metadata?.sheet??fallback.sheet,start=metadata?.start??fallback.start;
+    const sheet=metadata?.sheet??fallback.sheet,start=metadata?.start??fallback.start??0;
     const frames=metadata?.frames??fallback.frames,fps=metadata?.fps??fallback.fps;
     const looping=metadata?.loop??fallback.loop??false;
-    const frame=looping?Math.floor(stateTime*fps)%frames:Math.min(frames-1,Math.floor(stateTime*fps));
-    const rolling=alive&&!grinding&&(animation==='run'||animation==='idle');
+    const count=typeof frames==='number'?frames:frames.length;
+    const ticks=Math.floor(stateTime*fps);
+    const frame=looping?ticks%count:Math.min(count-1,ticks);
+    const cell=typeof frames==='number'?start+frame:frames[frame];
+    const rolling=animation==='idle';
     // The approved six-frame board-run cycle stays active on the ground.
     const rollFrame=Math.floor(elapsed*12)%6;
     const settledBail=!alive&&bailRemaining<=0;
     const atlasKey=settledBail?'skater':sheet;
-    const idx=settledBail?26:rolling&&atlasKey==='skater'?rollFrame:start+frame;
+    const idx=settledBail?26:rolling&&atlasKey==='skater'?rollFrame:cell;
     const cfg=art?.grid?.[atlasKey]??art?.grid?.skater;
     const width=cfg?.cellW??80,height=cfg?.cellH??94,columns=cfg?.columns??8;
     const anchorX=cfg?.anchorX??width/2,anchorY=cfg?.anchorY??height-4;
