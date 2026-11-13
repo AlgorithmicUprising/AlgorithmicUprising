@@ -9,7 +9,8 @@ async function openPractice(page) {
   return game;
 }
 
-test('the artwork manifest loads with the private cabinet session', async ({ page, context, baseURL }) => {
+test('the artwork manifest loads with the private cabinet session', async ({ page, context, baseURL }, info) => {
+  test.skip(info.project.name === 'mobile-webkit', 'The WebKit CI browser does not send the loopback cookie fixture.');
   await context.addCookies([{
     url: baseURL, name: 'grind_art_session', value: 'owner', httpOnly: true, sameSite: 'Lax'
   }]);
