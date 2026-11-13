@@ -1,5 +1,5 @@
 import {
-  eyeDipTime, eyeDisabledTime, eyeLens, eyePad, eyePadReady, eyeScan,
+  courierDeck, eyeDipTime, eyeDisabledTime, eyeLens, eyePad, eyePadReady, eyeScan,
   eyeWarningTime, type CookieEye
 } from './drones';
 
@@ -7,12 +7,38 @@ const ink = '#17121c';
 const paper = '#f3e6cc';
 const pink = '#ff3b9b';
 const lime = '#d7ff00';
+const gunmetal = '#554451';
 
 export type SprayBurst = {
   from: { x: number; y: number };
   to: { x: number; y: number };
   left: number;
 };
+
+export function drawCourierDeck(ctx: CanvasRenderingContext2D, spriteX: number, top: number) {
+  const left = spriteX + courierDeck.left;
+  const width = courierDeck.right - courierDeck.left;
+  ctx.save();
+  for (const mount of [left + 10, left + width - 10]) {
+    ctx.fillStyle = ink;
+    ctx.beginPath();
+    ctx.roundRect(mount - 5, top + 4, 10, 15, 2);
+    ctx.fill();
+    ctx.fillStyle = gunmetal;
+    ctx.fillRect(mount - 3, top + 6, 6, 10);
+    ctx.fillStyle = paper;
+    ctx.fillRect(mount - 1, top + 12, 2, 2);
+  }
+  ctx.fillStyle = ink;
+  ctx.fillRect(left, top, width, 9);
+  ctx.fillStyle = lime;
+  ctx.fillRect(left, top, width, 4);
+  ctx.fillStyle = '#899b24';
+  ctx.fillRect(left + 3, top + 4, width - 6, 2);
+  ctx.fillStyle = '#eff5a8';
+  ctx.fillRect(left + 5, top + 1, width - 10, 1);
+  ctx.restore();
+}
 
 export function drawScanLane(ctx: CanvasRenderingContext2D, eye: CookieEye, playerX: number, ground: number) {
   if (eye.phase !== 'warning' && eye.phase !== 'scan') return;
@@ -63,21 +89,6 @@ export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, gro
   ctx.ellipse(x, ground - 1, 28, 4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  if (phase === 'recover') {
-    const pad = eyePad(eye);
-    const ready = eyePadReady(eye);
-    const extend = Math.min(1, age / eyeDipTime);
-    const left = pad.right - (pad.right - pad.left) * extend;
-    ctx.fillStyle = ink;
-    ctx.beginPath();
-    ctx.roundRect(left, top - 2, pad.right - left + 2, 10, 3);
-    ctx.fill();
-    ctx.fillStyle = ready ? lime : '#9da06c';
-    ctx.fillRect(left + 2, top, Math.max(0, pad.right - left - 2), 4);
-    ctx.fillStyle = '#73653b';
-    for (let notch = left + 7; notch < pad.right - 3; notch += 10) ctx.fillRect(notch, top + 4, 3, 2);
-  }
-
   ctx.translate(x, top);
   if (disabled && !reducedMotion) ctx.rotate(.23 + age * .7);
   ctx.strokeStyle = ink;
@@ -104,12 +115,40 @@ export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, gro
   ctx.beginPath();ctx.roundRect(-24, 1, 48, 29, [8, 6, 10, 9]);ctx.fill();ctx.stroke();
   ctx.fillStyle = paper;
   ctx.fillRect(-9, 4, 24, 5);
-  ctx.fillStyle = '#554450';
+  ctx.fillStyle = gunmetal;
   ctx.fillRect(-1, 13, 22, 12);
   ctx.fillStyle = '#241922';
   for (let vent = 2; vent < 20; vent += 5) ctx.fillRect(vent, 15, 2, 7);
   ctx.fillStyle = pink;
   ctx.fillRect(14, 5, 7, 4);
+
+  // The pad telescopes out of the bracket bolted to the top of the hull.
+  if (phase === 'recover') {
+    const pad = eyePad(eye);
+    const right = pad.right - x;
+    const width = (pad.right - pad.left) * Math.min(1, age / eyeDipTime);
+    const left = right - width;
+    ctx.fillStyle = ink;
+    ctx.beginPath();
+    ctx.moveTo(left, 0);ctx.lineTo(right, 0);ctx.lineTo(right, 15);
+    ctx.lineTo(left, 8);ctx.closePath();ctx.fill();
+    ctx.fillStyle = gunmetal;
+    ctx.fillRect(left, 4, width, 3);
+    ctx.fillStyle = eyePadReady(eye) ? lime : '#a5a779';
+    ctx.fillRect(left, 0, width, 4);
+    ctx.fillStyle = '#eff5a8';
+    if (width > 8) ctx.fillRect(left + 4, 1, width - 8, 1);
+    ctx.fillStyle = '#97854a';
+    for (let notch = left + 7; notch < right - 10; notch += 10) ctx.fillRect(notch, 5, 3, 2);
+  }
+  ctx.fillStyle = ink;
+  ctx.fillRect(-10, 4, 21, 9);
+  ctx.fillStyle = gunmetal;
+  ctx.fillRect(-8, 6, 17, 5);
+  ctx.fillStyle = paper;
+  ctx.fillRect(-6, 7, 2, 2);
+  ctx.fillRect(5, 7, 2, 2);
+
   ctx.fillStyle = ink;
   ctx.beginPath();ctx.ellipse(-15, 17, 11, 10, 0, 0, Math.PI * 2);ctx.fill();
   ctx.fillStyle = disabled ? '#6f6874' : jammed ? lime : brightLens ? pink : '#8b3b71';

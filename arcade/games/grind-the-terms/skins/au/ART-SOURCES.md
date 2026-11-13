@@ -40,7 +40,7 @@ The skin is all rights reserved. Keep it under `skins/au/`; do not copy these as
 ## November 6 — Terms Runner delivery drone
 
 - `terms_runner_delivery_drone_v1.webp`: transparent, losslessly optimized 576 × 288 px game sprite derived from the user-selected “Acid-lime Terms Runner Drone.png” concept in the ChatGPT Library. Displayed at 144 × 72 px (4× source sampling) in the AU-only skin.
-- The renderer anchors the lime grind coping at 35.6% of the sprite height so the image and collision surface stay aligned. Spawned couriers cycle through stable hover heights of 96, 118, and 140 world units above the sidewalk, with the existing subtle ±3-unit hover motion. The lowest route is raised from the former 64-unit lane.
+- The renderer bolts a flat lime deck to the sprite. Its top is the board contact surface and the hull and cargo hitboxes sit below it. Phase 2 uses alternating high and mid-height couriers with a subtle ±3-unit hover motion.
 - The packaged artwork stays under `skins/au/`; it is not copied into the open Fony skin.
 
 

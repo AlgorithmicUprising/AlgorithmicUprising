@@ -9,6 +9,61 @@ async function openPractice(page) {
   return game;
 }
 
+test('the artwork manifest loads with the private cabinet session', async ({ page, context, baseURL }) => {
+  await context.addCookies([{
+    url: baseURL, name: 'grind_art_session', value: 'owner', httpOnly: true, sameSite: 'Lax'
+  }]);
+  let signedIn = false;
+  await page.route('**/games/grind-the-terms/skins/au/skin.json', async route => {
+    const cookie = await route.request().headerValue('cookie');
+    signedIn = (cookie ?? '').split(/;\s*/).includes('grind_art_session=owner');
+    if (signedIn) await route.continue();
+    else await route.fulfill({ status: 401, body: 'Artwork requires a session.' });
+  });
+  await openPractice(page);
+  expect(signedIn).toBe(true);
+});
+
+test('Fony lands on the lime rail attached to the courier sprite', async ({ page }) => {
+  const game = await openPractice(page);
+  const result = await game.evaluate(el => {
+    const g = el.game;
+    const read = () => g.result().stats;
+    g.start();
+    while (read().distancePx < 185 && !g.over()) g.update(1 / 120);
+    g.input('up', true);
+    for (let n = 0; n < 60 && read().boardY > 206 && !g.over(); n++) g.update(1 / 120);
+    g.input('trick', true);
+    g.input('trick', false);
+    for (let n = 0; n < 120 && !read().grinding && !g.over(); n++) g.update(1 / 120);
+    const stats = read();
+    const canvas = document.createElement('canvas');
+    canvas.width = 640;
+    canvas.height = 360;
+    const ctx = canvas.getContext('2d');
+    const image = ctx.drawImage.bind(ctx), fill = ctx.fillRect.bind(ctx);
+    let courier, rail;
+    ctx.drawImage = (asset, ...args) => {
+      if (asset.src?.endsWith('terms_runner_delivery_drone_v1.webp')) courier = args;
+      return image(asset, ...args);
+    };
+    ctx.fillRect = (x, y, w, h) => {
+      if (ctx.fillStyle === '#d7ff00' && w === 73 && h === 4) rail = { x, y };
+      return fill(x, y, w, h);
+    };
+    g.draw(ctx, canvas.width, canvas.height);
+    g.input('up', false);
+    return { grinding: stats.grinding, boardY: stats.boardY, top: stats.supportTop,
+      rail, courier, tricksAfterPop: read().tricksUsed };
+  });
+  expect(result.grinding).toBe(true);
+  expect(result.rail.y).toBe(result.top);
+  expect(result.boardY).toBe(Math.round(result.rail.y));
+  expect(result.rail.x - result.courier[0]).toBeCloseTo(39, 5);
+  expect(result.rail.y - result.courier[1]).toBeCloseTo(20, 5);
+  expect(result.tricksAfterPop).toBe(0);
+});
+
 test('the high courier is safe to skate under and a low scan slows once', async ({ page }) => {
   const game = await openPractice(page);
   const result = await game.evaluate(el => {

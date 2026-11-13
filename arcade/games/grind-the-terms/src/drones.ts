@@ -5,10 +5,11 @@ export type Bounds = { left: number; right: number; top: number; bottom: number 
 export const courierWidth = 144;
 export const courierClosing = 0.68;
 export const courierDeck = { left: 39, right: 112 };
-// Trimmed hull and parcel bounds at the sprite's 144-unit draw width.
+// The drawn rail sits above the painted hull. All vertical offsets are measured from its top.
+export const courierSpriteTopOffset = 20;
 export const courierBody = [
-  { left: 29, right: 116, top: 1, bottom: 26 },
-  { left: 37, right: 99, top: 23, bottom: 46 }
+  { left: 29, right: 116, top: 7, bottom: 32 },
+  { left: 37, right: 99, top: 28, bottom: 52 }
 ] as const;
 
 export const eyeApproachTime = 0.55;
@@ -102,7 +103,7 @@ export function eyeLens(eye: CookieEye) {
 }
 
 export function eyePad(eye: CookieEye) {
-  return { left: eye.x - 82, right: eye.x - 19, y: eye.top };
+  return { left: eye.x - 82, right: eye.x + 4, y: eye.top };
 }
 
 export function eyePadReady(eye: CookieEye) {

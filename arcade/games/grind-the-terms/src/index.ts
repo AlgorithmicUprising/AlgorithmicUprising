@@ -1,13 +1,13 @@
 import { defineArcade, type GameAPI } from '../../../core/src/engine';
 import chunksData from './chunks.json';
 import {
-  boundsOverlap, courierBody, courierClosing, courierDeck, courierWidth, createEye,
+  boundsOverlap, courierBody, courierClosing, courierDeck, courierSpriteTopOffset, courierWidth, createEye,
   enterEyePhase, eyeApproachTime, eyeDepartTime, eyeDisabledTime, eyeEarlyJumpTime,
   eyeHull, eyeInSprayRange, eyeLens, eyeOllieCueTime, eyePad, eyePadReady, eyeRecoverTime,
   eyeScan, eyeScanTime, eyeWarningTime, moveEye, sprayJamCost, sprayOrigin,
   type Bounds, type CookieEye
 } from './drones';
-import { drawCookieEye, drawEyeCallout, drawScanLane, drawSprayJam, type SprayBurst } from './drones-draw';
+import { drawCookieEye, drawCourierDeck, drawEyeCallout, drawScanLane, drawSprayJam, type SprayBurst } from './drones-draw';
 
 // Grind the Terms v0.2 preview: mechanics separated from the AU-only skin assets.
 type HazardKind = 'accept' | 'popup' | 'gap' | 'rail' | 'token' | 'drone';
@@ -40,7 +40,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   let trickCallout='',trickCalloutLeft=0;
   let objects:Obstacle[]=[];
   let clearedStationary:{rail:boolean;accept:boolean;popup:boolean;gap:boolean}={rail:false,accept:false,popup:false,gap:false};
-  const droneHeightBands=[154,96,166,92] as const;
+  const droneHeightBands=[160,96,166,92] as const;
   const stepTime=1/120;
   let stepCarry=0, practiceDrones=false;
   let deliveryUnlocked=false, nextDroneSection=Infinity, droneBeat=0, droneHeightIndex=0;
@@ -497,13 +497,18 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(!url){art=null;clearSkinCss();emit('game:skin-loaded',{skin:'placeholder',usingPlaceholder:true});return}
     try{
       const skinUrl=new URL(url,document.baseURI);
-      const response=await fetch(skinUrl.toString(),{credentials:'omit'});
+      // Private cabinets use the same-origin session to serve skin files.
+      const response=await fetch(skinUrl,{credentials:'same-origin'});
       if(!response.ok)throw new Error('skin HTTP '+response.status);
       const data=await response.json() as {game:string;name?:string;files?:Record<string,string>;palette?:Record<string,string>;grid?:Art['grid'];rail?:RailVisual;anims?:Art['anims']};
       if(data.game!=='grind-the-terms'||!data.files)throw new Error('Unsupported skin data');
       const images:Record<string,HTMLImageElement>={};
       await Promise.all(Object.entries(data.files).map(async ([key,path])=>{
-        const image=new Image();image.decoding='async';image.src=new URL(path,skinUrl).href;await image.decode();images[key]=image;
+        const image=new Image();
+        image.decoding='async';
+        image.src=new URL(path,skinUrl).href;
+        try{await image.decode()}catch{throw new Error('Could not load artwork: '+key)}
+        images[key]=image;
       }));
       if(request!==skinRequest)return;
       if(data.grid?.skater){const g=data.grid.skater,image=images.skater;if(!image||!Number.isInteger(g.cellW)||!Number.isInteger(g.cellH)||!Number.isInteger(g.columns)||g.cellW<16||g.cellH<16||g.columns<1||image.naturalWidth<g.columns*g.cellW||image.naturalHeight<Math.ceil(39/g.columns)*g.cellH)throw new Error('Incomplete Fony sprite atlas grid')}
@@ -748,12 +753,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     ctx.beginPath();ctx.ellipse(x+w*.48,ground-1,shadowWidth,5,0,0,Math.PI*2);ctx.fill();
     const sprite=art?.images.deliveryDrone;
     if(sprite&&sprite.naturalWidth>0){
-      // The bright lime coping in Terms Runner sits 35.6% down the sprite.
-      // Anchor it exactly to the collision surface so board contact matches the art.
       const spriteH=w*(sprite.naturalHeight/sprite.naturalWidth);
-      const grindRailAnchorY=spriteH*.356;
       ctx.save();ctx.imageSmoothingEnabled=false;
-      ctx.drawImage(sprite,x,top-grindRailAnchorY,w,spriteH);
+      ctx.drawImage(sprite,x,top-courierSpriteTopOffset,w,spriteH);
       ctx.restore();
     }else{
       // Keep the procedural fallback fully aligned with the same three hover lanes.
@@ -764,19 +766,17 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         ctx.strokeStyle='#e8dfd0';ctx.lineWidth=1.3;ctx.stroke();
         ctx.strokeStyle='#e0287a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-11,rotorY+Math.sin(elapsed*18+phase)*2);ctx.lineTo(cx+11,rotorY-Math.sin(elapsed*18+phase)*2);ctx.stroke();
       }
-      ctx.fillStyle='#111018';ctx.beginPath();ctx.roundRect(x+29,top-4,w-57,30,7);ctx.fill();
+      ctx.fillStyle='#111018';ctx.beginPath();ctx.roundRect(x+29,top+7,w-57,25,7);ctx.fill();
       ctx.strokeStyle='#e8dfd0';ctx.lineWidth=2;ctx.stroke();
-      ctx.fillStyle='#392334';ctx.fillRect(x+31,top+4,w-61,14);
-      ctx.fillStyle='#e0287a';ctx.fillRect(x+34,top-5,17,4);
-      ctx.fillStyle='#d7ff00';ctx.fillRect(x+w-49,top-5,12,4);
+      ctx.fillStyle='#392334';ctx.fillRect(x+31,top+10,w-61,14);
+      ctx.fillStyle='#e0287a';ctx.fillRect(x+34,top+13,17,4);
       // The parcel hangs from the hovering body rather than staying fixed by the ground.
-      ctx.fillStyle='#b6a78d';ctx.beginPath();ctx.roundRect(x+37,top+23,62,23,3);ctx.fill();
+      ctx.fillStyle='#b6a78d';ctx.beginPath();ctx.roundRect(x+37,top+28,62,24,3);ctx.fill();
       ctx.strokeStyle='#151019';ctx.lineWidth=2;ctx.stroke();
-      ctx.fillStyle='#e0287a';ctx.fillRect(x+39,top+26,58,3);
-      ctx.fillStyle='#17121b';ctx.font='bold 7px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('TERMS',x+68,top+38);
-      ctx.fillStyle='#101018';ctx.beginPath();ctx.roundRect(x+courierDeck.left-2,top-2,courierDeck.right-courierDeck.left+4,8,4);ctx.fill();
-      ctx.fillStyle='#d7ff00';ctx.fillRect(x+courierDeck.left,top,courierDeck.right-courierDeck.left,4);
+      ctx.fillStyle='#e0287a';ctx.fillRect(x+39,top+31,58,3);
+      ctx.fillStyle='#17121b';ctx.font='bold 7px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('TERMS',x+68,top+43);
     }
+    drawCourierDeck(ctx,x,top);
     // Cargo coin remains separate from the grind surface and collects on contact.
     if(!o.cargoCollected)drawToken(ctx,{kind:'token',power:'coin',x:cargoX-13,w:26,pickupY:top,scored:false,collected:false,deflected:false});
     else{ctx.fillStyle='#d7ff00';ctx.font='bold 8px monospace';ctx.textAlign='center';ctx.fillText('DELIVERED',cargoX,top-24)}
