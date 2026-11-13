@@ -1,11 +1,19 @@
 import { defineArcade, type GameAPI } from '../../../core/src/engine';
 import chunksData from './chunks.json';
+import {
+  boundsOverlap, courierBody, courierClosing, courierDeck, courierWidth, createEye,
+  enterEyePhase, eyeApproachTime, eyeDepartTime, eyeDisabledTime, eyeEarlyJumpTime,
+  eyeHull, eyeInSprayRange, eyeLens, eyeOllieCueTime, eyePad, eyePadReady, eyeRecoverTime,
+  eyeScan, eyeScanTime, eyeWarningTime, moveEye, sprayJamCost, sprayOrigin,
+  type Bounds, type CookieEye
+} from './drones';
+import { drawCookieEye, drawEyeCallout, drawScanLane, drawSprayJam, type SprayBurst } from './drones-draw';
 
 // Grind the Terms v0.2 preview: mechanics separated from the AU-only skin assets.
 type HazardKind = 'accept' | 'popup' | 'gap' | 'rail' | 'token' | 'drone';
 type Power = 'coin' | 'shield' | 'airboost' | 'trick2' | 'rocket';
 type Chunk = { id: string; tier: number; width: number; objects: Array<{at:number;kind:HazardKind;w:number;power?:Power;pickupY?:number}> };
-type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; pickupY?:number; scored:boolean; collected:boolean; deflected:boolean; cargoCollected?:boolean; phase?:number; hoverHeight?:number };
+type Obstacle = { x:number; w:number; kind:HazardKind; power?:Power; pickupY?:number; scored:boolean; collected:boolean; deflected:boolean; cargoCollected?:boolean; phase?:number; hoverHeight?:number; arriveAt?:number; intro?:boolean };
 type Anim = 'run'|'idle'|'land'|'ollie'|'bail'|'grind'|'railpop'|'kickflip'|'heelflip'|'flip360'|'varial'|'hardflip'|'laserflip';
 type AtlasGrid={cellW:number;cellH:number;columns:number;anchorX?:number;anchorY?:number;displayScale?:number;boardIncluded?:boolean};
 type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
@@ -32,8 +40,13 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   let trickCallout='',trickCalloutLeft=0;
   let objects:Obstacle[]=[];
   let clearedStationary:{rail:boolean;accept:boolean;popup:boolean;gap:boolean}={rail:false,accept:false,popup:false,gap:false};
-  let deliveryUnlocked=false,nextDroneDistance=Infinity,droneHeightIndex=0;
-  const droneHeightBands=[96,118,140] as const;
+  const droneHeightBands=[154,96,166,92] as const;
+  const stepTime=1/120;
+  let stepCarry=0, practiceDrones=false;
+  let deliveryUnlocked=false, nextDroneSection=Infinity, droneBeat=0, droneHeightIndex=0;
+  let eyeAt=Infinity, eye:CookieEye|null=null, scanSlowLeft=0;
+  let earlyDodges:boolean[]=[], sprayBurst:SprayBurst|null=null;
+  let scansHit=0, eyesJammed=0, eyesStomped=0;
   const boostSeconds=11.25;
   let nextChunk=0, lastChunkId='', firstChunk=true;
   let art:Art|null=null,skinRequest=0;
@@ -50,7 +63,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   const normalSpeed=()=>clamp(baseSpeed+elapsed*1.72,baseSpeed,460);
   const score=()=>Math.floor(distance/48)+Math.floor(extraClauses)+Math.floor(totalGrindDistance/32)*2+Math.floor(bonus);
   const boostActive=()=>boostDown&&!boostExhausted&&sprayGauge>0;
-  const speed=()=>normalSpeed()*(boostActive()?2:(grindBoostLeft>0?1.07:1));
+  const speed=()=>normalSpeed()*(boostActive()?2:(grindBoostLeft>0?1.07:1))*(scanSlowLeft>0?.75:1);
   const addSpray=(amount:number)=>{if(amount>0)sprayGauge=clamp(sprayGauge+amount*(boostDown ? 0.25 : 1),0,1)};
   const comboMultiplier=()=>combo>0?combo:1;
   const comboAction=(base=0)=>{
@@ -85,19 +98,26 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     kind==='accept'||kind==='popup'?surfaceTopY(kind):ground;
   const droneTopY=(o:Obstacle)=>ground-(o.hoverHeight??118)+Math.sin((o.phase||0)+elapsed*2.1)*3;
   const surfaceY=(o:Obstacle)=>o.kind==='rail'?railSurfaceY():o.kind==='drone'?droneTopY(o):flatTopY(o.kind);
-  const overlaps=(o:Obstacle)=>o.x<playerX+16&&o.x+o.w>playerX-16;
+  const overlaps=(o:Obstacle)=>o.x+(o.kind==='drone'?courierDeck.left:0)<playerX+16&&
+    o.x+(o.kind==='drone'?courierDeck.right:o.w)>playerX-16;
   const state=(animation:Anim)=>{if(currentAnim!==animation){currentAnim=animation;stateTime=0}};
   const isTrickAnimation=(animation:Anim)=>animation==='kickflip'||animation==='heelflip'||animation==='flip360'||animation==='varial'||animation==='hardflip'||animation==='laserflip';
+  const playerBody=():Bounds=>({left:playerX-14,right:playerX+14,top:boardY-(grinding||isTrickAnimation(currentAnim)?76:96),bottom:boardY});
   const reset=()=>{
     boardY=ground;lastBoardY=ground;vy=0;elapsed=0;distance=0;bonus=0;extraClauses=0;
     grindDistance=0;totalGrindDistance=0;grindMs=0;alive=true;bailRemaining=0;cause='accept';
     held=false;grinding=false;support=null;platformLandings=0;platformGrinds=0;jumpCount=0;tricksUsed=0;trick2Unlocked=false;airBoost=false;shield=false;shieldsUsed=0;sprayGauge=0;
     hazardsCleared=0;bufferLeft=0;coyoteLeft=.08;stateTime=0;landTimer=0;
-    combo=0;comboTimer=0;longestCombo=0;lastSurface='ground';objects=[];clearedStationary={rail:false,accept:false,popup:false,gap:false};deliveryUnlocked=false;nextDroneDistance=Infinity;droneHeightIndex=0;nextChunk=380;lastChunkId='';firstChunk=true;
+    combo=0;comboTimer=0;longestCombo=0;lastSurface='ground';objects=[];clearedStationary={rail:false,accept:false,popup:false,gap:false};
+    practiceDrones=host.getAttribute('practice')==='drones';
+    deliveryUnlocked=practiceDrones;nextDroneSection=practiceDrones?40:Infinity;droneBeat=0;droneHeightIndex=0;
+    nextChunk=practiceDrones?40:380;lastChunkId='';firstChunk=true;
+    stepCarry=0;eyeAt=Infinity;eye=null;scanSlowLeft=0;earlyDodges=[];sprayBurst=null;
+    scansHit=0;eyesJammed=0;eyesStomped=0;
     trickDown=false;boostDown=false;boostExhausted=false;trickUpgradeSpawned=false;nextRocketScore=160;grindCharge=0;grindBoostLeft=0;boostTriggered=false;shieldDeflections=0;
     trickCallout='';trickCalloutLeft=0;
     if(host.hasAttribute('data-qa-trick-upgrade'))trick2Unlocked=true;
-    if(host.hasAttribute('data-qa-rocket-charge'))sprayGauge=1/3;
+    if(practiceDrones||host.hasAttribute('data-qa-rocket-charge'))sprayGauge=1/3;
     rngState=(Number(host.getAttribute('seed'))||0x11b00c5)>>>0;visualFlash=0;currentAnim='run';
   };
   const land=()=>{
@@ -108,6 +128,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   };
   const ollie=()=>{
     if(!alive||bailRemaining>0)return;
+    if(eye?.phase==='warning'&&eye.age<=eyeEarlyJumpTime)eye.earlyJump=true;
     // Jump input is always a single ollie. Tricks use their own button.
     jumpCount=1;vy=jumpVelocity;state('ollie');
     support=null;grinding=false;landTimer=0;coyoteLeft=0;bufferLeft=0;lastSurface='air';comboAction();
@@ -156,15 +177,15 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     held=down;
   };
   const comboBonus=(base:number)=>{bonus+=base*comboMultiplier()};
-  const handleCollision=(o:Obstacle)=>{
-    if(shield){shield=false;shieldsUsed++;shieldDeflections++;o.deflected=true;bonus+=1;
-      // Consent forms are persistent level geometry, never collectible pickups.
-      // The shield absorbs impact and bounces Fony clear; the form stays visible.
-      boardY=Math.min(boardY,surfaceY(o)-4);vy=-260;support=null;grinding=false;
-      emit('game:shield',{used:true,blocked:o.kind});return}
-    alive=false;cause=o.kind;bailRemaining=.55;combo=0;comboTimer=0;state('bail');
+  const handleCollision=(kind:HazardKind|'cookie-eye',top:number)=>{
+    if(shield){shield=false;shieldsUsed++;shieldDeflections++;bonus+=1;
+      boardY=Math.min(boardY,top-4);vy=-260;support=null;grinding=false;
+      emit('game:shield',{used:true,blocked:kind});return true}
+    alive=false;cause=kind;bailRemaining=.55;combo=0;comboTimer=0;state('bail');
     emit('game:bail',{cause,score:score()});
+    return false;
   };
+  const collideObstacle=(o:Obstacle)=>{if(handleCollision(o.kind,surfaceY(o)))o.deflected=true};
   const collect=(o:Obstacle)=>{
     if(o.collected)return;
     o.collected=true;bonus+=10;
@@ -222,27 +243,127 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const cleared=stationaryClearCount();
     emit('game:obstacle-cleared',{kind:key,cleared,total:4});
     if(cleared===4&&!deliveryUnlocked){
-      deliveryUnlocked=true;nextDroneDistance=nextChunk+220;
-      emit('game:delivery-unlocked',{cleared,total:4,spawnDistance:Math.round(nextDroneDistance)});
+      deliveryUnlocked=true;
+      nextDroneSection=nextChunk;
+      emit('game:delivery-unlocked',{cleared,total:4,spawnDistance:nextChunk+270});
     }
   };
-  const maybeSpawnDeliveryDrone=()=>{
-    if(!deliveryUnlocked||!Number.isFinite(nextDroneDistance)||nextDroneDistance>distance+790)return;
-    if(objects.some(o=>o.kind==='drone'&&o.x+o.w>-45))return;
-    let x=playerX+nextDroneDistance-distance;
-    if(x<playerX+300){nextDroneDistance=distance+900;x=playerX+900;}
-    const droneWidth=144;
-    const crowded=objects.some(o=>o.kind!=='token'&&o.kind!=='drone'&&x<o.x+o.w+110&&x+droneWidth>o.x-110);
-    if(crowded){nextDroneDistance+=220;return;}
-    const hoverHeight=droneHeightBands[droneHeightIndex%droneHeightBands.length];
-    droneHeightIndex=(droneHeightIndex+1)%droneHeightBands.length;
-    objects.push({x,w:droneWidth,kind:'drone',power:'coin',phase:rng()*Math.PI*2,hoverHeight,scored:false,collected:false,cargoCollected:false,deflected:false});
-    emit('game:delivery-spawn',{x:Math.round(x),cargo:'coin',grindable:true,hoverHeight,clearCount:stationaryClearCount()});
-    nextDroneDistance+=1400+Math.floor(rng()*260);
+  const emitDroneSection=()=>{
+    const start=nextChunk;
+    const courier=droneBeat===0||(!practiceDrones&&droneBeat%2===0);
+    if(courier){
+      const arriveAt=start+270;
+      const x=playerX+(arriveAt-distance)*courierClosing-courierDeck.left;
+      const hoverHeight=droneHeightBands[droneHeightIndex++%droneHeightBands.length];
+      objects.push({x,w:courierWidth,kind:'drone',power:'coin',phase:rng()*Math.PI*2,
+        hoverHeight,arriveAt,intro:droneBeat===0,scored:false,collected:false,cargoCollected:false,deflected:false});
+      emit('game:delivery-spawn',{x:Math.round(x),cargo:'coin',grindable:true,hoverHeight,clearCount:stationaryClearCount()});
+      if(droneBeat===0){
+        for(const offset of [205,270,335]){
+          objects.push({x:playerX+start+offset-distance,w:26,kind:'token',power:'coin',pickupY:ground,
+            scored:false,collected:false,deflected:false});
+        }
+      }
+      nextChunk=start+640;
+      nextDroneSection=nextChunk+(droneBeat===0?0:900);
+    }else{
+      eyeAt=start+105;
+      if(sprayGauge<0.2){
+        objects.push({x:playerX+start+34-distance,w:72,kind:'token',power:'rocket',pickupY:ground,
+          scored:false,collected:false,deflected:false});
+      }
+    }
+    droneBeat++;
   };
-  const update=(dt:number)=>{
+
+  const fillRoute=()=>{
+    // An Eye needs a clear stretch until it leaves, even if Fony boosts midway through its warning.
+    while(!eye&&!Number.isFinite(eyeAt)&&nextChunk<distance+790){
+      if(nextChunk>=nextDroneSection)emitDroneSection();
+      else emitChunk();
+    }
+    if(distance<eyeAt)return;
+    const lane=earlyDodges.length===2&&earlyDodges.every(Boolean)?'high':'low';
+    eye=createEye(viewRight,playerX,ground,lane);
+    eyeAt=Infinity;
+    emit('game:drone-spawn',{drone:'cookie-eye',lane,clearCount:stationaryClearCount()});
+  };
+
+  const canJamEye=(target:CookieEye)=>target.phase==='warning'&&sprayGauge>=sprayJamCost&&eyeInSprayRange(target,playerX,boardY);
+  const updateEye=(target:CookieEye,dt:number)=>{
+    moveEye(target,dt,playerX,ground);
+    if(target.phase==='approach'&&target.age>=eyeApproachTime){
+      enterEyePhase(target,'warning');
+      emit('game:drone-warn',{drone:'cookie-eye',lane:target.lane,warningMs:Math.round(eyeWarningTime*1000)});
+    }
+    if(target.phase==='warning'){
+      if(boostActive()&&canJamEye(target)){
+        sprayGauge=Math.max(0,sprayGauge-sprayJamCost);
+        if(sprayGauge<=0)boostExhausted=true;
+        sprayBurst={from:sprayOrigin(playerX,boardY),to:eyeLens(target),left:.32};
+        target.jammed=true;
+        eyesJammed++;
+        enterEyePhase(target,'recover');
+        emit('game:drone-jam',{drone:'cookie-eye',sprayCost:sprayJamCost,sprayGauge});
+      }else if(target.age>=eyeWarningTime){
+        enterEyePhase(target,'scan');
+        emit('game:drone-scan',{drone:'cookie-eye',lane:target.lane});
+      }
+    }
+    if(target.phase==='scan'){
+      if(!target.scanHit&&boundsOverlap(playerBody(),eyeScan(target,playerX,ground))){
+        target.scanHit=true;
+        scansHit++;
+        scanSlowLeft=1.15;
+        combo=0;
+        comboTimer=0;
+        emit('game:drone-hit',{drone:'cookie-eye',lane:target.lane,slowMs:1150});
+      }
+      if(target.age>=eyeScanTime){
+        const earlyDodge=target.earlyJump&&!target.scanHit;
+        earlyDodges=[...earlyDodges,earlyDodge].slice(-2);
+        if(!target.scanHit)emit('game:drone-dodge',{drone:'cookie-eye',lane:target.lane,early:earlyDodge});
+        enterEyePhase(target,'recover');
+      }
+    }
+    if(target.phase==='recover'){
+      const pad=eyePad(target);
+      const abovePad=playerX+14>pad.left&&playerX-14<pad.right;
+      if(eyePadReady(target)&&abovePad&&!support&&vy>=0&&lastBoardY<=pad.y+2&&boardY>=pad.y){
+        target.stomped=true;
+        enterEyePhase(target,'disabled');
+        eyesStomped++;
+        boardY=pad.y-2;
+        vy=-420;
+        jumpCount=1;
+        tricksUsed=0;
+        coyoteLeft=0;
+        landTimer=0;
+        lastSurface='air';
+        state('railpop');
+        comboAction(8);
+        trickCallout='TRICKS REFRESHED';
+        trickCalloutLeft=1.05;
+        emit('game:drone-stomp',{drone:'cookie-eye',jammed:target.jammed,combo,tricksReset:true,score:score()});
+      }else if(target.age>=eyeRecoverTime){
+        enterEyePhase(target,'depart');
+      }
+    }
+    if(target.phase!=='disabled'&&boundsOverlap(playerBody(),eyeHull(target))){
+      if(handleCollision('cookie-eye',target.top))enterEyePhase(target,'disabled');
+    }
+    if((target.phase==='depart'&&target.age>=eyeDepartTime)||(target.phase==='disabled'&&target.age>=eyeDisabledTime)){
+      eye=null;
+      nextChunk=distance+(practiceDrones?110:Math.max(175,speed()*.65));
+      nextDroneSection=nextChunk+(practiceDrones?0:1000);
+    }
+  };
+
+  const step=(dt:number)=>{
     if(!alive){bailRemaining=Math.max(0,bailRemaining-dt);stateTime+=dt;return}
-    dt=Math.min(dt,.05);elapsed+=dt;stateTime+=dt;landTimer=Math.max(0,landTimer-dt);
+    elapsed+=dt;stateTime+=dt;landTimer=Math.max(0,landTimer-dt);
+    scanSlowLeft=Math.max(0,scanSlowLeft-dt);
+    if(sprayBurst){sprayBurst.left-=dt;if(sprayBurst.left<=0)sprayBurst=null;}
     if(combo>0){if(grinding)comboTimer=1.5;else{comboTimer=Math.max(0,comboTimer-dt);if(comboTimer===0)combo=0}}
     trickCalloutLeft=Math.max(0,trickCalloutLeft-dt);
     grindBoostLeft=Math.max(0,grindBoostLeft-dt);
@@ -258,11 +379,10 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       sprayGauge=Math.max(0,sprayGauge-dt/boostSeconds);
       if(sprayGauge<=0)boostExhausted=true;
     }
-    while(nextChunk<distance+790)emitChunk();
-    maybeSpawnDeliveryDrone();
-    // The courier drifts forward more slowly than Fony, so it approaches the grind line.
+    fillRoute();
+    // The leading edge of each courier deck reaches Fony at the section's planned distance.
     for(const o of objects){
-      if(o.kind==='drone')o.x-=Math.min(100,Math.max(55,playerSpeed*.22))*dt;
+      if(o.kind==='drone'&&o.arriveAt!==undefined)o.x=playerX+(o.arriveAt-distance)*courierClosing-courierDeck.left;
       else o.x-=moved;
     }
     lastBoardY=boardY;
@@ -299,7 +419,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
           o.cargoCollected=true;bonus+=10;
           emit('game:power',{power:'coin',collected:true,source:'delivery-drone',score:score()});
         }
-        if(!o.deflected&&!support&&overlap&&vy>=0&&lastBoardY<=top+12&&boardY>=top-10&&boardY<=top+Math.max(26,Math.abs(vy)*dt+12)){
+        if(!o.deflected&&!support&&overlap&&vy>=0&&lastBoardY<=top+3&&boardY>=top){
           support=o;boardY=top;vy=0;coyoteLeft=.08;landTimer=.36;platformLandings++;lastSurface='drone';
           if(held){
             grinding=true;grindCharge=0;boostTriggered=false;platformGrinds++;state('grind');comboAction(1);
@@ -307,8 +427,11 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
           }else{grinding=false;state('land');emit('game:platform-land',{surface:'drone',score:score()})}
           continue;
         }
-        if(!overlap||o.deflected||!alive||o===support)continue;
-        if(boardY>top+10)handleCollision(o);
+        if(o.deflected||!alive||o===support)continue;
+        const body=playerBody();
+        if(courierBody.some(part=>boundsOverlap(body,{
+          left:o.x+part.left,right:o.x+part.right,top:top+part.top,bottom:top+part.bottom
+        })))collideObstacle(o);
         continue;
       }
       if(o.kind==='token'){
@@ -317,7 +440,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       }
       if(!overlap||o.collected||o.deflected||!alive||o===support)continue;
       if(o.kind==='gap'){
-        if(boardY>ground-10)handleCollision(o);
+        if(boardY>ground-10)collideObstacle(o);
         continue;
       }
       // ACCEPT and Consent barriers have flat, skatable tops.
@@ -335,8 +458,9 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
         }
         continue;
       }
-      if(boardY>top+10)handleCollision(o);
+      if(boardY>top+10)collideObstacle(o);
     }
+    if(eye&&alive)updateEye(eye,dt);
     if(!support&&boardY>=ground){land()}
     if(!support&&boardY<ground-1&&landTimer===0&&alive){
       if(currentAnim!=='ollie'&&!isTrickAnimation(currentAnim)&&currentAnim!=='railpop')state('ollie');
@@ -344,7 +468,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(!support&&boardY>=ground&&landTimer===0)state('idle');
     if(support&&!grinding&&landTimer===0)state('idle');
     for(const o of objects){
-      if(o.kind==='token'||o.kind==='drone'||o.scored||o.collected)continue;
+      if(!alive||o.kind==='token'||o.kind==='drone'||o.scored||o.collected)continue;
       if(o.x+o.w<playerX-15){
         o.scored=true;markStationaryCleared(o.kind);
         if(o.kind==='rail')continue;
@@ -358,6 +482,14 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
     objects=objects.filter(o=>o.x+o.w>-45);
     spawnMilestonePickups();
+  };
+
+  const update=(dt:number)=>{
+    stepCarry+=Math.min(dt,.05);
+    while(stepCarry+1e-9>=stepTime){
+      stepCarry=Math.max(0,stepCarry-stepTime);
+      step(stepTime);
+    }
   };
 
   async function setSkin(url:string|null){
@@ -626,27 +758,24 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }else{
       // Keep the procedural fallback fully aligned with the same three hover lanes.
       const rotorY=top-12;
-      ctx.strokeStyle='#15101a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x+27,top+18);ctx.lineTo(x+17,ground-42);ctx.moveTo(x+w-27,top+18);ctx.lineTo(x+w-6,ground-42);ctx.stroke();
-      ctx.strokeStyle='#e0287a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x+27,top+18);ctx.lineTo(x+17,ground-42);ctx.moveTo(x+w-27,top+18);ctx.lineTo(x+w-6,ground-42);ctx.stroke();
       for(const cx of [x+20,x+w-20]){
         ctx.strokeStyle='#17121c';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(cx,rotorY+9);ctx.lineTo(cx,top+1);ctx.stroke();
         ctx.fillStyle='#292331';ctx.beginPath();ctx.ellipse(cx,rotorY,16,4,0,0,Math.PI*2);ctx.fill();
         ctx.strokeStyle='#e8dfd0';ctx.lineWidth=1.3;ctx.stroke();
         ctx.strokeStyle='#e0287a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-11,rotorY+Math.sin(elapsed*18+phase)*2);ctx.lineTo(cx+11,rotorY-Math.sin(elapsed*18+phase)*2);ctx.stroke();
       }
-      ctx.fillStyle='#111018';ctx.beginPath();ctx.roundRect(x+19,top-11,w-38,27,7);ctx.fill();
+      ctx.fillStyle='#111018';ctx.beginPath();ctx.roundRect(x+29,top-4,w-57,30,7);ctx.fill();
       ctx.strokeStyle='#e8dfd0';ctx.lineWidth=2;ctx.stroke();
-      ctx.fillStyle='#392334';ctx.fillRect(x+27,top-7,w-54,14);
+      ctx.fillStyle='#392334';ctx.fillRect(x+31,top+4,w-61,14);
       ctx.fillStyle='#e0287a';ctx.fillRect(x+34,top-5,17,4);
       ctx.fillStyle='#d7ff00';ctx.fillRect(x+w-49,top-5,12,4);
       // The parcel hangs from the hovering body rather than staying fixed by the ground.
-      ctx.fillStyle='#b6a78d';ctx.beginPath();ctx.roundRect(x+7,top+21,30,28,3);ctx.fill();
+      ctx.fillStyle='#b6a78d';ctx.beginPath();ctx.roundRect(x+37,top+23,62,23,3);ctx.fill();
       ctx.strokeStyle='#151019';ctx.lineWidth=2;ctx.stroke();
-      ctx.fillStyle='#e0287a';ctx.fillRect(x+7,top+30,30,4);
-      ctx.fillStyle='#17121b';ctx.font='bold 7px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('TERMS',x+22,top+39);
-      ctx.fillStyle='#101018';ctx.beginPath();ctx.roundRect(x+6,top-4,w-12,10,4);ctx.fill();
-      ctx.fillStyle='#d7ff00';ctx.fillRect(x+9,top-2,w-18,5);
-      ctx.fillStyle='#e0287a';ctx.fillRect(x+14,top+3,w-28,2);
+      ctx.fillStyle='#e0287a';ctx.fillRect(x+39,top+26,58,3);
+      ctx.fillStyle='#17121b';ctx.font='bold 7px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('TERMS',x+68,top+38);
+      ctx.fillStyle='#101018';ctx.beginPath();ctx.roundRect(x+courierDeck.left-2,top-2,courierDeck.right-courierDeck.left+4,8,4);ctx.fill();
+      ctx.fillStyle='#d7ff00';ctx.fillRect(x+courierDeck.left,top,courierDeck.right-courierDeck.left,4);
     }
     // Cargo coin remains separate from the grind surface and collects on contact.
     if(!o.cargoCollected)drawToken(ctx,{kind:'token',power:'coin',x:cargoX-13,w:26,pickupY:top,scored:false,collected:false,deflected:false});
@@ -775,8 +904,14 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     const dy=portrait?h-portraitHeight*scale:(h-360*scale)/2;
     ctx.setTransform(scale,0,0,scale,dx,dy);
     viewLeft=-dx/scale;viewRight=(w-dx)/scale;
+    const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const showCourierHint=!eye&&objects.some(o=>o.kind==='drone'&&o.intro&&o.x<viewRight-32&&o.x+o.w>playerX-14);
     drawBackdrop(ctx,portrait,-dy/scale);
     for(const o of objects)drawObstacle(ctx,o);
+    if(eye){
+      drawScanLane(ctx,eye,playerX,ground);
+      drawCookieEye(ctx,eye,ground,elapsed,reducedMotion,canJamEye(eye));
+    }
     // This opt-in developer-only visual fixture uses the production renderer.
     // It is not part of gameplay, and is never displayed without the QA attr.
     if(host.hasAttribute('data-qa-consent'))
@@ -802,6 +937,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#D7FF00';ctx.beginPath();ctx.moveTo(left-2,base-4);ctx.lineTo(left-21*pulse,base);ctx.lineTo(left-2,base+3);ctx.closePath();ctx.fill();
     }
     drawSkater(ctx);
+    if(sprayBurst)drawSprayJam(ctx,sprayBurst,reducedMotion);
     if(trickCalloutLeft>0){ctx.fillStyle='#D7FF00';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(trickCallout,playerX,Math.max(84,boardY-74));ctx.textAlign='left'}
     if(grinding){ctx.fillStyle='#E0287A';const y=support?surfaceY(support):railSurfaceY();for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,y-2+(i%2)*3,5,2)}
     if(portrait){
@@ -818,7 +954,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#e0287a';ctx.font='bold 10px monospace';
       ctx.fillText(grinding?'GRIND — RELEASE U TO POP':'U=OLLIE/GRIND  •  A=TRICK  •  Ø=HOLD BOOST',48,t+91);
       ctx.fillStyle='#b8aaba';ctx.font='bold 10px monospace';
-      ctx.fillText((shield?'SHIELD  ':'')+(trick2Unlocked?'TRICK2 READY':'TRICK2 AT 80')+'  •  STREET '+stationaryClearCount()+'/4'+(deliveryUnlocked?' DRONES OPEN':''),48,t+150);
+      if(!eye&&!showCourierHint)ctx.fillText((shield?'SHIELD  ':'')+(trick2Unlocked?'TRICK2 READY':'TRICK2 AT 80')+'  •  '+(practiceDrones?'DRONE PRACTICE':'STREET '+stationaryClearCount()+'/4'),48,t+124);
     }else{
       ctx.fillStyle='rgba(17,12,20,.93)';ctx.fillRect(0,0,640,71);
       ctx.fillStyle='#D7FF00';ctx.font='bold 18px monospace';ctx.fillText('CLAUSES SKIPPED  '+score(),14,27);
@@ -835,10 +971,33 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       if(grinding)ctx.fillText('GRINDING THE FINE PRINT — RELEASE U TO POP!',170,65);
       else ctx.fillText('U / ↑: OLLIE + HOLD GRIND  •  SPACE / A: TRICK  •  HOLD R / Ø: BOOST',12,65);
     }
-    if(visualFlash>0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
+    const cueX=portrait?48:14,cueY=portrait?-dy/scale+105:78;
+    if(eye?.phase==='warning'||eye?.phase==='scan'){
+      const control=eye.lane==='high'?'HIGH SCAN / STAY LOW':
+        eye.phase==='scan'||eye.age>=eyeOllieCueTime?'LOW SCAN / OLLIE NOW':'LOW SCAN / GET READY';
+      drawEyeCallout(ctx,cueX,cueY,control,'warning',eye);
+      if(canJamEye(eye))drawEyeCallout(ctx,cueX,cueY+28,portrait?'HOLD Ø TO JAM':'HOLD R TO JAM','open');
+    }else if(eye?.phase==='disabled'&&eye.stomped){
+      drawEyeCallout(ctx,cueX,cueY,'COOKIE EYE DISABLED','open');
+    }else if(eye?.phase==='recover'){
+      drawEyeCallout(ctx,cueX,cueY,eye.jammed?'LENS JAMMED / STOMP':'STOMP THE LIME PAD','open');
+      if(scanSlowLeft>0)drawEyeCallout(ctx,cueX,cueY+28,'SCANNED / SLOWED','warning');
+    }else if(scanSlowLeft>0){
+      drawEyeCallout(ctx,cueX,cueY,'SCANNED / SLOWED','warning');
+    }else if(showCourierHint){
+      drawEyeCallout(ctx,cueX,cueY,'TERMS RUNNER / SKATE UNDER','open');
+    }
+    if(visualFlash>0&&!reducedMotion){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
     ctx.restore();
   };
-  const result=()=>({cause,causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',gap:'YOU FELL THROUGH A LOOPHOLE.',drone:'DELIVERY DRONE TOOK THE LINE.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,combo,longestCombo,comboTimer:Math.round(comboTimer*100)/100,shieldsUsed,runSpeed:Math.round(speed()),normalSpeed:Math.round(normalSpeed()),speedMultiplier:boostActive()?2:1,tricksUsed,trickLimit:trickLimit(),trick2Unlocked,trickAvailable:!support&&!grinding&&lastSurface==='air'&&boardY<ground-1&&tricksUsed<trickLimit(),sprayGauge:Math.round(sprayGauge*10000)/10000,sprayCans:Math.floor(sprayGauge*3+1e-6),boostHeld:boostDown,boostActive:boostActive(),boostExhausted,rocketBoostLeft:Math.round(sprayGauge*boostSeconds*100)/100,grindBoostLeft:Math.round(grindBoostLeft*100)/100,stationaryCleared:{...clearedStationary},stationaryClearCount:stationaryClearCount(),deliveryUnlocked,deliveryDrones:objects.filter(o=>o.kind==='drone').length,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null}});
+  const result=()=>({
+    cause,
+    causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',gap:'YOU FELL THROUGH A LOOPHOLE.',drone:'DELIVERY DRONE TOOK THE LINE.','cookie-eye':'THE COOKIE EYE CAUGHT YOUR BOARD.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',
+    stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,combo,longestCombo,comboTimer:Math.round(comboTimer*100)/100,shieldsUsed,runSpeed:Math.round(speed()),normalSpeed:Math.round(normalSpeed()),speedMultiplier:boostActive()?2:1,tricksUsed,trickLimit:trickLimit(),trick2Unlocked,trickAvailable:!support&&!grinding&&lastSurface==='air'&&boardY<ground-1&&tricksUsed<trickLimit(),sprayGauge:Math.round(sprayGauge*10000)/10000,sprayCans:Math.floor(sprayGauge*3+1e-6),boostHeld:boostDown,boostActive:boostActive(),boostExhausted,rocketBoostLeft:Math.round(sprayGauge*boostSeconds*100)/100,grindBoostLeft:Math.round(grindBoostLeft*100)/100,stationaryCleared:{...clearedStationary},stationaryClearCount:stationaryClearCount(),deliveryUnlocked,deliveryDrones:objects.filter(o=>o.kind==='drone').length,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null,
+      scansHit,eyesJammed,eyesStomped,scanSlowLeft:Math.round(scanSlowLeft*100)/100,
+      eye:eye?{phase:eye.phase,lane:eye.lane,age:eye.age,padReady:eyePadReady(eye),canJam:canJamEye(eye)}:null
+    }
+  });
   const releaseInput=()=>{trickDown=false;boostDown=false;boostExhausted=false;if(grinding)railPop();held=false;};
   reset();
   return {start:reset,input,update,draw,score,over:()=>!alive&&bailRemaining===0,result,setSkin,releaseInput} satisfies GameAPI;

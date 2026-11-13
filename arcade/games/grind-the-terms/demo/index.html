@@ -11,6 +11,9 @@
     main{margin:0 auto;max-width:1080px;padding:clamp(12px,3vw,28px)}
     h1{font-size:clamp(1.3rem,4.5vw,2rem);line-height:1.2;color:#d7ff00;margin:.4rem 0}
     .tagline{margin:.5rem 0 1rem}
+    .run-modes{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 .75rem}
+    .run-modes a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid #67606c;font-weight:700;text-decoration:none}
+    .run-modes a[aria-current=page]{border-color:#d7ff00;background:#d7ff00;color:#17121c}
     grind-the-terms{display:block;position:relative;width:100%;aspect-ratio:16/9;min-height:210px;border:2px solid #d7ff00;background:#0d0b12}
     .fallback{padding:22px;text-align:center;color:#f3e4dc}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin:1rem 0}
@@ -34,10 +37,14 @@
 <main>
   <h1>GRIND THE TERMS</h1>
   <p class="tagline">Nobody reads them. Skate them.</p>
+  <nav class="run-modes" aria-label="Run mode">
+    <a id="street-run" href="./" aria-current="page">Street run</a>
+    <a id="drone-practice" href="?practice=drones">Drone practice</a>
+  </nav>
   <grind-the-terms skin="../skins/au/skin.json">
     <p class="fallback">Loading Fony… If the game stays blank, <a href="../../../demo/">open Arcade Lab</a>.</p>
   </grind-the-terms>
-  <p class="note">U / ↑ / W ollies. Hold during descent to grind, release to pop. SPACE / A performs one aerial trick; at 80 clauses collect the combo token to unlock a second trick. Collect ground pickups by rolling through them; airborne pickups and obstacle-top rewards take an ollie or a careful landing. R / Ø spends a can for 2× speed for 3.75 seconds; up to three cans can extend it to 11.25 seconds.</p>
+  <p class="note">U / ↑ / W to ollie, hold to grind, release to pop. SPACE / A to trick. Hold R / Ø to boost from the spray gauge. Ollie over a low scan, roll under a high scan, then land on the lime pad. Hold boost when the Eye’s lens is outlined in lime to jam it.</p>
   <div class="controls" aria-label="Artwork selection">
     <button type="button" id="au" aria-label="Use Fony artwork">Fony Art</button>
     <button type="button" id="placeholder" aria-label="Use placeholder artwork">Placeholder</button>
@@ -48,13 +55,19 @@
 <!-- The assets live ONE folder above demo/, not two. Works under GitHub Pages' project subpath. -->
 <script type="module" src="../dist/grind-the-terms.js"></script>
 <script>
-  for(const event of ['game:ready','game:skin-loaded','game:error','game:start','game:over','game:grind-start','game:grind-end','game:power','game:trick','game:boost']){
+  for(const event of ['game:ready','game:skin-loaded','game:error','game:start','game:over','game:grind-start','game:grind-end','game:power','game:trick','game:boost','game:drone-warn','game:drone-hit','game:drone-jam','game:drone-stomp']){
     document.addEventListener(event,e=>{
       const panel=document.querySelector('#events');
       panel.textContent=(e.type+' '+JSON.stringify(e.detail)+'\n'+panel.textContent).slice(0,2500);
     });
   }
   const game=document.querySelector('grind-the-terms');
+  if(new URLSearchParams(location.search).get('practice')==='drones'){
+    game.setAttribute('practice','drones');
+    game.setAttribute('storage-key','au-arcade-drone-practice');
+    document.querySelector('#street-run').removeAttribute('aria-current');
+    document.querySelector('#drone-practice').setAttribute('aria-current','page');
+  }
   document.querySelector('#au').addEventListener('click',()=>game.setAttribute('skin','../skins/au/skin.json'));
   document.querySelector('#placeholder').addEventListener('click',()=>game.removeAttribute('skin'));
 </script>

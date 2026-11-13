@@ -10,6 +10,11 @@ grind-the-terms{display:block;width:100%;height:100%;aspect-ratio:auto}
 <grind-the-terms layout="portrait" skin="../skins/au/skin.json"><p class="fallback">Loading Grind the Terms…</p></grind-the-terms>
 <script type="module" src="../dist/grind-the-terms.js"></script>
 <script>
+if(new URLSearchParams(location.search).get('practice')==='drones'){
+  const game=document.querySelector('grind-the-terms');
+  game.setAttribute('practice','drones');
+  game.setAttribute('storage-key','au-arcade-drone-practice');
+}
 for(const type of ['game:ready','game:skin-loaded','game:start','game:pause','game:resume','game:over','game:share','game:error'])
   document.addEventListener(type,e=>parent.postMessage({source:'punk-arcade',type,detail:e.detail},location.origin));
 </script>

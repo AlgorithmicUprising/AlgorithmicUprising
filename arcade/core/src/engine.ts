@@ -47,7 +47,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
   private profilePad = new Set<number>();
   private idlePadTimer?: number;
   private storageKey(suffix: string) {
-    const prefix = profile ? this.getAttribute('storage-key') || 'au-arcade' : 'au-arcade';
+    const prefix = this.getAttribute('storage-key') || 'au-arcade';
     return prefix + ':v1:' + tag + ':' + suffix;
   }
   private readStorage() {
@@ -119,7 +119,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
        if (profile.cues[name]) this.playCue(profile.cues[name]);
        this.notify(name, detail);
      } else {
-       if (['game:grind-start','game:grind-end','game:power','game:near-miss','game:bail','game:tag','game:drone-tagged','game:paint-pickup','game:scraped','game:stun','game:player-scan','game:identified','game:police-arrived','game:arrested'].includes(name)) this.playTone(name);
+       if (['game:grind-start','game:grind-end','game:power','game:near-miss','game:bail','game:tag','game:drone-tagged','game:paint-pickup','game:scraped','game:stun','game:player-scan','game:identified','game:police-arrived','game:arrested','game:drone-warn','game:drone-hit','game:drone-jam','game:drone-stomp'].includes(name)) this.playTone(name);
        this.notify(name, { version: this.version, skin: this.getAttribute('skin') || 'placeholder', ...detail });
      }
    }, this);
@@ -325,7 +325,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     const axis = pad?.axes[0] || 0;
     this.game.setMoveAxis?.(this.phase === 'playing' && Math.abs(axis) > 0.16 ? axis : 0, 0);
   }
-  private playTone(event:string){if(this.muted)return;try{this.audio??=new AudioContext();const time=this.audio.currentTime;const osc=this.audio.createOscillator(),gain=this.audio.createGain();const pitches:Record<string,number>={'game:grind-start':610,'game:grind-end':390,'game:power':870,'game:near-miss':720,'game:bail':140,'game:player-scan':960,'game:identified':240,'game:police-arrived':330,'game:arrested':130};const f=pitches[event]||550;osc.type=event==='game:bail'?'sawtooth':'square';osc.frequency.setValueAtTime(f,time);osc.frequency.exponentialRampToValueAtTime(Math.max(65,f*.55),time+.12);gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(.035,time+.01);gain.gain.exponentialRampToValueAtTime(.0001,time+.14);osc.connect(gain);gain.connect(this.audio.destination);osc.start(time);osc.stop(time+.15)}catch{}}
+  private playTone(event:string){if(this.muted)return;try{this.audio??=new AudioContext();const time=this.audio.currentTime;const osc=this.audio.createOscillator(),gain=this.audio.createGain();const pitches:Record<string,number>={'game:grind-start':610,'game:grind-end':390,'game:power':870,'game:near-miss':720,'game:bail':140,'game:player-scan':960,'game:identified':240,'game:police-arrived':330,'game:arrested':130,'game:drone-warn':1090,'game:drone-hit':215,'game:drone-jam':475,'game:drone-stomp':790};const f=pitches[event]||550;osc.type=event==='game:bail'?'sawtooth':'square';osc.frequency.setValueAtTime(f,time);osc.frequency.exponentialRampToValueAtTime(Math.max(65,f*.55),time+.12);gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(.035,time+.01);gain.gain.exponentialRampToValueAtTime(.0001,time+.14);osc.connect(gain);gain.connect(this.audio.destination);osc.start(time);osc.stop(time+.15)}catch{}}
   private pollGamepad(){try{const pad=navigator.getGamepads?.().find(p=>p?.connected);if(profile){this.readProfilePad(pad ?? null);return}if(!pad)return;if(tag==='grind-the-terms'){const keys=['up','trick','boost'];keys.forEach((key,i)=>{const pressed=!!pad.buttons[i]?.pressed;if(pressed!==this.padHeld[i]){this.sendInput(key,'gamepad:'+key,pressed);this.padHeld[i]=pressed}})}else{const pressed=!!pad.buttons[0]?.pressed;if(pressed!==this.padHeld[0]){const key=tag==='tag-before-training'?'spray':'tap';this.sendInput(key,'gamepad:'+key,pressed);this.padHeld[0]=pressed}}if(tag==='tag-before-training'){const x=pad.axes[0]||0,y=pad.axes[1]||0;this.game.input('left',x<-.35);this.game.input('right',x>.35);this.game.input('up',y<-.35);this.game.input('down',y>.35)}}catch{}}
   start() {
     this.releaseHeldInputs(); this.game.start(); this.padHeld = [false,false,false];
