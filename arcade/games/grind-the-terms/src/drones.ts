@@ -25,7 +25,11 @@ export const sprayJamCost = 0.08;
 const eyeRiseTime = 0.28;
 const eyeHoverHeight = 164;
 const eyeStompHeight = 56;
+const eyeStompOffset = 90;
+const eyePadRetractTime = 0.20;
+const eyePadWidth = 46;
 const sprayReach = 112;
+export const eyePadHinge = { x: -22, y: 8 } as const;
 
 export type CookieEye = {
   phase: EyePhase;
@@ -78,8 +82,8 @@ export function moveEye(eye: CookieEye, dt: number, playerX: number, ground: num
       eye.top = mix(eye.entryTop, high, age / eyeScanTime);
       break;
     case 'recover':
-      // The stomp pad reaches Fony's line while the hull stays out of it.
-      eye.x = mix(eye.entryX, playerX + 62, easeOut(age / eyeDipTime));
+      // Keep the leading edge in the board's path and the platform visible ahead of Fony.
+      eye.x = mix(eye.entryX, playerX + eyeStompOffset, easeOut(age / eyeDipTime));
       eye.top = mix(eye.entryTop, ground - eyeStompHeight, easeOut(age / eyeDipTime));
       break;
     case 'depart':
@@ -94,20 +98,27 @@ export function moveEye(eye: CookieEye, dt: number, playerX: number, ground: num
 }
 
 export function eyeHull(eye: CookieEye): Bounds {
-  return { left: eye.x - 25, right: eye.x + 25, top: eye.top, bottom: eye.top + 31 };
+  return { left: eye.x - 29, right: eye.x + 29, top: eye.top + 2, bottom: eye.top + 31 };
 }
 
 export function eyeLens(eye: CookieEye) {
   const aiming = eye.phase === 'warning' || eye.phase === 'scan';
-  return { x: eye.x - 15, y: eye.top + (aiming ? (eye.lane === 'low' ? 20 : 15) : 17) };
+  return { x: eye.x - 13, y: eye.top + (aiming ? (eye.lane === 'low' ? 20 : 15) : 17) };
 }
 
 export function eyePad(eye: CookieEye) {
-  return { left: eye.x - 82, right: eye.x + 4, y: eye.top };
-}
-
-export function eyePadReady(eye: CookieEye) {
-  return eye.phase === 'recover' && eye.age >= eyeDipTime;
+  let extension = 0;
+  if (eye.phase === 'recover') extension = easeOut(eye.age / eyeDipTime);
+  if (eye.phase === 'depart' || (eye.phase === 'disabled' && eye.stomped)) {
+    extension = 1 - easeOut(eye.age / eyePadRetractTime);
+  }
+  const right = eye.x + mix(eyePadHinge.x, -38, extension);
+  return {
+    left: right - eyePadWidth * extension,
+    right,
+    y: eye.top + mix(eyePadHinge.y, 0, extension),
+    ready: eye.phase === 'recover' && eye.age >= eyeDipTime
+  };
 }
 
 export function eyeScan(eye: CookieEye, playerX: number, ground: number): Bounds {

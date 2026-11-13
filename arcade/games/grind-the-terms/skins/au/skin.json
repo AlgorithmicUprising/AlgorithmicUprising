@@ -2,7 +2,7 @@
   "id": "au",
   "game": "grind-the-terms",
   "name": "Algorithmic Uprising — approved punk-comic gameplay art",
-  "version": "0.10.1-fony-split-animation-atlas",
+  "version": "0.11.0-cookie-eye",
   "license": "all-rights-reserved",
   "extends": "fony",
   "render": {
@@ -34,6 +34,7 @@
     "rocketCan": "terms_spray_rocket_v1.webp",
     "acceptObstacle": "terms_accept_obstacle_v4.webp",
     "deliveryDrone": "terms_runner_delivery_drone_v1.webp",
+    "cookieEye": "terms_cookie_eye_v1.webp",
     "skaterActions": "fony_gameplay_atlas_v2.webp"
   },
   "grid": {

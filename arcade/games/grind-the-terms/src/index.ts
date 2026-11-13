@@ -3,11 +3,11 @@ import chunksData from './chunks.json';
 import {
   boundsOverlap, courierBody, courierClosing, courierDeck, courierSpriteTopOffset, courierWidth, createEye,
   enterEyePhase, eyeApproachTime, eyeDepartTime, eyeDisabledTime, eyeEarlyJumpTime,
-  eyeHull, eyeInSprayRange, eyeLens, eyeOllieCueTime, eyePad, eyePadReady, eyeRecoverTime,
+  eyeHull, eyeInSprayRange, eyeLens, eyeOllieCueTime, eyePad, eyeRecoverTime,
   eyeScan, eyeScanTime, eyeWarningTime, moveEye, sprayJamCost, sprayOrigin,
   type Bounds, type CookieEye
 } from './drones';
-import { drawCookieEye, drawCourierDeck, drawEyeCallout, drawScanLane, drawSprayJam, type SprayBurst } from './drones-draw';
+import { drawCookieEye, drawCourierDeck, drawEyeCallout, drawScanLane, drawSprayJam, drawStompCue, type SprayBurst } from './drones-draw';
 
 // Grind the Terms v0.2 preview: mechanics separated from the AU-only skin assets.
 type HazardKind = 'accept' | 'popup' | 'gap' | 'rail' | 'token' | 'drone';
@@ -329,7 +329,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     if(target.phase==='recover'){
       const pad=eyePad(target);
       const abovePad=playerX+14>pad.left&&playerX-14<pad.right;
-      if(eyePadReady(target)&&abovePad&&!support&&vy>=0&&lastBoardY<=pad.y+2&&boardY>=pad.y){
+      if(pad.ready&&abovePad&&!support&&vy>=0&&lastBoardY<=pad.y+2&&boardY>=pad.y){
         target.stomped=true;
         enterEyePhase(target,'disabled');
         eyesStomped++;
@@ -910,7 +910,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     for(const o of objects)drawObstacle(ctx,o);
     if(eye){
       drawScanLane(ctx,eye,playerX,ground);
-      drawCookieEye(ctx,eye,ground,elapsed,reducedMotion,canJamEye(eye));
+      drawCookieEye(ctx,eye,ground,elapsed,reducedMotion,art?.images.cookieEye);
     }
     // This opt-in developer-only visual fixture uses the production renderer.
     // It is not part of gameplay, and is never displayed without the QA attr.
@@ -937,6 +937,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       ctx.fillStyle='#D7FF00';ctx.beginPath();ctx.moveTo(left-2,base-4);ctx.lineTo(left-21*pulse,base);ctx.lineTo(left-2,base+3);ctx.closePath();ctx.fill();
     }
     drawSkater(ctx);
+    if(eye)drawStompCue(ctx,eyePad(eye));
     if(sprayBurst)drawSprayJam(ctx,sprayBurst,reducedMotion);
     if(trickCalloutLeft>0){ctx.fillStyle='#D7FF00';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(trickCallout,playerX,Math.max(84,boardY-74));ctx.textAlign='left'}
     if(grinding){ctx.fillStyle='#E0287A';const y=support?surfaceY(support):railSurfaceY();for(let i=0;i<3;i++)ctx.fillRect(playerX-8-i*7,y-2+(i%2)*3,5,2)}
@@ -971,21 +972,22 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
       if(grinding)ctx.fillText('GRINDING THE FINE PRINT — RELEASE U TO POP!',170,65);
       else ctx.fillText('U / ↑: OLLIE + HOLD GRIND  •  SPACE / A: TRICK  •  HOLD R / Ø: BOOST',12,65);
     }
-    const cueX=portrait?48:14,cueY=portrait?-dy/scale+105:78;
-    if(eye?.phase==='warning'||eye?.phase==='scan'){
+    const hudStatus=scanSlowLeft>0?'SCANNED / SLOWED':eye&&canJamEye(eye)?(portrait?'HOLD Ø TO JAM':'HOLD R TO JAM'):'';
+    if(hudStatus){
+      ctx.fillStyle=scanSlowLeft>0?'#ff76b2':'#d7ff00';
+      ctx.font='bold 10px monospace';
+      ctx.fillText(hudStatus,portrait?202:330,portrait?-dy/scale+51:27);
+    }
+    const cueY=portrait?-dy/scale+105:78;
+    const warningX=portrait?246:399;
+    if(eye?.phase==='warning'||(eye?.phase==='scan'&&!eye.scanHit)){
       const control=eye.lane==='high'?'HIGH SCAN / STAY LOW':
         eye.phase==='scan'||eye.age>=eyeOllieCueTime?'LOW SCAN / OLLIE NOW':'LOW SCAN / GET READY';
-      drawEyeCallout(ctx,cueX,cueY,control,'warning',eye);
-      if(canJamEye(eye))drawEyeCallout(ctx,cueX,cueY+28,portrait?'HOLD Ø TO JAM':'HOLD R TO JAM','open');
+      drawEyeCallout(ctx,warningX,cueY,control,'warning',eye);
     }else if(eye?.phase==='disabled'&&eye.stomped){
-      drawEyeCallout(ctx,cueX,cueY,'COOKIE EYE DISABLED','open');
-    }else if(eye?.phase==='recover'){
-      drawEyeCallout(ctx,cueX,cueY,eye.jammed?'LENS JAMMED / STOMP':'STOMP THE LIME PAD','open');
-      if(scanSlowLeft>0)drawEyeCallout(ctx,cueX,cueY+28,'SCANNED / SLOWED','warning');
-    }else if(scanSlowLeft>0){
-      drawEyeCallout(ctx,cueX,cueY,'SCANNED / SLOWED','warning');
+      drawEyeCallout(ctx,warningX,cueY,'COOKIE EYE DISABLED','open');
     }else if(showCourierHint){
-      drawEyeCallout(ctx,cueX,cueY,'TERMS RUNNER / SKATE UNDER','open');
+      drawEyeCallout(ctx,portrait?48:14,cueY,'TERMS RUNNER / SKATE UNDER','open');
     }
     if(visualFlash>0&&!reducedMotion){ctx.fillStyle='rgba(238,40,122,.12)';ctx.fillRect(0,0,640,360)}
     ctx.restore();
@@ -995,7 +997,7 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     causeLine:({accept:'YOU ACCEPTED EVERYTHING. THEY THANK YOU.',popup:'THE POP-UP WON. AGAIN.',gap:'YOU FELL THROUGH A LOOPHOLE.',drone:'DELIVERY DRONE TOOK THE LINE.','cookie-eye':'THE COOKIE EYE CAUGHT YOUR BOARD.'} as Record<string,string>)[cause]||'READ THE FINE PRINT',
     stats:{distancePx:Math.floor(distance),hazardsCleared,grindMs:Math.floor(grindMs),platformLandings,platformGrinds,combo,longestCombo,comboTimer:Math.round(comboTimer*100)/100,shieldsUsed,runSpeed:Math.round(speed()),normalSpeed:Math.round(normalSpeed()),speedMultiplier:boostActive()?2:1,tricksUsed,trickLimit:trickLimit(),trick2Unlocked,trickAvailable:!support&&!grinding&&lastSurface==='air'&&boardY<ground-1&&tricksUsed<trickLimit(),sprayGauge:Math.round(sprayGauge*10000)/10000,sprayCans:Math.floor(sprayGauge*3+1e-6),boostHeld:boostDown,boostActive:boostActive(),boostExhausted,rocketBoostLeft:Math.round(sprayGauge*boostSeconds*100)/100,grindBoostLeft:Math.round(grindBoostLeft*100)/100,stationaryCleared:{...clearedStationary},stationaryClearCount:stationaryClearCount(),deliveryUnlocked,deliveryDrones:objects.filter(o=>o.kind==='drone').length,shieldDeflections,boardY:Math.round(boardY),jumpCount,grinding,supportX:support?.x??null,supportWidth:support?.w??null,supportTop:support?surfaceY(support):null,
       scansHit,eyesJammed,eyesStomped,scanSlowLeft:Math.round(scanSlowLeft*100)/100,
-      eye:eye?{phase:eye.phase,lane:eye.lane,age:eye.age,padReady:eyePadReady(eye),canJam:canJamEye(eye)}:null
+      eye:eye?{phase:eye.phase,lane:eye.lane,age:eye.age,padReady:eyePad(eye).ready,canJam:canJamEye(eye)}:null
     }
   });
   const releaseInput=()=>{trickDown=false;boostDown=false;boostExhausted=false;if(grinding)railPop();held=false;};

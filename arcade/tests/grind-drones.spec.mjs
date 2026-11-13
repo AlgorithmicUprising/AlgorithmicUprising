@@ -87,6 +87,61 @@ test('the high courier is safe to skate under and a low scan slows once', async 
   expect(result.over).toBe(false);
 });
 
+test('the Cookie Eye only lights and labels the stomp pad once it locks', async ({ page }) => {
+  const game = await openPractice(page);
+  const frames = await game.evaluate(el => {
+    const g = el.game;
+    const screen = el.shadowRoot.querySelector('canvas');
+    const canvas = document.createElement('canvas');
+    canvas.width = screen.width;
+    canvas.height = screen.height;
+    const ctx = canvas.getContext('2d');
+    const drawImage = ctx.drawImage.bind(ctx);
+    const fillRect = ctx.fillRect.bind(ctx);
+    const fillText = ctx.fillText.bind(ctx);
+    const frames = {};
+    let frame;
+    ctx.drawImage = (asset, ...args) => {
+      if (asset.src?.endsWith('terms_cookie_eye_v1.webp')) frame.sprite = args;
+      return drawImage(asset, ...args);
+    };
+    ctx.fillRect = (x, y, width, height) => {
+      if (height === 4 && ['#ad9a77', '#d7ff00'].includes(ctx.fillStyle)) {
+        frame.pad = { x, y, width, lit: ctx.fillStyle === '#d7ff00' };
+      }
+      return fillRect(x, y, width, height);
+    };
+    ctx.fillText = (label, x, y) => {
+      if (label === 'STOMP' || label === 'SCANNED / SLOWED') frame.labels.push({ label, y });
+      return fillText(label, x, y);
+    };
+    g.start();
+    for (let i = 0; i < 1600 && !g.over() && !frames.retracting; i++) {
+      g.update(1 / 120);
+      const eye = g.result().stats.eye;
+      if (!eye) continue;
+      const phase = eye.phase === 'recover' ? (eye.padReady ? 'locked' : eye.age > .04 ? 'opening' : '') :
+        eye.phase === 'depart' && eye.age > .08 ? 'retracting' : eye.phase === 'warning' ? 'warning' : '';
+      if (!phase || frames[phase]) continue;
+      frame = { labels: [] };
+      g.draw(ctx, canvas.width, canvas.height);
+      frames[phase] = frame;
+    }
+    return frames;
+  });
+  expect(frames.warning.sprite).toBeDefined();
+  expect(frames.warning.pad).toBeUndefined();
+  expect(frames.opening.pad.lit).toBe(false);
+  expect(frames.locked.pad).toMatchObject({ lit: true, y: 0 });
+  expect(frames.locked.pad.width).toBeGreaterThan(frames.opening.pad.width);
+  expect(frames.retracting.pad.lit).toBe(false);
+  expect(frames.retracting.pad.width).toBeLessThan(frames.locked.pad.width);
+  expect(frames.opening.labels.map(row => row.label)).toEqual(['SCANNED / SLOWED']);
+  expect(frames.locked.labels.map(row => row.label)).toEqual(['STOMP', 'SCANNED / SLOWED']);
+  expect(frames.locked.labels[1].y).toBeLessThan(frames.locked.labels[0].y);
+  expect(frames.retracting.labels).toEqual([]);
+});
+
 test('two early dodges teach the next Eye to scan high', async ({ page }) => {
   const game = await openPractice(page);
   const result = await game.evaluate(el => {

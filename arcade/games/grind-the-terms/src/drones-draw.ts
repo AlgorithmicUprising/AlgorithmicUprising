@@ -1,5 +1,5 @@
 import {
-  courierDeck, eyeDipTime, eyeDisabledTime, eyeLens, eyePad, eyePadReady, eyeScan,
+  courierDeck, eyeDisabledTime, eyeLens, eyePad, eyePadHinge, eyeScan,
   eyeWarningTime, type CookieEye
 } from './drones';
 
@@ -74,104 +74,140 @@ export function drawScanLane(ctx: CanvasRenderingContext2D, eye: CookieEye, play
   ctx.restore();
 }
 
-export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, ground: number, elapsed: number, reducedMotion: boolean, jamInRange: boolean) {
-  const {x, top, phase, age, jammed} = eye;
-  const disabled = phase === 'disabled';
-  const alpha = disabled ? Math.max(0, 1 - age / eyeDisabledTime) : 1;
-  const brightLens = phase === 'warning' || phase === 'scan';
-  const irisY = eyeLens(eye).y - top;
-  ctx.save();
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  ctx.globalAlpha *= alpha;
-  ctx.fillStyle = 'rgba(15,9,17,.33)';
-  ctx.beginPath();
-  ctx.ellipse(x, ground - 1, 28, 4, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.translate(x, top);
-  if (disabled && !reducedMotion) ctx.rotate(.23 + age * .7);
+function drawEyeFallback(ctx: CanvasRenderingContext2D) {
   ctx.strokeStyle = ink;
   ctx.lineWidth = 6;
   ctx.beginPath();
-  ctx.moveTo(-20, 10);ctx.lineTo(-32, -2);ctx.lineTo(-32, -8);
-  ctx.moveTo(21, 10);ctx.lineTo(31, -3);ctx.lineTo(31, -8);
+  ctx.moveTo(-20, 10);ctx.lineTo(-34, 1);ctx.lineTo(-34, -5);
+  ctx.moveTo(20, 10);ctx.lineTo(34, 1);ctx.lineTo(34, -5);
   ctx.stroke();
-  const rotorFrame = reducedMotion || disabled ? 0 : Math.floor(elapsed * 18) % 4;
-  const blades = [19, 14, 9, 14];
-  for (const [i, rotorX] of [-32, 31].entries()) {
-    ctx.fillStyle = ink;
-    ctx.beginPath();ctx.ellipse(rotorX, -8, blades[(rotorFrame + i) % 4], 4, 0, 0, Math.PI * 2);ctx.fill();
-    ctx.strokeStyle = paper;
-    ctx.lineWidth = 1;
+  for (const rotorX of [-34, 34]) {
+    ctx.fillStyle = gunmetal;
+    ctx.beginPath();ctx.ellipse(rotorX, -5, 19, 3.5, 0, 0, Math.PI * 2);ctx.fill();
+    ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.fillStyle = disabled ? '#8e795b' : pink;
-    ctx.fillRect(rotorX - 5, -8, 10, 3);
+    ctx.fillStyle = pink;
+    ctx.fillRect(rotorX - 5, -1, 10, 4);
   }
-
   ctx.fillStyle = '#b7a686';
-  ctx.strokeStyle = ink;
   ctx.lineWidth = 3;
-  ctx.beginPath();ctx.roundRect(-24, 1, 48, 29, [8, 6, 10, 9]);ctx.fill();ctx.stroke();
-  ctx.fillStyle = paper;
-  ctx.fillRect(-9, 4, 24, 5);
+  ctx.beginPath();ctx.roundRect(-29, 3, 58, 27, [8, 6, 10, 9]);ctx.fill();ctx.stroke();
   ctx.fillStyle = gunmetal;
-  ctx.fillRect(-1, 13, 22, 12);
-  ctx.fillStyle = '#241922';
-  for (let vent = 2; vent < 20; vent += 5) ctx.fillRect(vent, 15, 2, 7);
+  ctx.fillRect(2, 13, 20, 12);
+  ctx.fillStyle = ink;
+  for (let vent = 5; vent < 20; vent += 5) ctx.fillRect(vent, 15, 2, 7);
+  ctx.beginPath();ctx.arc(-13, 18.5, 9, 0, Math.PI * 2);ctx.fill();
   ctx.fillStyle = pink;
-  ctx.fillRect(14, 5, 7, 4);
+  ctx.beginPath();ctx.arc(-13, 18.5, 5.5, 0, Math.PI * 2);ctx.fill();
+  ctx.fillStyle = ink;
+  ctx.beginPath();ctx.arc(-13, 18.5, 2.5, 0, Math.PI * 2);ctx.fill();
+  ctx.fillStyle = paper;
+  ctx.fillRect(-12, 15, 2, 2);
+}
 
-  // The pad telescopes out of the bracket bolted to the top of the hull.
-  if (phase === 'recover') {
-    const pad = eyePad(eye);
-    const right = pad.right - x;
-    const width = (pad.right - pad.left) * Math.min(1, age / eyeDipTime);
-    const left = right - width;
+function drawEyePad(ctx: CanvasRenderingContext2D, eye: CookieEye) {
+  const pad = eyePad(eye);
+  const left = pad.left - eye.x, right = pad.right - eye.x, y = pad.y - eye.top;
+  const width = right - left;
+  const hinge = eyePadHinge;
+  if (width > 0) {
+    const elbowX = (right + hinge.x) / 2;
+    const elbowY = y + 12;
+    ctx.beginPath();
+    ctx.moveTo(hinge.x, hinge.y);ctx.lineTo(elbowX, elbowY);ctx.lineTo(right - 3, y + 5);
+    ctx.strokeStyle = ink;ctx.lineWidth = 10;ctx.stroke();
+    ctx.strokeStyle = '#85707b';ctx.lineWidth = 6;ctx.stroke();
+    ctx.fillStyle = paper;
+    ctx.fillRect(elbowX - 1, elbowY - 1, 2, 2);
+
+    // The painted edge and board contact share pad.y when the arm locks.
     ctx.fillStyle = ink;
     ctx.beginPath();
-    ctx.moveTo(left, 0);ctx.lineTo(right, 0);ctx.lineTo(right, 15);
-    ctx.lineTo(left, 8);ctx.closePath();ctx.fill();
-    ctx.fillStyle = gunmetal;
-    ctx.fillRect(left, 4, width, 3);
-    ctx.fillStyle = eyePadReady(eye) ? lime : '#a5a779';
-    ctx.fillRect(left, 0, width, 4);
-    ctx.fillStyle = '#eff5a8';
-    if (width > 8) ctx.fillRect(left + 4, 1, width - 8, 1);
-    ctx.fillStyle = '#97854a';
-    for (let notch = left + 7; notch < right - 10; notch += 10) ctx.fillRect(notch, 5, 3, 2);
-  }
-  ctx.fillStyle = ink;
-  ctx.fillRect(-10, 4, 21, 9);
-  ctx.fillStyle = gunmetal;
-  ctx.fillRect(-8, 6, 17, 5);
-  ctx.fillStyle = paper;
-  ctx.fillRect(-6, 7, 2, 2);
-  ctx.fillRect(5, 7, 2, 2);
-
-  ctx.fillStyle = ink;
-  ctx.beginPath();ctx.ellipse(-15, 17, 11, 10, 0, 0, Math.PI * 2);ctx.fill();
-  ctx.fillStyle = disabled ? '#6f6874' : jammed ? lime : brightLens ? pink : '#8b3b71';
-  ctx.beginPath();ctx.ellipse(-16, irisY, brightLens ? 7.5 : 6.5, 6.5, 0, 0, Math.PI * 2);ctx.fill();
-  if (!disabled && !jammed) {
-    ctx.fillStyle = paper;
-    ctx.fillRect(-19, irisY - 4, 3, 3);
-    if (jamInRange) {
-      ctx.strokeStyle = lime;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();ctx.arc(-16, irisY, 12, 0, Math.PI * 2);ctx.stroke();
+    ctx.moveTo(left, y);ctx.lineTo(right, y);ctx.lineTo(right, y + 9);
+    ctx.lineTo(left + Math.min(4, width), y + 9);ctx.lineTo(left, y + 5);
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle = pad.ready ? lime : '#ad9a77';
+    ctx.fillRect(left, y, width, 4);
+    if (width > 10) {
+      ctx.fillStyle = pad.ready ? '#f2ffac' : paper;
+      ctx.fillRect(left + 3, y + 1, width - 6, 1);
+      ctx.fillStyle = '#85707b';
+      for (let bolt = left + 6; bolt < right - 4; bolt += 10) ctx.fillRect(bolt, y + 5, 3, 2);
     }
   }
-  if (jammed) {
-    ctx.fillStyle = lime;
-    ctx.fillRect(-23, 17, 12, 4);ctx.fillRect(-18, 19, 3, 8);ctx.fillRect(-24, 13, 4, 4);
+
+  // The hub stays on the hull while the arm articulates.
+  ctx.fillStyle = ink;
+  ctx.beginPath();ctx.arc(hinge.x, hinge.y, 5.5, 0, Math.PI * 2);ctx.fill();
+  ctx.fillStyle = '#b7a486';
+  ctx.beginPath();ctx.arc(hinge.x, hinge.y, 3.5, 0, Math.PI * 2);ctx.fill();
+  ctx.fillStyle = gunmetal;
+  ctx.fillRect(hinge.x - 2, hinge.y - .6, 4, 1.2);
+}
+
+export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, ground: number, elapsed: number, reducedMotion: boolean, sprite?: HTMLImageElement) {
+  const {x, top, phase, age, jammed} = eye;
+  const disabled = phase === 'disabled';
+  const aiming = phase === 'warning' || phase === 'scan';
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  if (disabled) ctx.globalAlpha *= Math.max(0, 1 - age / eyeDisabledTime);
+  ctx.fillStyle = 'rgba(15,9,17,.33)';
+  ctx.beginPath();ctx.ellipse(x, ground - 1, 28, 4, 0, 0, Math.PI * 2);ctx.fill();
+
+  ctx.translate(x, top);
+  if (disabled && !reducedMotion) ctx.rotate(age * 1.5);
+  if (sprite) ctx.drawImage(sprite, -54, -11, 108, 42.75);
+  else drawEyeFallback(ctx);
+
+  if (!disabled && !reducedMotion) {
+    ctx.strokeStyle = 'rgba(243,230,204,.45)';
+    ctx.lineWidth = .8;
+    for (const rotor of [-34, 34]) {
+      const spin = Math.sin(elapsed * 38 + rotor) * 11;
+      ctx.beginPath();ctx.moveTo(rotor + spin - 4, -5.5);ctx.lineTo(rotor + spin + 5, -5);ctx.stroke();
+    }
   }
+  if (aiming) {
+    const irisY = eyeLens(eye).y - top;
+    ctx.strokeStyle = phase === 'scan' ? paper : pink;
+    ctx.lineWidth = phase === 'scan' ? 2 : 1.4;
+    const sweep = phase === 'scan' ? 1 : Math.min(1, age / eyeWarningTime);
+    ctx.beginPath();ctx.arc(-13, 18.5, 8, -Math.PI / 2, -Math.PI / 2 + sweep * Math.PI * 2);ctx.stroke();
+    ctx.fillStyle = paper;
+    ctx.fillRect(-14.5, irisY - 1, 3, 2);
+  }
+  if (disabled) {
+    ctx.fillStyle = '#342c37';
+    ctx.beginPath();ctx.ellipse(-13, 18.5, 5.6, 5.2, 0, 0, Math.PI * 2);ctx.fill();
+  }
+  if (jammed && !disabled) {
+    ctx.fillStyle = lime;
+    ctx.fillRect(-20, 17, 11, 3);ctx.fillRect(-17, 18, 3, 6);ctx.fillRect(-21, 13, 3, 3);
+  }
+  drawEyePad(ctx, eye);
   if (disabled && eye.stomped && !reducedMotion) {
     for (let i = 0; i < 5; i++) {
       ctx.fillStyle = i % 2 ? paper : lime;
       ctx.fillRect(-22 - age * (24 + i * 12), -age * (15 + i * 13) + i * 2, 4, 3);
     }
   }
+  ctx.restore();
+}
+
+export function drawStompCue(ctx: CanvasRenderingContext2D, pad: ReturnType<typeof eyePad>) {
+  if (!pad.ready) return;
+  const x = pad.right - 10, y = pad.y + 15;
+  ctx.save();
+  ctx.fillStyle = ink;
+  ctx.fillRect(x - 24.5, y, 49, 17);
+  ctx.fillStyle = lime;
+  ctx.beginPath();ctx.moveTo(x - 3, y);ctx.lineTo(x, y - 4);ctx.lineTo(x + 3, y);ctx.fill();
+  ctx.font = '900 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('STOMP', x, y + 8.5);
   ctx.restore();
 }
 

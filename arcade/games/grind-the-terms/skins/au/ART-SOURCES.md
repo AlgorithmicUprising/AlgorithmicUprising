@@ -43,6 +43,11 @@ The skin is all rights reserved. Keep it under `skins/au/`; do not copy these as
 - The renderer bolts a flat lime deck to the sprite. Its top is the board contact surface and the hull and cargo hitboxes sit below it. Phase 2 uses alternating high and mid-height couriers with a subtle ±3-unit hover motion.
 - The packaged artwork stays under `skins/au/`; it is not copied into the open Fony skin.
 
+## Cookie Eye security drone
+
+- `terms_cookie_eye_v1.webp` is a transparent 384 × 152 px sprite generated from the Terms Runner's inked style and the original Cookie Eye silhouette. Its neutral rotor and hull trim reserve lime for the deployable stomp pad and spray effects.
+- Rotor motion, scan charge, paint splatter, the hinged pad and the falling shutdown pose are drawn over the same anchored hull. The pad's leading edge, landing height and ready cue come from the same recovery geometry.
+
 
 ## Fony animation atlas v2
 
