@@ -1,4 +1,4 @@
-# Grind the Terms · Fony Sprock (v0.10 · held boost + courier combo)
+# Grind the Terms · Fony Sprock
 
 > Nobody reads them. Skate them.
 
@@ -8,11 +8,14 @@ The side-scrolling runner for Punk Arcade's CH 05. The `arcade` branch uses the 
 
 | Move | Desktop | Zero Game Thing tablet / touch | Gamepad |
 | --- | --- | --- | --- |
+| Steer on the ground or in the air | ← / → | Left-thumb rocker | D-pad or left stick |
 | Ollie / hold to grind | ↑ / W / U | Hold U | A |
 | Pop off a grind | Release ↑ / W / U | Release U | Release A |
 | Trick | SPACE or A | A button | B |
 | Spray boost | Hold R | Hold Ø | Hold X |
 | Pause / resume | P / Esc or pause button | Pause / Resume buttons | — |
+
+**Steering.** Hold either direction to shift Fony across the screen. Let go to keep that position. Street obstacles are laid out for a straight run, and the spray gauge still controls boost speed.
 
 **Grind:** Press U / ↑ / W for one ollie. Hold it as Fony descends to catch a rail, obstacle top, or delivery-drone deck; release to pop. Both feet stay on the board while grinding.
 
@@ -20,7 +23,11 @@ The side-scrolling runner for Punk Arcade's CH 05. The `arcade` branch uses the 
 
 **Tricks and combo:** A successful jump starts a chain at x1. Each successful trick, grind attach, and controlled grind pop advances it once. The action's points use the new xN multiplier; simply passing a hazard does not increase the chain. A chain expires after 1.5 seconds without an action, stays alive during a grind, and banks/reset on landing on the sidewalk or bailing. The 80-clause trick token unlocks a second trick per airtime; it stays unlocked for the run. A successful delivery-drone grind and pop resets the used-trick count to the full unlocked allowance without breaking the combo. For example, after the upgrade: **Jump x1 → Trick x2 → Trick x3 → Grind x4 → Drone pop x5 → Trick x6 → Trick x7.** Stationary rails extend the chain but do not refresh tricks.
 
-**Delivery drones:** Drones enter the route only after Fony has safely cleared each stationary family in the current run: rail, ACCEPT, Consent barrier, and gap. The first arrives beyond the next chunk boundary, without a hazard stacked beside it. Each courier carries a separate glowing coin that can be collected by passing through it. Its top deck is a moving grind lane; a side impact uses the usual obstacle response. Once introduced, couriers recur at spaced intervals.
+**Terms Runner:** Drones enter the street run after Fony clears a rail, ACCEPT, Consent, and a gap. The first courier passes high enough to skate underneath, with a coin trail on the sidewalk. Its lime deck is still a moving grind surface. A hit against the visible hull or parcel uses the usual bail and shield rules.
+
+**Cookie Eye.** Stay on the sidewalk as the Eye approaches to bait a low scan. Ollie at the cue and steer onto the lime roof. An airborne approach can draw a high scan, and the Eye also adapts after two consecutive early dodges. Stay low through the high scan, then ollie, use a trick to get above the roof, and steer onto it on the descent. The Eye commits to its lane and position when the warning starts. Spray can jam its lens for 8% of a full gauge in addition to the normal boost drain. A hit from the scan breaks the combo and slows Fony for 1.15 seconds. Stomping a vulnerable roof disables the Eye, bounces Fony, and refreshes his unlocked tricks.
+
+The standalone demo and portrait embed accept `?practice=drones` for a quick courier pass and repeatable Cookie Eye encounters. Practice starts with one spray segment and has its own local best score.
 
 **Coins and upgrades:** Ground pickups can be collected by rolling through them. Other coins and powerups sit in jump arcs, and a few align with obstacle tops to reward deliberate platform landings. Coins add 10 points. The 80-clause trick token adds the second trick. Spray-can pickups add one gauge segment.
 

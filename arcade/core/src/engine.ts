@@ -23,6 +23,34 @@ const tagControlsStyle=`
 @media(pointer:coarse) and (orientation:landscape){:host{aspect-ratio:16/9!important;grid-template-rows:minmax(0,1fr) calc(100px + env(safe-area-inset-bottom))}.tag-stick{height:90px;width:150px}.tag-stick-art{height:82px;width:82px}.tag-knob{width:32px;height:32px}.tag-controls .tag-dir{height:40px;min-height:40px;width:40px;min-width:40px!important}.tag-dir[data-key=left]{top:26px;left:10px}.tag-dir[data-key=right]{top:26px;right:10px}.tag-dir[data-key=up]{left:55px;top:-4px}.tag-dir[data-key=down]{left:55px;bottom:-4px}.tag-controls .tag-spray{width:85px;height:85px;min-width:85px!important}.overlay{gap:4px}:host([data-art-ready]) .overlay[data-phase=title] h2{height:52px}.overlay p{font-size:10px}.overlay button{min-height:32px;padding:4px}}
 `;
 const grindArtStyle=':host([data-au-art-ready]) .overlay[data-phase=title]{background-image:linear-gradient(0deg,rgba(12,8,16,.88),rgba(12,8,16,.24) 48%,rgba(12,8,16,.16)),var(--grind-title-art);background-position:center 48%;background-size:cover;background-repeat:no-repeat;border:2px solid #d7ff00}:host([data-au-art-ready]) .overlay[data-phase=over]{background-image:linear-gradient(0deg,rgba(12,8,16,.88),rgba(12,8,16,.38) 55%,rgba(12,8,16,.22)),var(--grind-over-art);background-position:center 68%;background-size:cover;background-repeat:no-repeat;border:2px solid #e0287a}:host([data-au-art-ready]) .deck{background-color:#1a111c;background-image:var(--grind-deck-art);background-position:center;background-size:100% 100%;background-repeat:no-repeat;border-top-color:#e0287a}:host([data-au-art-ready]) .deck .right-zone{justify-content:space-evenly;gap:0}:host([data-au-art-ready]) .deck .zero-zone{transform:translateY(32px)}:host([data-au-art-ready]) .deck .labeled{transform:translateY(36px)}:host([data-au-art-ready]) .deck .trick,:host([data-au-art-ready]) .deck .jump{align-self:center;margin:0}';
+const grindTabletStyle = `
+@media (pointer:coarse) {
+ :host([layout=portrait]){display:grid!important;grid-template-rows:minmax(0,65fr) minmax(0,35fr);width:100%;height:100%!important;min-height:0!important;contain:layout style;overflow:hidden!important}
+ :host([layout=portrait]) .screen{height:100%;min-height:0;min-width:0}
+ :host([layout=portrait]) .deck{display:grid}
+ .deck{position:relative}
+ .deck .zero-zone,:host([data-au-art-ready]) .deck .zero-zone{position:absolute;left:23.5%;top:50%;transform:translate(-50%,calc(-50% - 13px));gap:4px}
+ .deck .zero{box-sizing:border-box;width:clamp(64px,23vw,102px);height:clamp(64px,23vw,102px);min-width:44px;padding:5px}
+ .deck .right-zone{grid-column:2}
+ .deck .steer{position:absolute;z-index:1;left:23.5%;bottom:max(6px,env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content}
+ .deck .steer-buttons{display:flex;border:2px solid #b8aea3;border-radius:26px;overflow:hidden;background:#121017;box-shadow:0 4px 0 #09070d}
+ .deck .steer button{border:0;border-radius:0;min-width:44px;min-height:44px;padding:0 7px;color:#e7efbf;font-size:22px;background:linear-gradient(#38343f,#181521);box-shadow:none;touch-action:none}
+ .deck .steer button+button{border-left:1px solid #8c8187}
+ .deck .steer button[data-held]{color:#16121b;background:#d7ff00;transform:none}
+ .deck .steer button:focus-visible{outline-offset:-4px}
+}
+@media (pointer:coarse) and (min-width:601px) {
+ :host([layout=portrait]) .deck{position:relative;grid-template-columns:minmax(0,42fr) minmax(0,58fr);align-items:center;min-height:0;gap:0;padding:10px 14px;box-sizing:border-box;touch-action:none;border-top:4px solid #d7ff00}
+ :host([layout=portrait]) .deck .zero-zone,:host([layout=portrait]) .deck .labeled{display:flex;flex-direction:column;align-items:center;gap:4px}
+ :host([layout=portrait]) .deck .right-zone{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;min-width:0}
+ :host([layout=portrait]) .deck .zero,:host([layout=portrait]) .deck .right-zone button{box-sizing:border-box;display:grid;place-items:center;border-radius:50%;width:76px;height:76px;min-width:44px;padding:0;font:bold 32px monospace;touch-action:none}
+ :host([layout=portrait]) .deck .zero{width:98px;height:98px;background:#282435;border-color:#9b979e}
+ :host([layout=portrait]) .deck .zero svg{width:72%;height:72%}
+ :host([layout=portrait]) .deck .trick{background:#f756a4;border-color:#ffd0e8}
+ :host([layout=portrait]) .deck .jump{background:#c6fa42;border-color:#f1ffc0}
+ :host([layout=portrait]) .deck .caption{color:#f5e8f0;font:700 9px monospace;text-align:center;white-space:nowrap}
+}
+`;
 export function defineArcade(tag:string,label:string,create:(emit:(name:string,detail?:Record<string,unknown>)=>void,host:HTMLElement)=>GameAPI,profile?:CartridgeProfile){
  if(customElements.get(tag))return;
  class ArcadeElement extends HTMLElement{
@@ -47,7 +75,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
   private profilePad = new Set<number>();
   private idlePadTimer?: number;
   private storageKey(suffix: string) {
-    const prefix = profile ? this.getAttribute('storage-key') || 'au-arcade' : 'au-arcade';
+    const prefix = this.getAttribute('storage-key') || 'au-arcade';
     return prefix + ':v1:' + tag + ':' + suffix;
   }
   private readStorage() {
@@ -84,6 +112,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     return this.skinPending;
   }
   private canvas!:HTMLCanvasElement;private ctx!:CanvasRenderingContext2D;private game!:GameAPI;private frame=0;private last=0;private active=false;private paused=false;private live!:HTMLElement;private startButton!:HTMLButtonElement;private controls!:HTMLElement;private observer?:IntersectionObserver;private mutedValue=true;private resizeObserver?:ResizeObserver;private phase:'title'|'playing'|'paused'|'over'='title';private bestScore=0;private runStartedAt=0;private audio?:AudioContext;private padHeld:boolean[]=[false,false,false];private inputSources=new Map<string,Set<string>>();
+  private clearGrindPointers?:()=>void;
   connectedCallback(){
    this.tabIndex=0;
    this.lifetime = new AbortController();
@@ -108,7 +137,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
 .deck .right-zone .labeled{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;max-width:100%}
 .deck .note{font-size:9px;color:#a8a3b0;text-align:center}
 }
-@media(pointer:fine){.controls{display:none}}@media(max-width:600px){.top{top:3px;right:3px;gap:3px}.top button{font-size:10px;padding:5px 6px;min-width:44px;min-height:40px}.overlay{font-size:12px;padding:4px;gap:3px;place-content:center;grid-template-columns:minmax(0,1fr);justify-items:center;box-sizing:border-box;overflow:hidden}.overlay h2{font-size:14px;margin:1px}.overlay p{font-size:11px;line-height:1.25;margin:1px;max-width:290px;overflow-wrap:anywhere;text-align:center}.overlay button{font-size:11px;min-height:32px;min-width:110px;width:150px;max-width:80%;padding:5px 8px}}${tag==='tag-before-training'?tagControlsStyle:''}${tag==='grind-the-terms'?grindArtStyle:''}</style><div class="screen"><canvas role="img" aria-label="${label} game"></canvas><div class="top"><button part="sound" aria-label="Toggle sound">SOUND OFF</button><button part="pause" aria-label="Pause">Ⅱ</button></div>${tag==='tag-before-training'?'':'<div class="controls"></div>'}<div class="overlay" data-phase="title"><h2>${label}</h2><p>${tag==='grind-the-terms'?'PRESS U / ↑ TO START':'PRESS SPACE / TAP TO START'}</p>${tag==='tag-before-training'?'<p>10s without fresh art: drones hunt you. Escape their scan or tag the police.</p>':''}<button part="start">START</button></div></div>${tag==='grind-the-terms'?'<div class="deck" part="mobile-controls" aria-label="Zero Algorithmic Uprising arcade controls"><div class="zero-zone"><button type="button" class="zero" data-key="boost" aria-label="Ø, hold spray boost"><svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="49" cy="50" rx="29" ry="39" fill="none" stroke="#d7ff00" stroke-width="12"/><path d="M54 4 L32 51 H49 L39 91 L76 41 H57 L70 4 Z" fill="#e0287a" stroke="#100b17" stroke-width="3"/></svg></button><span class="caption">Ø / BOOST</span><span class="note">GRIND + TRICKS FILL</span></div><div class="right-zone"><div class="labeled"><button type="button" class="letter trick" data-key="trick" aria-label="A, perform a trick">A</button><span class="caption">TRICK</span></div><div class="labeled"><button type="button" class="letter jump" data-key="jump" aria-label="U, jump and hold to grind">U</button><span class="caption">JUMP / GRIND</span></div></div></div>':tag==='tag-before-training'?'<div class="tag-deck" part="mobile-controls"><div class="controls tag-controls" aria-label="Skate and spray controls"></div></div>':''}<span aria-live="polite" style="position:absolute;left:-9999px" class="live"></span>`;
+@media(pointer:fine){.controls{display:none}}@media(max-width:600px){.top{top:3px;right:3px;gap:3px}.top button{font-size:10px;padding:5px 6px;min-width:44px;min-height:40px}.overlay{font-size:12px;padding:4px;gap:3px;place-content:center;grid-template-columns:minmax(0,1fr);justify-items:center;box-sizing:border-box;overflow:hidden}.overlay h2{font-size:14px;margin:1px}.overlay p{font-size:11px;line-height:1.25;margin:1px;max-width:290px;overflow-wrap:anywhere;text-align:center}.overlay button{font-size:11px;min-height:32px;min-width:110px;width:150px;max-width:80%;padding:5px 8px}}${tag==='tag-before-training'?tagControlsStyle:''}${tag==='grind-the-terms'?grindArtStyle+grindTabletStyle:''}</style><div class="screen"><canvas role="img" aria-label="${label} game"></canvas><div class="top"><button part="sound" aria-label="Toggle sound">SOUND OFF</button><button part="pause" aria-label="Pause">Ⅱ</button></div>${tag==='tag-before-training'?'':'<div class="controls"></div>'}<div class="overlay" data-phase="title"><h2>${label}</h2><p>${tag==='grind-the-terms'?'PRESS U / ↑ TO START':'PRESS SPACE / TAP TO START'}</p>${tag==='tag-before-training'?'<p>10s without fresh art: drones hunt you. Escape their scan or tag the police.</p>':''}<button part="start">START</button></div></div>${tag==='grind-the-terms'?'<div class="deck" part="mobile-controls" aria-label="Zero Algorithmic Uprising arcade controls"><div class="zero-zone"><button type="button" class="zero" data-key="boost" aria-label="Ø, hold spray boost"><svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="49" cy="50" rx="29" ry="39" fill="none" stroke="#d7ff00" stroke-width="12"/><path d="M54 4 L32 51 H49 L39 91 L76 41 H57 L70 4 Z" fill="#e0287a" stroke="#100b17" stroke-width="3"/></svg></button><span class="caption">Ø / BOOST</span></div><div class="steer" role="group" aria-label="Steer"><div class="steer-buttons"><button type="button" data-key="left" aria-label="Steer left">◀</button><button type="button" data-key="right" aria-label="Steer right">▶</button></div></div><div class="right-zone"><div class="labeled"><button type="button" class="letter trick" data-key="trick" aria-label="A, perform a trick">A</button><span class="caption">TRICK</span></div><div class="labeled"><button type="button" class="letter jump" data-key="jump" aria-label="U, jump and hold to grind">U</button><span class="caption">JUMP / GRIND</span></div></div></div>':tag==='tag-before-training'?'<div class="tag-deck" part="mobile-controls"><div class="controls tag-controls" aria-label="Skate and spray controls"></div></div>':''}<span aria-live="polite" style="position:absolute;left:-9999px" class="live"></span>`;
    this.canvas=root.querySelector('canvas')!;this.ctx=this.canvas.getContext('2d')!;this.live=root.querySelector('.live')!;this.controls=root.querySelector('.controls')!;this.startButton=root.querySelector('[part=start]')!;
    this.readStorage();
    this.game = create((name, detail = {}) => {
@@ -119,7 +148,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
        if (profile.cues[name]) this.playCue(profile.cues[name]);
        this.notify(name, detail);
      } else {
-       if (['game:grind-start','game:grind-end','game:power','game:near-miss','game:bail','game:tag','game:drone-tagged','game:paint-pickup','game:scraped','game:stun','game:player-scan','game:identified','game:police-arrived','game:arrested'].includes(name)) this.playTone(name);
+       if (['game:grind-start','game:grind-end','game:power','game:near-miss','game:bail','game:tag','game:drone-tagged','game:paint-pickup','game:scraped','game:stun','game:player-scan','game:identified','game:police-arrived','game:arrested','game:drone-warn','game:drone-hit','game:drone-jam','game:drone-stomp'].includes(name)) this.playTone(name);
        this.notify(name, { version: this.version, skin: this.getAttribute('skin') || 'placeholder', ...detail });
      }
    }, this);
@@ -129,6 +158,10 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
    root.querySelector('[part=pause]')!.addEventListener('click', () => this.paused ? this.resume() : this.pause());
    root.querySelector('[part=sound]')!.addEventListener('click', () => this.setSound(!this.muted));
    this.addEventListener('keydown', this.onKey); this.addEventListener('keyup', this.onUp);
+   if (tag==='grind-the-terms') this.addEventListener('focusout',event=>{
+    const next=event.relatedTarget;
+    if (!(next instanceof Node) || (next!==this&&!root.contains(next))) this.releaseHeldInputs();
+   },{signal:this.lifetime.signal});
    if (profile) {
      this.bindProfile(root);
    } else {
@@ -152,20 +185,41 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     const trick=root.querySelector('[data-key=trick]') as HTMLButtonElement|null;
     const jump=root.querySelector('[data-key=jump]') as HTMLButtonElement|null;
     const boost=root.querySelector('[data-key=boost]') as HTMLButtonElement|null;
+    const pointerSets:Array<Set<number>|Map<number,number>>=[];
+    this.clearGrindPointers=()=>{for(const pointers of pointerSets)pointers.clear()};
     const bindHold=(button:HTMLButtonElement|null,key:string)=>{
-     const pointers=new Set<number>();
-     button?.addEventListener('pointerdown',event=>{
+     if(!button)return;
+     const steering=key==='left'||key==='right';
+     const pointers=new Map<number,number>();
+     pointerSets.push(pointers);
+     button.addEventListener('pointerdown',event=>{
+      if(event.button!==0)return;
       event.preventDefault();if(!this.active)this.start();if(this.paused)return;
-      try{button?.setPointerCapture(event.pointerId)}catch{}
-      pointers.add(event.pointerId);this.sendInput(key,'pointer:'+key+':'+event.pointerId,true);
+      try{button.setPointerCapture(event.pointerId)}catch{}
+      pointers.set(event.pointerId,event.timeStamp);this.sendInput(key,'pointer:'+key+':'+event.pointerId,true);
      });
-     const end=(event:PointerEvent)=>{if(!pointers.delete(event.pointerId))return;this.sendInput(key,'pointer:'+key+':'+event.pointerId,false)};
-     button?.addEventListener('pointerup',end);button?.addEventListener('pointercancel',end);button?.addEventListener('lostpointercapture',end);
-     button?.addEventListener('click',event=>{if(event.detail===0){if(!this.active)this.start();if(!this.paused){const source='accessible:'+key;this.sendInput(key,source,true);this.sendInput(key,source,false)}}});
+     const end=(event:PointerEvent)=>{
+      const pressedAt=pointers.get(event.pointerId);
+      if(pressedAt===undefined)return;
+      pointers.delete(event.pointerId);
+      this.sendInput(key,'pointer:'+key+':'+event.pointerId,false);
+      if(steering&&event.type==='pointerup'&&event.timeStamp-pressedAt<90)this.game.input(key+'-tap',true);
+     };
+     for(const name of ['pointerup','pointercancel','lostpointercapture'] as const)button.addEventListener(name,end);
+     button.addEventListener('click',event=>{
+      if(event.detail!==0)return;
+      if(!this.active)this.start();
+      if(this.paused)return;
+      if(steering){this.game.input(key+'-tap',true);return}
+      const source='accessible:'+key;
+      this.sendInput(key,source,true);this.sendInput(key,source,false);
+     });
     };
     bindHold(trick,'trick');
     bindHold(boost,'boost');
+    for(const key of ['left','right'])bindHold(root.querySelector<HTMLButtonElement>('[data-key='+key+']'),key);
     const jumpPointers=new Set<number>();
+    pointerSets.push(jumpPointers);
     jump?.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
     jump?.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
     jump?.addEventListener('pointerdown',e=>{
@@ -186,10 +240,15 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     const sources=this.inputSources.get(key)??new Set<string>(),wasDown=sources.size>0;
     if(down)sources.add(source);else sources.delete(source);
     if(sources.size)this.inputSources.set(key,sources);else this.inputSources.delete(key);
-    const isDown=sources.size>0;if(wasDown!==isDown)this.game.input(key,isDown);
+    const isDown=sources.size>0;if(wasDown===isDown)return;
+    this.game.input(key,isDown);
+    if(tag==='grind-the-terms'&&(key==='left'||key==='right'))
+      this.shadowRoot?.querySelector('[data-key='+key+']')?.toggleAttribute('data-held',isDown);
    }
    private releaseHeldInputs(){
     for(const [key,sources] of this.inputSources)if(sources.size)this.game.input(key,false);
+    this.clearGrindPointers?.();
+    if(tag==='grind-the-terms')this.shadowRoot?.querySelectorAll('.steer [data-held]').forEach(button=>button.removeAttribute('data-held'));
     this.releasePointer?.();this.inputSources.clear();this.padHeld=[false,false,false];this.game.releaseInput?.();
    }
   private onKey = (e: KeyboardEvent) => {
@@ -216,7 +275,7 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     if (!profile || !inControl) event.preventDefault();
     this.sendInput(action, 'keyboard:' + event.code, false);
   };
-  private key(k:string){if(profile)return profile.keys[k.length===1?k.toLowerCase():k] || '';if(tag==='tag-before-training'&&k.length===1)k=k.toLowerCase();if(tag==='grind-the-terms')return ({' ':'trick','ArrowUp':'up','w':'up','W':'up','u':'up','U':'up','a':'trick','A':'trick','r':'boost','R':'boost','Escape':'pause','p':'pause','m':'mute','M':'mute'} as Record<string,string>)[k]||'';return ({' ':'tap','ArrowUp':'up','ArrowDown':'down','ArrowLeft':'left','ArrowRight':'right','w':'up','a':'left','s':'down','d':'right','Escape':'pause','p':'pause','m':'mute','M':'mute'} as Record<string,string>)[k]||''}
+  private key(k:string){if(profile)return profile.keys[k.length===1?k.toLowerCase():k] || '';if(tag==='tag-before-training'&&k.length===1)k=k.toLowerCase();if(tag==='grind-the-terms')return ({' ':'trick','ArrowUp':'up','ArrowLeft':'left','ArrowRight':'right','w':'up','W':'up','u':'up','U':'up','a':'trick','A':'trick','r':'boost','R':'boost','Escape':'pause','p':'pause','m':'mute','M':'mute'} as Record<string,string>)[k]||'';return ({' ':'tap','ArrowUp':'up','ArrowDown':'down','ArrowLeft':'left','ArrowRight':'right','w':'up','a':'left','s':'down','d':'right','Escape':'pause','p':'pause','m':'mute','M':'mute'} as Record<string,string>)[k]||''}
   private onVisibility=()=>{if(document.hidden)this.pause('hidden')};private onBlur=()=>this.pause('blur');
   private resize() {
     if (!this.canvas) return;
@@ -325,8 +384,40 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     const axis = pad?.axes[0] || 0;
     this.game.setMoveAxis?.(this.phase === 'playing' && Math.abs(axis) > 0.16 ? axis : 0, 0);
   }
-  private playTone(event:string){if(this.muted)return;try{this.audio??=new AudioContext();const time=this.audio.currentTime;const osc=this.audio.createOscillator(),gain=this.audio.createGain();const pitches:Record<string,number>={'game:grind-start':610,'game:grind-end':390,'game:power':870,'game:near-miss':720,'game:bail':140,'game:player-scan':960,'game:identified':240,'game:police-arrived':330,'game:arrested':130};const f=pitches[event]||550;osc.type=event==='game:bail'?'sawtooth':'square';osc.frequency.setValueAtTime(f,time);osc.frequency.exponentialRampToValueAtTime(Math.max(65,f*.55),time+.12);gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(.035,time+.01);gain.gain.exponentialRampToValueAtTime(.0001,time+.14);osc.connect(gain);gain.connect(this.audio.destination);osc.start(time);osc.stop(time+.15)}catch{}}
-  private pollGamepad(){try{const pad=navigator.getGamepads?.().find(p=>p?.connected);if(profile){this.readProfilePad(pad ?? null);return}if(!pad)return;if(tag==='grind-the-terms'){const keys=['up','trick','boost'];keys.forEach((key,i)=>{const pressed=!!pad.buttons[i]?.pressed;if(pressed!==this.padHeld[i]){this.sendInput(key,'gamepad:'+key,pressed);this.padHeld[i]=pressed}})}else{const pressed=!!pad.buttons[0]?.pressed;if(pressed!==this.padHeld[0]){const key=tag==='tag-before-training'?'spray':'tap';this.sendInput(key,'gamepad:'+key,pressed);this.padHeld[0]=pressed}}if(tag==='tag-before-training'){const x=pad.axes[0]||0,y=pad.axes[1]||0;this.game.input('left',x<-.35);this.game.input('right',x>.35);this.game.input('up',y<-.35);this.game.input('down',y>.35)}}catch{}}
+  private playTone(event:string){if(this.muted)return;try{this.audio??=new AudioContext();const time=this.audio.currentTime;const osc=this.audio.createOscillator(),gain=this.audio.createGain();const pitches:Record<string,number>={'game:grind-start':610,'game:grind-end':390,'game:power':870,'game:near-miss':720,'game:bail':140,'game:player-scan':960,'game:identified':240,'game:police-arrived':330,'game:arrested':130,'game:drone-warn':1090,'game:drone-hit':215,'game:drone-jam':475,'game:drone-stomp':790};const f=pitches[event]||550;osc.type=event==='game:bail'?'sawtooth':'square';osc.frequency.setValueAtTime(f,time);osc.frequency.exponentialRampToValueAtTime(Math.max(65,f*.55),time+.12);gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(.035,time+.01);gain.gain.exponentialRampToValueAtTime(.0001,time+.14);osc.connect(gain);gain.connect(this.audio.destination);osc.start(time);osc.stop(time+.15)}catch{}}
+  private pollGamepad(){
+    try {
+      const pad=navigator.getGamepads?.().find(p=>p?.connected);
+      if(profile){this.readProfilePad(pad??null);return}
+      if(tag==='grind-the-terms'){
+        const axis=pad?.axes[0]??0;
+        const actions=[
+          ['up',!!pad?.buttons[0]?.pressed],
+          ['trick',!!pad?.buttons[1]?.pressed],
+          ['boost',!!pad?.buttons[2]?.pressed],
+          ['left',axis<-.35||!!pad?.buttons[14]?.pressed],
+          ['right',axis>.35||!!pad?.buttons[15]?.pressed]
+        ] as const;
+        actions.forEach(([key,pressed],i)=>{
+          if(pressed===Boolean(this.padHeld[i]))return;
+          this.sendInput(key,'gamepad:'+key,pressed);
+          this.padHeld[i]=pressed;
+        });
+        return;
+      }
+      if(!pad)return;
+      const pressed=!!pad.buttons[0]?.pressed;
+      if(pressed!==this.padHeld[0]){
+        const key=tag==='tag-before-training'?'spray':'tap';
+        this.sendInput(key,'gamepad:'+key,pressed);this.padHeld[0]=pressed;
+      }
+      if(tag==='tag-before-training'){
+        const x=pad.axes[0]||0,y=pad.axes[1]||0;
+        this.game.input('left',x<-.35);this.game.input('right',x>.35);
+        this.game.input('up',y<-.35);this.game.input('down',y>.35);
+      }
+    }catch{}
+  }
   start() {
     this.releaseHeldInputs(); this.game.start(); this.padHeld = [false,false,false];
     this.active = true; this.paused = false; this.phase = 'playing'; this.focusGame();

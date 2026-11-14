@@ -40,8 +40,13 @@ The skin is all rights reserved. Keep it under `skins/au/`; do not copy these as
 ## November 6 — Terms Runner delivery drone
 
 - `terms_runner_delivery_drone_v1.webp`: transparent, losslessly optimized 576 × 288 px game sprite derived from the user-selected “Acid-lime Terms Runner Drone.png” concept in the ChatGPT Library. Displayed at 144 × 72 px (4× source sampling) in the AU-only skin.
-- The renderer anchors the lime grind coping at 35.6% of the sprite height so the image and collision surface stay aligned. Spawned couriers cycle through stable hover heights of 96, 118, and 140 world units above the sidewalk, with the existing subtle ±3-unit hover motion. The lowest route is raised from the former 64-unit lane.
+- The renderer bolts a flat lime deck to the sprite. Its top is the board contact surface and the hull and cargo hitboxes sit below it. Phase 2 uses alternating high and mid-height couriers with a subtle ±3-unit hover motion.
 - The packaged artwork stays under `skins/au/`; it is not copied into the open Fony skin.
+
+## Cookie Eye security drone
+
+- `terms_cookie_eye_v1.webp` is a transparent 384 × 152 px sprite generated from the Terms Runner's inked style and the original Cookie Eye silhouette. Its neutral rotor and hull trim reserve lime for the vulnerable roof and spray effects.
+- Rotor motion, scan charge, paint splatter, the lime roof and the falling shutdown pose share the same anchored hull. The lit roof and the stomp use the same collision edge.
 
 
 ## Fony animation atlas v2
@@ -50,6 +55,7 @@ The runtime keeps the two approved atlas files separate by role, with a shared 1
 
 - `fony_gameplay_atlas_v1.webp` remains the source for the six-frame board-contact skating cycle and the settled pose after a bail. Keeping this sheet preserves the established grounded animation and stable game-over silhouette.
 - `fony_gameplay_atlas_v2.webp` is loaded as `skaterActions` (8 columns × 7 rows). Its generated action frames drive ollie, landing/recovery, tricks, grinding, grind-pop and bail.
-- v2 frame map: 0–5 copied run poses (reserved for comparison); 6–10 ollie; 11–14 landing; 15–18 kickflip; 19–22 heelflip; 23–26 360 flip; 27–30 varial combo; 31–34 hard flip combo; 35–38 laser flip combo; 39–42 grind loop; 43–46 grind-pop; 47–50 bail. Cells 51–55 are transparent padding.
-- The six named trick animations each use their own four-frame sequence selected by trick sequence and score tier. Grinding keeps both feet on the board. The action-sheet art is transparent and contains no rail, pipe, ledge, or support; gameplay rails remain world-space objects.
+- Original v2 sheet ranges: 0–5 run; 6–10 ollie; 11–14 landing; 15–18 kickflip; 19–22 heelflip; 23–26 360 flip; 27–30 varial combo; 31–34 hard flip combo; 35–38 laser flip combo; 39–42 grind; 43–46 grind-pop; 47–50 bail. Cells 51–55 are transparent padding.
+- The active ollie takes off in cells 11 and 12, tucks in 10, and reaches for the landing in 13. Ground contact starts at 14. Rail and stomp bounces use 12, 10, and 13. The grind cycles through the planted-foot poses 39 and 42. The skin lists these cells in playback order.
+- The six named trick animations each use their own four-frame sequence selected by trick sequence and score tier. The action-sheet art is transparent and contains no rail, pipe, ledge, or support. Gameplay rails are drawn in world space.
 - The `sheet` field in `skin.json` identifies each animation's source atlas. Both character sheets render with interpolation disabled and share one contact anchor, keeping desktop and Zero Game Thing tablet poses aligned.
