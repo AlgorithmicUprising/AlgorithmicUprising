@@ -131,10 +131,11 @@ test('Fony lands on the lime rail attached to the courier sprite', async ({ page
     };
     g.draw(ctx, canvas.width, canvas.height);
     g.input('up', false);
-    return { grinding: stats.grinding, boardY: stats.boardY, top: stats.supportTop,
+    return { grinding: stats.grinding, couriersStomped: stats.couriersStomped, boardY: stats.boardY, top: stats.supportTop,
       rail, courier, tricksAfterPop: read().tricksUsed };
   });
   expect(result.grinding).toBe(true);
+  expect(result.couriersStomped).toBe(1);
   expect(result.rail.y).toBe(result.top);
   expect(result.boardY).toBe(Math.round(result.rail.y));
   expect(result.rail.x - result.courier[0]).toBeCloseTo(39, 5);
@@ -142,29 +143,82 @@ test('Fony lands on the lime rail attached to the courier sprite', async ({ page
   expect(result.tricksAfterPop).toBe(0);
 });
 
-test('the high courier is safe to skate under and a low scan slows once', async ({ page }) => {
+test('an unheld landing disables the courier and refreshes Fony’s tricks', async ({ page }) => {
   const game = await openPractice(page);
   const result = await game.evaluate(el => {
     const g = el.game;
-    const events = [];
-    for (const type of ['game:delivery-spawn', 'game:drone-warn', 'game:drone-hit', 'game:bail']) {
-      el.addEventListener(type, event => events.push({ type, ...event.detail }));
-    }
+    const read = () => g.result().stats;
+    const stomps = [], bails = [];
+    el.addEventListener('game:drone-stomp', event => stomps.push(event.detail));
+    el.addEventListener('game:bail', event => bails.push(event.detail.cause));
+    const until = predicate => {
+      for (let i = 0; i < 360 && !predicate(read()) && !bails.length; i++) g.update(1 / 120);
+    };
+    const tap = key => { g.input(key, true); g.input(key, false); };
     g.start();
-    for (let i = 0; i < 600 && g.result().stats.scansHit === 0; i++) g.update(1 / 60);
-    const hit = g.result().stats;
-    for (let i = 0; i < 75; i++) g.update(1 / 60);
-    return { events, hit, after: g.result().stats, over: g.over() };
+    until(stats => stats.distancePx >= 185);
+    tap('up');
+    until(stats => stats.boardY <= 206);
+    tap('trick');
+    until(stats => stats.couriersStomped === 1);
+    const stomp = read();
+    for (let i = 0; i < 80; i++) g.update(1 / 120);
+    return { stomps, bails, stomp, after: read() };
   });
-  expect(result.events.map(event => event.type)).toEqual(['game:delivery-spawn', 'game:drone-warn', 'game:drone-hit']);
-  expect(result.events[1]).toMatchObject({ lane: 'low', warningMs: 1100 });
-  expect(result.hit.runSpeed).toBeLessThan(result.hit.normalSpeed);
-  expect(result.after.scansHit).toBe(1);
-  expect(result.after.runSpeed).toBe(result.after.normalSpeed);
-  expect(result.over).toBe(false);
+  expect(result.stomps).toHaveLength(1);
+  expect(result.stomps[0]).toMatchObject({ drone: 'terms-runner', grinding: false, tricksReset: true });
+  expect(result.bails).toEqual([]);
+  expect(result.stomp).toMatchObject({ couriersStomped: 1, tricksUsed: 0, trickAvailable: true, grinding: false });
+  expect(result.after.deliveryDrones).toBe(0);
 });
 
-test('the Cookie Eye locks its scan and lights only its roof during recovery', async ({ page }) => {
+test('both scan lanes and direct side hits end the run', async ({ page }) => {
+  const game = await openPractice(page);
+  const results = await game.evaluate(el => {
+    const g = el.game;
+    const bails = [], hits = [];
+    el.addEventListener('game:bail', event => bails.push(event.detail.cause));
+    el.addEventListener('game:drone-hit', event => hits.push(event.detail));
+    const until = predicate => {
+      for (let i = 0; i < 1200 && !predicate(g.result().stats) && !bails.length; i++) g.update(1 / 120);
+    };
+    const tap = key => { g.input(key, true); g.input(key, false); };
+    return ['low scan', 'high scan', 'eye side', 'courier side', 'under courier'].map(action => {
+      g.start();
+      bails.length = hits.length = 0;
+      if (action === 'high scan') {
+        until(stats => stats.eye?.phase === 'approach' && stats.eye.age >= .47);
+        tap('up');
+        until(stats => stats.eye?.phase === 'warning' && stats.eye.age >= .8);
+        tap('up');
+      }
+      if (action === 'eye side') {
+        until(stats => stats.eye?.phase === 'warning');
+        g.input('right', true);
+      }
+      if (action === 'courier side' || action === 'under courier') {
+        until(stats => stats.distancePx >= (action === 'courier side' ? 220 : 380));
+        tap('up');
+      }
+      until(stats => stats.distancePx >= (action === 'under courier' ? 560 : 1300));
+      if (bails.length) for (let i = 0; i < 75; i++) g.update(1 / 120);
+      return { bails: [...bails], hits: [...hits], over: g.over(), causeLine: g.result().causeLine };
+    });
+  });
+  const [low, high, eyeSide, courierSide, under] = results;
+  for (const [result, lane] of [[low, 'low'], [high, 'high']]) {
+    expect(result.bails).toEqual(['cookie-scan']);
+    expect(result.hits).toHaveLength(1);
+    expect(result.hits[0]).toMatchObject({ drone: 'cookie-eye', lane, attack: 'scan', fatal: true });
+    expect(result.over).toBe(true);
+    expect(result.causeLine).toBe('THE COOKIE EYE SCANNED YOU.');
+  }
+  expect(eyeSide).toMatchObject({ bails: ['cookie-eye'], hits: [], over: true });
+  expect(courierSide).toMatchObject({ bails: ['drone'], hits: [], over: true });
+  expect(under).toMatchObject({ bails: [], hits: [], over: false });
+});
+
+test('the Cookie Eye locks its scan while its roof stays lit throughout flight', async ({ page }) => {
   const game = await openPractice(page);
   const result = await game.evaluate(el => {
     const g = el.game;
@@ -187,7 +241,7 @@ test('the Cookie Eye locks its scan and lights only its roof during recovery', a
       return fillRect(x, y, width, height);
     };
     ctx.fillText = (label, x, y) => {
-      if (label === 'STOMP' || label === 'SCANNED / SLOWED') frame.labels.push({ label, y });
+      if (label === 'STOMP') frame.labels.push({ label, y });
       return fillText(label, x, y);
     };
     ctx.strokeRect = (x, y, width, height) => {
@@ -204,31 +258,85 @@ test('the Cookie Eye locks its scan and lights only its roof during recovery', a
       return g.result().stats;
     };
     g.start();
+    next(stats => stats.eye?.phase === 'approach' && stats.eye.age >= .3);
+    const approach = render();
+    next(stats => stats.eye?.phase === 'lineup');
+    const lineup = render();
     const first = next(stats => stats.eye?.phase === 'warning');
     const warning = render();
     g.input('left', true);
     const repositioned = next(stats => stats.playerX <= 84);
     g.input('left', false);
     const warningAfterSteering = render();
+    next(stats => stats.eye?.phase === 'warning' && stats.eye.age >= .8);
+    g.input('up', true);
+    g.input('up', false);
     const firing = next(stats => stats.eye?.phase === 'scan');
     const scan = render();
-    const opened = next(stats => stats.eye?.roof.ready);
+    const opened = next(stats => stats.eye?.phase === 'recover');
     const recovery = render();
     next(stats => stats.eye?.phase === 'depart');
     const depart = render();
-    return { first, warning, repositioned, warningAfterSteering, firing, scan, opened, recovery, depart };
+    return { approach, lineup, first, warning, repositioned, warningAfterSteering, firing, scan, opened, recovery, depart };
   });
-  expect(result.warning.sprite).toBeDefined();
-  expect(result.warning.roofLight).toBeUndefined();
+  for (const frame of [result.approach, result.lineup, result.warning, result.scan, result.recovery, result.depart]) {
+    expect(frame.sprite).toBeDefined();
+    expect(frame.roofLight).toEqual({ x: -22, y: 4, width: 44 });
+    expect(frame.labels.map(({ label }) => label)).toEqual(['STOMP']);
+  }
+  expect(result.warning.scan).toBeDefined();
   expect(result.warningAfterSteering.scan).toEqual(result.warning.scan);
   expect(result.scan.scan).toEqual(result.warning.scan);
   expect(result.repositioned.eye.roof).toEqual(result.first.eye.roof);
   expect(result.firing.eye.roof).toEqual(result.first.eye.roof);
-  expect(result.opened.eye.roof).toEqual({ ...result.first.eye.roof, ready: true });
-  expect(result.recovery.roofLight).toEqual({ x: -22, y: 4, width: 44 });
-  expect(result.recovery.labels[0].label).toBe('STOMP');
-  expect(result.depart.roofLight).toBeUndefined();
-  expect(result.depart.labels).toEqual([]);
+  expect(result.opened.eye.roof).toEqual(result.first.eye.roof);
+});
+
+test('landing on the Eye’s roof cancels the encounter in every flight phase', async ({ page }) => {
+  const game = await openPractice(page);
+  const results = await game.evaluate(el => {
+    const g = el.game;
+    const stomps = [], bails = [];
+    el.addEventListener('game:drone-stomp', event => stomps.push(event.detail));
+    el.addEventListener('game:bail', event => bails.push(event.detail.cause));
+    const read = () => g.result().stats;
+    const until = predicate => {
+      for (let i = 0; i < 1400 && !predicate(read()) && !bails.length; i++) g.update(1 / 120);
+    };
+    const waitFor = (phase, age) => until(stats => stats.eye?.phase === phase && stats.eye.age >= age);
+    const tap = key => { g.input(key, true); g.input(key, false); };
+    return ['approach', 'lineup', 'warning', 'scan', 'recover', 'depart'].map(phase => {
+      g.start();
+      bails.length = stomps.length = 0;
+      const intercept = phase === 'approach' || phase === 'lineup';
+      if (intercept) {
+        until(stats => stats.distancePx >= (phase === 'approach' ? 770 : 800));
+        tap('up');
+        until(stats => stats.boardY <= 202);
+        tap('trick');
+        waitFor('approach', .14);
+      } else if (phase === 'depart') {
+        waitFor('warning', .8);
+        tap('up');
+        waitFor('recover', 1.2);
+        tap('up');
+      } else {
+        waitFor('warning', { warning: .05, scan: .60, recover: .8 }[phase]);
+        tap('up');
+      }
+      g.input('right', true);
+      until(stats => stats.playerX >= (intercept ? 274 : 224) || stats.eyesStomped === 1);
+      g.input('right', false);
+      until(stats => stats.eyesStomped === 1);
+      return { phase, stomps: [...stomps], bails: [...bails], stats: read() };
+    });
+  });
+  for (const { phase, stomps, bails, stats } of results) {
+    expect(bails, phase).toEqual([]);
+    expect(stomps, phase).toHaveLength(1);
+    expect(stomps[0]).toMatchObject({ drone: 'cookie-eye', phase, tricksReset: true });
+    expect(stats).toMatchObject({ eyesStomped: 1, scansHit: 0, eye: { phase: 'disabled', roof: { ready: false } } });
+  }
 });
 
 test('baiting the Cookie Eye low leaves a roof Fony can steer onto with one ollie', async ({ page }) => {
@@ -291,7 +399,7 @@ test('baiting the Cookie Eye low leaves a roof Fony can steer onto with one olli
   expect(result.after.playerX).toBeGreaterThan(result.warning.eye.roof.left);
 });
 
-test('an airborne approach holds the Eye high and a trick reaches its vulnerable roof', async ({ page }) => {
+test('an airborne approach holds the Eye high and a trick reaches its roof', async ({ page }) => {
   const game = await openPractice(page);
   const result = await game.evaluate(el => {
     const g = el.game;
@@ -305,7 +413,7 @@ test('an airborne approach holds the Eye high and a trick reaches its vulnerable
     until(stats => stats.eye?.phase === 'approach' && stats.eye.age >= .47);
     tap('up');
     const warning = until(stats => stats.eye?.phase === 'warning');
-    const recovery = until(stats => stats.eye?.roof.ready);
+    const recovery = until(stats => stats.eye?.phase === 'recover');
     tap('up');
     const ollie = until(stats => stats.boardY <= 204);
     tap('trick');
@@ -317,7 +425,7 @@ test('an airborne approach holds the Eye high and a trick reaches its vulnerable
     return { warning, recovery, ollie, trick, stomp };
   });
   expect(result.warning.eye.lane).toBe('high');
-  expect(result.recovery.eye.roof).toEqual({ ...result.warning.eye.roof, ready: true });
+  expect(result.recovery.eye.roof).toEqual(result.warning.eye.roof);
   expect(result.ollie.boardY).toBeGreaterThan(result.recovery.eye.roof.y);
   expect(result.trick.boardY).toBeLessThan(result.recovery.eye.roof.y);
   expect(result.trick.tricksUsed).toBe(1);

@@ -1,5 +1,5 @@
 import {
-  courierDeck, eyeDisabledTime, eyeLens, eyeRoof, eyeScan,
+  courierRoof, droneShutdownTime, eyeLens, eyeRoof, eyeScan,
   eyeWarningTime, type CookieEye
 } from './drones';
 
@@ -15,9 +15,9 @@ export type SprayBurst = {
   left: number;
 };
 
-export function drawCourierDeck(ctx: CanvasRenderingContext2D, spriteX: number, top: number) {
-  const left = spriteX + courierDeck.left;
-  const width = courierDeck.right - courierDeck.left;
+export function drawCourierDeck(ctx: CanvasRenderingContext2D, spriteX: number, top: number, grindable: boolean) {
+  const { left, right } = courierRoof(spriteX, top);
+  const width = right - left;
   ctx.save();
   for (const mount of [left + 10, left + width - 10]) {
     ctx.fillStyle = ink;
@@ -31,11 +31,11 @@ export function drawCourierDeck(ctx: CanvasRenderingContext2D, spriteX: number, 
   }
   ctx.fillStyle = ink;
   ctx.fillRect(left, top, width, 9);
-  ctx.fillStyle = lime;
+  ctx.fillStyle = grindable ? lime : '#81767e';
   ctx.fillRect(left, top, width, 4);
-  ctx.fillStyle = '#899b24';
+  ctx.fillStyle = grindable ? '#899b24' : '#504650';
   ctx.fillRect(left + 3, top + 4, width - 6, 2);
-  ctx.fillStyle = '#eff5a8';
+  ctx.fillStyle = grindable ? '#eff5a8' : paper;
   ctx.fillRect(left + 5, top + 1, width - 10, 1);
   ctx.restore();
 }
@@ -112,7 +112,7 @@ export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, gro
   ctx.save();
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  if (disabled) ctx.globalAlpha *= Math.max(0, 1 - age / eyeDisabledTime);
+  if (disabled) ctx.globalAlpha *= Math.max(0, 1 - age / droneShutdownTime);
   ctx.fillStyle = 'rgba(15,9,17,.33)';
   ctx.beginPath();ctx.ellipse(x, ground - 1, 28, 4, 0, 0, Math.PI * 2);ctx.fill();
 

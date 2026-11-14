@@ -1,6 +1,10 @@
 export type ScanLane = 'low' | 'high';
 export type EyePhase = 'approach' | 'lineup' | 'warning' | 'scan' | 'recover' | 'depart' | 'disabled';
 export type Bounds = { left: number; right: number; top: number; bottom: number };
+type Roof = { left: number; right: number; y: number };
+type Board = { x: number; y: number };
+
+export const boardHalfWidth = 14;
 
 export const courierWidth = 144;
 export const courierClosing = 0.68;
@@ -20,7 +24,7 @@ export const eyeOllieCueTime = 0.79;
 export const eyeScanTime = 0.14;
 export const eyeRecoverTime = 1.63;
 export const eyeDepartTime = 0.82;
-export const eyeDisabledTime = 0.58;
+export const droneShutdownTime = 0.58;
 export const eyeEarlyJumpTime = 0.97;
 export const sprayJamCost = 0.08;
 const eyeRiseTime = 0.28;
@@ -41,7 +45,6 @@ export type CookieEye = {
   facing: -1 | 1;
   groundTime: number;
   earlyJump: boolean;
-  scanHit: boolean;
   jammed: boolean;
   stomped: boolean;
 };
@@ -53,12 +56,47 @@ export function boundsOverlap(a: Bounds, b: Bounds) {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 }
 
-export function createEye(viewRight: number, ground: number): CookieEye {
+export function landsOnDrone(from: Board, to: Board, previous: Roof, roof: Roof) {
+  const start = from.y - previous.y;
+  const end = to.y - roof.y;
+  if (to.y < from.y || start > 0 || end < 0 || end <= start) return false;
+
+  // Sample the board and the moving roof at the same instant of contact.
+  const t = -start / (end - start);
+  const boardX = mix(from.x, to.x, t);
+  return boardX + boardHalfWidth > mix(previous.left, roof.left, t)
+    && boardX - boardHalfWidth < mix(previous.right, roof.right, t);
+}
+
+export function hitsDroneSide(from: Bounds, to: Bounds, previous: Bounds, hull: Bounds) {
+  let before: number, after: number;
+  if (from.right <= previous.left) {
+    before = previous.left - from.right;
+    after = hull.left - to.right;
+  } else if (from.left >= previous.right) {
+    before = from.left - previous.right;
+    after = to.left - hull.right;
+  } else {
+    return false;
+  }
+  if (after >= 0) return false;
+
+  // Crossing a lateral face is hazardous only when the bodies overlap in height.
+  const t = before / (before - after);
+  return mix(from.top, to.top, t) < mix(previous.bottom, hull.bottom, t)
+    && mix(from.bottom, to.bottom, t) > mix(previous.top, hull.top, t);
+}
+
+export function courierRoof(x: number, y: number): Roof {
+  return { left: x + courierDeck.left, right: x + courierDeck.right, y };
+}
+
+export function createEye(viewRight: number, ground: number, approachX: number): CookieEye {
   const x = viewRight + 56;
   const top = ground - eyeHoverHeight;
-  return { phase: 'approach', age: 0, lane: 'low', x, top, entryX: x, entryTop: top,
-    targetX: x, facing: -1, groundTime: 0,
-    earlyJump: false, scanHit: false, jammed: false, stomped: false };
+  return { phase: 'approach', age: 0, lane: 'high', x, top, entryX: x, entryTop: top,
+    targetX: approachX, facing: -1, groundTime: 0,
+    earlyJump: false, jammed: false, stomped: false };
 }
 
 export function enterEyePhase(eye: CookieEye, phase: EyePhase) {
@@ -77,13 +115,13 @@ export function lineUpEye(eye: CookieEye, playerX: number, forwardLimit: number,
   enterEyePhase(eye, 'lineup');
 }
 
-export function moveEye(eye: CookieEye, dt: number, playerX: number, ground: number, viewLeft: number, viewRight: number) {
+export function moveEye(eye: CookieEye, dt: number, ground: number, viewLeft: number, viewRight: number) {
   eye.age += dt;
   const age = eye.age;
   const high = ground - eyeHoverHeight;
   switch (eye.phase) {
     case 'approach':
-      eye.x = mix(eye.entryX, playerX + 132, easeOut(age / eyeApproachTime));
+      eye.x = mix(eye.entryX, eye.targetX, easeOut(age / eyeApproachTime));
       break;
     case 'lineup': {
       const progress = easeOut(age / eyeLineupTime);
@@ -114,7 +152,7 @@ export function eyeLens(eye: CookieEye) {
 }
 
 export function eyeRoof(eye: CookieEye) {
-  return { left: eye.x - 22, right: eye.x + 22, y: eye.top + 4, ready: eye.phase === 'recover' };
+  return { left: eye.x - 22, right: eye.x + 22, y: eye.top + 4, ready: eye.phase !== 'disabled' };
 }
 
 export function eyeScan(eye: CookieEye, ground: number): Bounds {
