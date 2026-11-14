@@ -1,5 +1,5 @@
 export type ScanLane = 'low' | 'high';
-export type EyePhase = 'approach' | 'warning' | 'scan' | 'recover' | 'depart' | 'disabled';
+export type EyePhase = 'approach' | 'lineup' | 'warning' | 'scan' | 'recover' | 'depart' | 'disabled';
 export type Bounds = { left: number; right: number; top: number; bottom: number };
 
 export const courierWidth = 144;
@@ -12,11 +12,12 @@ export const courierBody = [
   { left: 37, right: 99, top: 28, bottom: 52 }
 ] as const;
 
-export const eyeApproachTime = 0.55;
+export const eyeApproachTime = 0.85;
+export const eyeBaitTime = 0.24;
+export const eyeLineupTime = 0.27;
 export const eyeWarningTime = 1.1;
 export const eyeOllieCueTime = 0.79;
 export const eyeScanTime = 0.14;
-export const eyeDipTime = 0.12;
 export const eyeRecoverTime = 1.63;
 export const eyeDepartTime = 0.82;
 export const eyeDisabledTime = 0.58;
@@ -24,12 +25,9 @@ export const eyeEarlyJumpTime = 0.97;
 export const sprayJamCost = 0.08;
 const eyeRiseTime = 0.28;
 const eyeHoverHeight = 164;
-const eyeStompHeight = 56;
-const eyeStompOffset = 90;
-const eyePadRetractTime = 0.20;
-const eyePadWidth = 46;
+const eyeLowHeight = 84;
+const eyeScanReach = 155;
 const sprayReach = 112;
-export const eyePadHinge = { x: -22, y: 8 } as const;
 
 export type CookieEye = {
   phase: EyePhase;
@@ -39,6 +37,9 @@ export type CookieEye = {
   top: number;
   entryX: number;
   entryTop: number;
+  targetX: number;
+  facing: -1 | 1;
+  groundTime: number;
   earlyJump: boolean;
   scanHit: boolean;
   jammed: boolean;
@@ -52,10 +53,11 @@ export function boundsOverlap(a: Bounds, b: Bounds) {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 }
 
-export function createEye(viewRight: number, playerX: number, ground: number, lane: ScanLane): CookieEye {
-  const x = Math.max(viewRight + 26, playerX + 205);
+export function createEye(viewRight: number, ground: number): CookieEye {
+  const x = viewRight + 56;
   const top = ground - eyeHoverHeight;
-  return { phase: 'approach', age: 0, lane, x, top, entryX: x, entryTop: top,
+  return { phase: 'approach', age: 0, lane: 'low', x, top, entryX: x, entryTop: top,
+    targetX: x, facing: -1, groundTime: 0,
     earlyJump: false, scanHit: false, jammed: false, stomped: false };
 }
 
@@ -66,65 +68,61 @@ export function enterEyePhase(eye: CookieEye, phase: EyePhase) {
   eye.entryTop = eye.top;
 }
 
-export function moveEye(eye: CookieEye, dt: number, playerX: number, ground: number) {
+export function lineUpEye(eye: CookieEye, playerX: number, forwardLimit: number, lane: ScanLane) {
+  const roomAhead = forwardLimit - playerX;
+  // A player already near the right limit can reach a drone lined up behind them.
+  eye.facing = roomAhead >= 72 ? -1 : 1;
+  eye.targetX = eye.facing < 0 ? Math.min(playerX + 94, forwardLimit) : playerX - 78;
+  eye.lane = lane;
+  enterEyePhase(eye, 'lineup');
+}
+
+export function moveEye(eye: CookieEye, dt: number, playerX: number, ground: number, viewLeft: number, viewRight: number) {
   eye.age += dt;
   const age = eye.age;
   const high = ground - eyeHoverHeight;
   switch (eye.phase) {
     case 'approach':
-      eye.x = mix(eye.entryX, playerX + 168, easeOut(age / eyeApproachTime));
+      eye.x = mix(eye.entryX, playerX + 132, easeOut(age / eyeApproachTime));
       break;
-    case 'warning':
-      eye.x = mix(eye.entryX, playerX + 62, easeOut(age / eyeWarningTime));
-      eye.top = high + Math.sin(age * 6) * 2;
+    case 'lineup': {
+      const progress = easeOut(age / eyeLineupTime);
+      eye.x = mix(eye.entryX, eye.targetX, progress);
+      eye.top = mix(eye.entryTop, eye.lane === 'low' ? ground - eyeLowHeight : high, progress);
       break;
-    case 'scan':
-      eye.top = mix(eye.entryTop, high, age / eyeScanTime);
-      break;
-    case 'recover':
-      // Keep the leading edge in the board's path and the platform visible ahead of Fony.
-      eye.x = mix(eye.entryX, playerX + eyeStompOffset, easeOut(age / eyeDipTime));
-      eye.top = mix(eye.entryTop, ground - eyeStompHeight, easeOut(age / eyeDipTime));
-      break;
-    case 'depart':
+    }
+    case 'depart': {
+      const exitX = eye.facing < 0 ? viewRight + 58 : viewLeft - 58;
       eye.top = mix(eye.entryTop, high, easeOut(age / eyeRiseTime));
-      eye.x = age <= eyeRiseTime ? eye.entryX : mix(eye.entryX, playerX - 215, (age - eyeRiseTime) / (eyeDepartTime - eyeRiseTime));
+      if (age > eyeRiseTime) eye.x = mix(eye.entryX, exitX, (age - eyeRiseTime) / (eyeDepartTime - eyeRiseTime));
       break;
+    }
     case 'disabled':
-      eye.x = eye.entryX + age * 80;
+      eye.x = eye.entryX - eye.facing * age * 80;
       eye.top = eye.entryTop + age * age * 270;
       break;
   }
 }
 
 export function eyeHull(eye: CookieEye): Bounds {
-  return { left: eye.x - 29, right: eye.x + 29, top: eye.top + 2, bottom: eye.top + 31 };
+  return { left: eye.x - 29, right: eye.x + 29, top: eye.top + 5, bottom: eye.top + 31 };
 }
 
 export function eyeLens(eye: CookieEye) {
   const aiming = eye.phase === 'warning' || eye.phase === 'scan';
-  return { x: eye.x - 13, y: eye.top + (aiming ? (eye.lane === 'low' ? 20 : 15) : 17) };
+  return { x: eye.x + eye.facing * 13, y: eye.top + (aiming ? (eye.lane === 'low' ? 20 : 15) : 17) };
 }
 
-export function eyePad(eye: CookieEye) {
-  let extension = 0;
-  if (eye.phase === 'recover') extension = easeOut(eye.age / eyeDipTime);
-  if (eye.phase === 'depart' || (eye.phase === 'disabled' && eye.stomped)) {
-    extension = 1 - easeOut(eye.age / eyePadRetractTime);
-  }
-  const right = eye.x + mix(eyePadHinge.x, -38, extension);
-  return {
-    left: right - eyePadWidth * extension,
-    right,
-    y: eye.top + mix(eyePadHinge.y, 0, extension),
-    ready: eye.phase === 'recover' && eye.age >= eyeDipTime
-  };
+export function eyeRoof(eye: CookieEye) {
+  return { left: eye.x - 22, right: eye.x + 22, y: eye.top + 4, ready: eye.phase === 'recover' };
 }
 
-export function eyeScan(eye: CookieEye, playerX: number, ground: number): Bounds {
+export function eyeScan(eye: CookieEye, ground: number): Bounds {
+  const lens = eyeLens(eye).x;
+  const edge = lens + eye.facing * eyeScanReach;
   return {
-    left: playerX - 84,
-    right: eyeLens(eye).x,
+    left: Math.min(lens, edge),
+    right: Math.max(lens, edge),
     top: ground - (eye.lane === 'low' ? 42 : 164),
     bottom: eye.lane === 'low' ? ground + 1 : ground - 115
   };

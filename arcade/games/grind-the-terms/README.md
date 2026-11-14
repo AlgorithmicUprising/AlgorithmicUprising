@@ -1,4 +1,4 @@
-# Grind the Terms · Fony Sprock (v0.10 · held boost + courier combo)
+# Grind the Terms · Fony Sprock
 
 > Nobody reads them. Skate them.
 
@@ -8,11 +8,14 @@ The side-scrolling runner for Punk Arcade's CH 05. The `arcade` branch uses the 
 
 | Move | Desktop | Zero Game Thing tablet / touch | Gamepad |
 | --- | --- | --- | --- |
+| Steer on the ground or in the air | ← / → | Left-thumb rocker | D-pad or left stick |
 | Ollie / hold to grind | ↑ / W / U | Hold U | A |
 | Pop off a grind | Release ↑ / W / U | Release U | Release A |
 | Trick | SPACE or A | A button | B |
 | Spray boost | Hold R | Hold Ø | Hold X |
 | Pause / resume | P / Esc or pause button | Pause / Resume buttons | — |
+
+**Steering.** Hold either direction to shift Fony across the screen. Let go to keep that position. Street obstacles are laid out for a straight run, and the spray gauge still controls boost speed.
 
 **Grind:** Press U / ↑ / W for one ollie. Hold it as Fony descends to catch a rail, obstacle top, or delivery-drone deck; release to pop. Both feet stay on the board while grinding.
 
@@ -22,7 +25,7 @@ The side-scrolling runner for Punk Arcade's CH 05. The `arcade` branch uses the 
 
 **Terms Runner:** Drones enter the street run after Fony clears a rail, ACCEPT, Consent, and a gap. The first courier passes high enough to skate underneath, with a coin trail on the sidewalk. Its lime deck is still a moving grind surface. A hit against the visible hull or parcel uses the usual bail and shield rules.
 
-**Cookie Eye:** The first Eye warns for 1.1 seconds, then scans the sidewalk. Jump on the ollie cue, or stay low if it warns of a high scan. Two consecutive early dodges prompt a high scan on the next Eye. Getting scanned breaks the combo and slows Fony for 1.15 seconds. Land on the extended lime pad to disable the Eye, bounce, and refresh the currently unlocked tricks. Hold boost when the lens is outlined in lime to jam the scan and open the pad early. The jam spends 8% of a full spray gauge in addition to the normal boost drain.
+**Cookie Eye.** Stay on the sidewalk as the Eye approaches to bait a low scan. Ollie at the cue and steer onto the lime roof. An airborne approach can draw a high scan, and the Eye also adapts after two consecutive early dodges. Stay low through the high scan, then ollie, use a trick to get above the roof, and steer onto it on the descent. The Eye commits to its lane and position when the warning starts. Spray can jam its lens for 8% of a full gauge in addition to the normal boost drain. A hit from the scan breaks the combo and slows Fony for 1.15 seconds. Stomping a vulnerable roof disables the Eye, bounces Fony, and refreshes his unlocked tricks.
 
 The standalone demo and portrait embed accept `?practice=drones` for a quick courier pass and repeatable Cookie Eye encounters. Practice starts with one spray segment and has its own local best score.
 

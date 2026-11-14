@@ -1,5 +1,5 @@
 import {
-  courierDeck, eyeDisabledTime, eyeLens, eyePad, eyePadHinge, eyeScan,
+  courierDeck, eyeDisabledTime, eyeLens, eyeRoof, eyeScan,
   eyeWarningTime, type CookieEye
 } from './drones';
 
@@ -40,10 +40,10 @@ export function drawCourierDeck(ctx: CanvasRenderingContext2D, spriteX: number, 
   ctx.restore();
 }
 
-export function drawScanLane(ctx: CanvasRenderingContext2D, eye: CookieEye, playerX: number, ground: number) {
+export function drawScanLane(ctx: CanvasRenderingContext2D, eye: CookieEye, ground: number) {
   if (eye.phase !== 'warning' && eye.phase !== 'scan') return;
   const firing = eye.phase === 'scan';
-  const lane = eyeScan(eye, playerX, ground);
+  const lane = eyeScan(eye, ground);
   const lens = eyeLens(eye);
   const w = lane.right - lane.left, h = lane.bottom - lane.top;
   if (w <= 0) return;
@@ -61,7 +61,7 @@ export function drawScanLane(ctx: CanvasRenderingContext2D, eye: CookieEye, play
   ctx.strokeStyle = pink;
   ctx.beginPath();
   ctx.moveTo(lens.x, lens.y);
-  ctx.lineTo(lane.right, lane.top + h / 2);
+  ctx.lineTo(lens.x, lane.top + h / 2);
   ctx.stroke();
   if (firing) {
     ctx.strokeStyle = paper;
@@ -105,47 +105,7 @@ function drawEyeFallback(ctx: CanvasRenderingContext2D) {
   ctx.fillRect(-12, 15, 2, 2);
 }
 
-function drawEyePad(ctx: CanvasRenderingContext2D, eye: CookieEye) {
-  const pad = eyePad(eye);
-  const left = pad.left - eye.x, right = pad.right - eye.x, y = pad.y - eye.top;
-  const width = right - left;
-  const hinge = eyePadHinge;
-  if (width > 0) {
-    const elbowX = (right + hinge.x) / 2;
-    const elbowY = y + 12;
-    ctx.beginPath();
-    ctx.moveTo(hinge.x, hinge.y);ctx.lineTo(elbowX, elbowY);ctx.lineTo(right - 3, y + 5);
-    ctx.strokeStyle = ink;ctx.lineWidth = 10;ctx.stroke();
-    ctx.strokeStyle = '#85707b';ctx.lineWidth = 6;ctx.stroke();
-    ctx.fillStyle = paper;
-    ctx.fillRect(elbowX - 1, elbowY - 1, 2, 2);
-
-    // The painted edge and board contact share pad.y when the arm locks.
-    ctx.fillStyle = ink;
-    ctx.beginPath();
-    ctx.moveTo(left, y);ctx.lineTo(right, y);ctx.lineTo(right, y + 9);
-    ctx.lineTo(left + Math.min(4, width), y + 9);ctx.lineTo(left, y + 5);
-    ctx.closePath();ctx.fill();
-    ctx.fillStyle = pad.ready ? lime : '#ad9a77';
-    ctx.fillRect(left, y, width, 4);
-    if (width > 10) {
-      ctx.fillStyle = pad.ready ? '#f2ffac' : paper;
-      ctx.fillRect(left + 3, y + 1, width - 6, 1);
-      ctx.fillStyle = '#85707b';
-      for (let bolt = left + 6; bolt < right - 4; bolt += 10) ctx.fillRect(bolt, y + 5, 3, 2);
-    }
-  }
-
-  // The hub stays on the hull while the arm articulates.
-  ctx.fillStyle = ink;
-  ctx.beginPath();ctx.arc(hinge.x, hinge.y, 5.5, 0, Math.PI * 2);ctx.fill();
-  ctx.fillStyle = '#b7a486';
-  ctx.beginPath();ctx.arc(hinge.x, hinge.y, 3.5, 0, Math.PI * 2);ctx.fill();
-  ctx.fillStyle = gunmetal;
-  ctx.fillRect(hinge.x - 2, hinge.y - .6, 4, 1.2);
-}
-
-export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, ground: number, elapsed: number, reducedMotion: boolean, sprite?: HTMLImageElement) {
+export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, ground: number, elapsed: number, reducedMotion: boolean, jamAvailable: boolean, sprite?: HTMLImageElement) {
   const {x, top, phase, age, jammed} = eye;
   const disabled = phase === 'disabled';
   const aiming = phase === 'warning' || phase === 'scan';
@@ -158,6 +118,7 @@ export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, gro
 
   ctx.translate(x, top);
   if (disabled && !reducedMotion) ctx.rotate(age * 1.5);
+  if (eye.facing > 0) ctx.scale(-1, 1);
   if (sprite) ctx.drawImage(sprite, -54, -11, 108, 42.75);
   else drawEyeFallback(ctx);
 
@@ -178,6 +139,13 @@ export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, gro
     ctx.fillStyle = paper;
     ctx.fillRect(-14.5, irisY - 1, 3, 2);
   }
+  if (jamAvailable) {
+    ctx.strokeStyle = lime;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();ctx.arc(-13, 18.5, 10.5, 0, Math.PI * 2);ctx.stroke();
+    ctx.setLineDash([]);
+  }
   if (disabled) {
     ctx.fillStyle = '#342c37';
     ctx.beginPath();ctx.ellipse(-13, 18.5, 5.6, 5.2, 0, 0, Math.PI * 2);ctx.fill();
@@ -186,7 +154,16 @@ export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, gro
     ctx.fillStyle = lime;
     ctx.fillRect(-20, 17, 11, 3);ctx.fillRect(-17, 18, 3, 6);ctx.fillRect(-21, 13, 3, 3);
   }
-  drawEyePad(ctx, eye);
+  const roof = eyeRoof(eye);
+  if (roof.ready) {
+    const left = roof.left - x, y = roof.y - top, width = roof.right - roof.left;
+    ctx.fillStyle = ink;
+    ctx.fillRect(left, y, width, 6);
+    ctx.fillStyle = lime;
+    ctx.fillRect(left, y, width, 3);
+    ctx.fillStyle = '#f2ffac';
+    ctx.fillRect(left + 3, y, width - 6, 1);
+  }
   if (disabled && eye.stomped && !reducedMotion) {
     for (let i = 0; i < 5; i++) {
       ctx.fillStyle = i % 2 ? paper : lime;
@@ -196,14 +173,15 @@ export function drawCookieEye(ctx: CanvasRenderingContext2D, eye: CookieEye, gro
   ctx.restore();
 }
 
-export function drawStompCue(ctx: CanvasRenderingContext2D, pad: ReturnType<typeof eyePad>) {
-  if (!pad.ready) return;
-  const x = pad.right - 10, y = pad.y + 15;
+export function drawStompCue(ctx: CanvasRenderingContext2D, eye: CookieEye) {
+  const roof = eyeRoof(eye);
+  if (!roof.ready) return;
+  const x = eye.x, y = roof.y + 34;
   ctx.save();
   ctx.fillStyle = ink;
   ctx.fillRect(x - 24.5, y, 49, 17);
   ctx.fillStyle = lime;
-  ctx.beginPath();ctx.moveTo(x - 3, y);ctx.lineTo(x, y - 4);ctx.lineTo(x + 3, y);ctx.fill();
+  ctx.beginPath();ctx.moveTo(x - 4, y);ctx.lineTo(x, y - 5);ctx.lineTo(x + 4, y);ctx.fill();
   ctx.font = '900 11px monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';

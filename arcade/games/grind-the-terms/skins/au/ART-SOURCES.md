@@ -45,8 +45,8 @@ The skin is all rights reserved. Keep it under `skins/au/`; do not copy these as
 
 ## Cookie Eye security drone
 
-- `terms_cookie_eye_v1.webp` is a transparent 384 × 152 px sprite generated from the Terms Runner's inked style and the original Cookie Eye silhouette. Its neutral rotor and hull trim reserve lime for the deployable stomp pad and spray effects.
-- Rotor motion, scan charge, paint splatter, the hinged pad and the falling shutdown pose are drawn over the same anchored hull. The pad's leading edge, landing height and ready cue come from the same recovery geometry.
+- `terms_cookie_eye_v1.webp` is a transparent 384 × 152 px sprite generated from the Terms Runner's inked style and the original Cookie Eye silhouette. Its neutral rotor and hull trim reserve lime for the vulnerable roof and spray effects.
+- Rotor motion, scan charge, paint splatter, the lime roof and the falling shutdown pose share the same anchored hull. The lit roof and the stomp use the same collision edge.
 
 
 ## Fony animation atlas v2

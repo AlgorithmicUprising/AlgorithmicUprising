@@ -9,6 +9,83 @@ async function openPractice(page) {
   return game;
 }
 
+test('steering keeps its position without changing scroll pace or the courier flight', async ({ page }) => {
+  const game = await openPractice(page);
+  const result = await game.evaluate(el => {
+    const g = el.game;
+    const read = () => g.result().stats;
+    const tick = steps => { for (let i = 0; i < steps; i++) g.update(1 / 120); };
+    const canvas = document.createElement('canvas');
+    const screen = el.shadowRoot.querySelector('canvas');
+    canvas.width = screen.width;
+    canvas.height = screen.height;
+    const ctx = canvas.getContext('2d');
+    const drawImage = ctx.drawImage.bind(ctx);
+    let courier;
+    ctx.drawImage = (asset, ...args) => {
+      if (asset.src?.endsWith('terms_runner_delivery_drone_v1.webp')) courier = args;
+      return drawImage(asset, ...args);
+    };
+    const render = () => {
+      g.draw(ctx, canvas.width, canvas.height);
+      return { ...read(), courier };
+    };
+    g.start();
+    tick(96);
+    const neutral = render();
+    g.start();
+    g.input('right', true);
+    tick(96);
+    const forward = render();
+    g.input('right', false);
+    tick(24);
+    const released = read();
+    g.input('left', true);
+    tick(8);
+    g.releaseInput();
+    const beforeTick = read();
+    tick(24);
+    const afterTick = read();
+    g.start();
+    return { neutral, forward, released, beforeTick, afterTick, reset: read() };
+  });
+  expect(result.neutral.courier).toBeDefined();
+  expect(result.forward.courier).toEqual(result.neutral.courier);
+  expect(result.forward.playerX).toBeGreaterThan(result.neutral.playerX + 100);
+  expect(result.forward.distancePx).toBe(result.neutral.distancePx);
+  expect(result.forward.runSpeed).toBe(result.neutral.runSpeed);
+  expect(result.released.playerX).toBe(result.forward.playerX);
+  expect(result.beforeTick.playerX).toBeLessThan(result.released.playerX);
+  expect(result.afterTick.playerX).toBe(result.beforeTick.playerX);
+  expect(result.reset.playerX).toBe(result.neutral.playerX);
+});
+
+test('the desktop arrows steer while held and pause clears the held input', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-chromium', 'Desktop keyboard bindings.');
+  const game = await openPractice(page);
+  const x = () => game.evaluate(el => el.game.result().stats.playerX);
+  await game.locator('button[part=start]').click();
+  const start = await x();
+  try {
+    await page.keyboard.down('ArrowRight');
+    await expect.poll(x).toBeGreaterThan(start + 20);
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    const resumed = await x();
+    await game.evaluate(el => el.game.update(.05));
+    expect(await x()).toBe(resumed);
+  } finally {
+    await page.keyboard.up('ArrowRight');
+  }
+  try {
+    const beforeLeft = await x();
+    await page.keyboard.down('ArrowLeft');
+    await expect.poll(x).toBeLessThan(beforeLeft);
+  } finally {
+    await page.keyboard.up('ArrowLeft');
+  }
+});
+
 test('the artwork manifest loads with the private cabinet session', async ({ page, context, baseURL }, info) => {
   test.skip(info.project.name === 'mobile-webkit', 'The WebKit CI browser does not send the loopback cookie fixture.');
   await context.addCookies([{
@@ -87,9 +164,9 @@ test('the high courier is safe to skate under and a low scan slows once', async 
   expect(result.over).toBe(false);
 });
 
-test('the Cookie Eye only lights and labels the stomp pad once it locks', async ({ page }) => {
+test('the Cookie Eye locks its scan and lights only its roof during recovery', async ({ page }) => {
   const game = await openPractice(page);
-  const frames = await game.evaluate(el => {
+  const result = await game.evaluate(el => {
     const g = el.game;
     const screen = el.shadowRoot.querySelector('canvas');
     const canvas = document.createElement('canvas');
@@ -99,50 +176,62 @@ test('the Cookie Eye only lights and labels the stomp pad once it locks', async 
     const drawImage = ctx.drawImage.bind(ctx);
     const fillRect = ctx.fillRect.bind(ctx);
     const fillText = ctx.fillText.bind(ctx);
-    const frames = {};
+    const strokeRect = ctx.strokeRect.bind(ctx);
     let frame;
     ctx.drawImage = (asset, ...args) => {
       if (asset.src?.endsWith('terms_cookie_eye_v1.webp')) frame.sprite = args;
       return drawImage(asset, ...args);
     };
     ctx.fillRect = (x, y, width, height) => {
-      if (height === 4 && ['#ad9a77', '#d7ff00'].includes(ctx.fillStyle)) {
-        frame.pad = { x, y, width, lit: ctx.fillStyle === '#d7ff00' };
-      }
+      if (width === 44 && height === 3 && ctx.fillStyle === '#d7ff00') frame.roofLight = { x, y, width };
       return fillRect(x, y, width, height);
     };
     ctx.fillText = (label, x, y) => {
       if (label === 'STOMP' || label === 'SCANNED / SLOWED') frame.labels.push({ label, y });
       return fillText(label, x, y);
     };
-    g.start();
-    for (let i = 0; i < 1600 && !g.over() && !frames.retracting; i++) {
-      g.update(1 / 120);
-      const eye = g.result().stats.eye;
-      if (!eye) continue;
-      const phase = eye.phase === 'recover' ? (eye.padReady ? 'locked' : eye.age > .04 ? 'opening' : '') :
-        eye.phase === 'depart' && eye.age > .08 ? 'retracting' : eye.phase === 'warning' ? 'warning' : '';
-      if (!phase || frames[phase]) continue;
+    ctx.strokeRect = (x, y, width, height) => {
+      if (width === 155 && height === 43) frame.scan = { x, y, width, height };
+      return strokeRect(x, y, width, height);
+    };
+    const render = () => {
       frame = { labels: [] };
       g.draw(ctx, canvas.width, canvas.height);
-      frames[phase] = frame;
-    }
-    return frames;
+      return frame;
+    };
+    const next = predicate => {
+      for (let i = 0; i < 1400 && !predicate(g.result().stats) && !g.over(); i++) g.update(1 / 120);
+      return g.result().stats;
+    };
+    g.start();
+    const first = next(stats => stats.eye?.phase === 'warning');
+    const warning = render();
+    g.input('left', true);
+    const repositioned = next(stats => stats.playerX <= 84);
+    g.input('left', false);
+    const warningAfterSteering = render();
+    const firing = next(stats => stats.eye?.phase === 'scan');
+    const scan = render();
+    const opened = next(stats => stats.eye?.roof.ready);
+    const recovery = render();
+    next(stats => stats.eye?.phase === 'depart');
+    const depart = render();
+    return { first, warning, repositioned, warningAfterSteering, firing, scan, opened, recovery, depart };
   });
-  expect(frames.warning.sprite).toBeDefined();
-  expect(frames.warning.pad).toBeUndefined();
-  expect(frames.opening.pad.lit).toBe(false);
-  expect(frames.locked.pad).toMatchObject({ lit: true, y: 0 });
-  expect(frames.locked.pad.width).toBeGreaterThan(frames.opening.pad.width);
-  expect(frames.retracting.pad.lit).toBe(false);
-  expect(frames.retracting.pad.width).toBeLessThan(frames.locked.pad.width);
-  expect(frames.opening.labels.map(row => row.label)).toEqual(['SCANNED / SLOWED']);
-  expect(frames.locked.labels.map(row => row.label)).toEqual(['STOMP', 'SCANNED / SLOWED']);
-  expect(frames.locked.labels[1].y).toBeLessThan(frames.locked.labels[0].y);
-  expect(frames.retracting.labels).toEqual([]);
+  expect(result.warning.sprite).toBeDefined();
+  expect(result.warning.roofLight).toBeUndefined();
+  expect(result.warningAfterSteering.scan).toEqual(result.warning.scan);
+  expect(result.scan.scan).toEqual(result.warning.scan);
+  expect(result.repositioned.eye.roof).toEqual(result.first.eye.roof);
+  expect(result.firing.eye.roof).toEqual(result.first.eye.roof);
+  expect(result.opened.eye.roof).toEqual({ ...result.first.eye.roof, ready: true });
+  expect(result.recovery.roofLight).toEqual({ x: -22, y: 4, width: 44 });
+  expect(result.recovery.labels[0].label).toBe('STOMP');
+  expect(result.depart.roofLight).toBeUndefined();
+  expect(result.depart.labels).toEqual([]);
 });
 
-test('an ollie onto the Cookie Eye uses airborne poses until the board lands', async ({ page }) => {
+test('baiting the Cookie Eye low leaves a roof Fony can steer onto with one ollie', async ({ page }) => {
   const game = await openPractice(page);
   const result = await game.evaluate(el => {
     const game = el.game;
@@ -152,9 +241,7 @@ test('an ollie onto the Cookie Eye uses airborne poses until the board lands', a
     canvas.height = screen.height;
     const ctx = canvas.getContext('2d');
     const image = ctx.drawImage.bind(ctx);
-    const fill = ctx.fillRect.bind(ctx);
     let pose;
-    let pad;
     ctx.drawImage = (asset, ...args) => {
       if (args.length === 8 && asset.src?.includes('fony_gameplay_atlas_')) {
         pose = {
@@ -165,50 +252,102 @@ test('an ollie onto the Cookie Eye uses airborne poses until the board lands', a
       }
       return image(asset, ...args);
     };
-    ctx.fillRect = (x, y, w, h) => {
-      if (w === 46 && h === 4 && ctx.fillStyle === '#d7ff00') {
-        const { a, d, e, f } = ctx.getTransform();
-        pad = { left: x + (e - origin.e) / a, right: x + w + (e - origin.e) / a, top: y + (f - origin.f) / d };
-      }
-      return fill(x, y, w, h);
-    };
-    let origin;
-    const setTransform = ctx.setTransform.bind(ctx);
-    ctx.setTransform = (...args) => {
-      setTransform(...args);
-      origin = ctx.getTransform();
-    };
     const read = () => game.result().stats;
     game.start();
-    for (let i = 0; i < 1200 && !read().eye?.padReady && !game.over(); i++) game.update(1 / 120);
-    const ready = read();
-    game.draw(ctx, canvas.width, canvas.height);
-    const target = pad;
+    for (let i = 0; i < 1200 && !game.over(); i++) {
+      if (read().eye?.phase === 'warning' && read().eye.age >= .8) break;
+      game.update(1 / 120);
+    }
+    const warning = read();
     game.input('up', true);
     game.input('up', false);
+    game.input('right', true);
     const airborne = [];
     let landing;
-    for (let i = 0; i < 180 && !game.over(); i++) {
+    let released = false;
+    for (let i = 0; i < 220 && !game.over(); i++) {
       game.update(1 / 120);
       const stats = read();
-      if (i % 4 !== 0 && !stats.eyesStomped && stats.boardY < ready.boardY) continue;
+      if (!released && stats.playerX >= warning.eye.roof.left + 11) {
+        released = true;
+        game.input('right', false);
+      }
+      if (i % 4 !== 0 && !stats.eyesStomped && stats.boardY < warning.boardY) continue;
       game.draw(ctx, canvas.width, canvas.height);
       if (stats.eyesStomped) landing ??= pose;
-      if (stats.boardY === ready.boardY) break;
+      if (stats.boardY === warning.boardY) break;
       if (!stats.eyesStomped) airborne.push(pose);
     }
-    return { ready, target, airborne, landing, ground: pose, after: read() };
+    return { warning, airborne, landing, ground: pose, after: read() };
   });
-  expect(result.ready.eye.padReady).toBe(true);
-  expect(result.ready.scansHit).toBe(1);
-  expect(result.target.left).toBeLessThan(140 + 14);
-  expect(result.target.right).toBeGreaterThan(140);
+  expect(result.warning.eye.lane).toBe('low');
+  expect(result.warning.eye.roof.left).toBeGreaterThan(result.warning.playerX + 50);
   expect(result.airborne.every(pose => pose.actionAtlas)).toBe(true);
   expect([...new Set(result.airborne.map(pose => pose.cell))]).toEqual([11, 12, 10, 13]);
   expect(result.landing).toMatchObject({ actionAtlas: true, cell: 12 });
-  expect(result.landing.boardY).toBeCloseTo(result.target.top - 2, 4);
-  expect(result.ground).toMatchObject({ actionAtlas: true, cell: 14, boardY: result.ready.boardY });
-  expect(result.after.eyesStomped).toBe(1);
+  expect(result.landing.boardY).toBeCloseTo(result.warning.eye.roof.y - 2, 4);
+  expect(result.ground).toMatchObject({ actionAtlas: true, cell: 14, boardY: result.warning.boardY });
+  expect(result.after).toMatchObject({ eyesStomped: 1, scansHit: 0, tricksUsed: 0 });
+  expect(result.after.playerX).toBeGreaterThan(result.warning.eye.roof.left);
+});
+
+test('an airborne approach holds the Eye high and a trick reaches its vulnerable roof', async ({ page }) => {
+  const game = await openPractice(page);
+  const result = await game.evaluate(el => {
+    const g = el.game;
+    const read = () => g.result().stats;
+    const until = predicate => {
+      for (let i = 0; i < 1400 && !predicate(read()) && !g.over(); i++) g.update(1 / 120);
+      return read();
+    };
+    const tap = key => { g.input(key, true); g.input(key, false); };
+    g.start();
+    until(stats => stats.eye?.phase === 'approach' && stats.eye.age >= .47);
+    tap('up');
+    const warning = until(stats => stats.eye?.phase === 'warning');
+    const recovery = until(stats => stats.eye?.roof.ready);
+    tap('up');
+    const ollie = until(stats => stats.boardY <= 204);
+    tap('trick');
+    const trick = until(stats => stats.boardY < recovery.eye.roof.y - 6);
+    g.input('right', true);
+    until(stats => stats.playerX >= recovery.eye.roof.left + 11);
+    g.input('right', false);
+    const stomp = until(stats => stats.eyesStomped === 1 || stats.eye?.phase === 'depart');
+    return { warning, recovery, ollie, trick, stomp };
+  });
+  expect(result.warning.eye.lane).toBe('high');
+  expect(result.recovery.eye.roof).toEqual({ ...result.warning.eye.roof, ready: true });
+  expect(result.ollie.boardY).toBeGreaterThan(result.recovery.eye.roof.y);
+  expect(result.trick.boardY).toBeLessThan(result.recovery.eye.roof.y);
+  expect(result.trick.tricksUsed).toBe(1);
+  expect(result.stomp).toMatchObject({ combo: 3, eyesStomped: 1, scansHit: 0, tricksUsed: 0, trickAvailable: true });
+});
+
+test('the Eye offers a reachable roof when Fony hugs the forward limit', async ({ page }) => {
+  const game = await openPractice(page);
+  const result = await game.evaluate(el => {
+    const g = el.game;
+    const read = () => g.result().stats;
+    const until = predicate => {
+      for (let i = 0; i < 1400 && !predicate(read()) && !g.over(); i++) g.update(1 / 120);
+      return read();
+    };
+    g.start();
+    g.input('right', true);
+    for (let i = 0; i < 100; i++) g.update(1 / 120);
+    g.input('right', false);
+    const warning = until(stats => stats.eye?.phase === 'warning' && stats.eye.age >= .8);
+    g.input('up', true);
+    g.input('up', false);
+    g.input('left', true);
+    until(stats => stats.playerX < warning.eye.roof.right - 8);
+    g.input('left', false);
+    const stomp = until(stats => stats.eyesStomped === 1 || stats.eye?.phase === 'depart');
+    return { warning, stomp };
+  });
+  expect(result.warning.eye.roof.right).toBeLessThan(result.warning.playerX - 30);
+  expect(result.stomp).toMatchObject({ eyesStomped: 1, scansHit: 0 });
 });
 
 test('two early dodges teach the next Eye to scan high', async ({ page }) => {
@@ -235,7 +374,7 @@ test('two early dodges teach the next Eye to scan high', async ({ page }) => {
   expect(result.lanes).toEqual(['low', 'low', 'high']);
   expect(result.dodges).toEqual([{ lane: 'low', early: true }, { lane: 'low', early: true }, { lane: 'high', early: false }]);
   expect(result.scansHit).toBe(0);
-  expect(result.eyesStomped).toBe(2);
+  expect(result.eyesStomped).toBe(0);
 });
 
 test('boost jams the Eye once and a board stomp refreshes both tricks', async ({ page }) => {
@@ -262,7 +401,9 @@ test('boost jams the Eye once and a board stomp refreshes both tricks', async ({
     for (let i = 0; i < 16; i++) g.update(1 / 120);
     g.input('trick', true);
     g.input('trick', false);
-    const spent = g.result().stats;
+    g.input('right', true);
+    const spent = advanceUntil(stats => stats.playerX >= jam.eye.roof.left + 10);
+    g.input('right', false);
     g.input('boost', false);
     const stomp = advanceUntil(stats => stats.eyesStomped === 1);
     return { before, jam, spent, stomp, jams, stomps };
