@@ -12,6 +12,10 @@ export interface CartridgeProfile {
   portrait: readonly [number, number];
   resultStats: Record<string, string>;
   cues: Record<string, string>;
+  /** A new cartridge may consume the key that opened its title card. */
+  consumeStartInput?: boolean;
+  /** Optional axis-to-button mapping for rhythm and accessibility controllers. */
+  padAxes?: readonly { index: number; negative: string; positive: string; deadzone?: number }[];
 }
 
 export function fitViewport(host: HTMLElement, root: ShadowRoot, profile: CartridgeProfile) {

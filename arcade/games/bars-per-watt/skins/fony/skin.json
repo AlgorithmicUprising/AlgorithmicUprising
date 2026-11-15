@@ -1,0 +1,16 @@
+{
+  "id": "fony",
+  "game": "bars-per-watt",
+  "name": "Fony's Basement Rack",
+  "extends": "placeholder",
+  "palette": {
+    "bg": "#15131d",
+    "panel": "#2b2532",
+    "accent": "#7de3dc",
+    "secondary": "#e9aa5b"
+  },
+  "strings": {
+    "subtitle": "Four lanes. One overloaded basement.",
+    "gameover_any": "The meter had opinions."
+  }
+}

@@ -1,0 +1,115 @@
+<div class="viewport" part="viewport">
+  <div class="playfield" inert>
+  <header class="header">
+    <div class="track-visual" data-track-visual aria-hidden="true" hidden>
+      <img alt="" hidden>
+      <video muted playsinline loop preload="none" disablepictureinpicture disableremoteplayback></video>
+    </div>
+    <div class="brand"><b>Ø</b><span>BARS<br>PER WATT</span></div>
+    <div class="hud"><div><small>BARS BANKED</small><output data-score>0</output></div>
+      <div class="combo-stat"><small>COMBO</small><output data-combo>0</output></div>
+      <div><small>ACCURACY</small><output data-accuracy>0%</output></div></div>
+  </header>
+  <div class="screen">
+    <canvas role="img" aria-label="Four-lane rhythm highway: left, down, up, right"></canvas>
+    <div class="feedback-strip" aria-live="off">
+      <div class="hit-readout"><b data-hit>HIT THE LINE</b><small data-timing></small></div>
+      <span data-precision>PRECISION 0/5</span>
+    </div>
+    <div class="count-in" data-count-in hidden aria-hidden="true"></div>
+    <div class="overlay" data-phase="title">
+      <section class="card">
+        <span class="eyebrow">ZERO GAME THING 2000 / 04</span>
+        <h2>BARS PER WATT</h2><p data-detail>Drop bars. Not the grid.</p><p data-summary hidden></p>
+        <div class="bill" hidden><strong>ELECTRIC BILL / <span data-bill-song></span></strong>
+          <div><span>BEAT CHARGE</span><output data-bill-score>0</output></div>
+          <div><span>BEST</span><output data-bill-best>0</output></div>
+          <div><span>ACCURACY</span><output data-bill-accuracy>0%</output></div>
+          <div><span>MAX COMBO</span><output data-bill-combo>0</output></div>
+          <div><span>BEST PRECISION</span><output data-bill-precision>0</output></div>
+          <div><span>ROOT / SYNC / ROUGH</span><output data-bill-hits>0 / 0 / 0</output></div>
+          <div><span>DESYNC</span><output data-bill-miss>0</output></div>
+          <div class="total"><span>TOTAL POINTS</span><output data-bill-total>0</output></div>
+          <small>FICTIONAL POINTS. NOT MONEY.</small>
+        </div>
+        <div class="actions"><button type="button" part="start" disabled>PLAY SONG</button>
+          <button type="button" part="resume" hidden>RESUME</button>
+          <button type="button" part="again" hidden>RUN IT AGAIN</button>
+          <button type="button" part="share" hidden>SHARE</button>
+          <button type="button" data-choose hidden>SONG SELECT</button></div>
+        <input data-share-fallback type="text" aria-label="Score to copy" readonly hidden>
+      </section>
+    </div>
+  </div>
+  <aside class="rack"><div class="meter"><span>RACK LOAD</span><div class="meter-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <b data-meter>READY</b></div><p data-judge aria-live="off">HIT THE LINE</p>
+    <div class="timing-key"><span>ROOT ACCESS <small>PERFECT</small></span><span>IN SYNC <small>GOOD</small></span><span>BIT ROUGH <small>OK</small></span></div>
+    <div class="progress"><span>TRACK</span><progress data-progress max="318.8" value="0"></progress><time data-time>0:00</time></div></aside>
+  <nav class="touch-pads" part="mobile-controls" aria-label="Rhythm lanes">
+    <button type="button" data-lane="left" aria-label="Left lane">←</button>
+    <button type="button" data-lane="down" aria-label="Down lane">↓</button>
+    <button type="button" data-lane="up" aria-label="Up lane">↑</button>
+    <button type="button" data-lane="right" aria-label="Right lane">→</button>
+  </nav>
+  <div class="top"><button type="button" part="pause" aria-label="Pause game">Ⅱ</button>
+    <button type="button" part="sound" aria-pressed="false">SOUND OFF</button>
+    <button type="button" part="settings">⚙ SETTINGS</button></div>
+  </div>
+  <section class="menu menu-title" data-title aria-label="Bars per Watt">
+    <div class="rack-face">
+      <div class="rack-grille" aria-hidden="true"></div>
+      <div class="rack-title">
+        <span class="rack-brand">Ø <span>ALGORITHMIC UPRISING</span></span>
+        <h1>BARS<br>PER WATT</h1>
+        <div class="rack-leds" aria-hidden="true">
+          <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i>
+          <i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i>
+          <i style="--i:8"></i><i style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i>
+        </div>
+      </div>
+      <div class="rack-switches">
+        <button class="rack-primary" type="button" data-open-songs>PLAY <span aria-hidden="true">▶</span></button>
+        <button type="button" data-menu-settings>SETTINGS</button>
+      </div>
+    </div>
+  </section>
+  <section class="menu song-menu" data-song-menu aria-labelledby="song-select-heading" hidden>
+    <header class="song-menu-header">
+      <button type="button" data-back aria-label="Back to title">←</button>
+      <h2 id="song-select-heading">SONG SELECT</h2>
+      <button type="button" data-menu-sound aria-pressed="false">SOUND OFF</button>
+    </header>
+    <div class="song-menu-body">
+      <div class="song-list" data-song-list aria-label="Tracks"></div>
+      <article class="sleeve">
+        <div class="sleeve-art"><span aria-hidden="true">Ø</span><img data-sleeve alt="" hidden></div>
+        <div class="sleeve-info">
+          <p data-artist>ALGORITHMIC UPRISING</p>
+          <h3 data-song-title></h3>
+          <p data-song-meta></p>
+          <div class="difficulty" role="group" aria-label="Difficulty">
+            <button type="button" data-difficulty="easy" aria-pressed="true">EASY</button>
+            <button type="button" data-difficulty="medium" aria-pressed="false">MEDIUM</button>
+            <button type="button" data-difficulty="hard" aria-pressed="false">HARD</button>
+          </div>
+        </div>
+      </article>
+    </div>
+    <footer class="song-menu-footer">
+      <p data-loading role="status"></p>
+      <button class="rack-primary" type="button" data-load disabled><b data-play-label>PLAY SONG</b> <span aria-hidden="true">▶</span></button>
+    </footer>
+  </section>
+  <dialog class="settings"><form method="dialog"><h2>SETTINGS</h2>
+    <label>SCROLL SPEED <input data-scroll-speed type="range" min="0.75" max="1.75" step="0.05" value="1"><output data-scroll-value>1.00×</output></label>
+    <label>VISUAL OFFSET <input data-visual-offset type="range" min="-150" max="150" step="5" value="0"><output data-visual-value>0 ms</output></label>
+    <label>INPUT OFFSET <input data-input-offset type="range" min="-150" max="150" step="5" value="0"><output data-input-value>0 ms</output></label>
+    <label>HIGH CONTRAST <input data-contrast type="checkbox"></label>
+    <label>REDUCED MOTION <input data-motion type="checkbox"></label>
+    <label>BACKGROUND VIDEO <input data-background-video type="checkbox" checked></label>
+    <p>Scroll speed changes arrow spacing. Song speed and scoring stay the same. Hold an arrow until its end cap meets the hit line, then release.</p>
+    <p>ROOT ACCESS: within 50 ms. IN SYNC: within 90 ms. BIT ROUGH: within 120 ms. Five perfect hits in a row: OVERCLOCKED! A Good or OK hit keeps your combo but resets precision. A miss or dropped hold breaks both.</p>
+    <p>Offsets are local to this device. The song clock always controls scoring.</p>
+    <button type="submit">DONE</button></form></dialog>
+  <span class="live" aria-live="polite" aria-atomic="true"></span>
+</div>

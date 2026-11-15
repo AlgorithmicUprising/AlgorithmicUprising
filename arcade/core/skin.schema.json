@@ -15,7 +15,8 @@
       "enum": [
         "grind-the-terms",
         "tag-before-training",
-        "cookie-wall"
+        "cookie-wall",
+        "bars-per-watt"
       ]
     },
     "name": {

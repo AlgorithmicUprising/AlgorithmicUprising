@@ -1,0 +1,16 @@
+{
+  "id": "au",
+  "game": "bars-per-watt",
+  "name": "Algorithmic Uprising",
+  "extends": "fony",
+  "palette": {
+    "bg": "#101116",
+    "panel": "#28202b",
+    "accent": "#d7ff00",
+    "secondary": "#e0287a"
+  },
+  "strings": {
+    "subtitle": "Welcome to the Human Zoo. Keep your eyes on the arrows.",
+    "gameover_any": "Paid in full. Somehow."
+  }
+}
