@@ -418,16 +418,18 @@ func _invert() -> void:
 	var stick := InputEventJoypadMotion.new()
 	stick.axis = JOY_AXIS_RIGHT_Y
 	stick.axis_value = 1.0
-	var stick_start: float = reloaded.player.camera_pitch
 	reloaded.player.look_invert_y = true
+	await frames(2)
+	var stick_start: float = reloaded.player.camera_pitch
 	Input.parse_input_event(stick)
 	await frames(4)
 	var stick_inverted: float = reloaded.player.camera_pitch - stick_start
 	stick.axis_value = 0.0
 	Input.parse_input_event(stick)
 	await frames(1)
-	stick_start = reloaded.player.camera_pitch
 	reloaded.player.look_invert_y = false
+	await frames(2)
+	stick_start = reloaded.player.camera_pitch
 	stick.axis_value = 1.0
 	Input.parse_input_event(stick)
 	await frames(4)
@@ -1262,8 +1264,9 @@ func _card_px(fs, fr: Dictionary, cam: Camera3D, px: Vector2) -> Vector3:
 	var right := cam.global_transform.basis.x
 	right.y = 0.0
 	right = right.normalized()
-	var vx := (-float(off[0]) + px.x * 0.5 - float(rect[2]) * 0.5 + s.offset.x) * s.pixel_size
-	var vy := (float(rect[3]) * 0.5 + float(off[1]) - px.y * 0.5 + s.offset.y) * s.pixel_size
+	var sc := float(fr.get("atlas_scale", 0.5))
+	var vx := (-float(off[0]) + px.x * sc - float(rect[2]) * 0.5 + s.offset.x) * s.pixel_size
+	var vy := (float(rect[3]) * 0.5 + float(off[1]) - px.y * sc + s.offset.y) * s.pixel_size
 	return s.global_position + right * vx + Vector3.UP * vy
 
 func _ray_ground(cam: Camera3D, p: Vector3, plane_y: float) -> Vector3:

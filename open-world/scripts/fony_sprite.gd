@@ -5,6 +5,13 @@ extends Node3D
 const AnimScript = preload("res://scripts/fony_sprite_anim.gd")
 const PIXEL := 0.007167
 
+func _px(fr: Dictionary) -> float:
+	return float(fr.get("pixel_size", PIXEL))
+
+func _atlas_scale(fr: Dictionary) -> float:
+	return float(fr.get("atlas_scale", AnimScript.ATLAS_SCALE))
+
+
 var anim = AnimScript.new()
 var sprite: Sprite3D
 var tex: Texture2D
@@ -119,8 +126,9 @@ func _apply(airborne: bool, cam: Camera3D = null) -> void:
 	var off: Array = fr.get("anchor_offset", [0.0, 0.0])
 	var w := float(rect[2])
 	var h := float(rect[3])
+	var px := _px(fr)
 	sprite.texture = _puppet_tex(str(fr.get("atlas_file", ""))) if str(fr.get("atlas", "v3")) == "puppet" else tex
-	sprite.pixel_size = PIXEL
+	sprite.pixel_size = px
 	sprite.region_rect = Rect2(float(rect[0]), float(rect[1]), w, h)
 	# anchor_offset is the rect top-left relative to the ground anchor, y down.
 	var anchor_x := -float(off[0])
@@ -130,7 +138,7 @@ func _apply(airborne: bool, cam: Camera3D = null) -> void:
 	# so drop that gap while the body is in the air.
 	if airborne:
 		anchor_y -= lift
-	var anchor_local := Vector3(0.0, foot_local_y - (lift * PIXEL if airborne else 0.0), 0.0)
+	var anchor_local := Vector3(0.0, foot_local_y - (lift * px if airborne else 0.0), 0.0)
 	depth_shift = 0.0
 	depth_offset = Vector3.ZERO
 	if depth_fix and cam != null and is_inside_tree():
@@ -152,12 +160,12 @@ func _apply(airborne: bool, cam: Camera3D = null) -> void:
 		_apply_qp(fr, side_px, anchor_y, h)
 		return
 	if cam != null and is_inside_tree() and (lean_up.angle_to(Vector3.UP) > 0.01 or anchor_extra.length() > 0.001):
-		_apply_lean(cam, Vector3(0.0, foot_local_y, 0.0), (anchor_y - h * 0.5) * PIXEL)
+		_apply_lean(cam, Vector3(0.0, foot_local_y, 0.0), (anchor_y - h * 0.5) * px)
 		return
 	sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	sprite.transform = Transform3D(Basis(), Vector3(
-		0.0 if plane_anchor else side_px * PIXEL,
-		foot_local_y + (anchor_y - h * 0.5) * PIXEL,
+		0.0 if plane_anchor else side_px * px,
+		foot_local_y + (anchor_y - h * 0.5) * px,
 		0.0
 	) + depth_offset)
 
@@ -165,13 +173,15 @@ func _apply(airborne: bool, cam: Camera3D = null) -> void:
 ## point it belongs on (the lip edge, or the board's contact on the wall) as anchor_extra. Upright Y billboard, no depth shift
 ## (the bake drew these frames with no shift along the view axis), no card lean (the lean is drawn).
 func _apply_qp(fr: Dictionary, side_px: float, anchor_y: float, h: float) -> void:
+	var px := _px(fr)
+	var sc := _atlas_scale(fr)
 	var bp: Array = fr.get("body_px", [0.0, 0.0])
-	var bx := float(bp[0]) * AnimScript.ATLAS_SCALE if bp.size() >= 2 else 0.0
-	var by := float(bp[1]) * AnimScript.ATLAS_SCALE if bp.size() >= 2 else 0.0
+	var bx := float(bp[0]) * sc if bp.size() >= 2 else 0.0
+	var by := float(bp[1]) * sc if bp.size() >= 2 else 0.0
 	sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	sprite.offset = Vector2((side_px - bx) if plane_anchor else 0.0, 0.0)
 	var extra := global_transform.basis.inverse() * anchor_extra
-	sprite.transform = Transform3D(Basis(), Vector3(0.0, foot_local_y + (anchor_y + by - h * 0.5) * PIXEL, 0.0) + extra)
+	sprite.transform = Transform3D(Basis(), Vector3(0.0, foot_local_y + (anchor_y + by - h * 0.5) * px, 0.0) + extra)
 
 ## World point of the drawn deck centre (board_px) for the current frame and camera (tests / probes: drawn-board continuity).
 func drawn_board_world(cam: Camera3D) -> Vector3:
@@ -188,11 +198,13 @@ func drawn_board_world(cam: Camera3D) -> Vector3:
 	if sprite.billboard == BaseMaterial3D.BILLBOARD_DISABLED:
 		right = sprite.global_transform.basis.x.normalized()
 		up = sprite.global_transform.basis.y.normalized()
-	var center := sprite.global_transform.origin + right * sprite.offset.x * PIXEL
+	var px := _px(fr)
+	var sc := _atlas_scale(fr)
+	var center := sprite.global_transform.origin + right * sprite.offset.x * px
 	var w := float(rect[2])
 	var hh := float(rect[3])
-	var anchor := center - right * (float(off[0]) + w * 0.5) * PIXEL + up * (float(off[1]) + hh * 0.5) * PIXEL
-	return anchor + right * float(bpx[0]) * AnimScript.ATLAS_SCALE * PIXEL - up * float(bpx[1]) * AnimScript.ATLAS_SCALE * PIXEL
+	var anchor := center - right * (float(off[0]) + w * 0.5) * px + up * (float(off[1]) + hh * 0.5) * px
+	return anchor + right * float(bpx[0]) * sc * px - up * float(bpx[1]) * sc * px
 
 ## Phase 2: stand the card on the contact point with its up axis along the (limited) surface normal, facing the camera.
 func _apply_lean(cam: Camera3D, anchor_local: Vector3, up_m: float) -> void:
@@ -220,7 +232,7 @@ func _apply_lean(cam: Camera3D, anchor_local: Vector3, up_m: float) -> void:
 static func ground_shift(fr: Dictionary, anchor_world: Vector3, cam_pos: Vector3) -> float:
 	var gd := float(fr.get("ground_depth_m", 0.0))
 	var bp: Array = fr.get("body_px", [0.0, 0.0])
-	var h := -float(bp[1]) * PIXEL * AnimScript.ATLAS_SCALE if bp.size() >= 2 else 0.0
+	var h := -float(bp[1]) * float(fr.get("pixel_size", PIXEL)) * float(fr.get("atlas_scale", AnimScript.ATLAS_SCALE)) if bp.size() >= 2 else 0.0
 	if gd <= 0.0 or h <= 0.0:
 		return 0.0
 	var to_cam := cam_pos - anchor_world

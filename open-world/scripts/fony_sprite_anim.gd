@@ -75,6 +75,16 @@ func direction_index(facing_yaw: float, camera_x: float, camera_z: float, origin
 func direction_name(facing_yaw: float, camera_x: float, camera_z: float, origin_x: float, origin_z: float) -> String:
 	return DIRS[direction_index(facing_yaw, camera_x, camera_z, origin_x, origin_z)]
 
+
+func _parse_json(path: String) -> Variant:
+	if path.ends_with(".gz"):
+		var bytes := FileAccess.get_file_as_bytes(path)
+		var dec := bytes.decompress_dynamic(8 * 1024 * 1024, FileAccess.COMPRESSION_GZIP)
+		if dec.is_empty():
+			return null
+		return JSON.parse_string(dec.get_string_from_utf8())
+	return JSON.parse_string(FileAccess.get_file_as_string(path))
+
 func ensure_loaded() -> void:
 	if _loaded:
 		return
@@ -88,7 +98,7 @@ func ensure_loaded() -> void:
 	_load_catalog(catalog, "v3")
 	# LOCAL TEST ONLY: puppet-v1 Skeleton2D bakes override same-name clips (all 8 directions; per-frame atlas_file).
 	if USE_PUPPET and FileAccess.file_exists(PUPPET_JSON):
-		var pc = JSON.parse_string(FileAccess.get_file_as_string(PUPPET_JSON))
+		var pc = _parse_json(PUPPET_JSON)
 		if typeof(pc) == TYPE_DICTIONARY:
 			_load_catalog(pc, "puppet")
 
@@ -96,15 +106,19 @@ func _load_catalog(catalog: Dictionary, tag: String) -> void:
 	for anim_name in catalog.get("animations", {}):
 		var anim: Dictionary = catalog.animations[anim_name]
 		var frames: Array = []
+		var catalog_scale := float(catalog.get("atlas", {}).get("scale_from_master", ATLAS_SCALE))
+		var catalog_px := float(catalog.get("atlas", {}).get("pixel_size_m", 0.007167))
 		for fr in anim.get("frames", []):
 			var rect: Array = fr.get("atlas_rect", [0, 0, 1, 1])
 			var off: Array = fr.get("anchor_offset", [0, 0])
 			frames.append({
 				"rect": rect,
 				"anchor_offset": off,
-				"lift_atlas": float(fr.get("lift_px", 0.0)) * ATLAS_SCALE,
+				"lift_atlas": float(fr.get("lift_px", 0.0)) * catalog_scale,
 				"atlas": tag,
 				"atlas_file": str(fr.get("atlas_file", "")),
+				"atlas_scale": catalog_scale,
+				"pixel_size": catalog_px,
 				# Phase 1d ground depth (puppet bakes only; v3 paintings stand on the body).
 				"ground_depth_m": float(fr.get("ground_depth_m", 0.0)),
 				"body_px": fr.get("body_px", [0.0, 0.0]),
