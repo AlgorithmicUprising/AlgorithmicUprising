@@ -168,6 +168,7 @@ static func _skate(parent: Node) -> void:
 	pipe.position = Vector3(-54, 0, -12)
 	pipe.rotation.y = PI
 	parent.add_child(pipe)
+	_quarter_steps(parent, pipe)
 	Blocks.solid(parent, "Funbox", Vector3(-48, 0.45, -2), Vector3(4.2, 0.9, 4.2), Palette.FUNBOX)
 	Blocks.add_quarter(parent, "HalfPipeWest", Vector3(-50, 0, -30), PI, 2.0, 6.5, Palette.RAMP)
 	Blocks.add_quarter(parent, "HalfPipeEast", Vector3(-44, 0, -30), 0.0, 2.0, 6.5, Palette.RAMP)
@@ -180,6 +181,27 @@ static func _skate(parent: Node) -> void:
 	parent.add_child(rail)
 	Blocks.label(parent, "SKATE YARD", Vector3(-52, 3.4, -6), Palette.LABEL, 48)
 	Blocks.label(parent, "RAIL", Vector3(-50, 1.8, 8), Palette.LABEL, 28)
+
+## Phase 2 (LOCAL blockout): steps up the north cheek of SkateQuarter onto its deck (1.58 m). Collision is one smooth slope
+## (like PlazaStair), so walking and skating both climb it; the treads are visual only.
+static func _quarter_steps(parent: Node, pipe: Node3D) -> void:
+	var lip_x: float = pipe.radius * sin(deg_to_rad(pipe.climb_deg))
+	var top: float = pipe.radius * (1.0 - cos(deg_to_rad(pipe.climb_deg)))
+	var half: float = pipe.width * 0.5
+	var mid_local := Vector3(lip_x + pipe.deck_length * 0.5, 0.0, half)
+	var mid: Vector3 = pipe.position + pipe.basis * mid_local
+	var out: Vector3 = (pipe.basis * Vector3(0, 0, 1)).normalized()
+	var run := 2.9
+	var count := 8
+	var high := Vector3(mid.x, top, mid.z) - out * 0.02
+	var low := high + out * run
+	low.y = 0.08
+	Blocks.add_slope(parent, "QuarterDeckSteps", low, high, pipe.deck_length - 0.1, Palette.RAMP)
+	for i in count:
+		var f := (float(i) + 0.5) / float(count)
+		var c := low.lerp(high, f)
+		var y_top: float = c.y
+		Blocks.visual(parent, "QuarterStep%d" % i, Vector3(c.x, y_top * 0.5, c.z), Vector3(pipe.deck_length - 0.1, y_top, run / float(count)), Color("b9a090"))
 
 static func _plaza(parent: Node) -> void:
 	Blocks.solid(parent, "MuralWall", Vector3(6, 1.3, 20), Vector3(0.4, 2.6, 8), Palette.PARK_WALL)

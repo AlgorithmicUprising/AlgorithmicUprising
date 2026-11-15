@@ -8,6 +8,9 @@ const SHIN := 0.42
 const SOLE_DROP := 0.065
 const STAND_ANKLE_Y := 0.40
 const SKATE_ANKLE_Y := 0.505
+# Keep in step with player_controller.gd OLLIE_CROUCH_S and FLIP_SPIN_S.
+const CROUCH_S := 0.2
+const FLIP_S := 0.36
 
 var pose_name := "idle"
 var phase := 0.0
@@ -56,7 +59,7 @@ func drive(delta: float, speed: float, skating: bool, airborne: bool, grinding: 
 	land_time = maxf(0.0, land_time - delta)
 	var swing := sin(phase) if speed > 0.5 and not airborne and not grinding else 0.0
 	if trick == "crouch":
-		_crouch(clampf(trick_time / 0.62, 0.0, 1.0))
+		_crouch(clampf(trick_time / CROUCH_S, 0.0, 1.0))
 		pose_name = "crouch"
 	elif trick == "ollie":
 		_ollie_air(trick_time)
@@ -282,9 +285,9 @@ func _author_clips() -> void:
 	anim.root_node = NodePath("..")
 	add_child(anim)
 	var lib := AnimationLibrary.new()
-	lib.add_animation("crouch", _clip(0.62, 1.02, 0.72, Vector3(0.2, 0, 0), Vector3(0.9, 0, 0), Vector3(0.4, 0, 0.4), Vector3(1.1, 0, 0.35)))
+	lib.add_animation("crouch", _clip(CROUCH_S, 1.02, 0.72, Vector3(0.2, 0, 0), Vector3(0.9, 0, 0), Vector3(0.4, 0, 0.4), Vector3(1.1, 0, 0.35)))
 	lib.add_animation("ollie", _clip(0.7, 0.78, 1.14, Vector3(0.6, 0, 0), Vector3(-0.45, 0, 0), Vector3(0.6, 0, 0.4), Vector3(-2.2, 0, 0.5)))
-	lib.add_animation("flip", _clip(1.0, 1.02, 1.12, Vector3(0.2, 0, 0), Vector3(-0.15, 0, 0), Vector3(0.3, 0, 0.4), Vector3(-0.4, 0, 0.9)))
+	lib.add_animation("flip", _clip(FLIP_S, 1.02, 1.12, Vector3(0.2, 0, 0), Vector3(-0.15, 0, 0), Vector3(0.3, 0, 0.4), Vector3(-0.4, 0, 0.9)))
 	lib.add_animation("grab", _clip(0.8, 1.02, 1.05, Vector3(0.2, 0, 0), Vector3(0.55, 0.2, 0), Vector3(0.3, 0, 0.3), Vector3(1.35, 0.2, -0.15)))
 	lib.add_animation("land", _clip(0.48, 1.02, 0.74, Vector3(0.2, 0, 0), Vector3(0.85, 0, 0), Vector3(0.3, 0, 0.3), Vector3(0.7, 0, 0.7)))
 	lib.add_animation("bail", _clip(0.7, 1.02, 0.9, Vector3(0.2, 0, 0), Vector3(1.0, 0, 0.4), Vector3(0.3, 0, 0.3), Vector3(1.1, 0, 0.8)))

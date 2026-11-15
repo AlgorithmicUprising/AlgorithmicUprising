@@ -100,8 +100,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	if event.is_action_pressed("skate_toggle"):
-		player.skating = not player.skating
-		player.update_board()
+		# Phase 3 (LOCAL puppet test): on a quarter-pipe deck facing the coping, Shift sets up / backs out of a drop-in
+		if player.has_method("skate_toggle_pressed"):
+			player.skate_toggle_pressed()
+		else:
+			player.skating = not player.skating
+			player.update_board()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact"):
 		var target = _nearest(2.5)
