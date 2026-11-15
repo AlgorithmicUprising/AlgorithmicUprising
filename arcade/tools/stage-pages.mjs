@@ -48,7 +48,7 @@ for (const game of games) {
 }
 for(const page of ['games/grind-the-terms/demo/index.html','games/grind-the-terms/demo/embed.html']){
  const content=await readFile(join(root,page),'utf8');
- for(const expected of ['src="../dist/grind-the-terms.js"','skin="../skins/au/skin.json"']){
+ for(const expected of ['src="../dist/grind-the-terms.js','skin="../skins/au/skin.json"']){
   if(!content.includes(expected))throw Error('Standalone resource path invalid in '+page+': '+expected);
  }
 }

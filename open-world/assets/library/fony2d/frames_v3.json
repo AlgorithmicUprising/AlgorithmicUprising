@@ -1,0 +1,5604 @@
+{
+  "version": "v3+v5-push",
+  "master_cell": [
+    510,
+    648
+  ],
+  "anchor": [
+    255,
+    632
+  ],
+  "anchor_note": "anchor = ground point under the head axis; airborne frames are already raised by lift_px",
+  "standing_height_px": 480.0,
+  "suggested_pixel_size_m": 0.003583,
+  "animations": {
+    "idle_back": {
+      "state": "idle",
+      "direction": "back",
+      "fps": 4,
+      "loop": true,
+      "status": "new",
+      "note": "Breathing loop built from the v1 still: upper body rises <=1.2% about the waist. Subtle by design.",
+      "frames": [
+        {
+          "file": "frames/idle_back_00.png",
+          "source": "idle_back_breath_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3443,
+            268,
+            100,
+            242
+          ],
+          "anchor_offset": [
+            -56.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_01.png",
+          "source": "idle_back_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1072,
+            268,
+            101,
+            243
+          ],
+          "anchor_offset": [
+            -56.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_02.png",
+          "source": "idle_back_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            133,
+            268,
+            101,
+            244
+          ],
+          "anchor_offset": [
+            -56.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_03.png",
+          "source": "idle_back_breath_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1175,
+            268,
+            101,
+            243
+          ],
+          "anchor_offset": [
+            -56.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_04.png",
+          "source": "idle_back_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            133,
+            268,
+            101,
+            244
+          ],
+          "anchor_offset": [
+            -56.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_05.png",
+          "source": "idle_back_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1072,
+            268,
+            101,
+            243
+          ],
+          "anchor_offset": [
+            -56.5,
+            -243.0
+          ]
+        }
+      ]
+    },
+    "idle_back_left": {
+      "state": "idle",
+      "direction": "back_left",
+      "fps": 4,
+      "loop": true,
+      "status": "new",
+      "note": "Breathing loop built from the v1 still: upper body rises <=1.2% about the waist. Subtle by design.",
+      "frames": [
+        {
+          "file": "frames/idle_back_left_00.png",
+          "source": "idle_back_left_breath_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3545,
+            268,
+            104,
+            242
+          ],
+          "anchor_offset": [
+            -58.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_left_01.png",
+          "source": "idle_back_left_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1278,
+            268,
+            104,
+            243
+          ],
+          "anchor_offset": [
+            -58.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_left_02.png",
+          "source": "idle_back_left_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            236,
+            268,
+            104,
+            244
+          ],
+          "anchor_offset": [
+            -58.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_left_03.png",
+          "source": "idle_back_left_breath_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1384,
+            268,
+            104,
+            243
+          ],
+          "anchor_offset": [
+            -58.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_left_04.png",
+          "source": "idle_back_left_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            236,
+            268,
+            104,
+            244
+          ],
+          "anchor_offset": [
+            -58.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_left_05.png",
+          "source": "idle_back_left_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1278,
+            268,
+            104,
+            243
+          ],
+          "anchor_offset": [
+            -58.5,
+            -243.0
+          ]
+        }
+      ]
+    },
+    "idle_back_right": {
+      "state": "idle",
+      "direction": "back_right",
+      "fps": 4,
+      "loop": true,
+      "status": "new",
+      "note": "Breathing loop built from the v1 still: upper body rises <=1.2% about the waist. Subtle by design.",
+      "frames": [
+        {
+          "file": "frames/idle_back_right_00.png",
+          "source": "idle_back_right_breath_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3651,
+            268,
+            97,
+            242
+          ],
+          "anchor_offset": [
+            -56.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_right_01.png",
+          "source": "idle_back_right_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1490,
+            268,
+            97,
+            243
+          ],
+          "anchor_offset": [
+            -56.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_right_02.png",
+          "source": "idle_back_right_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            342,
+            268,
+            97,
+            244
+          ],
+          "anchor_offset": [
+            -56.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_right_03.png",
+          "source": "idle_back_right_breath_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1589,
+            268,
+            97,
+            243
+          ],
+          "anchor_offset": [
+            -56.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_right_04.png",
+          "source": "idle_back_right_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            342,
+            268,
+            97,
+            244
+          ],
+          "anchor_offset": [
+            -56.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_back_right_05.png",
+          "source": "idle_back_right_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1490,
+            268,
+            97,
+            243
+          ],
+          "anchor_offset": [
+            -56.5,
+            -243.0
+          ]
+        }
+      ]
+    },
+    "idle_left": {
+      "state": "idle",
+      "direction": "left",
+      "fps": 4,
+      "loop": true,
+      "status": "new",
+      "note": "Breathing loop built from the v1 still: upper body rises <=1.2% about the waist. Subtle by design.",
+      "frames": [
+        {
+          "file": "frames/idle_left_00.png",
+          "source": "idle_left_breath_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3750,
+            268,
+            91,
+            242
+          ],
+          "anchor_offset": [
+            -39.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_left_01.png",
+          "source": "idle_left_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3843,
+            268,
+            91,
+            242
+          ],
+          "anchor_offset": [
+            -39.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_left_02.png",
+          "source": "idle_left_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1688,
+            268,
+            91,
+            243
+          ],
+          "anchor_offset": [
+            -39.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_left_03.png",
+          "source": "idle_left_breath_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3936,
+            268,
+            91,
+            242
+          ],
+          "anchor_offset": [
+            -39.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_left_04.png",
+          "source": "idle_left_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1688,
+            268,
+            91,
+            243
+          ],
+          "anchor_offset": [
+            -39.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_left_05.png",
+          "source": "idle_left_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3843,
+            268,
+            91,
+            242
+          ],
+          "anchor_offset": [
+            -39.5,
+            -242.0
+          ]
+        }
+      ]
+    },
+    "idle_right": {
+      "state": "idle",
+      "direction": "right",
+      "fps": 4,
+      "loop": true,
+      "status": "new",
+      "note": "Breathing loop built from the v1 still: upper body rises <=1.2% about the waist. Subtle by design.",
+      "frames": [
+        {
+          "file": "frames/idle_right_00.png",
+          "source": "idle_right_breath_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            0,
+            515,
+            75,
+            242
+          ],
+          "anchor_offset": [
+            -44.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_right_01.png",
+          "source": "idle_right_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1781,
+            268,
+            75,
+            243
+          ],
+          "anchor_offset": [
+            -44.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_right_02.png",
+          "source": "idle_right_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            441,
+            268,
+            75,
+            244
+          ],
+          "anchor_offset": [
+            -44.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_right_03.png",
+          "source": "idle_right_breath_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1858,
+            268,
+            75,
+            243
+          ],
+          "anchor_offset": [
+            -44.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_right_04.png",
+          "source": "idle_right_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            441,
+            268,
+            75,
+            244
+          ],
+          "anchor_offset": [
+            -44.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_right_05.png",
+          "source": "idle_right_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1781,
+            268,
+            75,
+            243
+          ],
+          "anchor_offset": [
+            -44.5,
+            -243.0
+          ]
+        }
+      ]
+    },
+    "idle_front": {
+      "state": "idle",
+      "direction": "front",
+      "fps": 4,
+      "loop": true,
+      "status": "new",
+      "note": "Breathing loop built from the v1 still: upper body rises <=1.2% about the waist. Subtle by design.",
+      "frames": [
+        {
+          "file": "frames/idle_front_00.png",
+          "source": "idle_front_breath_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            77,
+            515,
+            118,
+            242
+          ],
+          "anchor_offset": [
+            -45.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_01.png",
+          "source": "idle_front_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            197,
+            515,
+            118,
+            242
+          ],
+          "anchor_offset": [
+            -45.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_02.png",
+          "source": "idle_front_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1935,
+            268,
+            118,
+            243
+          ],
+          "anchor_offset": [
+            -45.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_03.png",
+          "source": "idle_front_breath_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            317,
+            515,
+            118,
+            242
+          ],
+          "anchor_offset": [
+            -45.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_04.png",
+          "source": "idle_front_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1935,
+            268,
+            118,
+            243
+          ],
+          "anchor_offset": [
+            -45.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_05.png",
+          "source": "idle_front_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            197,
+            515,
+            118,
+            242
+          ],
+          "anchor_offset": [
+            -45.5,
+            -242.0
+          ]
+        }
+      ]
+    },
+    "idle_front_left": {
+      "state": "idle",
+      "direction": "front_left",
+      "fps": 4,
+      "loop": true,
+      "status": "new",
+      "note": "Breathing loop built from the v1 still: upper body rises <=1.2% about the waist. Subtle by design.",
+      "frames": [
+        {
+          "file": "frames/idle_front_left_00.png",
+          "source": "idle_front_left_breath_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            437,
+            515,
+            111,
+            242
+          ],
+          "anchor_offset": [
+            -44.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_left_01.png",
+          "source": "idle_front_left_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2055,
+            268,
+            111,
+            243
+          ],
+          "anchor_offset": [
+            -44.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_left_02.png",
+          "source": "idle_front_left_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            518,
+            268,
+            111,
+            244
+          ],
+          "anchor_offset": [
+            -44.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_left_03.png",
+          "source": "idle_front_left_breath_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2168,
+            268,
+            111,
+            243
+          ],
+          "anchor_offset": [
+            -44.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_left_04.png",
+          "source": "idle_front_left_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            518,
+            268,
+            111,
+            244
+          ],
+          "anchor_offset": [
+            -44.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_left_05.png",
+          "source": "idle_front_left_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2055,
+            268,
+            111,
+            243
+          ],
+          "anchor_offset": [
+            -44.5,
+            -243.0
+          ]
+        }
+      ]
+    },
+    "idle_front_right": {
+      "state": "idle",
+      "direction": "front_right",
+      "fps": 4,
+      "loop": true,
+      "status": "new",
+      "note": "Breathing loop built from the v1 still: upper body rises <=1.2% about the waist. Subtle by design.",
+      "frames": [
+        {
+          "file": "frames/idle_front_right_00.png",
+          "source": "idle_front_right_breath_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            550,
+            515,
+            97,
+            242
+          ],
+          "anchor_offset": [
+            -42.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_right_01.png",
+          "source": "idle_front_right_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2281,
+            268,
+            96,
+            243
+          ],
+          "anchor_offset": [
+            -41.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_right_02.png",
+          "source": "idle_front_right_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2379,
+            268,
+            96,
+            243
+          ],
+          "anchor_offset": [
+            -41.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_right_03.png",
+          "source": "idle_front_right_breath_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2477,
+            268,
+            96,
+            243
+          ],
+          "anchor_offset": [
+            -41.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_right_04.png",
+          "source": "idle_front_right_breath_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2379,
+            268,
+            96,
+            243
+          ],
+          "anchor_offset": [
+            -41.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/idle_front_right_05.png",
+          "source": "idle_front_right_breath_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2281,
+            268,
+            96,
+            243
+          ],
+          "anchor_offset": [
+            -41.5,
+            -243.0
+          ]
+        }
+      ]
+    },
+    "cruise_back": {
+      "state": "cruise",
+      "direction": "back",
+      "fps": 6,
+      "loop": true,
+      "status": "pass",
+      "note": "v2 drawings, now an 8-step ping-pong so the sway loops without a pop.",
+      "frames": [
+        {
+          "file": "frames/push_back_00.png",
+          "source": "v3:cruise_back_00",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            200,
+            0,
+            99,
+            258
+          ],
+          "anchor_offset": [
+            -49.5,
+            -255.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_01.png",
+          "source": "cruise_back_strip_try1_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1317,
+            0,
+            94,
+            252
+          ],
+          "anchor_offset": [
+            -46.5,
+            -252.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_02.png",
+          "source": "cruise_back_strip_try1_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            941,
+            0,
+            92,
+            253
+          ],
+          "anchor_offset": [
+            -44.5,
+            -253.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_03.png",
+          "source": "cruise_back_strip_try1_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1035,
+            0,
+            92,
+            253
+          ],
+          "anchor_offset": [
+            -46.5,
+            -253.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_04.png",
+          "source": "cruise_back_strip_try1_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1129,
+            0,
+            92,
+            253
+          ],
+          "anchor_offset": [
+            -44.5,
+            -253.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_05.png",
+          "source": "cruise_back_strip_try1_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1035,
+            0,
+            92,
+            253
+          ],
+          "anchor_offset": [
+            -46.5,
+            -253.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_06.png",
+          "source": "cruise_back_strip_try1_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            941,
+            0,
+            92,
+            253
+          ],
+          "anchor_offset": [
+            -44.5,
+            -253.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_07.png",
+          "source": "cruise_back_strip_try1_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1317,
+            0,
+            94,
+            252
+          ],
+          "anchor_offset": [
+            -46.5,
+            -252.0
+          ]
+        }
+      ]
+    },
+    "cruise_back_left": {
+      "state": "cruise",
+      "direction": "back_left",
+      "fps": 6,
+      "loop": true,
+      "status": "pass",
+      "note": "v2 drawings, 8-step ping-pong.",
+      "frames": [
+        {
+          "file": "frames/push_back_left_00.png",
+          "source": "v3:cruise_back_left_00 (blob cleaned)",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            827,
+            0,
+            112,
+            254
+          ],
+          "anchor_offset": [
+            -42.5,
+            -251.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_left_01.png",
+          "source": "push_back_left_strip_try2_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2956,
+            0,
+            99,
+            248
+          ],
+          "anchor_offset": [
+            -36.5,
+            -248.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_left_02.png",
+          "source": "push_back_left_strip_try2_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2447,
+            0,
+            107,
+            249
+          ],
+          "anchor_offset": [
+            -39.5,
+            -249.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_left_03.png",
+          "source": "push_back_left_strip_try2_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2556,
+            0,
+            109,
+            249
+          ],
+          "anchor_offset": [
+            -37.5,
+            -249.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_left_04.png",
+          "source": "push_back_left_strip_try2_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3057,
+            0,
+            106,
+            248
+          ],
+          "anchor_offset": [
+            -38.5,
+            -248.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_left_05.png",
+          "source": "push_back_left_strip_try2_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2556,
+            0,
+            109,
+            249
+          ],
+          "anchor_offset": [
+            -37.5,
+            -249.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_left_06.png",
+          "source": "push_back_left_strip_try2_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2447,
+            0,
+            107,
+            249
+          ],
+          "anchor_offset": [
+            -39.5,
+            -249.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_left_07.png",
+          "source": "push_back_left_strip_try2_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2956,
+            0,
+            99,
+            248
+          ],
+          "anchor_offset": [
+            -36.5,
+            -248.0
+          ]
+        }
+      ]
+    },
+    "cruise_back_right": {
+      "state": "cruise",
+      "direction": "back_right",
+      "fps": 6,
+      "loop": true,
+      "status": "pass",
+      "note": "v2 drawings, 6-step ping-pong.",
+      "frames": [
+        {
+          "file": "frames/cruise_back_right_00.png",
+          "source": "push_back_right_strip_try2_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1866,
+            515,
+            119,
+            240
+          ],
+          "anchor_offset": [
+            -81.5,
+            -240.0
+          ]
+        },
+        {
+          "file": "frames/push_back_right_00.png",
+          "source": "v3:cruise_back_right_01 (blob cleaned)",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1070,
+            515,
+            116,
+            242
+          ],
+          "anchor_offset": [
+            -79.5,
+            -239.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_right_02.png",
+          "source": "push_back_right_strip_try2_3",
+          "lift_px": 9.7,
+          "atlas_rect": [
+            724,
+            759,
+            114,
+            235
+          ],
+          "anchor_offset": [
+            -77.5,
+            -240.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_right_03.png",
+          "source": "push_back_right_strip_try2_4",
+          "lift_px": 11.8,
+          "atlas_rect": [
+            1085,
+            759,
+            117,
+            233
+          ],
+          "anchor_offset": [
+            -78.5,
+            -239.0
+          ]
+        },
+        {
+          "file": "frames/cruise_back_right_04.png",
+          "source": "push_back_right_strip_try2_3",
+          "lift_px": 9.7,
+          "atlas_rect": [
+            724,
+            759,
+            114,
+            235
+          ],
+          "anchor_offset": [
+            -77.5,
+            -240.0
+          ]
+        },
+        {
+          "file": "frames/push_back_right_00.png",
+          "source": "v3:cruise_back_right_01 (blob cleaned)",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1070,
+            515,
+            116,
+            242
+          ],
+          "anchor_offset": [
+            -79.5,
+            -239.0
+          ]
+        }
+      ]
+    },
+    "cruise_left": {
+      "state": "cruise",
+      "direction": "left",
+      "fps": 6,
+      "loop": true,
+      "status": "new",
+      "note": "NEW: replaces the v1 skate_left still. Knee-bend sway loop; magenta patch on his left (near) side.",
+      "frames": [
+        {
+          "file": "frames/push_left_00.png",
+          "source": "v3:cruise_left_00",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3288,
+            515,
+            120,
+            238
+          ],
+          "anchor_offset": [
+            -47.5,
+            -235.0
+          ]
+        },
+        {
+          "file": "frames/cruise_left_01.png",
+          "source": "cruise_left_strip_v3a_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2395,
+            759,
+            110,
+            231
+          ],
+          "anchor_offset": [
+            -37.5,
+            -231.0
+          ]
+        },
+        {
+          "file": "frames/cruise_left_02.png",
+          "source": "cruise_left_strip_v3a_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            937,
+            997,
+            114,
+            226
+          ],
+          "anchor_offset": [
+            -39.5,
+            -226.0
+          ]
+        },
+        {
+          "file": "frames/cruise_left_03.png",
+          "source": "cruise_left_strip_v3a_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2507,
+            759,
+            111,
+            231
+          ],
+          "anchor_offset": [
+            -38.5,
+            -231.0
+          ]
+        },
+        {
+          "file": "frames/cruise_left_04.png",
+          "source": "cruise_left_strip_v3a_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1431,
+            759,
+            110,
+            232
+          ],
+          "anchor_offset": [
+            -38.5,
+            -232.0
+          ]
+        },
+        {
+          "file": "frames/cruise_left_05.png",
+          "source": "cruise_left_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2620,
+            759,
+            113,
+            231
+          ],
+          "anchor_offset": [
+            -41.5,
+            -231.0
+          ]
+        }
+      ]
+    },
+    "cruise_right": {
+      "state": "cruise",
+      "direction": "right",
+      "fps": 6,
+      "loop": true,
+      "status": "new",
+      "note": "NEW: replaces the v1 skate_right still. No magenta patch visible (it is on his far side).",
+      "frames": [
+        {
+          "file": "frames/push_right_00.png",
+          "source": "v3:cruise_right_00",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            840,
+            759,
+            125,
+            235
+          ],
+          "anchor_offset": [
+            -73.5,
+            -232.0
+          ]
+        },
+        {
+          "file": "frames/cruise_right_01.png",
+          "source": "cruise_right_strip_v3a_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            593,
+            997,
+            119,
+            227
+          ],
+          "anchor_offset": [
+            -68.5,
+            -227.0
+          ]
+        },
+        {
+          "file": "frames/cruise_right_02.png",
+          "source": "cruise_right_strip_v3a_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2321,
+            997,
+            120,
+            223
+          ],
+          "anchor_offset": [
+            -83.5,
+            -223.0
+          ]
+        },
+        {
+          "file": "frames/cruise_right_03.png",
+          "source": "cruise_right_strip_v3a_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            714,
+            997,
+            116,
+            227
+          ],
+          "anchor_offset": [
+            -71.5,
+            -227.0
+          ]
+        },
+        {
+          "file": "frames/cruise_right_04.png",
+          "source": "cruise_right_strip_v3a_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            0,
+            997,
+            114,
+            228
+          ],
+          "anchor_offset": [
+            -69.5,
+            -228.0
+          ]
+        },
+        {
+          "file": "frames/cruise_right_05.png",
+          "source": "cruise_right_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            116,
+            997,
+            114,
+            228
+          ],
+          "anchor_offset": [
+            -65.5,
+            -228.0
+          ]
+        }
+      ]
+    },
+    "cruise_front": {
+      "state": "cruise",
+      "direction": "front",
+      "fps": 6,
+      "loop": true,
+      "status": "new",
+      "note": "NEW: replaces the v1 skate_front still. Board end-on toward camera. Frames 0 and 2 of the strip rejected (diagonal board / turned crouch).",
+      "frames": [
+        {
+          "file": "frames/push_front_00.png",
+          "source": "v3:cruise_front_00",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1486,
+            515,
+            93,
+            241
+          ],
+          "anchor_offset": [
+            -35.5,
+            -238.0
+          ]
+        },
+        {
+          "file": "frames/cruise_front_01.png",
+          "source": "cruise_front_strip_v3a_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            631,
+            268,
+            88,
+            244
+          ],
+          "anchor_offset": [
+            -32.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/cruise_front_02.png",
+          "source": "cruise_front_strip_v3a_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1613,
+            0,
+            85,
+            251
+          ],
+          "anchor_offset": [
+            -33.5,
+            -251.0
+          ]
+        },
+        {
+          "file": "frames/cruise_front_03.png",
+          "source": "cruise_front_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2575,
+            268,
+            81,
+            243
+          ],
+          "anchor_offset": [
+            -30.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/cruise_front_04.png",
+          "source": "cruise_front_strip_v3a_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1613,
+            0,
+            85,
+            251
+          ],
+          "anchor_offset": [
+            -33.5,
+            -251.0
+          ]
+        },
+        {
+          "file": "frames/cruise_front_05.png",
+          "source": "cruise_front_strip_v3a_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            631,
+            268,
+            88,
+            244
+          ],
+          "anchor_offset": [
+            -32.5,
+            -244.0
+          ]
+        }
+      ]
+    },
+    "push_back": {
+      "state": "push",
+      "direction": "back",
+      "fps": 12,
+      "loop": true,
+      "status": "new",
+      "note": "v5-push. Same stroke as v4 (plant beside the rear wheels, drag, toe-off, low recovery). The dip/lean is now eased: head moves at most 8px between frames (v4 jumped 23px at 1->2 and 5->6). The board is widened to match the v3 board.",
+      "phases": {
+        "ground_contact": [
+          2,
+          3,
+          4
+        ]
+      },
+      "frames": [
+        {
+          "file": "frames/push_back_00.png",
+          "source": "v3:cruise_back_00",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            200,
+            0,
+            99,
+            258
+          ],
+          "anchor_offset": [
+            -49.5,
+            -255.0
+          ]
+        },
+        {
+          "file": "frames/push_back_01.png",
+          "source": "v5-push/work/gen/back/pb_7a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            604,
+            0,
+            98,
+            255
+          ],
+          "anchor_offset": [
+            -48.5,
+            -253.0
+          ]
+        },
+        {
+          "file": "frames/push_back_02.png",
+          "source": "v5-push/work/gen/back/pb_2b.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1413,
+            0,
+            98,
+            252
+          ],
+          "anchor_offset": [
+            -41.5,
+            -250.0
+          ]
+        },
+        {
+          "file": "frames/push_back_03.png",
+          "source": "v5-push/work/gen/back/pb_drive_a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2019,
+            0,
+            98,
+            250
+          ],
+          "anchor_offset": [
+            -42.5,
+            -248.0
+          ]
+        },
+        {
+          "file": "frames/push_back_04.png",
+          "source": "v5-push/work/gen/back/pb_5b.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2119,
+            0,
+            98,
+            250
+          ],
+          "anchor_offset": [
+            -42.5,
+            -248.0
+          ]
+        },
+        {
+          "file": "frames/push_back_05.png",
+          "source": "v5-push/work/gen/back/pb_6b.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1513,
+            0,
+            98,
+            252
+          ],
+          "anchor_offset": [
+            -43.5,
+            -250.0
+          ]
+        },
+        {
+          "file": "frames/push_back_06.png",
+          "source": "v5-push/work/gen/back/pb_6a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            504,
+            0,
+            98,
+            256
+          ],
+          "anchor_offset": [
+            -48.5,
+            -253.0
+          ]
+        },
+        {
+          "file": "frames/push_back_07.png",
+          "source": "v5-push/work/gen/back/pb_7a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            404,
+            0,
+            98,
+            257
+          ],
+          "anchor_offset": [
+            -49.5,
+            -255.0
+          ]
+        }
+      ]
+    },
+    "push_back_left": {
+      "state": "push",
+      "direction": "back_left",
+      "fps": 12,
+      "loop": true,
+      "status": "new",
+      "note": "v5-push. Same stroke as v4. The torso drift is reduced and eased (head x 256->272->260; v4 went to 291 and snapped back 33px at the loop). The plant is still beside/behind the deck, not up by the front trucks.",
+      "phases": {
+        "ground_contact": [
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "frames": [
+        {
+          "file": "frames/push_back_left_00.png",
+          "source": "v3:cruise_back_left_00 (blob cleaned)",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            827,
+            0,
+            112,
+            254
+          ],
+          "anchor_offset": [
+            -42.5,
+            -251.0
+          ]
+        },
+        {
+          "file": "frames/push_back_left_01.png",
+          "source": "v5-push/work/gen/back_left/pbl_1a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2219,
+            0,
+            112,
+            250
+          ],
+          "anchor_offset": [
+            -41.5,
+            -247.0
+          ]
+        },
+        {
+          "file": "frames/push_back_left_02.png",
+          "source": "v5-push/work/gen/back_left/pbl_2b.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            961,
+            515,
+            107,
+            242
+          ],
+          "anchor_offset": [
+            -36.5,
+            -239.0
+          ]
+        },
+        {
+          "file": "frames/push_back_left_03.png",
+          "source": "v5-push/work/gen/back_left/pbl_2a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1370,
+            515,
+            114,
+            241
+          ],
+          "anchor_offset": [
+            -35.5,
+            -238.0
+          ]
+        },
+        {
+          "file": "frames/push_back_left_04.png",
+          "source": "v5-push/work/gen/back_left/pbl_3a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            824,
+            268,
+            118,
+            244
+          ],
+          "anchor_offset": [
+            -34.5,
+            -241.0
+          ]
+        },
+        {
+          "file": "frames/push_back_left_05.png",
+          "source": "v5-push/work/gen/back_left/pbl_4a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            0,
+            268,
+            131,
+            245
+          ],
+          "anchor_offset": [
+            -32.5,
+            -239.0
+          ]
+        },
+        {
+          "file": "frames/push_back_left_06.png",
+          "source": "v5-push/work/gen/back_left/pbl_5b.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            944,
+            268,
+            126,
+            244
+          ],
+          "anchor_offset": [
+            -32.5,
+            -241.0
+          ]
+        },
+        {
+          "file": "frames/push_back_left_07.png",
+          "source": "v5-push/work/gen/back_left/pbl_1a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2333,
+            0,
+            112,
+            250
+          ],
+          "anchor_offset": [
+            -41.5,
+            -247.0
+          ]
+        }
+      ]
+    },
+    "push_back_right": {
+      "state": "push",
+      "direction": "back_right",
+      "fps": 12,
+      "loop": true,
+      "status": "new",
+      "note": "v5-push. New plant frames: the push foot swings in and plants on the ground in front of the tail beside the rear wheel (near side), drags back behind the tail, toe-off, extends, lifts. Built by rotating the lower leg about the knee from a clean v4 frame (the generator kept putting it behind the tail). v3 white blob removed from frame 0; no double boards.",
+      "phases": {
+        "ground_contact": [
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "frames": [
+        {
+          "file": "frames/push_back_right_00.png",
+          "source": "v3:cruise_back_right_01 (blob cleaned)",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1070,
+            515,
+            116,
+            242
+          ],
+          "anchor_offset": [
+            -79.5,
+            -239.0
+          ]
+        },
+        {
+          "file": "frames/push_back_right_01.png",
+          "source": "v5-push/work/comp/pbr_hover.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3071,
+            515,
+            106,
+            238
+          ],
+          "anchor_offset": [
+            -73.5,
+            -236.0
+          ]
+        },
+        {
+          "file": "frames/push_back_right_02.png",
+          "source": "v5-push/work/comp/pbr_plant.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3179,
+            515,
+            107,
+            238
+          ],
+          "anchor_offset": [
+            -74.5,
+            -236.0
+          ]
+        },
+        {
+          "file": "frames/push_back_right_03.png",
+          "source": "v5-push/work/comp/pbr_plant_mid.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            207,
+            759,
+            115,
+            236
+          ],
+          "anchor_offset": [
+            -82.5,
+            -234.0
+          ]
+        },
+        {
+          "file": "frames/push_back_right_04.png",
+          "source": "v5-push/work/gen/back_right/pbr_3d.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            324,
+            759,
+            125,
+            236
+          ],
+          "anchor_offset": [
+            -92.5,
+            -234.0
+          ]
+        },
+        {
+          "file": "frames/push_back_right_05.png",
+          "source": "v5-push/work/gen/back_right/pbr_4c.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            451,
+            759,
+            134,
+            236
+          ],
+          "anchor_offset": [
+            -102.5,
+            -234.0
+          ]
+        },
+        {
+          "file": "frames/push_back_right_06.png",
+          "source": "v5-push/work/gen/back_right/pbr_5d.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            587,
+            759,
+            135,
+            236
+          ],
+          "anchor_offset": [
+            -103.5,
+            -234.0
+          ]
+        },
+        {
+          "file": "frames/push_back_right_07.png",
+          "source": "v5-push/work/gen/back_right/pbr_6e.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3612,
+            515,
+            137,
+            237
+          ],
+          "anchor_offset": [
+            -104.5,
+            -235.0
+          ]
+        }
+      ]
+    },
+    "push_left": {
+      "state": "push",
+      "direction": "left",
+      "fps": 12,
+      "loop": true,
+      "status": "new",
+      "note": "v5-push. New plant frames: the push foot plants on the far side of the board between the wheels (shoe seen above the deck and under it between the wheels), then drags back behind the tail, extends, lifts. Built by rotating the whole push leg about the hip from a v4 frame.",
+      "phases": {
+        "ground_contact": [
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "frames": [
+        {
+          "file": "frames/push_left_00.png",
+          "source": "v3:cruise_left_00",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3288,
+            515,
+            120,
+            238
+          ],
+          "anchor_offset": [
+            -47.5,
+            -235.0
+          ]
+        },
+        {
+          "file": "frames/push_left_01.png",
+          "source": "v5-push/work/comp/pl_hover.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1308,
+            759,
+            121,
+            233
+          ],
+          "anchor_offset": [
+            -47.5,
+            -231.0
+          ]
+        },
+        {
+          "file": "frames/push_left_02.png",
+          "source": "v5-push/work/comp/pl_plant.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3350,
+            759,
+            121,
+            229
+          ],
+          "anchor_offset": [
+            -47.5,
+            -227.0
+          ]
+        },
+        {
+          "file": "frames/push_left_03.png",
+          "source": "v5-push/work/comp/pl_plant_mid.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3473,
+            759,
+            122,
+            229
+          ],
+          "anchor_offset": [
+            -47.5,
+            -226.0
+          ]
+        },
+        {
+          "file": "frames/push_left_04.png",
+          "source": "v5-push/work/gen/left/pl_3b.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3597,
+            759,
+            145,
+            229
+          ],
+          "anchor_offset": [
+            -47.5,
+            -226.0
+          ]
+        },
+        {
+          "file": "frames/push_left_05.png",
+          "source": "v5-push/work/gen/left/pl_5a.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3744,
+            759,
+            155,
+            229
+          ],
+          "anchor_offset": [
+            -47.5,
+            -226.0
+          ]
+        },
+        {
+          "file": "frames/push_left_06.png",
+          "source": "v5-push/work/gen/left/pl_6b.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3901,
+            759,
+            158,
+            229
+          ],
+          "anchor_offset": [
+            -47.5,
+            -226.0
+          ]
+        },
+        {
+          "file": "frames/push_left_07.png",
+          "source": "v5-push/work/gen/left/pl_7e.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2240,
+            759,
+            153,
+            232
+          ],
+          "anchor_offset": [
+            -46.5,
+            -229.0
+          ]
+        }
+      ]
+    },
+    "push_right": {
+      "state": "push",
+      "direction": "right",
+      "fps": 12,
+      "loop": true,
+      "status": "new",
+      "note": "v5-push. Redrawn with a committed push: deep front-knee bend and forward lean (new render family; the body was dropped 17px so the front shoe sits on the deck). The plant is on the ground beside the rear truck on the near side, built by rotating the push leg about the hip. Frames 1 and 7 ease the crouch in and out.",
+      "phases": {
+        "ground_contact": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "frames": [
+        {
+          "file": "frames/push_right_00.png",
+          "source": "v3:cruise_right_00",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            840,
+            759,
+            125,
+            235
+          ],
+          "anchor_offset": [
+            -73.5,
+            -232.0
+          ]
+        },
+        {
+          "file": "frames/push_right_01.png",
+          "source": "v5-push/work/comp/pr5_hover.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1483,
+            997,
+            128,
+            226
+          ],
+          "anchor_offset": [
+            -73.5,
+            -222.0
+          ]
+        },
+        {
+          "file": "frames/push_right_02.png",
+          "source": "v5-push/work/comp/pr5_plant_fwd.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3224,
+            997,
+            128,
+            216
+          ],
+          "anchor_offset": [
+            -72.5,
+            -212.0
+          ]
+        },
+        {
+          "file": "frames/push_right_03.png",
+          "source": "v5-push/work/comp/pr5_plant.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3354,
+            997,
+            128,
+            216
+          ],
+          "anchor_offset": [
+            -72.5,
+            -212.0
+          ]
+        },
+        {
+          "file": "frames/push_right_04.png",
+          "source": "v5-push/work/comp/pr5_plant_mid.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2929,
+            997,
+            137,
+            217
+          ],
+          "anchor_offset": [
+            -81.5,
+            -214.0
+          ]
+        },
+        {
+          "file": "frames/push_right_05.png",
+          "source": "v5-push/work/gen/right/pr5_drag.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3068,
+            997,
+            154,
+            217
+          ],
+          "anchor_offset": [
+            -98.5,
+            -214.0
+          ]
+        },
+        {
+          "file": "frames/push_right_06.png",
+          "source": "v5-push/work/gen/right/pr5_ext.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            0,
+            1227,
+            158,
+            213
+          ],
+          "anchor_offset": [
+            -102.5,
+            -210.0
+          ]
+        },
+        {
+          "file": "frames/push_right_07.png",
+          "source": "v5-push/work/gen/right/pr5_lift.jpg",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1613,
+            997,
+            151,
+            225
+          ],
+          "anchor_offset": [
+            -96.5,
+            -222.0
+          ]
+        }
+      ]
+    },
+    "push_front": {
+      "state": "push",
+      "direction": "front",
+      "fps": 12,
+      "loop": true,
+      "status": "new",
+      "note": "v5-push. Built directly from the v3 cruise_front_00 frame, so the board is pixel-identical to cruise frame 0 (no pop). Only the push leg moves: lift, plant on the ground line beside the board's rear end, drag back behind the deck, lift behind, return. The deck under the lifted shoe is inpainted.",
+      "phases": {
+        "ground_contact": [
+          2,
+          3
+        ]
+      },
+      "frames": [
+        {
+          "file": "frames/push_front_00.png",
+          "source": "v3:cruise_front_00",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1486,
+            515,
+            93,
+            241
+          ],
+          "anchor_offset": [
+            -35.5,
+            -238.0
+          ]
+        },
+        {
+          "file": "frames/push_front_01.png",
+          "source": "v5-push/work/cells/front_lift.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1581,
+            515,
+            93,
+            241
+          ],
+          "anchor_offset": [
+            -35.5,
+            -238.0
+          ]
+        },
+        {
+          "file": "frames/push_front_02.png",
+          "source": "v5-push/work/cells/front_plant.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3751,
+            515,
+            99,
+            237
+          ],
+          "anchor_offset": [
+            -41.5,
+            -234.0
+          ]
+        },
+        {
+          "file": "frames/push_front_03.png",
+          "source": "v5-push/work/cells/front_drag.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3852,
+            515,
+            93,
+            237
+          ],
+          "anchor_offset": [
+            -35.5,
+            -234.0
+          ]
+        },
+        {
+          "file": "frames/push_front_04.png",
+          "source": "v5-push/work/cells/front_back.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1676,
+            515,
+            93,
+            241
+          ],
+          "anchor_offset": [
+            -35.5,
+            -238.0
+          ]
+        },
+        {
+          "file": "frames/push_front_05.png",
+          "source": "v5-push/work/cells/front_return.png",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1771,
+            515,
+            93,
+            241
+          ],
+          "anchor_offset": [
+            -35.5,
+            -238.0
+          ]
+        }
+      ]
+    },
+    "walk_back": {
+      "state": "walk",
+      "direction": "back",
+      "fps": 8,
+      "loop": true,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/walk_back_00.png",
+          "source": "walk_back_strip_try1_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3410,
+            515,
+            95,
+            237
+          ],
+          "anchor_offset": [
+            -53.5,
+            -237.0
+          ]
+        },
+        {
+          "file": "frames/walk_back_01.png",
+          "source": "walk_back_strip_try1_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2686,
+            515,
+            95,
+            239
+          ],
+          "anchor_offset": [
+            -52.5,
+            -239.0
+          ]
+        },
+        {
+          "file": "frames/walk_back_02.png",
+          "source": "walk_back_strip_try1_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1188,
+            515,
+            95,
+            241
+          ],
+          "anchor_offset": [
+            -51.5,
+            -241.0
+          ]
+        },
+        {
+          "file": "frames/walk_back_03.png",
+          "source": "walk_back_strip_try1_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2783,
+            515,
+            92,
+            239
+          ],
+          "anchor_offset": [
+            -49.5,
+            -239.0
+          ]
+        },
+        {
+          "file": "frames/walk_back_04.png",
+          "source": "walk_back_strip_try1_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2877,
+            515,
+            91,
+            239
+          ],
+          "anchor_offset": [
+            -48.5,
+            -239.0
+          ]
+        },
+        {
+          "file": "frames/walk_back_05.png",
+          "source": "walk_back_strip_try1_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1987,
+            515,
+            94,
+            240
+          ],
+          "anchor_offset": [
+            -50.5,
+            -240.0
+          ]
+        }
+      ]
+    },
+    "walk_front": {
+      "state": "walk",
+      "direction": "front",
+      "fps": 8,
+      "loop": true,
+      "status": "new",
+      "note": "REDONE: 8 steps, both feet alternate: passing (left knee up), left-foot contact, down, cross, right-foot contact, down, passing, up. Right-foot steps flip ONLY the legs below the jacket hem; torso, chest patch and board are never mirrored.",
+      "frames": [
+        {
+          "file": "frames/walk_front_00.png",
+          "source": "walk_front_pass_v3c_0",
+          "lift_px": 10.7,
+          "atlas_rect": [
+            3507,
+            515,
+            103,
+            237
+          ],
+          "anchor_offset": [
+            -44.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/walk_front_01.png",
+          "source": "walk_front_keys_v3b_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3587,
+            0,
+            98,
+            245
+          ],
+          "anchor_offset": [
+            -39.5,
+            -245.0
+          ]
+        },
+        {
+          "file": "frames/walk_front_02.png",
+          "source": "walk_front_strip_v3a_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2083,
+            515,
+            96,
+            240
+          ],
+          "anchor_offset": [
+            -38.5,
+            -240.0
+          ]
+        },
+        {
+          "file": "frames/walk_front_03.png",
+          "source": "walk_front_strip_v3a_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2181,
+            515,
+            96,
+            240
+          ],
+          "anchor_offset": [
+            -39.5,
+            -240.0
+          ]
+        },
+        {
+          "file": "frames/walk_front_04.png",
+          "source": "walk_front_mirlegs_keys_v3b_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3687,
+            0,
+            98,
+            245
+          ],
+          "anchor_offset": [
+            -39.5,
+            -245.0
+          ]
+        },
+        {
+          "file": "frames/walk_front_05.png",
+          "source": "walk_front_mirlegs_strip_v3a_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2279,
+            515,
+            96,
+            240
+          ],
+          "anchor_offset": [
+            -38.5,
+            -240.0
+          ]
+        },
+        {
+          "file": "frames/walk_front_06.png",
+          "source": "walk_front_mirlegs_pass_v3c_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            649,
+            515,
+            99,
+            242
+          ],
+          "anchor_offset": [
+            -37.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/walk_front_07.png",
+          "source": "walk_front_pass_v3c_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            750,
+            515,
+            99,
+            242
+          ],
+          "anchor_offset": [
+            -37.5,
+            -242.0
+          ]
+        }
+      ]
+    },
+    "walk_left": {
+      "state": "walk",
+      "direction": "left",
+      "fps": 8,
+      "loop": true,
+      "status": "new",
+      "note": "REDONE: 8 steps with a real passing pose (knee lifted, foot off the ground) and an up pose between strides. Same leg leads each contact (generator would not alternate in profile).",
+      "frames": [
+        {
+          "file": "frames/walk_left_00.png",
+          "source": "walk_left_strip_v3a_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2658,
+            268,
+            129,
+            243
+          ],
+          "anchor_offset": [
+            -61.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/walk_left_01.png",
+          "source": "walk_left_strip_v3a_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2789,
+            268,
+            115,
+            243
+          ],
+          "anchor_offset": [
+            -49.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/walk_left_02.png",
+          "source": "walk_left_pass_v3c_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            721,
+            268,
+            101,
+            244
+          ],
+          "anchor_offset": [
+            -43.5,
+            -244.0
+          ]
+        },
+        {
+          "file": "frames/walk_left_03.png",
+          "source": "walk_left_pass_v3c_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2906,
+            268,
+            86,
+            243
+          ],
+          "anchor_offset": [
+            -29.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/walk_left_04.png",
+          "source": "walk_left_keys_v3b_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2994,
+            268,
+            138,
+            243
+          ],
+          "anchor_offset": [
+            -68.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/walk_left_05.png",
+          "source": "walk_left_strip_v3a_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3134,
+            268,
+            129,
+            243
+          ],
+          "anchor_offset": [
+            -58.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/walk_left_06.png",
+          "source": "walk_left_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3787,
+            0,
+            89,
+            245
+          ],
+          "anchor_offset": [
+            -30.5,
+            -245.0
+          ]
+        },
+        {
+          "file": "frames/walk_left_07.png",
+          "source": "walk_left_pass_v3c_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2906,
+            268,
+            86,
+            243
+          ],
+          "anchor_offset": [
+            -29.5,
+            -243.0
+          ]
+        }
+      ]
+    },
+    "walk_right": {
+      "state": "walk",
+      "direction": "right",
+      "fps": 8,
+      "loop": true,
+      "status": "new",
+      "note": "REDONE: 8 steps with passing (knee lifted) and up poses between strides.",
+      "frames": [
+        {
+          "file": "frames/walk_right_00.png",
+          "source": "walk_right_strip_v3a_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3260,
+            0,
+            117,
+            246
+          ],
+          "anchor_offset": [
+            -59.5,
+            -246.0
+          ]
+        },
+        {
+          "file": "frames/walk_right_01.png",
+          "source": "walk_right_strip_v3a_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3379,
+            0,
+            105,
+            246
+          ],
+          "anchor_offset": [
+            -55.5,
+            -246.0
+          ]
+        },
+        {
+          "file": "frames/walk_right_02.png",
+          "source": "walk_right_pass_v3c_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1285,
+            515,
+            83,
+            241
+          ],
+          "anchor_offset": [
+            -48.5,
+            -241.0
+          ]
+        },
+        {
+          "file": "frames/walk_right_03.png",
+          "source": "walk_right_pass_v3c_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3265,
+            268,
+            78,
+            243
+          ],
+          "anchor_offset": [
+            -43.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/walk_right_04.png",
+          "source": "walk_right_strip_v3a_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3486,
+            0,
+            99,
+            246
+          ],
+          "anchor_offset": [
+            -59.5,
+            -246.0
+          ]
+        },
+        {
+          "file": "frames/walk_right_05.png",
+          "source": "walk_right_strip_v3a_6",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3878,
+            0,
+            104,
+            245
+          ],
+          "anchor_offset": [
+            -60.5,
+            -245.0
+          ]
+        },
+        {
+          "file": "frames/walk_right_06.png",
+          "source": "walk_right_pass_v3c_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1285,
+            515,
+            83,
+            241
+          ],
+          "anchor_offset": [
+            -48.5,
+            -241.0
+          ]
+        },
+        {
+          "file": "frames/walk_right_07.png",
+          "source": "walk_right_pass_v3c_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3265,
+            268,
+            78,
+            243
+          ],
+          "anchor_offset": [
+            -43.5,
+            -243.0
+          ]
+        }
+      ]
+    },
+    "kickup_back": {
+      "state": "kickup",
+      "direction": "back",
+      "fps": 12,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/kickup_back_00.png",
+          "source": "kickup_back_strip_try1_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2667,
+            0,
+            93,
+            249
+          ],
+          "anchor_offset": [
+            -47.5,
+            -249.0
+          ]
+        },
+        {
+          "file": "frames/kickup_back_01.png",
+          "source": "kickup_back_strip_try1_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1920,
+            0,
+            97,
+            250
+          ],
+          "anchor_offset": [
+            -49.5,
+            -250.0
+          ]
+        },
+        {
+          "file": "frames/kickup_back_02.png",
+          "source": "kickup_back_strip_try1_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2762,
+            0,
+            96,
+            249
+          ],
+          "anchor_offset": [
+            -47.5,
+            -249.0
+          ]
+        },
+        {
+          "file": "frames/kickup_back_03.png",
+          "source": "kickup_back_strip_try1_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2860,
+            0,
+            94,
+            249
+          ],
+          "anchor_offset": [
+            -46.5,
+            -249.0
+          ]
+        },
+        {
+          "file": "frames/kickup_back_04.png",
+          "source": "kickup_back_catch_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1766,
+            997,
+            106,
+            224
+          ],
+          "anchor_offset": [
+            -66.5,
+            -224.0
+          ]
+        },
+        {
+          "file": "frames/kickup_back_05.png",
+          "source": "kickup_back_catch_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1874,
+            997,
+            91,
+            224
+          ],
+          "anchor_offset": [
+            -50.5,
+            -224.0
+          ]
+        }
+      ]
+    },
+    "dropin_back": {
+      "state": "dropin",
+      "direction": "back",
+      "fps": 12,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/dropin_back_00.png",
+          "source": "dropin_back_strip_try1_0",
+          "lift_px": 45.8,
+          "atlas_rect": [
+            2970,
+            515,
+            99,
+            238
+          ],
+          "anchor_offset": [
+            -55.5,
+            -261.0
+          ]
+        },
+        {
+          "file": "frames/dropin_back_01.png",
+          "source": "dropin_back_strip_try1_1",
+          "lift_px": 41.7,
+          "atlas_rect": [
+            2377,
+            515,
+            99,
+            240
+          ],
+          "anchor_offset": [
+            -54.5,
+            -261.0
+          ]
+        },
+        {
+          "file": "frames/dropin_back_02.png",
+          "source": "dropin_back_strip_try1_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            105,
+            0,
+            93,
+            261
+          ],
+          "anchor_offset": [
+            -46.5,
+            -261.0
+          ]
+        },
+        {
+          "file": "frames/dropin_back_03.png",
+          "source": "dropin_back_strip_try1_3",
+          "lift_px": 26.4,
+          "atlas_rect": [
+            3165,
+            0,
+            93,
+            247
+          ],
+          "anchor_offset": [
+            -45.5,
+            -260.0
+          ]
+        },
+        {
+          "file": "frames/dropin_back_04.png",
+          "source": "dropin_back_strip_try1_4",
+          "lift_px": 15.3,
+          "atlas_rect": [
+            1223,
+            0,
+            92,
+            253
+          ],
+          "anchor_offset": [
+            -45.5,
+            -261.0
+          ]
+        },
+        {
+          "file": "frames/dropin_back_05.png",
+          "source": "dropin_back_strip_try1_5",
+          "lift_px": 20.3,
+          "atlas_rect": [
+            1700,
+            0,
+            93,
+            251
+          ],
+          "anchor_offset": [
+            -45.5,
+            -261.0
+          ]
+        }
+      ]
+    },
+    "kickup_front": {
+      "state": "kickup",
+      "direction": "front",
+      "fps": 12,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/kickup_front_00.png",
+          "source": "kickup_front_strip_try1_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2735,
+            759,
+            104,
+            230
+          ],
+          "anchor_offset": [
+            -37.5,
+            -230.0
+          ]
+        },
+        {
+          "file": "frames/kickup_front_01.png",
+          "source": "kickup_front_strip_try1_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3947,
+            515,
+            112,
+            236
+          ],
+          "anchor_offset": [
+            -51.5,
+            -236.0
+          ]
+        },
+        {
+          "file": "frames/kickup_front_02.png",
+          "source": "kickup_front_strip_try1_2",
+          "lift_px": 10.6,
+          "atlas_rect": [
+            2841,
+            759,
+            101,
+            230
+          ],
+          "anchor_offset": [
+            -40.5,
+            -236.0
+          ]
+        },
+        {
+          "file": "frames/kickup_front_03.png",
+          "source": "kickup_front_strip_try1_3",
+          "lift_px": 19.2,
+          "atlas_rect": [
+            1967,
+            997,
+            119,
+            224
+          ],
+          "anchor_offset": [
+            -57.5,
+            -234.0
+          ]
+        },
+        {
+          "file": "frames/kickup_front_04.png",
+          "source": "kickup_front_strip_try1_4",
+          "lift_px": 12.8,
+          "atlas_rect": [
+            1053,
+            997,
+            109,
+            226
+          ],
+          "anchor_offset": [
+            -49.5,
+            -233.0
+          ]
+        },
+        {
+          "file": "frames/kickup_front_05.png",
+          "source": "kickup_front_strip_try1_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1543,
+            759,
+            111,
+            232
+          ],
+          "anchor_offset": [
+            -41.5,
+            -232.0
+          ]
+        }
+      ]
+    },
+    "dropin_front": {
+      "state": "dropin",
+      "direction": "front",
+      "fps": 12,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/dropin_front_00.png",
+          "source": "dropin_front_strip_try1_0",
+          "lift_px": 11.2,
+          "atlas_rect": [
+            0,
+            759,
+            116,
+            236
+          ],
+          "anchor_offset": [
+            -44.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/dropin_front_01.png",
+          "source": "dropin_front_strip_try1_1",
+          "lift_px": 16.3,
+          "atlas_rect": [
+            1204,
+            759,
+            102,
+            233
+          ],
+          "anchor_offset": [
+            -45.5,
+            -241.0
+          ]
+        },
+        {
+          "file": "frames/dropin_front_02.png",
+          "source": "dropin_front_strip_try1_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            851,
+            515,
+            108,
+            242
+          ],
+          "anchor_offset": [
+            -53.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/dropin_front_03.png",
+          "source": "dropin_front_strip_try1_3",
+          "lift_px": 26.5,
+          "atlas_rect": [
+            232,
+            997,
+            120,
+            228
+          ],
+          "anchor_offset": [
+            -65.5,
+            -242.0
+          ]
+        },
+        {
+          "file": "frames/dropin_front_04.png",
+          "source": "dropin_front_strip_try1_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3345,
+            268,
+            96,
+            243
+          ],
+          "anchor_offset": [
+            -42.5,
+            -243.0
+          ]
+        },
+        {
+          "file": "frames/dropin_front_05.png",
+          "source": "dropin_front_strip_try1_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2478,
+            515,
+            95,
+            240
+          ],
+          "anchor_offset": [
+            -35.5,
+            -240.0
+          ]
+        }
+      ]
+    },
+    "kickup_left": {
+      "state": "kickup",
+      "direction": "left",
+      "fps": 12,
+      "loop": false,
+      "status": "weak",
+      "note": "v2 unchanged (4 frames).",
+      "frames": [
+        {
+          "file": "frames/kickup_left_00.png",
+          "source": "kickup_left_strip_try2_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1164,
+            997,
+            110,
+            226
+          ],
+          "anchor_offset": [
+            -50.5,
+            -226.0
+          ]
+        },
+        {
+          "file": "frames/kickup_left_01.png",
+          "source": "kickup_left_strip_try2_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1276,
+            997,
+            117,
+            226
+          ],
+          "anchor_offset": [
+            -49.5,
+            -226.0
+          ]
+        },
+        {
+          "file": "frames/kickup_left_02.png",
+          "source": "kickup_left_strip_try2_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2443,
+            997,
+            119,
+            223
+          ],
+          "anchor_offset": [
+            -68.5,
+            -223.0
+          ]
+        },
+        {
+          "file": "frames/kickup_left_03.png",
+          "source": "kickup_left_strip_try2_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1395,
+            997,
+            86,
+            226
+          ],
+          "anchor_offset": [
+            -24.5,
+            -226.0
+          ]
+        }
+      ]
+    },
+    "dropin_left": {
+      "state": "dropin",
+      "direction": "left",
+      "fps": 12,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/dropin_left_00.png",
+          "source": "dropin_left_strip_try2_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            118,
+            759,
+            87,
+            236
+          ],
+          "anchor_offset": [
+            -31.5,
+            -236.0
+          ]
+        },
+        {
+          "file": "frames/dropin_left_01.png",
+          "source": "dropin_left_strip_try2_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3259,
+            759,
+            89,
+            229
+          ],
+          "anchor_offset": [
+            -23.5,
+            -229.0
+          ]
+        },
+        {
+          "file": "frames/dropin_left_02.png",
+          "source": "dropin_left_strip_try2_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2944,
+            759,
+            103,
+            230
+          ],
+          "anchor_offset": [
+            -44.5,
+            -230.0
+          ]
+        },
+        {
+          "file": "frames/dropin_left_03.png",
+          "source": "dropin_left_strip_try2_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3049,
+            759,
+            117,
+            230
+          ],
+          "anchor_offset": [
+            -45.5,
+            -230.0
+          ]
+        },
+        {
+          "file": "frames/dropin_left_04.png",
+          "source": "dropin_left_strip_try2_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            354,
+            997,
+            113,
+            228
+          ],
+          "anchor_offset": [
+            -40.5,
+            -228.0
+          ]
+        }
+      ]
+    },
+    "kickup_right": {
+      "state": "kickup",
+      "direction": "right",
+      "fps": 12,
+      "loop": false,
+      "status": "new",
+      "note": "NEW: ride, step off, tail stomp, board vertical, catch, tuck. A duplicate board the generator drew under his feet in frames 3-5 was erased by hand.",
+      "frames": [
+        {
+          "file": "frames/kickup_right_00.png",
+          "source": "kickup_right_strip_v3a_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2088,
+            997,
+            121,
+            224
+          ],
+          "anchor_offset": [
+            -84.5,
+            -224.0
+          ]
+        },
+        {
+          "file": "frames/kickup_right_01.png",
+          "source": "kickup_right_strip_v3a_1",
+          "lift_px": 20.1,
+          "atlas_rect": [
+            2798,
+            997,
+            129,
+            217
+          ],
+          "anchor_offset": [
+            -71.5,
+            -227.0
+          ]
+        },
+        {
+          "file": "frames/kickup_right_02.png",
+          "source": "kickup_right_strip_v3a_2",
+          "lift_px": 32.7,
+          "atlas_rect": [
+            275,
+            1227,
+            127,
+            211
+          ],
+          "anchor_offset": [
+            -55.5,
+            -227.0
+          ]
+        },
+        {
+          "file": "frames/kickup_right_03.png",
+          "source": "kickup_right_fix_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            851,
+            1227,
+            114,
+            208
+          ],
+          "anchor_offset": [
+            -64.5,
+            -208.0
+          ]
+        },
+        {
+          "file": "frames/kickup_right_04.png",
+          "source": "kickup_right_fix_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            639,
+            1227,
+            98,
+            209
+          ],
+          "anchor_offset": [
+            -60.5,
+            -209.0
+          ]
+        },
+        {
+          "file": "frames/kickup_right_05.png",
+          "source": "kickup_right_fix_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            404,
+            1227,
+            115,
+            211
+          ],
+          "anchor_offset": [
+            -73.5,
+            -211.0
+          ]
+        }
+      ]
+    },
+    "dropin_right": {
+      "state": "dropin",
+      "direction": "right",
+      "fps": 12,
+      "loop": false,
+      "status": "new",
+      "note": "NEW: hold, lower, step on, both feet, push, roll. v3a rejected (two boards in frame 2).",
+      "frames": [
+        {
+          "file": "frames/dropin_right_00.png",
+          "source": "dropin_right_strip_v3b_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3168,
+            759,
+            89,
+            230
+          ],
+          "anchor_offset": [
+            -63.5,
+            -230.0
+          ]
+        },
+        {
+          "file": "frames/dropin_right_01.png",
+          "source": "dropin_right_strip_v3b_1",
+          "lift_px": 10.0,
+          "atlas_rect": [
+            832,
+            997,
+            103,
+            227
+          ],
+          "anchor_offset": [
+            -74.5,
+            -232.0
+          ]
+        },
+        {
+          "file": "frames/dropin_right_02.png",
+          "source": "dropin_right_strip_v3b_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            469,
+            997,
+            122,
+            228
+          ],
+          "anchor_offset": [
+            -64.5,
+            -228.0
+          ]
+        },
+        {
+          "file": "frames/dropin_right_03.png",
+          "source": "dropin_right_strip_v3b_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1656,
+            759,
+            110,
+            232
+          ],
+          "anchor_offset": [
+            -68.5,
+            -232.0
+          ]
+        },
+        {
+          "file": "frames/dropin_right_04.png",
+          "source": "dropin_right_strip_v3b_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1768,
+            759,
+            110,
+            232
+          ],
+          "anchor_offset": [
+            -75.5,
+            -232.0
+          ]
+        },
+        {
+          "file": "frames/dropin_right_05.png",
+          "source": "dropin_right_strip_v3b_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1880,
+            759,
+            112,
+            232
+          ],
+          "anchor_offset": [
+            -73.5,
+            -232.0
+          ]
+        }
+      ]
+    },
+    "ollie_back": {
+      "state": "ollie",
+      "direction": "back",
+      "fps": 12,
+      "loop": false,
+      "status": "new",
+      "note": "REDONE: board is now end-on (pointing along his travel line) and level in every air frame. Body from a v3 render; its sideways deck was replaced with the end-on deck/trucks/wheels cut from the approved cruise_back art.",
+      "frames": [
+        {
+          "file": "frames/ollie_back_00.png",
+          "source": "ollie_back_comp_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3824,
+            997,
+            127,
+            213
+          ],
+          "anchor_offset": [
+            -66.5,
+            -213.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_01.png",
+          "source": "ollie_back_comp_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1795,
+            0,
+            123,
+            251
+          ],
+          "anchor_offset": [
+            -62.5,
+            -251.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_02.png",
+          "source": "ollie_back_comp_2",
+          "lift_px": 141.8,
+          "atlas_rect": [
+            2105,
+            1227,
+            132,
+            193
+          ],
+          "anchor_offset": [
+            -65.5,
+            -264.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_03.png",
+          "source": "ollie_back_comp_3",
+          "lift_px": 196.7,
+          "atlas_rect": [
+            3177,
+            1227,
+            139,
+            189
+          ],
+          "anchor_offset": [
+            -69.5,
+            -288.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_04.png",
+          "source": "ollie_back_comp_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            704,
+            0,
+            121,
+            254
+          ],
+          "anchor_offset": [
+            -59.5,
+            -254.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_05.png",
+          "source": "ollie_back_comp_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1994,
+            759,
+            121,
+            232
+          ],
+          "anchor_offset": [
+            -59.5,
+            -232.0
+          ]
+        },
+        {
+          "file": "frames/push_back_00.png",
+          "source": "v3:cruise_back_00",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            200,
+            0,
+            99,
+            258
+          ],
+          "anchor_offset": [
+            -49.5,
+            -255.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "rise": [
+          2,
+          3
+        ],
+        "fall": 4,
+        "land": 5,
+        "recover": 6
+      }
+    },
+    "ollie_back_left": {
+      "state": "ollie",
+      "direction": "back_left",
+      "fps": 12,
+      "loop": false,
+      "status": "new",
+      "note": "NEW: board points upper-left along travel. Strip frame 2 rejected (board on the wrong diagonal).",
+      "frames": [
+        {
+          "file": "frames/ollie_back_left_00.png",
+          "source": "ollie_back_left_strip_v3a_0",
+          "lift_px": 9.3,
+          "atlas_rect": [
+            3707,
+            997,
+            115,
+            214
+          ],
+          "anchor_offset": [
+            -44.5,
+            -219.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_left_01.png",
+          "source": "ollie_back_left_strip_v3a_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2575,
+            515,
+            109,
+            240
+          ],
+          "anchor_offset": [
+            -39.5,
+            -240.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_left_02.png",
+          "source": "ollie_back_left_strip_v3a_3",
+          "lift_px": 186.5,
+          "atlas_rect": [
+            1321,
+            1227,
+            127,
+            202
+          ],
+          "anchor_offset": [
+            -47.5,
+            -296.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_left_03.png",
+          "source": "ollie_back_left_strip_v3a_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            967,
+            759,
+            116,
+            234
+          ],
+          "anchor_offset": [
+            -41.5,
+            -234.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_left_04.png",
+          "source": "ollie_back_left_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2117,
+            759,
+            121,
+            232
+          ],
+          "anchor_offset": [
+            -42.5,
+            -232.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "rise": [
+          2
+        ],
+        "fall": 3,
+        "land": 4
+      }
+    },
+    "ollie_back_right": {
+      "state": "ollie",
+      "direction": "back_right",
+      "fps": 12,
+      "loop": false,
+      "status": "new",
+      "note": "NEW: board points upper-right along travel in every frame.",
+      "frames": [
+        {
+          "file": "frames/ollie_back_right_00.png",
+          "source": "ollie_back_right_strip_v3a_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3484,
+            997,
+            113,
+            215
+          ],
+          "anchor_offset": [
+            -75.5,
+            -215.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_right_01.png",
+          "source": "ollie_back_right_strip_v3a_1",
+          "lift_px": 10.6,
+          "atlas_rect": [
+            2211,
+            997,
+            108,
+            224
+          ],
+          "anchor_offset": [
+            -71.5,
+            -230.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_right_02.png",
+          "source": "ollie_back_right_strip_v3a_2",
+          "lift_px": 112.1,
+          "atlas_rect": [
+            1196,
+            1227,
+            123,
+            205
+          ],
+          "anchor_offset": [
+            -73.5,
+            -261.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_right_03.png",
+          "source": "ollie_back_right_strip_v3a_3",
+          "lift_px": 158.2,
+          "atlas_rect": [
+            1875,
+            1227,
+            123,
+            195
+          ],
+          "anchor_offset": [
+            -73.5,
+            -274.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_right_04.png",
+          "source": "ollie_back_right_strip_v3a_4",
+          "lift_px": 55.5,
+          "atlas_rect": [
+            160,
+            1227,
+            113,
+            212
+          ],
+          "anchor_offset": [
+            -69.5,
+            -240.0
+          ]
+        },
+        {
+          "file": "frames/ollie_back_right_05.png",
+          "source": "ollie_back_right_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1081,
+            1227,
+            113,
+            207
+          ],
+          "anchor_offset": [
+            -65.5,
+            -207.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "rise": [
+          2,
+          3
+        ],
+        "fall": 4,
+        "land": 5
+      }
+    },
+    "ollie_front": {
+      "state": "ollie",
+      "direction": "front",
+      "fps": 12,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/ollie_front_00.png",
+          "source": "ollie_front_strip_try1_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3267,
+            1442,
+            118,
+            166
+          ],
+          "anchor_offset": [
+            -41.5,
+            -166.0
+          ]
+        },
+        {
+          "file": "frames/ollie_front_01.png",
+          "source": "ollie_front_strip_try1_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2465,
+            1227,
+            124,
+            191
+          ],
+          "anchor_offset": [
+            -39.5,
+            -191.0
+          ]
+        },
+        {
+          "file": "frames/ollie_front_02.png",
+          "source": "ollie_front_strip_try1_2",
+          "lift_px": 123.5,
+          "atlas_rect": [
+            2259,
+            1442,
+            129,
+            174
+          ],
+          "anchor_offset": [
+            -40.5,
+            -236.0
+          ]
+        },
+        {
+          "file": "frames/ollie_front_03.png",
+          "source": "ollie_front_strip_try1_3",
+          "lift_px": 181.1,
+          "atlas_rect": [
+            2728,
+            1442,
+            133,
+            170
+          ],
+          "anchor_offset": [
+            -49.5,
+            -261.0
+          ]
+        },
+        {
+          "file": "frames/ollie_front_04.png",
+          "source": "ollie_front_strip_try1_4",
+          "lift_px": 62.4,
+          "atlas_rect": [
+            811,
+            1442,
+            137,
+            181
+          ],
+          "anchor_offset": [
+            -51.5,
+            -212.0
+          ]
+        },
+        {
+          "file": "frames/ollie_front_05.png",
+          "source": "ollie_front_strip_try1_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3068,
+            1630,
+            125,
+            138
+          ],
+          "anchor_offset": [
+            -45.5,
+            -138.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "rise": [
+          2,
+          3
+        ],
+        "fall": 4,
+        "land": 5
+      }
+    },
+    "ollie_left": {
+      "state": "ollie",
+      "direction": "left",
+      "fps": 12,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/ollie_left_00.png",
+          "source": "ollie_left_strip_try2_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            463,
+            1630,
+            111,
+            160
+          ],
+          "anchor_offset": [
+            -39.5,
+            -160.0
+          ]
+        },
+        {
+          "file": "frames/ollie_left_01.png",
+          "source": "ollie_left_strip_try2_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            370,
+            1442,
+            115,
+            184
+          ],
+          "anchor_offset": [
+            -38.5,
+            -184.0
+          ]
+        },
+        {
+          "file": "frames/ollie_left_02.png",
+          "source": "ollie_left_strip_try2_2",
+          "lift_px": 114.8,
+          "atlas_rect": [
+            791,
+            1630,
+            120,
+            159
+          ],
+          "anchor_offset": [
+            -36.5,
+            -217.0
+          ]
+        },
+        {
+          "file": "frames/ollie_left_03.png",
+          "source": "ollie_left_strip_try2_3",
+          "lift_px": 159.0,
+          "atlas_rect": [
+            3055,
+            1442,
+            108,
+            168
+          ],
+          "anchor_offset": [
+            -21.5,
+            -248.0
+          ]
+        },
+        {
+          "file": "frames/ollie_left_04.png",
+          "source": "ollie_left_strip_try2_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1560,
+            1227,
+            111,
+            197
+          ],
+          "anchor_offset": [
+            -41.5,
+            -197.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "rise": [
+          2
+        ],
+        "fall": 3,
+        "land": 4
+      }
+    },
+    "ollie_right": {
+      "state": "ollie",
+      "direction": "right",
+      "fps": 12,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/ollie_right_00.png",
+          "source": "ollie_right_strip_try2_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3737,
+            1442,
+            103,
+            163
+          ],
+          "anchor_offset": [
+            -73.5,
+            -163.0
+          ]
+        },
+        {
+          "file": "frames/ollie_right_01.png",
+          "source": "ollie_right_strip_try2_1",
+          "lift_px": 15.7,
+          "atlas_rect": [
+            701,
+            1442,
+            108,
+            182
+          ],
+          "anchor_offset": [
+            -74.5,
+            -190.0
+          ]
+        },
+        {
+          "file": "frames/ollie_right_02.png",
+          "source": "ollie_right_strip_try2_2",
+          "lift_px": 119.3,
+          "atlas_rect": [
+            1608,
+            1630,
+            110,
+            156
+          ],
+          "anchor_offset": [
+            -76.5,
+            -216.0
+          ]
+        },
+        {
+          "file": "frames/ollie_right_03.png",
+          "source": "ollie_right_strip_try2_3",
+          "lift_px": 191.5,
+          "atlas_rect": [
+            2171,
+            1630,
+            111,
+            153
+          ],
+          "anchor_offset": [
+            -78.5,
+            -249.0
+          ]
+        },
+        {
+          "file": "frames/ollie_right_04.png",
+          "source": "ollie_right_strip_try2_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3318,
+            1227,
+            103,
+            189
+          ],
+          "anchor_offset": [
+            -70.5,
+            -189.0
+          ]
+        },
+        {
+          "file": "frames/ollie_right_05.png",
+          "source": "ollie_right_strip_try2_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            576,
+            1630,
+            101,
+            160
+          ],
+          "anchor_offset": [
+            -59.5,
+            -160.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "rise": [
+          2,
+          3
+        ],
+        "fall": 4,
+        "land": 5
+      }
+    },
+    "ollie_front_left": {
+      "state": "ollie",
+      "direction": "front_left",
+      "fps": 12,
+      "loop": false,
+      "status": "weak",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/ollie_front_left_00.png",
+          "source": "ollie_left_strip_try1_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            913,
+            1630,
+            113,
+            159
+          ],
+          "anchor_offset": [
+            -39.5,
+            -159.0
+          ]
+        },
+        {
+          "file": "frames/ollie_front_left_01.png",
+          "source": "ollie_left_strip_try1_1",
+          "lift_px": 46.5,
+          "atlas_rect": [
+            1535,
+            1442,
+            126,
+            176
+          ],
+          "anchor_offset": [
+            -43.5,
+            -199.0
+          ]
+        },
+        {
+          "file": "frames/ollie_front_left_02.png",
+          "source": "ollie_left_strip_try1_2",
+          "lift_px": 44.2,
+          "atlas_rect": [
+            138,
+            1442,
+            123,
+            185
+          ],
+          "anchor_offset": [
+            -37.5,
+            -207.0
+          ]
+        },
+        {
+          "file": "frames/ollie_front_left_03.png",
+          "source": "ollie_left_strip_try1_3",
+          "lift_px": 181.3,
+          "atlas_rect": [
+            1133,
+            1630,
+            128,
+            158
+          ],
+          "anchor_offset": [
+            -44.5,
+            -249.0
+          ]
+        },
+        {
+          "file": "frames/ollie_front_left_04.png",
+          "source": "ollie_left_strip_try1_4",
+          "lift_px": 87.2,
+          "atlas_rect": [
+            3387,
+            1442,
+            124,
+            166
+          ],
+          "anchor_offset": [
+            -42.5,
+            -210.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "rise": [
+          2
+        ],
+        "fall": 3,
+        "land": 4
+      }
+    },
+    "kickflip_back": {
+      "state": "kickflip",
+      "direction": "back",
+      "fps": 14,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/kickflip_back_00.png",
+          "source": "kickflip_back_strip_try1_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            0,
+            0,
+            103,
+            266
+          ],
+          "anchor_offset": [
+            -52.5,
+            -266.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_back_01.png",
+          "source": "kickflip_back_strip_try1_1",
+          "lift_px": 107.4,
+          "atlas_rect": [
+            2681,
+            997,
+            115,
+            219
+          ],
+          "anchor_offset": [
+            -55.5,
+            -273.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_back_02.png",
+          "source": "kickflip_back_strip_try1_2",
+          "lift_px": 116.3,
+          "atlas_rect": [
+            739,
+            1227,
+            110,
+            209
+          ],
+          "anchor_offset": [
+            -52.5,
+            -267.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_back_03.png",
+          "source": "kickflip_back_strip_try1_3",
+          "lift_px": 129.6,
+          "atlas_rect": [
+            521,
+            1227,
+            116,
+            211
+          ],
+          "anchor_offset": [
+            -57.5,
+            -276.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_back_04.png",
+          "source": "kickflip_back_strip_try1_4",
+          "lift_px": 96.4,
+          "atlas_rect": [
+            3599,
+            997,
+            106,
+            215
+          ],
+          "anchor_offset": [
+            -51.5,
+            -263.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_back_05.png",
+          "source": "kickflip_back_strip_try1_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            301,
+            0,
+            101,
+            257
+          ],
+          "anchor_offset": [
+            -46.5,
+            -257.0
+          ]
+        }
+      ]
+    },
+    "kickflip_front": {
+      "state": "kickflip",
+      "direction": "front",
+      "fps": 14,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/kickflip_front_00.png",
+          "source": "kickflip_front_strip_try1_0",
+          "lift_px": 24.5,
+          "atlas_rect": [
+            1450,
+            1227,
+            108,
+            200
+          ],
+          "anchor_offset": [
+            -43.5,
+            -213.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_front_01.png",
+          "source": "kickflip_front_strip_try1_1",
+          "lift_px": 31.4,
+          "atlas_rect": [
+            1171,
+            1442,
+            107,
+            178
+          ],
+          "anchor_offset": [
+            -39.5,
+            -194.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_front_02.png",
+          "source": "kickflip_front_strip_try1_2",
+          "lift_px": 46.1,
+          "atlas_rect": [
+            2968,
+            1442,
+            85,
+            169
+          ],
+          "anchor_offset": [
+            -21.5,
+            -192.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_front_03.png",
+          "source": "kickflip_front_strip_try1_3",
+          "lift_px": 97.1,
+          "atlas_rect": [
+            1280,
+            1442,
+            106,
+            177
+          ],
+          "anchor_offset": [
+            -34.5,
+            -226.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_front_04.png",
+          "source": "kickflip_front_strip_try1_4",
+          "lift_px": 89.2,
+          "atlas_rect": [
+            2524,
+            1630,
+            101,
+            150
+          ],
+          "anchor_offset": [
+            -33.5,
+            -195.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_front_05.png",
+          "source": "kickflip_front_strip_try1_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1720,
+            1630,
+            101,
+            156
+          ],
+          "anchor_offset": [
+            -40.5,
+            -156.0
+          ]
+        }
+      ]
+    },
+    "kickflip_left": {
+      "state": "kickflip",
+      "direction": "left",
+      "fps": 14,
+      "loop": false,
+      "status": "new",
+      "note": "NEW: profile kickflip, board shows edge then wooden underside then grip.",
+      "frames": [
+        {
+          "file": "frames/kickflip_left_00.png",
+          "source": "kickflip_left_strip_v3a_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            0,
+            1630,
+            111,
+            161
+          ],
+          "anchor_offset": [
+            -38.5,
+            -161.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_left_01.png",
+          "source": "kickflip_left_strip_v3a_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            263,
+            1442,
+            105,
+            185
+          ],
+          "anchor_offset": [
+            -23.5,
+            -185.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_left_02.png",
+          "source": "kickflip_left_strip_v3a_2",
+          "lift_px": 79.9,
+          "atlas_rect": [
+            1663,
+            1442,
+            107,
+            176
+          ],
+          "anchor_offset": [
+            -25.5,
+            -216.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_left_03.png",
+          "source": "kickflip_left_strip_v3a_3",
+          "lift_px": 146.7,
+          "atlas_rect": [
+            2390,
+            1442,
+            111,
+            174
+          ],
+          "anchor_offset": [
+            -23.5,
+            -247.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_left_04.png",
+          "source": "kickflip_left_strip_v3a_4",
+          "lift_px": 34.6,
+          "atlas_rect": [
+            2591,
+            1227,
+            107,
+            191
+          ],
+          "anchor_offset": [
+            -31.5,
+            -209.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_left_05.png",
+          "source": "kickflip_left_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1823,
+            1630,
+            112,
+            156
+          ],
+          "anchor_offset": [
+            -40.5,
+            -156.0
+          ]
+        }
+      ]
+    },
+    "kickflip_right": {
+      "state": "kickflip",
+      "direction": "right",
+      "fps": 14,
+      "loop": false,
+      "status": "new",
+      "note": "NEW: profile kickflip facing right.",
+      "frames": [
+        {
+          "file": "frames/kickflip_right_00.png",
+          "source": "kickflip_right_strip_v3a_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1263,
+            1630,
+            102,
+            157
+          ],
+          "anchor_offset": [
+            -70.5,
+            -157.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_right_01.png",
+          "source": "kickflip_right_strip_v3a_1",
+          "lift_px": 10.4,
+          "atlas_rect": [
+            950,
+            1442,
+            121,
+            181
+          ],
+          "anchor_offset": [
+            -75.5,
+            -186.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_right_02.png",
+          "source": "kickflip_right_strip_v3a_2",
+          "lift_px": 90.4,
+          "atlas_rect": [
+            3513,
+            1442,
+            105,
+            166
+          ],
+          "anchor_offset": [
+            -79.5,
+            -211.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_right_03.png",
+          "source": "kickflip_right_strip_v3a_3",
+          "lift_px": 134.5,
+          "atlas_rect": [
+            3842,
+            1442,
+            107,
+            163
+          ],
+          "anchor_offset": [
+            -74.5,
+            -231.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_right_04.png",
+          "source": "kickflip_right_strip_v3a_4",
+          "lift_px": 62.6,
+          "atlas_rect": [
+            2863,
+            1442,
+            103,
+            170
+          ],
+          "anchor_offset": [
+            -73.5,
+            -202.0
+          ]
+        },
+        {
+          "file": "frames/kickflip_right_05.png",
+          "source": "kickflip_right_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3165,
+            1442,
+            100,
+            168
+          ],
+          "anchor_offset": [
+            -69.5,
+            -168.0
+          ]
+        }
+      ]
+    },
+    "grab_back": {
+      "state": "grab",
+      "direction": "back",
+      "fps": 10,
+      "loop": false,
+      "status": "new",
+      "note": "REDONE: 6 frames (was 4): crouch, pop, reach, grab, hold, release to an end-on landing. Board is tweaked diagonally while grabbed.",
+      "frames": [
+        {
+          "file": "frames/grab_back_00.png",
+          "source": "grab_back_strip_v3a_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1772,
+            1442,
+            113,
+            176
+          ],
+          "anchor_offset": [
+            -62.5,
+            -176.0
+          ]
+        },
+        {
+          "file": "frames/grab_back_01.png",
+          "source": "grab_back_strip_v3a_1",
+          "lift_px": 58.8,
+          "atlas_rect": [
+            2914,
+            1227,
+            122,
+            190
+          ],
+          "anchor_offset": [
+            -64.5,
+            -220.0
+          ]
+        },
+        {
+          "file": "frames/grab_back_02.png",
+          "source": "grab_back_strip_v3a_2",
+          "lift_px": 209.9,
+          "atlas_rect": [
+            2120,
+            1442,
+            137,
+            175
+          ],
+          "anchor_offset": [
+            -65.5,
+            -280.0
+          ]
+        },
+        {
+          "file": "frames/grab_back_03.png",
+          "source": "grab_back_strip_v3a_3",
+          "lift_px": 241.1,
+          "atlas_rect": [
+            0,
+            1442,
+            136,
+            186
+          ],
+          "anchor_offset": [
+            -59.5,
+            -307.0
+          ]
+        },
+        {
+          "file": "frames/grab_back_04.png",
+          "source": "grab_back_strip_v3a_4",
+          "lift_px": 88.8,
+          "atlas_rect": [
+            967,
+            1227,
+            112,
+            208
+          ],
+          "anchor_offset": [
+            -61.5,
+            -253.0
+          ]
+        },
+        {
+          "file": "frames/grab_back_05.png",
+          "source": "grab_back_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2564,
+            997,
+            115,
+            222
+          ],
+          "anchor_offset": [
+            -57.5,
+            -222.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "reach": 2,
+        "hold": [
+          3,
+          4
+        ],
+        "release": 5
+      }
+    },
+    "grab_front": {
+      "state": "grab",
+      "direction": "front",
+      "fps": 10,
+      "loop": false,
+      "status": "pass",
+      "note": "v2 unchanged.",
+      "frames": [
+        {
+          "file": "frames/grab_front_00.png",
+          "source": "grab_front_strip_try1_0",
+          "lift_px": 25.3,
+          "atlas_rect": [
+            1887,
+            1442,
+            121,
+            176
+          ],
+          "anchor_offset": [
+            -38.5,
+            -189.0
+          ]
+        },
+        {
+          "file": "frames/grab_front_01.png",
+          "source": "grab_front_strip_try1_1",
+          "lift_px": 69.3,
+          "atlas_rect": [
+            2284,
+            1630,
+            115,
+            152
+          ],
+          "anchor_offset": [
+            -33.5,
+            -187.0
+          ]
+        },
+        {
+          "file": "frames/grab_front_02.png",
+          "source": "grab_front_strip_try1_2",
+          "lift_px": 93.5,
+          "atlas_rect": [
+            1937,
+            1630,
+            104,
+            156
+          ],
+          "anchor_offset": [
+            -29.5,
+            -203.0
+          ]
+        },
+        {
+          "file": "frames/grab_front_03.png",
+          "source": "grab_front_strip_try1_3",
+          "lift_px": 136.4,
+          "atlas_rect": [
+            2503,
+            1442,
+            111,
+            172
+          ],
+          "anchor_offset": [
+            -44.5,
+            -240.0
+          ]
+        },
+        {
+          "file": "frames/grab_front_04.png",
+          "source": "grab_front_strip_try1_4",
+          "lift_px": 107.8,
+          "atlas_rect": [
+            113,
+            1630,
+            113,
+            161
+          ],
+          "anchor_offset": [
+            -34.5,
+            -215.0
+          ]
+        },
+        {
+          "file": "frames/grab_front_05.png",
+          "source": "grab_front_strip_try1_5",
+          "lift_px": 25.3,
+          "atlas_rect": [
+            3823,
+            1227,
+            107,
+            187
+          ],
+          "anchor_offset": [
+            -31.5,
+            -200.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "reach": 2,
+        "hold": [
+          3,
+          4
+        ],
+        "release": 5
+      }
+    },
+    "grab_left": {
+      "state": "grab",
+      "direction": "left",
+      "fps": 10,
+      "loop": false,
+      "status": "new",
+      "note": "NEW: profile indy grab facing left.",
+      "frames": [
+        {
+          "file": "frames/grab_left_00.png",
+          "source": "grab_left_strip_v3a_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3620,
+            1442,
+            115,
+            164
+          ],
+          "anchor_offset": [
+            -40.5,
+            -164.0
+          ]
+        },
+        {
+          "file": "frames/grab_left_01.png",
+          "source": "grab_left_strip_v3a_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3567,
+            1227,
+            104,
+            188
+          ],
+          "anchor_offset": [
+            -23.5,
+            -188.0
+          ]
+        },
+        {
+          "file": "frames/grab_left_02.png",
+          "source": "grab_left_strip_v3a_2",
+          "lift_px": 121.8,
+          "atlas_rect": [
+            679,
+            1630,
+            110,
+            160
+          ],
+          "anchor_offset": [
+            -24.5,
+            -221.0
+          ]
+        },
+        {
+          "file": "frames/grab_left_03.png",
+          "source": "grab_left_strip_v3a_3",
+          "lift_px": 204.2,
+          "atlas_rect": [
+            2401,
+            1630,
+            121,
+            152
+          ],
+          "anchor_offset": [
+            -27.5,
+            -254.0
+          ]
+        },
+        {
+          "file": "frames/grab_left_04.png",
+          "source": "grab_left_strip_v3a_4",
+          "lift_px": 62.7,
+          "atlas_rect": [
+            2010,
+            1442,
+            108,
+            176
+          ],
+          "anchor_offset": [
+            -32.5,
+            -208.0
+          ]
+        },
+        {
+          "file": "frames/grab_left_05.png",
+          "source": "grab_left_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2627,
+            1630,
+            118,
+            149
+          ],
+          "anchor_offset": [
+            -45.5,
+            -149.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "reach": 2,
+        "hold": [
+          3,
+          4
+        ],
+        "release": 5
+      }
+    },
+    "grab_right": {
+      "state": "grab",
+      "direction": "right",
+      "fps": 10,
+      "loop": false,
+      "status": "new",
+      "note": "NEW: profile indy grab facing right, hand on the board in frames 2-4.",
+      "frames": [
+        {
+          "file": "frames/grab_right_00.png",
+          "source": "grab_right_strip_v3a_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3951,
+            1442,
+            109,
+            163
+          ],
+          "anchor_offset": [
+            -78.5,
+            -163.0
+          ]
+        },
+        {
+          "file": "frames/grab_right_01.png",
+          "source": "grab_right_strip_v3a_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            228,
+            1630,
+            113,
+            161
+          ],
+          "anchor_offset": [
+            -80.5,
+            -161.0
+          ]
+        },
+        {
+          "file": "frames/grab_right_02.png",
+          "source": "grab_right_strip_v3a_2",
+          "lift_px": 108.6,
+          "atlas_rect": [
+            2747,
+            1630,
+            105,
+            146
+          ],
+          "anchor_offset": [
+            -62.5,
+            -201.0
+          ]
+        },
+        {
+          "file": "frames/grab_right_03.png",
+          "source": "grab_right_strip_v3a_3",
+          "lift_px": 211.1,
+          "atlas_rect": [
+            2854,
+            1630,
+            110,
+            146
+          ],
+          "anchor_offset": [
+            -57.5,
+            -251.0
+          ]
+        },
+        {
+          "file": "frames/grab_right_04.png",
+          "source": "grab_right_strip_v3a_4",
+          "lift_px": 112.3,
+          "atlas_rect": [
+            2966,
+            1630,
+            100,
+            144
+          ],
+          "anchor_offset": [
+            -65.5,
+            -200.0
+          ]
+        },
+        {
+          "file": "frames/grab_right_05.png",
+          "source": "grab_right_strip_v3a_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2616,
+            1442,
+            110,
+            172
+          ],
+          "anchor_offset": [
+            -84.5,
+            -172.0
+          ]
+        }
+      ],
+      "phases": {
+        "crouch": 0,
+        "pop": 1,
+        "reach": 2,
+        "hold": [
+          3,
+          4
+        ],
+        "release": 5
+      }
+    },
+    "grind_back": {
+      "state": "grind",
+      "direction": "back",
+      "fps": 8,
+      "loop": true,
+      "status": "pass",
+      "note": "v2 drawings, 6-step ping-pong loop.",
+      "frames": [
+        {
+          "file": "frames/grind_back_00.png",
+          "source": "grind_back_strip_try2_0",
+          "lift_px": 10.8,
+          "atlas_rect": [
+            2700,
+            1227,
+            110,
+            191
+          ],
+          "anchor_offset": [
+            -52.5,
+            -197.0
+          ]
+        },
+        {
+          "file": "frames/grind_back_01.png",
+          "source": "grind_back_strip_try2_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2000,
+            1227,
+            103,
+            195
+          ],
+          "anchor_offset": [
+            -43.5,
+            -195.0
+          ]
+        },
+        {
+          "file": "frames/grind_back_02.png",
+          "source": "grind_back_strip_try2_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2239,
+            1227,
+            107,
+            192
+          ],
+          "anchor_offset": [
+            -52.5,
+            -195.0
+          ]
+        },
+        {
+          "file": "frames/grind_back_03.png",
+          "source": "grind_back_strip_try2_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1770,
+            1227,
+            103,
+            196
+          ],
+          "anchor_offset": [
+            -53.5,
+            -196.0
+          ]
+        },
+        {
+          "file": "frames/grind_back_04.png",
+          "source": "grind_back_strip_try2_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2239,
+            1227,
+            107,
+            192
+          ],
+          "anchor_offset": [
+            -52.5,
+            -195.0
+          ]
+        },
+        {
+          "file": "frames/grind_back_05.png",
+          "source": "grind_back_strip_try2_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2000,
+            1227,
+            103,
+            195
+          ],
+          "anchor_offset": [
+            -43.5,
+            -195.0
+          ]
+        }
+      ]
+    },
+    "grind_left": {
+      "state": "grind",
+      "direction": "left",
+      "fps": 8,
+      "loop": true,
+      "status": "pass",
+      "note": "v2 drawings, 6-step ping-pong loop.",
+      "frames": [
+        {
+          "file": "frames/grind_left_00.png",
+          "source": "grind_left_strip_try1_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1388,
+            1442,
+            145,
+            177
+          ],
+          "anchor_offset": [
+            -46.5,
+            -177.0
+          ]
+        },
+        {
+          "file": "frames/grind_left_01.png",
+          "source": "grind_left_strip_try1_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            487,
+            1442,
+            128,
+            183
+          ],
+          "anchor_offset": [
+            -49.5,
+            -183.0
+          ]
+        },
+        {
+          "file": "frames/grind_left_02.png",
+          "source": "grind_left_strip_try1_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1367,
+            1630,
+            126,
+            157
+          ],
+          "anchor_offset": [
+            -32.5,
+            -157.0
+          ]
+        },
+        {
+          "file": "frames/grind_left_03.png",
+          "source": "grind_left_strip_try1_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            2348,
+            1227,
+            115,
+            192
+          ],
+          "anchor_offset": [
+            -48.5,
+            -192.0
+          ]
+        },
+        {
+          "file": "frames/grind_left_04.png",
+          "source": "grind_left_strip_try1_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1367,
+            1630,
+            126,
+            157
+          ],
+          "anchor_offset": [
+            -32.5,
+            -157.0
+          ]
+        },
+        {
+          "file": "frames/grind_left_05.png",
+          "source": "grind_left_strip_try1_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            487,
+            1442,
+            128,
+            183
+          ],
+          "anchor_offset": [
+            -49.5,
+            -183.0
+          ]
+        }
+      ]
+    },
+    "grind_right": {
+      "state": "grind",
+      "direction": "right",
+      "fps": 8,
+      "loop": true,
+      "status": "new",
+      "note": "NEW: right-facing 50-50 with sparks (no more patch-wrong fallback to grind_left). v3a rejected: magenta patch on his right chest.",
+      "frames": [
+        {
+          "file": "frames/grind_right_00.png",
+          "source": "grind_right_strip_v3b_0",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3038,
+            1227,
+            137,
+            190
+          ],
+          "anchor_offset": [
+            -91.5,
+            -190.0
+          ]
+        },
+        {
+          "file": "frames/grind_right_01.png",
+          "source": "grind_right_strip_v3b_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3423,
+            1227,
+            142,
+            189
+          ],
+          "anchor_offset": [
+            -91.5,
+            -189.0
+          ]
+        },
+        {
+          "file": "frames/grind_right_02.png",
+          "source": "grind_right_strip_v3b_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3673,
+            1227,
+            148,
+            188
+          ],
+          "anchor_offset": [
+            -92.5,
+            -188.0
+          ]
+        },
+        {
+          "file": "frames/grind_right_03.png",
+          "source": "grind_right_strip_v3b_3",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3932,
+            1227,
+            135,
+            187
+          ],
+          "anchor_offset": [
+            -88.5,
+            -187.0
+          ]
+        },
+        {
+          "file": "frames/grind_right_04.png",
+          "source": "grind_right_strip_v3b_2",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3673,
+            1227,
+            148,
+            188
+          ],
+          "anchor_offset": [
+            -92.5,
+            -188.0
+          ]
+        },
+        {
+          "file": "frames/grind_right_05.png",
+          "source": "grind_right_strip_v3b_1",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3423,
+            1227,
+            142,
+            189
+          ],
+          "anchor_offset": [
+            -91.5,
+            -189.0
+          ]
+        }
+      ]
+    },
+    "bail_back": {
+      "state": "bail",
+      "direction": "back",
+      "fps": 10,
+      "loop": false,
+      "status": "weak",
+      "note": "v2 unchanged (last frame board sideways).",
+      "frames": [
+        {
+          "file": "frames/bail_back_00.png",
+          "source": "bail_back_strip_try1_0",
+          "lift_px": 31.0,
+          "atlas_rect": [
+            1073,
+            1442,
+            96,
+            180
+          ],
+          "anchor_offset": [
+            -52.5,
+            -196.0
+          ]
+        },
+        {
+          "file": "frames/bail_back_01.png",
+          "source": "bail_back_strip_try1_1",
+          "lift_px": 26.2,
+          "atlas_rect": [
+            343,
+            1630,
+            118,
+            161
+          ],
+          "anchor_offset": [
+            -38.5,
+            -174.0
+          ]
+        },
+        {
+          "file": "frames/bail_back_02.png",
+          "source": "bail_back_strip_try1_2",
+          "lift_px": 37.8,
+          "atlas_rect": [
+            1028,
+            1630,
+            103,
+            159
+          ],
+          "anchor_offset": [
+            -36.5,
+            -178.0
+          ]
+        },
+        {
+          "file": "frames/bail_back_03.png",
+          "source": "bail_back_strip_try1_4",
+          "lift_px": 27.1,
+          "atlas_rect": [
+            617,
+            1442,
+            82,
+            183
+          ],
+          "anchor_offset": [
+            -40.5,
+            -197.0
+          ]
+        },
+        {
+          "file": "frames/bail_back_04.png",
+          "source": "bail_back_strip_try1_5",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            1673,
+            1227,
+            95,
+            197
+          ],
+          "anchor_offset": [
+            -60.5,
+            -197.0
+          ]
+        }
+      ]
+    },
+    "bail_front": {
+      "state": "bail",
+      "direction": "front",
+      "fps": 10,
+      "loop": false,
+      "status": "new",
+      "note": "REDONE: 6 frames (was 1): board slips out, tip back, stumble, sit-fall, wince, get up on one knee.",
+      "frames": [
+        {
+          "file": "frames/bail_front_00.png",
+          "source": "bail_front_strip_v3a_0",
+          "lift_px": 159.8,
+          "atlas_rect": [
+            1495,
+            1630,
+            111,
+            157
+          ],
+          "anchor_offset": [
+            -52.5,
+            -237.0
+          ]
+        },
+        {
+          "file": "frames/bail_front_01.png",
+          "source": "bail_front_strip_v3a_1",
+          "lift_px": 63.2,
+          "atlas_rect": [
+            2812,
+            1227,
+            100,
+            191
+          ],
+          "anchor_offset": [
+            -56.5,
+            -223.0
+          ]
+        },
+        {
+          "file": "frames/bail_front_02.png",
+          "source": "bail_front_strip_v3a_2",
+          "lift_px": 49.4,
+          "atlas_rect": [
+            2043,
+            1630,
+            126,
+            156
+          ],
+          "anchor_offset": [
+            -52.5,
+            -180.0
+          ]
+        },
+        {
+          "file": "frames/bail_front_03.png",
+          "source": "bail_front_strip_v3a_3",
+          "lift_px": 42.5,
+          "atlas_rect": [
+            3400,
+            1630,
+            123,
+            104
+          ],
+          "anchor_offset": [
+            -76.5,
+            -126.0
+          ]
+        },
+        {
+          "file": "frames/bail_front_04.png",
+          "source": "bail_front_strip_v3a_4",
+          "lift_px": 0.0,
+          "atlas_rect": [
+            3195,
+            1630,
+            115,
+            129
+          ],
+          "anchor_offset": [
+            -59.5,
+            -129.0
+          ]
+        },
+        {
+          "file": "frames/bail_front_05.png",
+          "source": "bail_front_strip_v3a_5",
+          "lift_px": 43.7,
+          "atlas_rect": [
+            3312,
+            1630,
+            86,
+            126
+          ],
+          "anchor_offset": [
+            -45.5,
+            -148.0
+          ]
+        }
+      ]
+    }
+  },
+  "rejected": {
+    "push_back_strip_v3a": "foot never leaves the deck (same problem as v2)",
+    "push_back_strip_v3b idx0,2,4,5": "idx2/idx4 push with the LEFT leg (inconsistent stroke); idx5 taller than the rest of the cycle (scale pop); idx0 unused",
+    "ollie_back_strip_v3a, v3c": "board diagonal / sideways across the travel line",
+    "ollie_back_strip_v3b (board only)": "sideways deck replaced by the end-on deck from cruise_back; body kept",
+    "walk_left_keys_v3b, walk_right_keys_v3b": "4 near-identical strides; no alternation",
+    "walk_front_mirlegs_pass_v3c_0": "seam mismatch on the lifted thigh",
+    "grind_right_strip_v3a": "magenta patch drawn on his RIGHT chest (would read as mirrored)",
+    "dropin_right_strip_v3a": "two boards in frame 2",
+    "kickup_right_strip_v3a idx3-5 (as drawn)": "second board under his feet; erased in kickup_right_fix",
+    "ollie_back_left_strip_v3a idx2": "board on the wrong diagonal for one frame",
+    "cruise_front_strip_v3a idx0,2": "diagonal board / turned crouch"
+  },
+  "atlas": {
+    "file": "fony2d_v3_atlas.png",
+    "scale_from_master": 0.5,
+    "size": [
+      4096,
+      1791
+    ],
+    "unique_drawings": 284,
+    "pixel_size_m": 0.007167,
+    "note": "atlas_rect is the trimmed frame; anchor_offset is that rect's top-left relative to the shared ground anchor, in atlas pixels (y down). Frames that reuse a drawing share one rect. Push cycles replaced by v5-push; other drawings are the v3 pixels."
+  }
+}

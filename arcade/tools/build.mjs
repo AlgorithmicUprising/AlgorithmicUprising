@@ -19,8 +19,9 @@ for (const game of games) {
     const withSkin = entry.replace('<cookie-wall></cookie-wall>', skinElement);
     if (withSkin === entry) throw new Error('Could not add the bundled Fony skin');
     const safeScript = bundle.replace(/<\/script/gi, '<\\/script').replace(/^\/\/# sourceMappingURL=.*$/gm, '');
-    const standalone = withSkin.replace('<script type="module" src="./page.js"></script>',
+    const standalone = withSkin.replace(/<script type="module" src="\.\/page\.js(?:\?[^"]*)?"><\/script>/,
       () => '<script type="module">' + safeScript + '</script>');
+    if (standalone === withSkin) throw new Error('Could not inline the Cookie Wall game bundle');
     await writeFile(outdir + '/Cookie-Wall.html', standalone);
   }
   console.log('Built',game);
