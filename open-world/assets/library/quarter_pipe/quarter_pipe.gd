@@ -11,12 +11,73 @@ const Blocks = preload("res://scripts/world_blocks.gd")
 @export var deck_length := 1.6
 @export var thickness := 0.42
 @export var curve_steps := 36
+## Phase 2 (LOCAL): self-lit fill on the shell. The face looks east and the sun is west of it, so the transition sits in the
+## pipe's own shadow (measured 43/255 in a render). 0 = the pre-Phase-2 look.
+@export var face_fill := 1.3
 
 var triangle_count := 0
 var _built := false
 
 func _ready() -> void:
+	add_to_group("quarter_pipe")
 	_build()
+
+# --- Phase 2 (LOCAL): riding profile. Local frame: +X climbs, +Y up, Z across the width; origin = centre of the low lip on the
+# ground. s = arc length up the curve from the bottom (0 .. lip_arc()); theta = s / radius.
+func climb_rad() -> float:
+	return deg_to_rad(climb_deg)
+
+func lip_arc() -> float:
+	return radius * climb_rad()
+
+func lip_local() -> Vector3:
+	var c := climb_rad()
+	return Vector3(radius * sin(c), radius * (1.0 - cos(c)), 0.0)
+
+func lip_height() -> float:
+	return lip_local().y
+
+func deck_end_x() -> float:
+	return lip_local().x + deck_length
+
+func half_width() -> float:
+	return width * 0.5
+
+func profile_point(s: float, z := 0.0) -> Vector3:
+	var a := clampf(s, 0.0, lip_arc()) / radius
+	return Vector3(radius * sin(a), radius * (1.0 - cos(a)), z)
+
+func profile_tangent(s: float) -> Vector3:
+	var a := clampf(s, 0.0, lip_arc()) / radius
+	return Vector3(cos(a), sin(a), 0.0)
+
+func profile_normal(s: float) -> Vector3:
+	var a := clampf(s, 0.0, lip_arc()) / radius
+	return Vector3(-sin(a), cos(a), 0.0)
+
+## Arc length of the curve point under local x (clamped to the curve).
+func arc_at_x(x: float) -> float:
+	return radius * asin(clampf(x / radius, 0.0, sin(climb_rad())))
+
+## Riding surface height under local x: flat ground before the curve, the curve, the deck, then ground behind the back wall.
+func surface_y(x: float) -> float:
+	var lip := lip_local()
+	if x <= 0.0:
+		return 0.0
+	if x <= lip.x:
+		return radius - sqrt(maxf(radius * radius - x * x, 0.0))
+	if x <= lip.x + deck_length:
+		return lip.y
+	return 0.0
+
+## World coping line (both ends of the coping tube's riding edge).
+func coping_line() -> PackedVector3Array:
+	var lip := lip_local()
+	return PackedVector3Array([to_global(lip + Vector3(0, 0, -width * 0.5)), to_global(lip + Vector3(0, 0, width * 0.5))])
+
+func profile_info() -> Dictionary:
+	return {"radius": radius, "climb_deg": climb_deg, "lip_height": lip_height(), "lip_x": lip_local().x, "lip_arc": lip_arc(),
+		"deck_length": deck_length, "width": width}
 
 func _build() -> void:
 	if _built:
@@ -51,6 +112,7 @@ func _build() -> void:
 	var concrete: Texture2D = load("res://assets/library/quarter_pipe/concrete_albedo.png")
 	var paint: Texture2D = load("res://assets/library/quarter_pipe/graffiti_albedo.png")
 	var shell_mat := Blocks.cel_textured(Color.WHITE, concrete, 3.0, 0.34)
+	shell_mat.set_shader_parameter("fill_light", face_fill)
 	var metal_mat := Blocks.cel(Color("e7eef2"), 3.0, 0.08)
 	var paint_mat := Blocks.cel_textured(Color.WHITE, paint, 3.0, 0.16)
 	var shell := _shell(outer, inner, normals, along, span, half)

@@ -6,6 +6,8 @@ uniform sampler2D albedo_tex : source_color, hint_default_white, filter_linear_m
 uniform float texture_mix : hint_range(0.0, 1.0) = 0.0;
 uniform float bands : hint_range(2.0, 4.0) = 3.0;
 uniform float outline_strength : hint_range(0.0, 1.0) = 0.28;
+// Phase 2 (LOCAL): self-lit fill so a face in its own shadow still reads (quarter-pipe face). 0 = off (every other block).
+uniform float fill_light : hint_range(0.0, 2.0) = 0.0;
 
 void fragment() {
 	float facing = clamp(dot(NORMAL, VIEW), 0.0, 1.0);
@@ -15,6 +17,9 @@ void fragment() {
 		base *= texture(albedo_tex, UV).rgb;
 	}
 	ALBEDO = base * mix(1.0, 1.0 - outline_strength, edge);
+	if (fill_light > 0.0) {
+		EMISSION = ALBEDO * fill_light;
+	}
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;
 }

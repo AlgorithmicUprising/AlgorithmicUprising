@@ -4,9 +4,74 @@ const WALK_SPEED := 4.5
 const SKATE_SPEED := 9.0
 const JUMP_VELOCITY := 6.2
 const GRAVITY := 18.0
+# Phase 1a trick timing (LOCAL puppet test). Real ollies spend 0.36 +/- 0.09 s in the
+# air; the puppet ollie clip has 0.42 s of board air. 3.8 m/s at 18 m/s^2 gives a
+# 0.40 m apex and 0.42 s of air.
+const OLLIE_CROUCH_S := 0.2
+const OLLIE_POP_VELOCITY := 3.8
+const FLIP_SPIN_S := 0.36
+const LAND_S := 0.25
+# Ignore the floor for this long after the pop so the launch tick never counts as a landing.
+const AIR_GUARD_S := 0.1
+# Phase 2 transition riding (LOCAL puppet test). On a quarter pipe ("quarter_pipe" group) the body rides the curve as one
+# number: s = arc length up the profile, ramp_v = speed along it (+ = climbing). Gravity acts along the curve
+# (a = -g sin(theta)), so he slows going up and speeds up coming down. Facing never follows velocity on the wall, so
+# running out of speed rolls him back down fakie. Reaching the coping with speed launches him straight up (the lip is
+# 70 deg; plan: "fake a vertical launch in code") with a small inward drift so he comes back down into the transition.
+const RAMP_ROLL_DECEL := 0.35       # m/s^2 rolling resistance on the wall (flat skating keeps its own friction)
+const PUMP_ACCEL := 3.0             # m/s^2 gained while pumping (stick held) on the lower transition
+const PUMP_MAX_DEG := 50.0          # pumping works below this wall angle
+const PUMP_MIN_SPEED := 0.8
+const LIP_DRIFT := 0.6              # m/s back toward the flat at the lip launch
+const RAMP_STEER_ACCEL := 3.0       # m/s^2 across the wall from the stick
+const RAMP_STEER_MAX := 2.5
+const RAMP_EDGE := 0.3              # leave the curve this close to the side of the pipe
+const CAPSULE_R := 0.35             # player.tscn capsule: radius 0.35, lower sphere centre 0.675 m above the origin
+const CAPSULE_LOW := 0.675
+
+# Phase 3 quarter-pipe drop-in (LOCAL puppet test). Plan: stand on the deck within 0.5 m of the coping facing the ramp within
+# 35 deg with the board in hand, press Shift: qp_setup sets the tail on the coping (S or Shift backs out). W commits: qp_dropin
+# stomps the nose down; letting go of W (or pressing S) in the first 0.15 s of the commit is a bail (he falls back, then
+# picks the board up with his left hand and returns to carrying it). After the commit he is placed on the transition with the board's centre 0.294 m below the coping and rides the
+# Phase 2 curve physics down to the flat.
+const QP_SPOT_MAX := 0.5            # m behind the coping
+const QP_FACE_MAX_DEG := 35.0
+const QP_STAND_BACK := 0.08         # qp_setup draws him 40 rig px behind the lip edge before he sets the board
+const QP_APPROACH_S := 0.25         # slide / turn onto that mark over the first frames of qp_setup
+const QP_SETUP_S := 23.0 / 24.0     # qp_setup: 23 frames at 24 fps (the last one = ready)
+const QP_COMMIT_S := 8.0 / 24.0     # qp_dropin commit frames 0-8: the board tips -14 -> 70 deg over the coping
+const QP_HESITATE_S := 0.15
+const QP_ROLL_START_M := 0.2943     # board centre along the wall from the lip at the commit's last frame (tools/anim_qp.py)
+const QP_ROLL_V0 := 1.2             # m/s down the wall as the front wheels land
+const QP_BAIL_S := 36.0 / 24.0
+const QP_KICKUP_S := 20.0 / 24.0    # puppet kickup clip length (rolling up to the coping: kick up, then set the board)
+const QP_RIDE_MAX := 1.5            # rolling slower than this at the spot: Shift kicks up and sets up
+# Phase 3b: ease the spring-arm length so the pipe deck never snaps the camera in or out.
+# Before the fix the arm stayed at 5.2 m through set-up and commit, then hit the deck mid-roll
+# (5.20 -> 1.24 m in one frame) and popped back to 5.20 m on the flat. The close target sits
+# just under that 1.24 m hit so the arm is already short when the deck crosses the ray.
+const CAM_SPRING_DEFAULT := 5.2
+const CAM_SPRING_QP := 1.20
+const CAM_SPRING_SLEW := 2.8        # m/s, ~0.047 m per 60 fps tick
 
 var skating := true
 var input_enabled := true
+var qp_state := ""                  # "" / setup / ready / commit / roll / bail
+var qp_time := 0.0
+var qp_reverse := false
+var qp_pipe: Node3D = null
+var qp_z := 0.0
+var qp_from := Vector3.ZERO
+var qp_to := Vector3.ZERO
+var qp_from_yaw := 0.0
+var qp_to_yaw := 0.0
+var qp_pending := 0.0               # kick-up running before a set-up (rolling entry)
+var qp_commit_msec := 0
+var qp_exit_speed := 0.0
+var qp_exit_s := 0.0                # seconds from the commit to rolling on the flat
+var qp_runs := 0
+var qp_elapsed := 0.0                # simulated seconds since the commit (commit + roll-out)
+var _cam_arm_len := CAM_SPRING_DEFAULT
 var camera_yaw := 0.0
 var camera_pitch := -0.18
 var grind = null
@@ -28,6 +93,26 @@ var painted_sprite: Node3D
 var use_painted_sprite := true
 var wish_len := 0.0
 var sprite_frame := ""
+# Phase 2 transition state
+var ramp: Node3D = null
+var ramp_mode := ""                 # "" = flat physics, "ride" = on the curve
+var ramp_s := 0.0
+var ramp_v := 0.0
+var ramp_z := 0.0
+var ramp_vz := 0.0
+var pipe_air := false               # airborne after leaving the curve: ballistic, no air steering
+var pipe_air_pipe: Node3D = null
+var pumping := false
+var ramp_lean_up := Vector3.UP      # card up for the sprite (surface normal on the wall, eases back to vertical in the air)
+var ramp_events: Array = []         # [{"t": msec, "what": ..., ...}] for tests and captures
+var ramp_entry_speed := 0.0
+var ramp_peak_y := 0.0              # highest riding-surface point of this visit (pipe local y, m)
+var air_peak_above_lip := 0.0
+var lip_launch_speed := 0.0
+var last_landing := ""              # "transition" / "deck" / "flat" after a pipe air
+var _reentry := false
+var air_from_y := 0.0
+var air_anchor := Vector3.ZERO      # sprite anchor offset held through a pipe air (the contact point at take-off)
 
 func _ready() -> void:
 	collision_layer = 2
@@ -147,6 +232,13 @@ func respawn() -> void:
 	velocity = Vector3.ZERO
 	grind = null
 	grind_lockout = 0.2
+	ramp_mode = ""
+	ramp = null
+	pipe_air = false
+	pipe_air_pipe = null
+	qp_state = ""
+	qp_pending = 0.0
+	_cam_arm_len = CAM_SPRING_DEFAULT
 	global_position = spawn_position
 	rotation.y = spawn_yaw
 	camera_yaw = spawn_yaw
@@ -158,6 +250,8 @@ func begin_grind(rail, along: float) -> void:
 	global_position = rail.point_at(along)
 
 func _physics_process(delta: float) -> void:
+	if qp_state == "commit" or qp_state == "roll":
+		qp_elapsed += delta
 	_simulate(delta)
 	if global_position.y < -8.0:
 		respawn()
@@ -220,6 +314,11 @@ func _simulate(delta: float) -> void:
 	if grind != null:
 		_step_grind(delta)
 		return
+	if _qp_step(delta):
+		return
+	if ramp_mode == "ride":
+		_ramp_step(delta)
+		return
 	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
 	external_jump = false
 	if is_on_floor() and jumping:
@@ -233,7 +332,9 @@ func _simulate(delta: float) -> void:
 	var accel := 22.0 if skating else 40.0
 	var friction := 7.0 if skating else 30.0
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
-	if wish.length() < 0.01:
+	if pipe_air:
+		pass    # Phase 2: off the curve he flies ballistic; no air steering, no turning to the stick
+	elif wish.length() < 0.01:
 		horizontal = horizontal.move_toward(Vector3.ZERO, friction * delta)
 	else:
 		horizontal = horizontal.move_toward(Vector3(wish.x, 0.0, wish.z) * speed, accel * delta)
@@ -241,7 +342,20 @@ func _simulate(delta: float) -> void:
 			rig.face_world(atan2(-wish.x, -wish.z))
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
+	var was_air := pipe_air
 	move_and_slide()
+	if pipe_air:
+		# the board left the wall at air_from_y (body height at take-off): the rise since then is the board's height above
+		# the point it left (the coping, for a lip launch)
+		air_peak_above_lip = maxf(air_peak_above_lip, global_position.y - air_from_y)
+	if pipe_air:
+		ramp_lean_up = ramp_lean_up.slerp(Vector3.UP, clampf(delta * 6.0, 0.0, 1.0)).normalized()
+	else:
+		ramp_lean_up = Vector3.UP
+	if is_on_floor():
+		if was_air:
+			_pipe_air_landed()
+		_try_ramp_entry()
 	_try_grind()
 	update_board()
 
@@ -282,6 +396,68 @@ func _update_camera(delta: float) -> void:
 		$CameraPivot.rotation.y = camera_yaw
 		if has_node("CameraPivot/SpringArm"):
 			$CameraPivot/SpringArm.rotation.x = camera_pitch
+			_update_cam_arm(delta)
+
+## Metres from the camera pivot to the game camera (tests / probes: spring-arm smoothness).
+func camera_distance() -> float:
+	if not has_node("CameraPivot/SpringArm/Camera"):
+		return 0.0
+	return $CameraPivot/SpringArm/Camera.global_position.distance_to($CameraPivot.global_position)
+
+## True while a drop-in or a walk-in on the pipe deck should keep the camera close.
+func _cam_qp_close() -> bool:
+	if qp_state == "setup" or qp_state == "ready" or qp_state == "commit" or qp_state == "bail" or qp_state == "roll":
+		return true
+	return _on_qp_deck()
+
+## Standing on a quarter-pipe deck (walk-in before Shift, or after a bail / back-out).
+func _on_qp_deck() -> bool:
+	if not is_on_floor() or ramp_mode != "" or pipe_air:
+		return false
+	if not is_inside_tree():
+		return false
+	for pipe in get_tree().get_nodes_in_group("quarter_pipe"):
+		if not pipe.has_method("lip_local"):
+			continue
+		var c: Vector3 = pipe.to_local(global_position + Vector3.UP * 0.325)
+		var lip: Vector3 = pipe.lip_local()
+		if absf(c.y - lip.y) > 0.2:
+			continue
+		if c.x < lip.x - 0.05 or c.x > lip.x + pipe.deck_length:
+			continue
+		if absf(c.z) > pipe.half_width():
+			continue
+		return true
+	return false
+
+func _cam_hit_length() -> float:
+	var pivot: Node3D = $CameraPivot
+	var arm: SpringArm3D = $CameraPivot/SpringArm
+	var space := get_world_3d().direct_space_state
+	if space == null:
+		return CAM_SPRING_DEFAULT
+	var from: Vector3 = pivot.global_position
+	var dir: Vector3 = -arm.global_transform.basis.z
+	var query := PhysicsRayQueryParameters3D.create(from, from + dir * CAM_SPRING_DEFAULT, 1)
+	query.exclude = [get_rid()]
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return CAM_SPRING_DEFAULT
+	return maxf(arm.margin, from.distance_to(hit.position) - arm.margin)
+
+func _update_cam_arm(delta: float) -> void:
+	var arm: SpringArm3D = $CameraPivot/SpringArm
+	var target := CAM_SPRING_QP if _cam_qp_close() else CAM_SPRING_DEFAULT
+	var hit := _cam_hit_length()
+	var goal: float = minf(target, hit)
+	if delta <= 0.0:
+		_cam_arm_len = goal
+	else:
+		_cam_arm_len = move_toward(_cam_arm_len, goal, CAM_SPRING_SLEW * delta)
+	# never sit longer than the collision hit (that would put the camera in the deck)
+	if _cam_arm_len > hit:
+		_cam_arm_len = hit
+	arm.spring_length = _cam_arm_len
 
 func _try_grind() -> void:
 	if grind != null or grind_lockout > 0.0 or is_on_floor():
@@ -328,6 +504,10 @@ var trick_next := ""
 var flip_turns := 0.0
 var board_caught := true
 var bail_time := 0.0
+## Phase 1e (LOCAL puppet test): a grab still held at touchdown is a bail (plan: "still grabbing at touchdown: bail").
+## Scripted tests set grab_hold instead of holding the key.
+var grab_hold := false
+var last_bail_reason := ""
 var trick_request := ""
 var visual_demo := ""
 var demo_clock := 0.0
@@ -377,20 +557,20 @@ func _tricks(delta: float) -> void:
 			trick_time = 0.0
 	if trick == "crouch":
 		trick_time += delta
-		if trick_time >= 0.62:
+		if trick_time >= OLLIE_CROUCH_S:
 			_start_air(trick_next if trick_next != "" else "ollie")
 	elif trick == "ollie" or trick == "flip" or trick == "grab":
 		trick_time += delta
 		if trick == "flip" and not board_caught:
-			flip_turns += delta / 1.0
+			flip_turns += delta / FLIP_SPIN_S
 			if flip_turns >= 0.99:
 				board_caught = true
 				flip_turns = 1.0
-		if is_on_floor() and trick_time > 0.42:
+		if is_on_floor() and trick_time > AIR_GUARD_S:
 			_finish_trick()
 	elif trick == "land":
 		trick_time += delta
-		if trick_time > 0.5:
+		if trick_time >= LAND_S:
 			trick = ""
 	_push_trick()
 
@@ -398,20 +578,31 @@ func _start_air(kind: String) -> void:
 	trick = kind
 	trick_next = ""
 	trick_time = 0.0
-	velocity.y = 12.0
+	if ramp_mode == "ride":
+		_ramp_leave(OLLIE_POP_VELOCITY, "pop")
+	else:
+		velocity.y = OLLIE_POP_VELOCITY
 	if kind == "flip":
 		board_caught = false
 		flip_turns = 0.0
 	else:
 		board_caught = true
 
+func _grab_held() -> bool:
+	if grab_hold:
+		return true
+	return not external_move_active and InputMap.has_action("trick_grab") and Input.is_action_pressed("trick_grab")
+
 func _finish_trick() -> void:
-	if trick == "flip" and not board_caught:
+	var grab_bail := trick == "grab" and _grab_held()
+	if (trick == "flip" and not board_caught) or grab_bail:
+		last_bail_reason = "grab_held" if grab_bail else "flip_not_caught"
 		trick = "bail"
 		bail_time = 0.6
 		skating = false
 		velocity.x *= 0.35
 		velocity.z *= 0.35
+		ramp_v *= 0.35
 	else:
 		trick = "land"
 		trick_time = 0.0
@@ -435,4 +626,443 @@ func _pose(delta: float) -> void:
 		return
 	_push_trick()
 	var speed := Vector2(velocity.x, velocity.z).length()
-	rig.drive(delta, speed, skating, not is_on_floor(), grind != null)
+	rig.drive(delta, speed, skating, not on_ground(), grind != null)
+
+# ---------------------------------------------------------------- Phase 2: transition riding (LOCAL puppet test)
+
+## True while the board is on something: flat ground or the curve.
+func on_ground() -> bool:
+	return qp_state != "" or ramp_mode == "ride" or is_on_floor()
+
+## Rolling backwards relative to where he faces (fakie). Facing comes from the stick on the flat only.
+func is_fakie() -> bool:
+	var face := Vector3.FORWARD
+	if rig != null:
+		face = -rig.global_transform.basis.z
+	var v := Vector3(velocity.x, 0.0, velocity.z)
+	return v.length() > 0.3 and v.normalized().dot(Vector3(face.x, 0.0, face.z).normalized()) < -0.2
+
+## World offset from the default sprite anchor (capsule bottom) to the board's contact point on the curve. The capsule
+## stays upright, so on a steep wall its bottom sits off the surface; the card is drawn on the surface instead. Through a
+## pipe air the take-off offset is held so the card does not jump when the board leaves the wall.
+func sprite_anchor_offset() -> Vector3:
+	if qp_state != "" and qp_state != "roll" and qp_pipe != null:
+		return qp_ref_world() - (global_position + Vector3.UP * 0.325)
+	if pipe_air:
+		return air_anchor
+	if ramp_mode != "ride" or ramp == null:
+		return Vector3.ZERO
+	var contact: Vector3 = ramp.to_global(ramp.profile_point(ramp_s, ramp_z))
+	return contact - (global_position + Vector3.UP * 0.325)
+
+## Wall angle under him in degrees (0 on the flat).
+func ramp_angle_deg() -> float:
+	if ramp_mode != "ride" or ramp == null:
+		return 0.0
+	return rad_to_deg(ramp_s / ramp.radius)
+
+func _event(what: String, extra := {}) -> void:
+	var e := {"t": Time.get_ticks_msec(), "what": what, "s": ramp_s, "v": ramp_v}
+	e.merge(extra, true)
+	ramp_events.append(e)
+	if ramp_events.size() > 64:
+		ramp_events.pop_front()
+
+## Sphere centre of the capsule's lower end in pipe space -> arc length, distance off the surface.
+func _pipe_contact(pipe: Node3D) -> Dictionary:
+	var c: Vector3 = pipe.to_local(global_position + Vector3.UP * CAPSULE_LOW)
+	var r: float = pipe.radius
+	var d: Vector2 = Vector2(c.x, r - c.y)
+	var theta: float = atan2(c.x, r - c.y)
+	return {"local": c, "theta": theta, "gap": r - d.length() - CAPSULE_R}
+
+func _try_ramp_entry() -> void:
+	if ramp_mode != "" or not skating or grind != null:
+		return
+	for pipe in get_tree().get_nodes_in_group("quarter_pipe"):
+		if not pipe.has_method("profile_point"):
+			continue
+		var pc: Dictionary = _pipe_contact(pipe)
+		var c: Vector3 = pc.local
+		if absf(c.z) > pipe.half_width() - RAMP_EDGE:
+			continue
+		var theta: float = pc.theta
+		if theta <= deg_to_rad(0.5) or theta >= pipe.climb_rad() - 0.001 or c.x <= 0.0:
+			continue
+		if absf(float(pc.gap)) > 0.12:
+			continue
+		_ramp_enter(pipe, theta * pipe.radius, c.z)
+		return
+
+func _ramp_enter(pipe: Node3D, s: float, z: float) -> void:
+	ramp = pipe
+	ramp_mode = "ride"
+	ramp_s = s
+	ramp_z = z
+	var b: Basis = pipe.global_transform.basis
+	var t_w: Vector3 = (b * pipe.profile_tangent(s)).normalized()
+	ramp_v = velocity.dot(t_w)
+	ramp_vz = velocity.dot(b.z.normalized())
+	if not _reentry:
+		ramp_entry_speed = Vector3(velocity.x, 0.0, velocity.z).length()
+		ramp_peak_y = 0.0
+	_reentry = false
+	pipe_air = false
+	pipe_air_pipe = null
+	_event("enter", {"speed": ramp_entry_speed})
+	_ramp_place()
+
+func _ramp_step(delta: float) -> void:
+	var pipe: Node3D = ramp
+	if pipe == null or not is_instance_valid(pipe):
+		ramp_mode = ""
+		ramp = null
+		return
+	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
+	external_jump = false
+	_tricks(delta)
+	if ramp_mode != "ride":
+		return              # a trick popped him off the wall this tick
+	if jumping and bail_time <= 0.0:
+		_ramp_leave(JUMP_VELOCITY, "jump")
+		return
+	var wish: Vector3 = _wish()
+	wish_len = wish.length()
+	var r: float = pipe.radius
+	var theta: float = ramp_s / r
+	var a: float = -GRAVITY * sin(theta)
+	if absf(ramp_v) > 0.05:
+		a -= signf(ramp_v) * RAMP_ROLL_DECEL
+	pumping = qp_state != "roll" and wish_len > 0.2 and theta < deg_to_rad(PUMP_MAX_DEG) and absf(ramp_v) > PUMP_MIN_SPEED and (trick == "" or trick == "land") and bail_time <= 0.0
+	if pumping:
+		a += signf(ramp_v) * PUMP_ACCEL
+	ramp_v += a * delta
+	var b: Basis = pipe.global_transform.basis
+	var zaxis: Vector3 = b.z.normalized()
+	var lateral: float = wish.dot(zaxis)
+	if absf(lateral) > 0.1 and bail_time <= 0.0:
+		ramp_vz = move_toward(ramp_vz, lateral * RAMP_STEER_MAX, RAMP_STEER_ACCEL * delta)
+	else:
+		ramp_vz = move_toward(ramp_vz, 0.0, RAMP_ROLL_DECEL * delta)
+	ramp_s += ramp_v * delta
+	ramp_z += ramp_vz * delta
+	ramp_peak_y = maxf(ramp_peak_y, pipe.profile_point(ramp_s).y)
+	if ramp_s <= 0.0:
+		# back on the flat: keep the speed (rolling away fakie if he came down backwards)
+		var over: float = ramp_s
+		ramp_s = 0.0
+		_ramp_place()
+		velocity = b * Vector3(ramp_v, 0.0, ramp_vz)
+		global_position += (b * Vector3(1, 0, 0)).normalized() * over
+		_event("exit_flat", {"fakie": is_fakie(), "peak": ramp_peak_y})
+		if qp_state == "roll":
+			_qp_rolled_out()
+		ramp_mode = ""
+		ramp = null
+		pumping = false
+		move_and_slide()
+		return
+	if ramp_s >= pipe.lip_arc():
+		if ramp_v > 0.0:
+			qp_state = ""
+			_lip_launch()
+			return
+		ramp_s = pipe.lip_arc()
+	if absf(ramp_z) > pipe.half_width() - RAMP_EDGE:
+		_event("off_side")
+		qp_state = ""
+		ramp_mode = ""
+		ramp = null
+		pumping = false
+		velocity = b * (pipe.profile_tangent(ramp_s) * ramp_v + Vector3(0, 0, ramp_vz))
+		return
+	_ramp_place()
+	update_board()
+
+## Put the capsule's lower sphere on the curve (tangent to it), set velocity along the wall, and the card lean.
+func _ramp_place() -> void:
+	var pipe: Node3D = ramp
+	var b: Basis = pipe.global_transform.basis
+	var contact: Vector3 = pipe.to_global(pipe.profile_point(ramp_s, ramp_z))
+	var n: Vector3 = (b * pipe.profile_normal(ramp_s)).normalized()
+	global_position = contact + n * CAPSULE_R - Vector3.UP * CAPSULE_LOW
+	velocity = b * (pipe.profile_tangent(ramp_s) * ramp_v + Vector3(0, 0, ramp_vz))
+	# Phase 3: the drop-in roll-out frames are drawn at the wall angle (all 8 views), so the card itself stays upright
+	ramp_lean_up = Vector3.UP if qp_state == "roll" else n
+
+## Off the coping going up: straight up with a small drift back over the transition (plan: vertical launch faked in code).
+func _lip_launch() -> void:
+	var pipe: Node3D = ramp
+	var b: Basis = pipe.global_transform.basis
+	var over: float = ramp_s - pipe.lip_arc()
+	# speed left at the coping (the overshoot this tick climbed against gravity at the lip angle)
+	var v_lip: float = sqrt(maxf(ramp_v * ramp_v - 2.0 * GRAVITY * sin(pipe.climb_rad()) * maxf(over, 0.0), 0.0))
+	ramp_s = pipe.lip_arc()
+	_ramp_place()
+	lip_launch_speed = v_lip
+	air_peak_above_lip = 0.0
+	air_from_y = global_position.y
+	air_anchor = sprite_anchor_offset()
+	velocity = b * Vector3(-LIP_DRIFT, v_lip, ramp_vz)
+	_event("lip_launch", {"speed": v_lip})
+	ramp_mode = ""
+	pipe_air = true
+	pipe_air_pipe = pipe
+	ramp = null
+	pumping = false
+	move_and_slide()
+
+## Leave the wall along its normal (ollie pop or jump), keeping the speed along it.
+func _ramp_leave(pop: float, why: String) -> void:
+	var pipe: Node3D = ramp
+	var b: Basis = pipe.global_transform.basis
+	var n: Vector3 = (b * pipe.profile_normal(ramp_s)).normalized()
+	velocity = b * (pipe.profile_tangent(ramp_s) * ramp_v + Vector3(0, 0, ramp_vz)) + n * pop
+	air_peak_above_lip = 0.0
+	air_from_y = global_position.y
+	air_anchor = sprite_anchor_offset()
+	_event(why)
+	ramp_mode = ""
+	pipe_air = true
+	pipe_air_pipe = pipe
+	ramp = null
+	pumping = false
+	move_and_slide()
+
+func _pipe_air_landed() -> void:
+	pipe_air = false
+	var pipe: Node3D = pipe_air_pipe
+	pipe_air_pipe = null
+	if pipe == null or not is_instance_valid(pipe):
+		last_landing = "flat"
+		return
+	var c: Vector3 = pipe.to_local(global_position + Vector3.UP * 0.325)
+	var lip: Vector3 = pipe.lip_local()
+	if c.x > lip.x - 0.05 and c.x < pipe.deck_end_x() + 0.3 and c.y > lip.y - 0.3:
+		last_landing = "deck"
+		_event("landed_deck")
+		# plan: landing on the deck counts as a bail
+		if trick != "bail":
+			last_bail_reason = "deck_landing"
+			trick = "bail"
+			bail_time = 0.6
+			skating = false
+			velocity.x *= 0.35
+			velocity.z *= 0.35
+	elif c.x > 0.02 and c.y > 0.02:
+		last_landing = "transition"
+		_reentry = true
+		_event("landed_transition", {"x": c.x, "y": c.y})
+	else:
+		last_landing = "flat"
+		_event("landed_flat")
+
+# ---------------------------------------------------------------- Phase 3: quarter-pipe drop-in (LOCAL puppet test)
+
+## Shift (skate_toggle). On the drop-in spot it sets up / backs out instead of the flat kick-up / drop.
+func skate_toggle_pressed() -> void:
+	if qp_state == "setup" or qp_state == "ready":
+		_qp_back_out()
+		return
+	if qp_state != "" or qp_pending > 0.0:
+		return
+	var spot := qp_spot()
+	if not spot.is_empty():
+		if not skating:
+			_qp_begin(spot)
+			return
+		if Vector2(velocity.x, velocity.z).length() < QP_RIDE_MAX:
+			# rolling up to the coping: kick the board up (the kickup clip plays), then set it on the coping
+			skating = false
+			qp_pending = QP_KICKUP_S
+			_event("qp_kickup")
+			update_board()
+			return
+	skating = not skating
+	update_board()
+
+## The drop-in spot under him, or {}: on a quarter pipe's deck within QP_SPOT_MAX of the coping, facing the ramp.
+func qp_spot() -> Dictionary:
+	if grind != null or ramp_mode != "" or pipe_air or bail_time > 0.0 or trick != "" or not is_on_floor():
+		return {}
+	var face := Vector3.FORWARD
+	if rig != null:
+		face = -rig.global_transform.basis.z
+	face.y = 0.0
+	if face.length() < 0.001:
+		return {}
+	face = face.normalized()
+	for pipe in get_tree().get_nodes_in_group("quarter_pipe"):
+		if not pipe.has_method("lip_local"):
+			continue
+		var c: Vector3 = pipe.to_local(global_position + Vector3.UP * 0.325)
+		var lip: Vector3 = pipe.lip_local()
+		var behind: float = c.x - lip.x
+		if absf(c.y - lip.y) > 0.15 or behind < 0.0 or behind > QP_SPOT_MAX:
+			continue
+		if absf(c.z) > pipe.half_width() - 0.45:
+			continue
+		var into: Vector3 = (pipe.global_transform.basis * Vector3(-1, 0, 0))
+		into.y = 0.0
+		into = into.normalized()
+		var off_deg := rad_to_deg(acos(clampf(face.dot(into), -1.0, 1.0)))
+		if off_deg > QP_FACE_MAX_DEG:
+			continue
+		return {"pipe": pipe, "z": c.z, "behind": behind, "off_deg": off_deg, "into": into}
+	return {}
+
+## World point the qp_ frames pin their rig origin on (the lip edge at deck height at his z), carried along while he slides
+## onto his mark at the start of qp_setup so the drawing never jumps.
+func qp_ref_world() -> Vector3:
+	if qp_pipe == null or not is_instance_valid(qp_pipe):
+		return global_position + Vector3.UP * 0.325
+	var lip: Vector3 = qp_pipe.lip_local()
+	var ref: Vector3 = qp_pipe.to_global(Vector3(lip.x, lip.y, qp_z))
+	if qp_state == "setup" or qp_state == "ready":
+		ref += global_position - qp_to
+	return ref
+
+func _qp_stick() -> float:
+	var move := external_move if external_move_active else _hardware_move()
+	return move.y
+
+func _qp_begin(spot: Dictionary) -> void:
+	var pipe: Node3D = spot.pipe
+	qp_pipe = pipe
+	qp_z = float(spot.z)
+	qp_state = "setup"
+	qp_time = 0.0
+	qp_reverse = false
+	skating = false
+	velocity = Vector3.ZERO
+	var lip: Vector3 = pipe.lip_local()
+	qp_from = global_position
+	qp_to = pipe.to_global(Vector3(lip.x + QP_STAND_BACK, lip.y, qp_z)) - Vector3.UP * 0.325
+	qp_from_yaw = rig.global_rotation.y if rig != null else rotation.y
+	var into: Vector3 = spot.into
+	qp_to_yaw = atan2(-into.x, -into.z)
+	_event("qp_setup", {"behind": spot.behind, "off_deg": spot.off_deg})
+
+func _qp_back_out() -> void:
+	qp_state = "setup"
+	qp_reverse = true
+	qp_time = minf(qp_time, QP_SETUP_S)
+	_event("qp_back_out")
+
+func _qp_face(yaw: float) -> void:
+	if rig != null and rig.has_method("face_world"):
+		rig.face_world(yaw)
+
+## Runs the drop-in states. Returns true when it owned this tick (no flat movement, no tricks).
+func _qp_step(delta: float) -> bool:
+	if qp_pending > 0.0:
+		qp_pending = maxf(0.0, qp_pending - delta)
+		if qp_pending <= 0.0 and qp_state == "":
+			var spot := qp_spot()
+			if not spot.is_empty():
+				_qp_begin(spot)
+		if qp_state == "":
+			return false
+	if qp_state == "" or qp_state == "roll":
+		return false
+	external_jump = false
+	trick_request = ""
+	wish_len = 0.0
+	var stick := _qp_stick()
+	if qp_state == "setup":
+		qp_time += -delta if qp_reverse else delta
+		var u := smoothstep(0.0, 1.0, clampf(qp_time / QP_APPROACH_S, 0.0, 1.0))
+		global_position = qp_from.lerp(qp_to, u)
+		_qp_face(lerp_angle(qp_from_yaw, qp_to_yaw, u))
+		velocity = Vector3.ZERO
+		if qp_reverse:
+			if qp_time <= 0.0:
+				qp_time = 0.0
+				qp_state = ""
+				qp_reverse = false
+				_event("qp_backed_out")
+		else:
+			if stick < -0.5:
+				_qp_back_out()
+			elif qp_time >= QP_SETUP_S:
+				qp_time = QP_SETUP_S
+				qp_state = "ready"
+				_event("qp_ready")
+		return true
+	if qp_state == "ready":
+		velocity = Vector3.ZERO
+		if stick > 0.5:
+			qp_state = "commit"
+			qp_time = 0.0
+			qp_commit_msec = Time.get_ticks_msec()
+			qp_elapsed = 0.0
+			qp_from = global_position
+			var pipe: Node3D = qp_pipe
+			var s0: float = pipe.lip_arc() - QP_ROLL_START_M
+			var n: Vector3 = (pipe.global_transform.basis * pipe.profile_normal(s0)).normalized()
+			qp_to = pipe.to_global(pipe.profile_point(s0, qp_z)) + n * CAPSULE_R - Vector3.UP * CAPSULE_LOW
+			_event("qp_commit")
+		elif stick < -0.5:
+			_qp_back_out()
+		return true
+	if qp_state == "commit":
+		qp_time += delta
+		if qp_time <= QP_HESITATE_S and stick < 0.3:
+			_qp_bail("qp_hesitate" if stick > -0.5 else "qp_lean_back")
+			return true
+		# the body (and the game camera) glide toward the roll-out start; the drawing stays pinned on the coping
+		global_position = qp_from.lerp(qp_to, smoothstep(0.0, 1.0, clampf(qp_time / QP_COMMIT_S, 0.0, 1.0)))
+		velocity = Vector3.ZERO
+		if qp_time >= QP_COMMIT_S:
+			_qp_roll_start()
+		return true
+	if qp_state == "bail":
+		qp_time += delta
+		velocity = Vector3.ZERO
+		# he falls back onto his mark behind the coping (the drawing stays pinned on the coping)
+		global_position = qp_from.lerp(qp_to, smoothstep(0.0, 1.0, clampf(qp_time / 0.2, 0.0, 1.0)))
+		if qp_time >= QP_BAIL_S:
+			qp_state = ""
+			skating = false
+			board_caught = true
+			_event("qp_bail_done")
+		return true
+	return false
+
+func _qp_bail(reason: String) -> void:
+	last_bail_reason = reason
+	qp_state = "bail"
+	qp_time = 0.0
+	qp_from = global_position
+	qp_to = qp_to_stand()
+	_event("qp_bail", {"reason": reason})
+
+## The mark he stands on behind the coping (bail falls back onto it).
+func qp_to_stand() -> Vector3:
+	var lip: Vector3 = qp_pipe.lip_local()
+	return qp_pipe.to_global(Vector3(lip.x + QP_STAND_BACK, lip.y, qp_z)) - Vector3.UP * 0.325
+
+func _qp_roll_start() -> void:
+	var pipe: Node3D = qp_pipe
+	ramp = pipe
+	ramp_mode = "ride"
+	ramp_s = pipe.lip_arc() - QP_ROLL_START_M
+	ramp_z = qp_z
+	ramp_v = -QP_ROLL_V0
+	ramp_vz = 0.0
+	ramp_entry_speed = 0.0
+	ramp_peak_y = pipe.profile_point(ramp_s).y
+	pipe_air = false
+	pipe_air_pipe = null
+	skating = true
+	trick = ""
+	qp_state = "roll"
+	_event("qp_roll", {"t": qp_time})
+	_ramp_place()
+
+func _qp_rolled_out() -> void:
+	qp_state = ""
+	qp_exit_speed = Vector2(velocity.x, velocity.z).length()
+	qp_exit_s = qp_elapsed
+	qp_runs += 1
+	_event("qp_rolled_out", {"speed": qp_exit_speed, "fakie": is_fakie()})
