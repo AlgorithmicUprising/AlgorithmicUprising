@@ -2,6 +2,7 @@ extends RefCounted
 
 const Blocks = preload("res://scripts/world_blocks.gd")
 const Palette = preload("res://scripts/palette.gd")
+const ArcadeExterior = preload("res://scripts/arcade_exterior.gd")
 
 # Wall centers sit on a 160 m square. The proposed map was 200 m and is not final.
 # 160 m keeps the labeled 2 m pipe and 3 m bowl readable at a 9 m/s skate speed.
@@ -12,6 +13,9 @@ const GATE_X0 := 46.0
 const GATE_X1 := 58.0
 
 static func zone_at(point: Vector3) -> String:
+	# Arcade Phase 1 (LOCAL): the separate interior scene sits far off-map (arcade_door.gd INTERIOR_ORIGIN).
+	if point.x < -300.0 and point.z < -300.0:
+		return "ARCADE"
 	if point.z > HALF + 0.2:
 		return "RUST AVENUE"
 	if abs(point.x) > HALF + 2.0 or point.z < -HALF - 2.0:
@@ -132,18 +136,12 @@ static func _rooms(parent: Node) -> void:
 	parent.add_child(zero)
 
 static func _warehouse(parent: Node) -> void:
+	# Arcade Phase 1 (LOCAL): the greybox shell keeps its collision; arcade_exterior.gd draws the building.
 	_shell(parent, "WarehouseArcade", 8.0, 70.0, -44.0, -8.0, 9.0, Palette.WAREHOUSE, 28.0, 36.0)
+	_hide_meshes(parent.get_node("WarehouseArcade"))
 	Blocks.visual(parent, "ArcadeFloor", Vector3(39, 0.04, -26), Vector3(58, 0.05, 32), Color("2f6d66"))
-	Blocks.solid(parent, "WarehouseBand", Vector3(39, 6.2, -8.4), Vector3(62, 1.4, 0.4), Palette.WAREHOUSE_RUST)
-	Blocks.solid(parent, "RoofDeck", Vector3(42, 9.15, -28), Vector3(70, 0.3, 36), Palette.SOLAR)
-	var solar := Node3D.new()
-	solar.name = "SolarRoof"
-	parent.add_child(solar)
-	for row in 4:
-		for col in 7:
-			var cell := Blocks.visual(solar, "Cell%d_%d" % [row, col], Vector3(18.0 + float(col) * 7.0, 9.55, -40.0 + float(row) * 6.5), Vector3(5.2, 0.12, 3.6), Palette.SOLAR_CELL)
-			cell.rotation.x = -0.22
-	Blocks.visual(parent, "RoofCoping", Vector3(39, 9.45, -7.6), Vector3(62, 0.22, 0.35), Color("241c18"))
+	_hide_meshes(Blocks.solid(parent, "WarehouseBand", Vector3(39, 6.2, -8.4), Vector3(62, 1.4, 0.4), Palette.WAREHOUSE_RUST))
+	_hide_meshes(Blocks.solid(parent, "RoofDeck", Vector3(42, 9.15, -28), Vector3(70, 0.3, 36), Palette.SOLAR))
 	Blocks.add_slope(parent, "RoofStair", Vector3(74, 0.08, -6), Vector3(74, 9.1, -34), 4.0, Palette.RAMP)
 	Blocks.solid(parent, "RoofRail", Vector3(76.2, 1.2, -20), Vector3(0.2, 0.9, 22), Palette.RAIL)
 	var cabinet = load("res://scenes/cabinet.tscn").instantiate()
@@ -152,9 +150,12 @@ static func _warehouse(parent: Node) -> void:
 	parent.add_child(cabinet)
 	for i in 4:
 		Blocks.solid(parent, "DecoyCabinet%d" % i, Vector3(20.0 + float(i) * 5.5, 0.7, -34), Vector3(1.3, 1.4, 0.7), Color("241c22"))
-	var arcade_sign := Blocks.label(parent, "ARCADE", Vector3(39, 8.4, -6.2), Palette.LABEL, 72)
-	arcade_sign.pixel_size = 0.03
-	_temp_tag(parent, Vector3(18, 3.2, -7.6), 4.5, 2.4)
+	# Replaces the old billboard "ARCADE" label, TEMP TAG, solar cells, coping, marquee bar and eave lamps.
+	ArcadeExterior.build(parent)
+
+static func _hide_meshes(node: Node) -> void:
+	for c in node.find_children("*", "MeshInstance3D", true, false):
+		(c as MeshInstance3D).visible = false
 
 static func _docks(parent: Node) -> void:
 	for i in 3:
@@ -248,15 +249,11 @@ static func _shell(parent: Node, node_name: String, x0: float, x1: float, z0: fl
 
 static func _marks(parent: Node) -> void:
 	# Original flat marks. Not copies of the reference painting, and not collision.
-	_mark(parent, "ArcadeMark", Vector3(16.5, 3.6, -7.52), Vector3(8.0, 3.0, 0.05))
 	_mark(parent, "ShopMark", Vector3(-63.0, 2.9, -51.58), Vector3(7.0, 2.4, 0.05))
-	Blocks.visual(parent, "ArcadeMarquee", Vector3(39, 7.55, -7.48), Vector3(9.0, 0.7, 0.16), Palette.ARCADE_SIGN)
 	Blocks.visual(parent, "PosterA", Vector3(22.5, 2.4, -16.2), Vector3(0.06, 1.3, 0.9), Color("f0c14a"))
 	Blocks.visual(parent, "PosterB", Vector3(22.62, 2.4, -16.2), Vector3(0.04, 0.7, 0.45), Color("e23e8c"))
 	Blocks.visual(parent, "CabinetFace", Vector3(32.0, 1.55, -17.35), Vector3(0.9, 0.55, 0.04), Color("16343a"))
 	Blocks.visual(parent, "CabinetFaceBar", Vector3(32.0, 1.55, -17.3), Vector3(0.55, 0.12, 0.03), Color("b6ff3b"))
-	for i in 6:
-		Blocks.visual(parent, "EaveLamp%d" % i, Vector3(18.0 + float(i) * 7.0, 5.4, -7.7), Vector3(0.8, 0.12, 0.35), Color("ffe0b8"))
 	Blocks.visual(parent, "YardCrackA", Vector3(10, 0.02, 24), Vector3(6.5, 0.012, 0.05), Color("8a6858"))
 	Blocks.visual(parent, "YardCrackB", Vector3(-8, 0.02, 14), Vector3(0.05, 0.012, 4.5), Color("8a6858"))
 

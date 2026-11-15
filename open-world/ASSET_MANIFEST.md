@@ -12,14 +12,15 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Skate yard | The west quarter is `assets/library/quarter_pipe/quarter_pipe.tscn`: a 2.4 m textured concrete shell, deck, metal coping, and two graffiti panels. Half-pipes, funbox, lanes, and the 12 m rail are still the simpler ramps |
 | Workshop | Open industrial shell, bench, five green battery blocks, eight container ribs on the south face |
 | Resistance rooms | Private shell, bunks, counter. Zero stands here |
-| Solar warehouse arcade | Teal shell, rust band, tilted blue roof cells, roof coping, door, one real cabinet, four mute cabinet boxes |
+| Solar warehouse arcade | **Arcade Phase 1 exterior (local branch `arcade-exterior-p1`)**: `scripts/arcade_exterior.gd` on a 1 m grid with 4 m bays. Ribbed teal sheet (procedural ribs with a distance fade), rust belly band, lit clerestory glazing, steel pilasters, coping/parapet, gutter and downpipes, a flat roof with a 4 × 7 slab solar array, tank, vent and AC units, our own staff door and lit windows, an entry deck with stairs, rails and skate wedges, three planters with Kenney bushes, weeds, and a Kenney container. One toon shader (`shaders/toon_world.gdshader`), one 512² trim sheet and one 2048×1024 art atlas (`assets/arcade/`) serve outside and inside. The greybox shell keeps its collision; its meshes are hidden. Inside the old shell: one real cabinet, four mute cabinet boxes (unchanged) |
+| Arcade front shutter | `scripts/arcade_door.gd`: closed roll-up shutter (solid). Interact (E / pad X) rolls it up, fades to black and moves the player into `scenes/arcade_interior.tscn`, a separate placeholder interior shell; its exit fades back out and the shutter rolls down. Never opens on approach |
 | Docks | 1.2 m decks and a ride-up slope |
 | Plaza | Benches, cart, awning, stair wedge, seven step boxes, handrail |
 | Gate yard | Lookout block, posts, a flat net quad, container stack |
 | Outside, not playable | Cool tower blocks, west factory blocks, north rail beam |
 | Plants | Five box planters with box shrubs |
 | Lighting | Procedural sunset sky, warmer key, cooler ambient, three-band shader with a sharper edge darkening, one shadow map. Still not inked illustration |
-| Park marks | Flat original panels on the warehouse front and workshop face, an arcade marquee, two poster quads, a cabinet face bar, eave lamps, and two crack lines. No collision. Not the reference painting |
+| Park marks | Flat original panel on the workshop face, two poster quads, a cabinet face bar, and two crack lines. No collision. Not the reference painting. (The arcade front mark, marquee bar, eave lamps, billboard ARCADE label and TEMP TAG moved into the Phase 1 exterior) |
 | Fony, the player | Painted sprite billboard. Idle, walk, cruise, tricks, grinds, and bails use the v3 clips. The six push cycles are the v5 strokes. The pivot mesh can be shown from the pause menu. Collision is still a separate capsule |
 | Zero | Articulated pivots, not a skin rig. Larger cream CRT, lime screen bars, knob, vent, capsule jacket and limbs, red “?” patch, barcode blocks, metal neck, hands, and knees, coiled cable segments. Idle bob and a raised arm while talking |
 
@@ -53,4 +54,6 @@ Still missing on the characters:
 
 ## Explicitly not in the repo
 
-No music, no samples, no generated paintings, no paid stock, and no franchise logos. The sunset reference painting was used as direction and is not a game texture.
+No music, no samples, no paid stock, and no franchise logos. The sunset reference painting was used as direction and is not a game texture.
+
+**Exception pending review (Arcade Phase 1, local only):** `assets/arcade/arcade_art.png` packs three AI-generated mural *candidates* (sources in `art-src/arcade/murals/`) plus Algorithmic Uprising covers and the AU / PUNK ARCADE marquee. These are for the band's review and are not final. If the murals are rejected or replaced with hand-made art, rebuild the atlas with `tools/make_arcade_textures.py`. Third-party pieces are CC0 only (Kenney, Poly Haven); see `assets/thirdparty/kenney/README.md`.

@@ -905,6 +905,77 @@ func _district() -> void:
 	main.flow.set_paused(false)
 	await frames(20)
 	expect(not main.get_tree().paused and player.global_position.z < z_before - 0.15, "resume lets the player skate")
+	await _arcade_door(main)
+
+## Arcade Phase 1 (LOCAL): the front shutter is closed by default and never opens on approach. Interact (E) at the
+## shutter rolls it up, fades to black and moves the player into the separate interior scene; the inside exit fades
+## back out to the deck and the shutter rolls down again.
+func _arcade_door(main) -> void:
+	var player = main.player
+	player.external_move = Vector2.ZERO
+	player.external_move_active = false
+	player.skating = false
+	var door = main.world_sim.get_node_or_null("ArcadeDoor")
+	expect(door != null and main.world_sim.get_node_or_null("ArcadeExterior") != null, "arcade has its exterior and front shutter")
+	if door == null:
+		return
+	expect(door.state == "closed" and is_zero_approx(door.roll), "arcade shutter starts closed")
+	# walk straight into the closed shutter: it blocks and does not open
+	player.global_position = Vector3(32.0, 1.0, -4.5)
+	player.velocity = Vector3.ZERO
+	await frames(6)
+	player.external_move_active = true
+	var min_z := 99.0
+	for _i in 120:
+		var axes: Array = player._camera_flat_axes()
+		player.external_move = Vector2(Vector3(0, 0, -0.8).dot(axes[1]), Vector3(0, 0, -0.8).dot(axes[0]))
+		await get_tree().physics_frame
+		min_z = minf(min_z, player.global_position.z)
+	player.external_move = Vector2.ZERO
+	player.external_move_active = false
+	expect(min_z > -7.9 and door.state == "closed" and is_zero_approx(door.roll), "walking into the shutter neither opens it nor passes through (min z %.2f)" % min_z)
+	player.global_position = Vector3(32.0, 0.95, -6.0)
+	player.velocity = Vector3.ZERO
+	await frames(4)
+	var trig = main._nearest(2.5)
+	expect(trig != null and trig.get("kind") == "enter" and trig.prompt() == "Open the Arcade", "shutter interact prompt is in range")
+	var press := InputEventAction.new()
+	press.action = "interact"
+	press.pressed = true
+	Input.parse_input_event(press)
+	await frames(3)
+	var release := InputEventAction.new()
+	release.action = "interact"
+	release.pressed = false
+	Input.parse_input_event(release)
+	expect(door.state == "opening" and not player.input_enabled, "E at the shutter starts the roll-up and takes input")
+	expect(door.enter(main.flow) == false, "a second interact while opening is ignored")
+	var peak := 0.0
+	var faded := false
+	for _i in 400:
+		await get_tree().physics_frame
+		peak = maxf(peak, door.roll)
+		faded = faded or door.fade.color.a > 0.95
+		if door.state == "inside":
+			break
+	expect(peak > 0.99 and faded, "shutter rolls fully up, then the screen fades to black (peak %.2f)" % peak)
+	expect(door.state == "inside" and player.input_enabled and door.fade.color.a < 0.01, "fade back in hands input to the player inside")
+	var inside: Node3D = door.interior
+	expect(inside != null and inside.visible and inside.scene_file_path == "res://scenes/arcade_interior.tscn", "player is in the separate interior scene")
+	expect(main.zone_at(player.global_position) == "ARCADE" and player.global_position.distance_to(inside.to_global(inside.spawn_local)) < 1.0, "interior spawn reads as the ARCADE zone")
+	await frames(20)
+	expect(player.is_on_floor(), "player stands on the interior floor")
+	var exit_t = main._nearest(2.5)
+	expect(exit_t != null and exit_t.get("kind") == "leave" and exit_t.prompt() == "Leave the Arcade", "interior exit prompt is in range")
+	exit_t.interact(main.flow)
+	expect(door.state == "leaving" and not player.input_enabled, "exit starts the fade out")
+	for _i in 400:
+		await get_tree().physics_frame
+		if door.state == "closed":
+			break
+	expect(door.state == "closed" and is_zero_approx(door.roll), "shutter rolls back down behind the player")
+	expect(player.input_enabled and player.global_position.z > -7.7 and absf(player.global_position.x - 32.0) < 1.5 and main.zone_at(player.global_position) != "OUTSIDE", "player is back on the deck outside")
+	expect(not inside.visible and door.entries == 1 and door.exits == 1, "interior hides again; one entry and one exit")
 
 func _ride_ctx(facing_yaw: float) -> Dictionary:
 	return {
