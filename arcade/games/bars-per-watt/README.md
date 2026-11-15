@@ -1,8 +1,10 @@
-# Bars per Watt · The Human Zoo
+# Bars per Watt · Power Rack
 
 Game 04 is a four-lane rhythm cartridge for the shared Punk Arcade engine. Its first catalog entry is Algorithmic Uprising's **The Human Zoo** (`AU-001`, explicit). The master in Drive's `Zero - Audio Masters` is 48 kHz stereo PCM, about 5:18.8, SHA-256 `54dcf056e2e5073b12a7fb38809a99ecba5c77ca72bd3111860e81ab806ee18c`. It remains outside this repository.
 
-This branch is a timing and integration vertical slice. The committed catalog contains metadata only, so the public title screen deliberately cannot start a run yet. With the author's permission, Easy/Medium/Hard draft steps were created for a private timing and aesthetic playtest. The second chart pass uses offline beat and harmonic-attack analysis, phrase patterns, sustained-sound candidates and two-thumb lane checks. These are assisted drafts that still need musical playtesting, not verified vocal transcriptions. Charts and media remain outside this public repository. A private 160 kb/s AAC playback encode was measured at 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`; it is used only in the owner-only preview.
+The owner-only Power Rack playtest has ten songs with Easy, Medium and Hard draft charts, sleeves, silent desktop loops and downloadable StepMania files. The charts use offline beat and attack analysis, phrase patterns, sustained-sound candidates and two-thumb lane checks. They still need musical playtesting. The public catalog lists the same ten tracks with release clearance pending and holds playback until reviewed charts and a cleared playback copy are available. The protected playtest supplies the media and draft charts.
+
+The private Human Zoo AAC playback encode is 160 kb/s, 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`.
 
 ## Run and embed
 

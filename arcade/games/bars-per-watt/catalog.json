@@ -14,6 +14,62 @@
       "durationSec": 177.2,
       "explicit": false,
       "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-002",
+      "title": "The Alignment Problem",
+      "durationSec": 292.76,
+      "explicit": false,
+      "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-013",
+      "title": "Tyrannosaurus Debt",
+      "durationSec": 332,
+      "explicit": false,
+      "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-024",
+      "title": "I'm The Robot",
+      "durationSec": 174.8,
+      "explicit": true,
+      "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-025",
+      "title": "Law of the Land",
+      "durationSec": 316.8,
+      "explicit": true,
+      "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-050",
+      "title": "Terms and Conditions",
+      "durationSec": 239.16,
+      "explicit": true,
+      "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-051",
+      "title": "Same Machine",
+      "durationSec": 218.373,
+      "explicit": false,
+      "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-053",
+      "title": "Best Case Is a Cage",
+      "durationSec": 186.36,
+      "explicit": false,
+      "rightsStatus": "pending"
+    },
+    {
+      "id": "AU-054",
+      "title": "Deadpan Flow",
+      "durationSec": 206.76,
+      "explicit": false,
+      "rightsStatus": "pending"
     }
   ]
 }

@@ -24,6 +24,10 @@ var _mouse_pending := Vector2.ZERO
 var spawn_position := Vector3.ZERO
 var spawn_yaw := 0.0
 var rig: Node3D
+var painted_sprite: Node3D
+var use_painted_sprite := true
+var wish_len := 0.0
+var sprite_frame := ""
 
 func _ready() -> void:
 	collision_layer = 2
@@ -45,6 +49,10 @@ func _style_body() -> void:
 		$Board.visible = false
 	rig = load("res://scripts/fony_rig.gd").new()
 	add_child(rig)
+	painted_sprite = load("res://scripts/fony_sprite.gd").new()
+	painted_sprite.name = "FonySprite"
+	add_child(painted_sprite)
+	_apply_painted_sprite()
 	var label := Label3D.new()
 	label.name = "NameLabel"
 	label.text = "FONY"
@@ -58,6 +66,16 @@ func _style_body() -> void:
 
 func update_board() -> void:
 	pass
+
+func set_painted_sprite(enabled: bool) -> void:
+	use_painted_sprite = enabled
+	_apply_painted_sprite()
+
+func _apply_painted_sprite() -> void:
+	if rig != null:
+		rig.visible = not use_painted_sprite
+	if painted_sprite != null:
+		painted_sprite.visible = use_painted_sprite
 
 func push_mouse_look(relative: Vector2) -> void:
 	if not look_captured or not input_enabled or external_move_active:
@@ -210,6 +228,7 @@ func _simulate(delta: float) -> void:
 		_fall(delta)
 	_tricks(delta)
 	var wish := _wish()
+	wish_len = wish.length()
 	var speed := SKATE_SPEED if skating else WALK_SPEED
 	var accel := 22.0 if skating else 40.0
 	var friction := 7.0 if skating else 30.0

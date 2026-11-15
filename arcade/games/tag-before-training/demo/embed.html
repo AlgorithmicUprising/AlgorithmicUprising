@@ -1,1 +1,7 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Tag Before Training</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#15111d}tag-before-training{width:100%;height:100%!important;min-height:0!important;aspect-ratio:auto!important}</style></head><body><tag-before-training skin="../skins/au/skin.json" layout="portrait"></tag-before-training><script type="module" src="../dist/tag-before-training.js?v=0.4.1"></script><script>for(const type of ['game:ready','game:start','game:pause','game:resume','game:over','game:share'])document.addEventListener(type,e=>parent.postMessage({type,detail:e.detail},'*'))</script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Tag Before Training</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#15111d}tag-before-training{width:100%;height:100%!important;min-height:0!important;aspect-ratio:auto!important}</style></head><body><tag-before-training skin="../skins/au/skin.json" layout="portrait"></tag-before-training>
+<script type="module">
+import { connectArcadeEmbed } from '../../../demo/embed-bridge.js';
+connectArcadeEmbed(document.querySelector('tag-before-training'), ['ready', 'start', 'pause', 'resume', 'over', 'share']);
+</script>
+<script type="module" src="../dist/tag-before-training.js?v=20261113-scores"></script>
+</body></html>

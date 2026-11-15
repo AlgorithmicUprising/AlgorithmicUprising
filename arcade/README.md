@@ -31,7 +31,7 @@ All four components emit bubbling `game:ready`, `game:start`, `game:pause`, `gam
 
 [Cookie Wall](games/cookie-wall/README.md) uses one square court in both layouts. Move with arrows or A/D and launch with Space/U. On a phone, drag below the court and tap Launch.
 
-[Bars per Watt](games/bars-per-watt/README.md) uses The Human Zoo as its first catalog song. The four-lane cartridge and responsive shell are in place; the metadata-only catalog holds play until human-authored charts and the separately hosted playback copy are supplied.
+[Bars per Watt](games/bars-per-watt/README.md) is a four-lane rhythm cartridge with ten catalog entries. The owner-only Power Rack playtest supplies the song audio, draft charts, sleeves and silent video loops. Public playback opens after the charts and playback copies clear review.
 
 ## License
 
