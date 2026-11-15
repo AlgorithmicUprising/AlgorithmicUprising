@@ -15,7 +15,8 @@ const arcadeHosts = new Set([
 export function connectArcadeEmbed(game, events, parentOrigin = httpOrigin(document.referrer)) {
   if (parent === window || !parentOrigin) return;
   const types = [...events];
-  if (arcadeHosts.has(parentOrigin) && new URLSearchParams(location.search).get('score-save') === '1') {
+  const scoreSaveRequested = new URLSearchParams(location.search).get('score-save') === '1';
+  if (scoreSaveRequested && !game.hasAttribute('practice') && arcadeHosts.has(parentOrigin)) {
     game.setAttribute('save-score', '');
     types.push('save-score');
   }

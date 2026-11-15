@@ -94,13 +94,15 @@ test('portrait phone cabinet is contained and does not cover artwork buttons',as
  expect(host.y+host.height).toBeGreaterThanOrEqual(panel.y+panel.height-2);
  expect(picker.y).toBeGreaterThanOrEqual(host.y+host.height-2);
  const controls=await game.locator('.deck button').evaluateAll(nodes=>nodes.map(n=>({key:n.dataset.key,w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,x:n.getBoundingClientRect().x})));
- expect(controls).toHaveLength(3);
- for(const b of controls)expect(b.h).toBeGreaterThanOrEqual(44);
+ expect(controls).toHaveLength(5);
+ for(const b of controls){expect(b.w).toBeGreaterThanOrEqual(44);expect(b.h).toBeGreaterThanOrEqual(44)}
+ expect(controls.find(b=>b.key==='left').x).toBeLessThan(controls.find(b=>b.key==='right').x);
+ expect(controls.find(b=>b.key==='right').x).toBeLessThan(controls.find(b=>b.key==='trick').x);
  expect(controls.find(b=>b.key==='boost').w).toBeGreaterThan(controls.find(b=>b.key==='trick').w);
  expect(controls.find(b=>b.key==='boost').x).toBeLessThan(controls.find(b=>b.key==='trick').x);
 });
 
-test('320px phone width keeps the Ø A U controls usable',async({page},info)=>{
+test('320px phone width keeps steering, Ø, A and U usable',async({page},info)=>{
  test.skip(!info.project.name.startsWith('mobile'),'Phone portrait only');
  await page.setViewportSize({width:320,height:740});
  await page.goto(standalone);
@@ -110,25 +112,31 @@ test('320px phone width keeps the Ø A U controls usable',async({page},info)=>{
  expect(host).not.toBeNull();expect(deck).not.toBeNull();
  expect(host.width).toBeLessThanOrEqual(320);
  expect(host.y+host.height).toBeGreaterThanOrEqual(deck.y+deck.height-2);
- for(const key of ['boost','trick','jump']){
+ for(const key of ['left','right','boost','trick','jump']){
   const button=game.locator('button[data-key='+key+']'),box=await button.boundingBox();
   expect(box).not.toBeNull();
   expect(box.width).toBeGreaterThanOrEqual(44);
+  expect(box.y).toBeGreaterThanOrEqual(deck.y);
+  expect(box.y+box.height).toBeLessThanOrEqual(deck.y+deck.height);
   expect(box.x+box.width).toBeLessThanOrEqual(320);
  }
 });
 
-test('mobile A performs an aerial trick and Ø boosts while held',async({page},info)=>{
+test('tablet steering can stay held through an ollie, a trick and spray boost',async({page},info)=>{
  test.skip(!info.project.name.startsWith('mobile'),'Mobile cabinet only');
  await page.goto(standalone);
  const game=page.locator('grind-the-terms');
  await game.evaluate(el=>el.setAttribute('data-qa-rocket-charge',''));
  await game.locator('button[part=start]').click();
  const a=game.locator('button[data-key=trick]'),u=game.locator('button[data-key=jump]'),zero=game.locator('button[data-key=boost]');
+ const right=game.getByRole('button',{name:'Steer right'}),left=game.getByRole('button',{name:'Steer left'});
+ const initial=await game.evaluate(el=>el.game.result().stats.playerX);
+ await right.dispatchEvent('pointerdown',{pointerId:1,pointerType:'touch',button:0});
  await u.dispatchEvent('pointerdown',{pointerId:2});
  await game.evaluate(el=>el.game.update(.05));
  await u.dispatchEvent('pointerup',{pointerId:2});
  const before=await game.evaluate(el=>el.game.result().stats);
+ expect(before.playerX).toBeGreaterThan(initial);
  expect(before.boardY).toBeLessThan(310);
  await a.click();
  const trick=await game.evaluate(el=>el.game.result().stats);
@@ -144,9 +152,14 @@ test('mobile A performs an aerial trick and Ø boosts while held',async({page},i
  expect(boosted.speedMultiplier).toBe(2);
  expect(boosted.sprayGauge).toBeLessThan(charge);
  await zero.dispatchEvent('pointerup',{pointerId:3});
+ await right.dispatchEvent('pointercancel',{pointerId:1,pointerType:'touch'});
  const released=await game.evaluate(el=>el.game.result().stats);
  expect(released.boostActive).toBe(false);
  expect(released.speedMultiplier).toBe(1);
+ await game.evaluate(el=>el.game.update(.05));
+ expect(await game.evaluate(el=>el.game.result().stats.playerX)).toBe(released.playerX);
+ await left.tap();
+ await expect.poll(()=>game.evaluate(el=>el.game.result().stats.playerX)).toBeLessThan(released.playerX);
 });
 
 test('iPhone long U hold cannot select text or open a context menu',async({page},info)=>{
