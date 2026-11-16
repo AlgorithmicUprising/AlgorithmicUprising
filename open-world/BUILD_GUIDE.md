@@ -194,6 +194,8 @@ There is no mobile or touch control path.
 
 The cabinet is a placeholder. Finish or Leave returns world input, unpauses `WorldSim`, and gives the audio owner back to the world. The result field `integration` is `placeholder_not_canvas`. This is not the Punk Arcade Canvas runtime and not Bars per Watt.
 
+Arcade interior (Phase 2, local): the placeholder cabinet now stands inside the Arcade by the token counter, with the same hooks. The other playable cabinets in the room open the existing Punk Arcade pages (`games/<id>/demo/embed.html`, and the lab page `demo/` on the featured ZERO GAME THING PRO 2K) on the same Pages origin, in an HTML `<iframe>` overlay over the canvas with a "Back to the Arcade" button (`scripts/arcade_overlay.gd`). The HQ holds player input while the overlay is up. Esc inside a game stays the game's own key. On desktop the cabinet opens the live Pages URL in the browser instead; headless runs only record the request. No arcade game code is changed.
+
 ## 7. Browser, desktop, and mobile
 
 Open:
@@ -256,7 +258,7 @@ A future adapter can translate a real cartridge result into `au.minigame_result`
 | Straight grind, only if it stayed stable | Met for one straight rail. No tricks |
 | Renderer-independent session, catalog, result, and save | Met as data contracts |
 | One audio owner, catalog disabled until cleared media exists | Met |
-| No music files, no paid or generated art, no final avatar | Met |
+| No music files, no paid stock, no final avatar. (This first pass also had no generated art; that described the prototype, not a rule. Generated mural/poster art is now allowed with the band's approval and listed in `ASSET_MANIFEST.md`. No generated or AI-processed music or audio, ever.) | Met |
 | Browser export actually loaded | Met locally, single-threaded, Chrome |
 | Live Pages URL that keeps the arcade and adds `/open-world/` | Already true on `main` for the first greybox. This visual branch must not be merged until the yard pictures are approved, because a merge publishes it. Section 11 |
 | Full city, missions, networking, real Bars per Watt | Out of scope |

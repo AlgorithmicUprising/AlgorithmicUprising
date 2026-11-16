@@ -939,6 +939,8 @@ func _arcade_door(main) -> void:
 	await frames(4)
 	var trig = main._nearest(2.5)
 	expect(trig != null and trig.get("kind") == "enter" and trig.prompt() == "Open the Arcade", "shutter interact prompt is in range")
+	# arrive on the board: Fony steps off while the shutter rolls, not after the fade
+	player.skating = true
 	var press := InputEventAction.new()
 	press.action = "interact"
 	press.pressed = true
@@ -949,6 +951,7 @@ func _arcade_door(main) -> void:
 	release.pressed = false
 	Input.parse_input_event(release)
 	expect(door.state == "opening" and not player.input_enabled, "E at the shutter starts the roll-up and takes input")
+	expect(not player.skating, "the board comes off at the shutter, during the roll-up")
 	expect(door.enter(main.flow) == false, "a second interact while opening is ignored")
 	var peak := 0.0
 	var faded := false
@@ -963,8 +966,10 @@ func _arcade_door(main) -> void:
 	var inside: Node3D = door.interior
 	expect(inside != null and inside.visible and inside.scene_file_path == "res://scenes/arcade_interior.tscn", "player is in the separate interior scene")
 	expect(main.zone_at(player.global_position) == "ARCADE" and player.global_position.distance_to(inside.to_global(inside.spawn_local)) < 1.0, "interior spawn reads as the ARCADE zone")
+	expect(not str(player.sprite_frame).begins_with("kickup"), "no kick-up plays on arrival inside (frame %s)" % player.sprite_frame)
 	await frames(20)
 	expect(player.is_on_floor(), "player stands on the interior floor")
+	await _arcade_interior(main, inside)
 	var exit_t = main._nearest(2.5)
 	expect(exit_t != null and exit_t.get("kind") == "leave" and exit_t.prompt() == "Leave the Arcade", "interior exit prompt is in range")
 	exit_t.interact(main.flow)
@@ -976,6 +981,52 @@ func _arcade_door(main) -> void:
 	expect(door.state == "closed" and is_zero_approx(door.roll), "shutter rolls back down behind the player")
 	expect(player.input_enabled and player.global_position.z > -7.7 and absf(player.global_position.x - 32.0) < 1.5 and main.zone_at(player.global_position) != "OUTSIDE", "player is back on the deck outside")
 	expect(not inside.visible and door.entries == 1 and door.exits == 1, "interior hides again; one entry and one exit")
+
+## Arcade Phase 2: the furnished room, a playable cabinet opening the existing game, and back to the room.
+func _arcade_interior(main, inside: Node3D) -> void:
+	var player = main.player
+	var ids := ["grind-the-terms", "tag-before-training", "cookie-wall", "bars-per-watt", "punk-arcade"]
+	var have := 0
+	for id in ids:
+		if inside.cabinets.has(id) and inside.cabinets[id].is_in_group("interactable"):
+			have += 1
+	expect(have == ids.size(), "interior has the five playable cabinets got %d" % have)
+	expect(int(inside.stats.get("batched_meshes", 99)) <= 12 and int(inside.stats.get("batched_tris", 0)) > 2000, "interior is furnished and batched %s" % str(inside.stats))
+	var featured = inside.cabinets["punk-arcade"]
+	var attract: MeshInstance3D = inside.get_node_or_null("AttractScreen")
+	expect(featured.path == "demo/" and attract != null and attract.material_override.get_shader_parameter("attract") == true, "featured ZERO GAME THING PRO 2K runs the attract loop and links the Punk Arcade page")
+	var hq_cab = main.world_sim.get_node("Cabinet")
+	expect(main.zone_at(hq_cab.global_position) == "ARCADE" and hq_cab.global_position.distance_to(inside.to_global(inside.HQ_CABINET_LOCAL)) < 0.01, "the HQ placeholder cabinet stands inside the room")
+	# walk up to Tag Before Training and press E
+	var cab = inside.cabinets["tag-before-training"]
+	player.global_position = cab.global_position + Vector3(0, 0.95, 1.1)
+	player.velocity = Vector3.ZERO
+	await frames(4)
+	expect(main._nearest(2.5) == cab and cab.prompt() == "Play Tag Before Training", "cabinet prompt is in range")
+	var press := InputEventAction.new()
+	press.action = "interact"
+	press.pressed = true
+	Input.parse_input_event(press)
+	await frames(3)
+	var release := InputEventAction.new()
+	release.action = "interact"
+	release.pressed = false
+	Input.parse_input_event(release)
+	var ov = inside.overlay
+	expect(ov.is_open() and ov.game_id == "tag-before-training" and ov.last_path == "games/tag-before-training/demo/embed.html", "E on the cabinet opens the existing game page %s" % ov.last_path)
+	expect(not player.input_enabled and cab.prompt() == "" and main.flow.boundary.phase == "world", "the room holds input while the game is up")
+	cab.interact(main.flow)
+	expect(ov.opens == 1, "a second press while the game is up is ignored")
+	ov.close()
+	await frames(2)
+	expect(not ov.is_open() and player.input_enabled and ov.closes == 1, "closing the game returns to the room")
+	for id in ["grind-the-terms", "cookie-wall", "bars-per-watt"]:
+		var c = inside.cabinets[id]
+		expect(String(c.path).begins_with("games/" + id + "/demo/") and main.zone_at(c.global_position) == "ARCADE", "%s cabinet links its existing page" % id)
+	# back to the shutter for the exit
+	player.global_position = inside.to_global(inside.spawn_local)
+	player.velocity = Vector3.ZERO
+	await frames(6)
 
 func _ride_ctx(facing_yaw: float) -> Dictionary:
 	return {

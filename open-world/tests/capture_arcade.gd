@@ -16,6 +16,16 @@ const SHOTS := [
 	["H_roof", Vector3(48.0, 16.0, 2.0), Vector3(40.0, 9.5, -26.0), 60.0],
 ]
 
+## Interior views, in the room's local frame (arcade_interior.gd).
+const INTERIOR_SHOTS := [
+	["I_interior_wide", Vector3(31.0, 3.0, -9.6), Vector3(36.0, 1.2, -32.0), 66.0],
+	["J_cabinet_rows", Vector3(29.0, 1.7, -13.0), Vector3(17.0, 1.3, -21.0), 60.0],
+	["K_bars_per_watt_corner", Vector3(52.5, 2.2, -27.0), Vector3(63.5, 1.8, -40.0), 64.0],
+	["L_featured_cabinet", Vector3(34.6, 2.0, -20.6), Vector3(32.0, 1.9, -25.0), 56.0],
+	["M_counter_and_hq_cabinet", Vector3(25.0, 2.0, -29.5), Vector3(16.0, 1.4, -40.0), 62.0],
+	["N_exit_view", Vector3(40.0, 2.4, -30.0), Vector3(36.0, 2.2, -8.3), 64.0],
+]
+
 var main: Node
 var out := ""
 
@@ -114,18 +124,23 @@ func _stills() -> void:
 			n.visible = true
 		report.views[s[0]] = {"with_arcade": with_info, "without_arcade": without}
 		print("saved ", s[0], " ", with_info)
-	if only == "" or "I_interior".contains(only):
-		var door = main.world_sim.get_node_or_null("ArcadeDoor")
-		if door != null:
-			var inner: Node3D = door.ensure_interior()
-			inner.visible = true
-			cam.fov = 64.0
-			cam.global_position = inner.to_global(Vector3(30.0, 2.6, -11.0))
-			cam.look_at(inner.to_global(Vector3(44.0, 2.0, -40.0)))
-			for _i in 10:
+	var door = main.world_sim.get_node_or_null("ArcadeDoor")
+	if door != null:
+		var inner: Node3D = door.ensure_interior()
+		inner.visible = true
+		for s in INTERIOR_SHOTS:
+			if only != "" and not String(s[0]).contains(only):
+				continue
+			cam.fov = s[3]
+			cam.global_position = inner.to_global(s[1])
+			cam.look_at(inner.to_global(s[2]))
+			for _i in 12:
 				await get_tree().process_frame
-			get_viewport().get_texture().get_image().save_png(out + "/I_interior_placeholder.png")
-			report.views["I_interior_placeholder"] = {"with_arcade": _info()}
+			get_viewport().get_texture().get_image().save_png(out + "/" + s[0] + ".png")
+			report.views[s[0]] = {"with_arcade": _info()}
+			print("saved ", s[0], " ", report.views[s[0]])
+		inner.visible = false
+		report["interior"] = inner.stats
 	var f := FileAccess.open(out + "/render_stats.json", FileAccess.WRITE)
 	f.store_string(JSON.stringify(report, "  "))
 	print("static ", report.static)

@@ -3,7 +3,8 @@ extends Node3D
 ## Closed by default; it never opens on approach. Interact (E / pad X) at the shutter rolls it up,
 ## fades to black and moves the player into the separate interior scene (scenes/arcade_interior.tscn).
 ## Interact at the inside exit fades back out to the deck, and the shutter rolls down behind you.
-## The HQ main scene, flow and audio owner stay loaded; the interior is its own scene instanced on demand.
+## The HQ main scene, flow and audio owner stay loaded; the interior is its own scene, instanced (hidden) when
+## the yard is built so the HQ placeholder cabinet can stand in it, and shown while the player is inside.
 
 const M = preload("res://scripts/arcade_materials.gd")
 const Trigger = preload("res://scripts/arcade_trigger.gd")
@@ -128,6 +129,11 @@ func enter(flow: Node) -> bool:
 		player = flow.player
 	entries += 1
 	_lock(true)
+	# step off the board now, while the shutter rolls, so the kick-up never plays on arrival inside
+	if player != null and "skating" in player and player.skating:
+		player.skating = false
+		if player.has_method("update_board"):
+			player.update_board()
 	_set_state("opening")
 	var tw := create_tween()
 	tw.tween_method(_set_roll, roll, 1.0, ROLL_TIME).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -162,6 +168,7 @@ func ensure_interior() -> Node3D:
 		interior = load(INTERIOR_SCENE).instantiate()
 		interior.name = "ArcadeInterior"
 		interior.position = INTERIOR_ORIGIN
+		interior.visible = false
 		get_parent().add_child(interior)
 		interior.bind_door(self)
 	return interior
@@ -191,10 +198,6 @@ func _place(pos: Vector3, yaw: float) -> void:
 		return
 	if player.has_method("respawn"):
 		player.respawn()
-	if "skating" in player and player.skating:
-		player.skating = false
-		if player.has_method("update_board"):
-			player.update_board()
 	player.global_position = pos
 	player.velocity = Vector3.ZERO
 	player.rotation.y = yaw

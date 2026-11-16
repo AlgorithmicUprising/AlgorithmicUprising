@@ -170,10 +170,31 @@ static func _bay_door(b, root: Node3D, parent: Node) -> void:
 	b.box("steel", Vector3(cx, OPEN_H - 0.25, FACE + 0.35), Vector3(DOOR1 - DOOR0, 0.5, 0.5))
 	# threshold plate
 	b.box("steel", Vector3(cx, 0.47, FACE + 0.15), Vector3(DOOR1 - DOOR0, 0.04, 0.5))
+	_vestibule(b)
 	var door = load("res://scripts/arcade_door.gd").new()
 	door.name = "ArcadeDoor"
 	parent.add_child(door)
 	door.setup(Vector3(cx, 0.0, FACE - 0.08), DOOR1 - DOOR0, OPEN_H - 0.5)
+
+## Phase 2 (LOCAL): a dark entry bay behind the shutter, so the roll-up shows a dim lit room glimpse
+## instead of the empty greybox shell (whose meshes are hidden) and the sky through it.
+static func _vestibule(b) -> void:
+	var cx := (DOOR0 + DOOR1) * 0.5
+	var zb := ZF - 3.2
+	var zi := ZF - T
+	var w := DOOR1 - DOOR0 + 0.6
+	b.box("dark", Vector3(cx, OPEN_H * 0.5, zb), Vector3(w, OPEN_H + 0.4, 0.1))
+	for sx in [DOOR0 - 0.25, DOOR1 + 0.25]:
+		b.box("dark", Vector3(sx, OPEN_H * 0.5, (zb + zi) * 0.5), Vector3(0.1, OPEN_H + 0.4, zi - zb))
+	b.box("dark", Vector3(cx, OPEN_H + 0.15, (zb + zi) * 0.5), Vector3(w, 0.1, zi - zb))
+	b.box("dark", Vector3(cx, 0.02, (zb + zi) * 0.5), Vector3(w, 0.04, zi - zb))
+	# far glow: cabinet screens and the coolant skirting, as seen from the deck
+	for i in 4:
+		var x := DOOR0 + 1.2 + i * 1.9
+		b.box("glass_low", Vector3(x, 1.45, zb + 0.07), Vector3(0.6, 0.45, 0.02))
+		b.box("alert" if i % 2 == 0 else "glass", Vector3(x, 2.0, zb + 0.07), Vector3(0.7, 0.16, 0.02))
+	b.box("lamp", Vector3(cx, 0.6, zb + 0.07), Vector3(w - 0.4, 0.05, 0.02))
+	b.box("glass_low", Vector3(cx, OPEN_H + 0.08, (zb + zi) * 0.5), Vector3(1.6, 0.03, 0.5))
 
 # ---------- marquee (as approved in mockup A) ----------
 static func _marquee(b, root: Node3D) -> void:

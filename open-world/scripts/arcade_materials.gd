@@ -134,3 +134,40 @@ static func art(glow_amount := 0.0, shade := 0.88, floor_light := 0.55, grime :=
 	m.set_shader_parameter("wall_grime", grime)
 	m.set_shader_parameter("sheen", sheen)
 	return m
+
+# ---------- Phase 2 interior (LOCAL) ----------
+static var _screens: Texture2D
+static var _screen_shader: Shader
+
+static func screens_texture() -> Texture2D:
+	if _screens == null:
+		_screens = load("res://assets/arcade/arcade_screens.png")
+	return _screens
+
+## Batched CRT screens: UVs point into arcade_screens.png; vertex colour r = brightness, g = flicker phase.
+static func screen_batch() -> ShaderMaterial:
+	if _screen_shader == null:
+		_screen_shader = load("res://shaders/arcade_screen.gdshader")
+	var m := ShaderMaterial.new()
+	m.shader = _screen_shader
+	m.set_shader_parameter("screens", screens_texture())
+	return m
+
+## The featured cabinet's attract loop: cycles the given atlas rects.
+static func screen_attract(cells: Array) -> ShaderMaterial:
+	var m := screen_batch()
+	var packed := PackedVector4Array()
+	for r in cells:
+		packed.append(Vector4(r.position.x, r.position.y, r.size.x, r.size.y))
+	while packed.size() < 6:
+		packed.append(packed[0])
+	m.set_shader_parameter("attract", true)
+	m.set_shader_parameter("cells", packed)
+	m.set_shader_parameter("cell_count", cells.size())
+	return m
+
+## Marquees and signs from arcade_screens.png through the same art-panel shader as the posters.
+static func art_vc_screens() -> ShaderMaterial:
+	var m := art_vc()
+	m.set_shader_parameter("art", screens_texture())
+	return m

@@ -139,19 +139,21 @@ static func _warehouse(parent: Node) -> void:
 	# Arcade Phase 1 (LOCAL): the greybox shell keeps its collision; arcade_exterior.gd draws the building.
 	_shell(parent, "WarehouseArcade", 8.0, 70.0, -44.0, -8.0, 9.0, Palette.WAREHOUSE, 28.0, 36.0)
 	_hide_meshes(parent.get_node("WarehouseArcade"))
-	Blocks.visual(parent, "ArcadeFloor", Vector3(39, 0.04, -26), Vector3(58, 0.05, 32), Color("2f6d66"))
 	_hide_meshes(Blocks.solid(parent, "WarehouseBand", Vector3(39, 6.2, -8.4), Vector3(62, 1.4, 0.4), Palette.WAREHOUSE_RUST))
 	_hide_meshes(Blocks.solid(parent, "RoofDeck", Vector3(42, 9.15, -28), Vector3(70, 0.3, 36), Palette.SOLAR))
 	Blocks.add_slope(parent, "RoofStair", Vector3(74, 0.08, -6), Vector3(74, 9.1, -34), 4.0, Palette.RAMP)
 	Blocks.solid(parent, "RoofRail", Vector3(76.2, 1.2, -20), Vector3(0.2, 0.9, 22), Palette.RAIL)
-	var cabinet = load("res://scenes/cabinet.tscn").instantiate()
-	cabinet.name = "Cabinet"
-	cabinet.position = Vector3(32, 0.85, -18)
-	parent.add_child(cabinet)
-	for i in 4:
-		Blocks.solid(parent, "DecoyCabinet%d" % i, Vector3(20.0 + float(i) * 5.5, 0.7, -34), Vector3(1.3, 1.4, 0.7), Color("241c22"))
 	# Replaces the old billboard "ARCADE" label, TEMP TAG, solar cells, coping, marquee bar and eave lamps.
 	ArcadeExterior.build(parent)
+	# Arcade Phase 2 (LOCAL): the old greybox floor, decoys and posters are gone; the room is the separate
+	# interior scene. The HQ placeholder cabinet (same scene, same hooks) moves into it by the token counter.
+	var door = parent.get_node("ArcadeDoor")
+	var interior: Node3D = door.ensure_interior()
+	var cabinet = load("res://scenes/cabinet.tscn").instantiate()
+	cabinet.name = "Cabinet"
+	cabinet.position = door.INTERIOR_ORIGIN + interior.HQ_CABINET_LOCAL
+	cabinet.ready.connect(_hide_meshes.bind(cabinet), CONNECT_ONE_SHOT)
+	parent.add_child(cabinet)
 
 static func _hide_meshes(node: Node) -> void:
 	for c in node.find_children("*", "MeshInstance3D", true, false):
@@ -250,10 +252,6 @@ static func _shell(parent: Node, node_name: String, x0: float, x1: float, z0: fl
 static func _marks(parent: Node) -> void:
 	# Original flat marks. Not copies of the reference painting, and not collision.
 	_mark(parent, "ShopMark", Vector3(-63.0, 2.9, -51.58), Vector3(7.0, 2.4, 0.05))
-	Blocks.visual(parent, "PosterA", Vector3(22.5, 2.4, -16.2), Vector3(0.06, 1.3, 0.9), Color("f0c14a"))
-	Blocks.visual(parent, "PosterB", Vector3(22.62, 2.4, -16.2), Vector3(0.04, 0.7, 0.45), Color("e23e8c"))
-	Blocks.visual(parent, "CabinetFace", Vector3(32.0, 1.55, -17.35), Vector3(0.9, 0.55, 0.04), Color("16343a"))
-	Blocks.visual(parent, "CabinetFaceBar", Vector3(32.0, 1.55, -17.3), Vector3(0.55, 0.12, 0.03), Color("b6ff3b"))
 	Blocks.visual(parent, "YardCrackA", Vector3(10, 0.02, 24), Vector3(6.5, 0.012, 0.05), Color("8a6858"))
 	Blocks.visual(parent, "YardCrackB", Vector3(-8, 0.02, 14), Vector3(0.05, 0.012, 4.5), Color("8a6858"))
 
