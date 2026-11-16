@@ -12,7 +12,7 @@ const firstPartyMediaOrigins = new Set(['https://media.algorithmicuprising.com']
 
 export const humanZoo: Song = {
   id: 'AU-001', title: 'The Human Zoo', durationSec: 318.8,
-  explicit: true, rightsStatus: 'pending'
+  explicit: true, rightsStatus: 'cleared'
 };
 
 function allowed(url: URL, base: URL) {
