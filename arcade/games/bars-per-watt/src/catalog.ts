@@ -8,14 +8,17 @@ export interface Song {
   charts?: Partial<Record<Difficulty, string>>;
 }
 export interface Catalog { version: 1; songs: Song[] }
+const firstPartyMediaOrigins = new Set(['https://media.algorithmicuprising.com']);
+
 export const humanZoo: Song = {
   id: 'AU-001', title: 'The Human Zoo', durationSec: 318.8,
-  explicit: true, rightsStatus: 'pending'
+  explicit: true, rightsStatus: 'cleared'
 };
 
 function allowed(url: URL, base: URL) {
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw Error('Invalid media URL');
-  if (url.origin !== base.origin) throw Error('Media must be served from the catalog origin');
+  if (url.origin !== base.origin && !firstPartyMediaOrigins.has(url.origin))
+    throw Error('Media must be served from the catalog origin or approved R2 media host');
   if (url.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(url.hostname))
     throw Error('Media must use HTTPS');
   return url;
