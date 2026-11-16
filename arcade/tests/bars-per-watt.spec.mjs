@@ -122,6 +122,11 @@ test('desktop and phone controls fit; host pause and eject stop the game', async
 });
 
 test('a missing licensed catalog leaves a readable, unplayable placeholder', async ({page}) => {
+  await page.route('**/games/bars-per-watt/catalog.json',route=>route.fulfill({
+    contentType:'application/json',body:JSON.stringify({version:1,songs:[{
+      id:'AU-001',title:'The Human Zoo',durationSec:318.8,explicit:true,rightsStatus:'cleared'
+    }]})
+  }));
   await page.goto(demo);
   const game=page.locator('bars-per-watt');
   await game.locator('[data-open-songs]').click();
