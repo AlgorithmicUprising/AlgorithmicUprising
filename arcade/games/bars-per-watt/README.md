@@ -2,9 +2,9 @@
 
 Game 04 is a four-lane rhythm cartridge for the shared Punk Arcade engine. Its first catalog entry is Algorithmic Uprising's **The Human Zoo** (`AU-001`, explicit). The master in Drive's `Zero - Audio Masters` is 48 kHz stereo PCM, about 5:18.8, SHA-256 `54dcf056e2e5073b12a7fb38809a99ecba5c77ca72bd3111860e81ab806ee18c`. It remains outside this repository.
 
-The owner-only Power Rack playtest has ten songs with Easy, Medium and Hard draft charts, sleeves, silent desktop loops and downloadable StepMania files. The owner has confirmed the songs are original and rights-cleared. The public catalog is still gated until each published playback copy and reviewed chart is referenced from the catalog; the current public catalog has no audio or chart paths, so it has no playable rotation yet.
+The owner-only Power Rack playtest has ten songs with Easy, Medium and Hard draft charts, sleeves, silent desktop loops and downloadable StepMania files. The owner has confirmed the songs are original and rights-cleared. The public catalog now includes The Human Zoo's reviewed Easy, Medium and Hard charts and cleared playback copy in R2, all pinned to audioVersion `human-zoo-playback-v1-05f6a0c8`. Only songs with matching published audio and charts are eligible for the daily rotation, so the other nine songs remain out until those assets are ready.
 
-The private Human Zoo AAC playback encode is 160 kb/s, 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`.
+The published Human Zoo AAC playback copy is 160 kb/s, 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`. Its versioned R2 path is `bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/`.
 
 ## Run and embed
 
