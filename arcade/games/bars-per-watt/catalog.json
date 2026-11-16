@@ -6,7 +6,14 @@
       "title": "The Human Zoo",
       "durationSec": 318.8,
       "explicit": true,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "human-zoo-playback-v1-05f6a0c8",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/hard.json"
+      }
     },
     {
       "id": "AU-052",
