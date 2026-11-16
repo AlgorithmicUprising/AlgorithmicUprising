@@ -4,7 +4,7 @@ export interface Song {
   id: string; title: string; durationSec: number; explicit: boolean;
   rightsStatus: 'pending' | 'cleared';
   audioVersion?: string; audio?: string;
-  artist?: string; sleeve?: string; backgroundVideo?: string;
+  artist?: string; edition?: string; sleeve?: string; backgroundVideo?: string;
   charts?: Partial<Record<Difficulty, string>>;
 }
 export interface Catalog { version: 1; songs: Song[] }
@@ -55,6 +55,8 @@ export async function loadCatalog(url: URL, signal: AbortSignal): Promise<Catalo
       throw Error('Invalid song metadata');
     if (song.artist !== undefined && (typeof song.artist !== 'string' || song.artist.length > 120))
       throw Error('Invalid artist');
+    if (song.edition !== undefined && (typeof song.edition !== 'string' || song.edition.length > 40))
+      throw Error('Invalid edition');
     if (song.sleeve !== undefined) assetUrl(song.sleeve, url);
     if (song.backgroundVideo !== undefined) {
       try { assetUrl(song.backgroundVideo, url); }

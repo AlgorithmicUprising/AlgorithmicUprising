@@ -4,7 +4,7 @@ export type Judgement = 'perfect' | 'good' | 'ok' | 'miss';
 type NoteState = 'pending' | 'holding' | 'done' | 'missed';
 export interface SessionNote { note: Note; state: NoteState }
 export interface HitFeedback { kind: Judgement | 'hold'; lane: Lane; at: number; errorSec?: number }
-export const WINDOWS = { perfect: 0.05, good: 0.09, ok: 0.12, holdRelease: 0.15 } as const;
+export const WINDOWS = { perfect: 0.05, good: 0.09, ok: 0.12 } as const;
 export const PRECISION_THRESHOLD = 5;
 export const SCORE_VERSION = 'timing-v2';
 // Inclusive boundaries must survive subtracting timestamps deep into a song.
@@ -68,16 +68,23 @@ export class RhythmSession {
       item.state = 'missed'; this.judge('miss', item.note.lane, at); this.pendingCursor++;
     }
     for (const item of this.holding) {
-      if (item.note.endTime !== undefined && at > item.note.endTime + WINDOWS.holdRelease + EPSILON) {
-        item.state = 'missed'; this.judge('miss', item.note.lane, at); this.holding.delete(item);
+      if (item.note.endTime !== undefined && at >= item.note.endTime - EPSILON) {
+        if (this.pressed.has(item.note.lane)) {
+          item.state = 'done'; this.holding.delete(item);
+          this.score += 500; this.totals.holds++;
+          this.feedback('hold', item.note.lane, item.note.endTime);
+        } else {
+          item.state = 'missed'; this.judge('miss', item.note.lane, at); this.holding.delete(item);
+        }
       }
     }
     if (at >= this.chart.durationSec) this.finish();
   }
   input(lane: Lane, down: boolean, at: number, feedbackAt = at) {
     if (this.complete || !Number.isFinite(at)) return;
-    if (down) this.pressed.add(lane); else this.pressed.delete(lane);
+    if (down) this.pressed.add(lane);
     this.advance(at);
+    if (!down) this.pressed.delete(lane);
     if (down) {
       const item = this.notes.find(n => n.note.lane === lane && n.state === 'pending' &&
         Math.abs(at - n.note.time) <= WINDOWS.ok + EPSILON);
@@ -91,10 +98,7 @@ export class RhythmSession {
     } else {
       const item = this.notes.find(n => n.note.lane === lane && n.state === 'holding');
       if (!item || item.note.endTime === undefined) return;
-      if (Math.abs(at - item.note.endTime) <= WINDOWS.holdRelease + EPSILON) {
-        item.state = 'done'; this.holding.delete(item); this.score += 500; this.totals.holds++;
-        this.feedback('hold', lane, feedbackAt);
-      } else if (at < item.note.endTime - WINDOWS.holdRelease) {
+      if (at < item.note.endTime - EPSILON) {
         item.state = 'missed'; this.holding.delete(item); this.judge('miss', lane, feedbackAt);
       }
     }

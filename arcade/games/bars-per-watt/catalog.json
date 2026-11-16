@@ -4,16 +4,17 @@
     {
       "id": "AU-001",
       "title": "The Human Zoo",
-      "durationSec": 318.8,
+      "durationSec": 147.49866666666668,
       "explicit": true,
       "rightsStatus": "cleared",
-      "audioVersion": "human-zoo-playback-v1-05f6a0c8",
-      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/audio.m4a",
+      "audioVersion": "human-zoo-arcade-edit-v1-827727bd",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-arcade-edit-v1-827727bd/audio.m4a",
       "charts": {
-        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/easy.json",
-        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/medium.json",
-        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/hard.json"
-      }
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-arcade-edit-v1-827727bd/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-arcade-edit-v1-827727bd/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-001/human-zoo-arcade-edit-v1-827727bd/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-052",

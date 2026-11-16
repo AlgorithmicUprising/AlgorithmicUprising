@@ -147,7 +147,7 @@ test('precision starts at five, pulses at milestones, and resets independently o
   assert.equal(session.maxPrecision,25);assert.equal(session.maxCombo,28);
 });
 
-test('combo milestones include good hits; hold completion never manufactures precision',()=>{
+test('hold completion requires a sustained press, not a timed release, and never adds precision',()=>{
   const taps=new RhythmSession(precisionChart());
   for(let i=1;i<=10;i++)taps.input((i-1)%4,true,i+.08);
   assert.equal(taps.milestone.kind,'combo');assert.equal(taps.milestone.count,10);assert.equal(taps.precision,0);
@@ -157,8 +157,9 @@ test('combo milestones include good hits; hold completion never manufactures pre
     for(let i=1;i<=4;i++)session.input(1,true,i);
     session.input(0,true,5);assert.equal(session.overclocked,true);
     session.input(0,false,releaseAt);session.input(0,false,releaseAt);
-    assert.equal(session.precision,releaseAt===8?5:0);assert.equal(session.combo,releaseAt===8?5:0);
-    assert.equal(session.totals.holds,releaseAt===8?1:0);assert.equal(session.totals.miss,releaseAt===8?0:1);
+    const completed=releaseAt!==7;
+    assert.equal(session.precision,completed?5:0);assert.equal(session.combo,completed?5:0);
+    assert.equal(session.totals.holds,completed?1:0);assert.equal(session.totals.miss,completed?0:1);
   }
 });
 

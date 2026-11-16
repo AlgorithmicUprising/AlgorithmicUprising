@@ -212,7 +212,8 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     root.querySelector<HTMLElement>('[data-song-title]')!.textContent = song.title;
     root.querySelector<HTMLElement>('[data-artist]')!.textContent = song.artist || 'Algorithmic Uprising';
     root.querySelector<HTMLElement>('[data-song-meta]')!.textContent =
-      timeLabel(song.durationSec) + (song.explicit ? ' · EXPLICIT' : '');
+      timeLabel(song.durationSec) + (song.explicit ? ' · EXPLICIT' : '') +
+      (song.edition ? ' · ' + song.edition.toUpperCase() : '');
     sleeve.hidden = true;
     sleeve.removeAttribute('src');
     if (song.sleeve) {
