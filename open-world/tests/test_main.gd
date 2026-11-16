@@ -44,6 +44,26 @@ func frames(count: int) -> void:
 	for _i in count:
 		await get_tree().physics_frame
 
+## The reloaded yard can still be importing when the first joypad event arrives, so that
+## sample moves no pitch. Hold the stick until pitch actually changes (bounded), release
+## it, and put the camera back. The measured samples below stay a fixed 4 frames.
+func _prime_stick(player, stick: InputEventJoypadMotion) -> void:
+	var origin: float = player.camera_pitch
+	await get_tree().process_frame
+	await get_tree().process_frame
+	stick.axis_value = 1.0
+	Input.parse_input_event(stick)
+	for _i in 45:
+		await get_tree().process_frame
+		await get_tree().physics_frame
+		if absf(player.camera_pitch - origin) > 0.02:
+			break
+	stick.axis_value = 0.0
+	Input.parse_input_event(stick)
+	await get_tree().process_frame
+	await frames(2)
+	player.camera_pitch = origin
+
 func _contracts() -> void:
 	var story = JsonFile.read("res://data/story_working.json")
 	expect(typeof(story) == TYPE_DICTIONARY, "story loads")
@@ -419,8 +439,9 @@ func _invert() -> void:
 	stick.axis = JOY_AXIS_RIGHT_Y
 	stick.axis_value = 1.0
 	reloaded.player.look_invert_y = true
-	await frames(2)
+	await _prime_stick(reloaded.player, stick)
 	var stick_start: float = reloaded.player.camera_pitch
+	stick.axis_value = 1.0
 	Input.parse_input_event(stick)
 	await frames(4)
 	var stick_inverted: float = reloaded.player.camera_pitch - stick_start
