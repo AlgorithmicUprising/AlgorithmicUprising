@@ -13,4 +13,6 @@ The Punk Arcade under `../arcade` is a separate project. This directory does not
 
 ## Zero X Game Engine (Godot Engine)
 
-The Zero X Game Engine is our name for the Godot Engine 4.7.2 build this game runs on. Godot Engine is Copyright (c) 2014-present Godot Engine contributors and Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur, under the MIT license. The full license shows on the boot screen (`scenes/boot.tscn`) and the web loading screen (`web/zero_x_shell.html`). Godot's third-party notices are in the boot screen's THIRD-PARTY NOTICES scroll and in `web/GODOT_COPYRIGHT.txt` (Godot's official `COPYRIGHT.txt` for 4.7.2-stable).
+The Zero X Game Engine is our name for the Godot Engine 4.7.2 build this game runs on. Godot Engine is Copyright (c) 2014-present Godot Engine contributors and Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur, under the MIT license. The full license shows on the boot screen (`scenes/boot.tscn`) and the web loading screen (`web/zero_x_shell.html`). Godot's third-party notices are in `web/GODOT_COPYRIGHT.txt`, which ships next to the web build and is linked from the loading screen (Godot's official `COPYRIGHT.txt` for 4.7.2-stable).
+
+`web/zero_x_zero.webp` is Algorithmic Uprising character art (Zero). It is not covered by the MIT license above; all rights reserved by Algorithmic Uprising.

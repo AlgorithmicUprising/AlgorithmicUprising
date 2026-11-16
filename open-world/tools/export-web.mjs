@@ -20,6 +20,8 @@ if (code !== 0) process.exit(code);
 // Zero X loading shell. Godot's "Complying with licenses" page suggests shipping it as
 // GODOT_COPYRIGHT.txt.
 await copyFile(join(world, 'web', 'GODOT_COPYRIGHT.txt'), join(out, 'GODOT_COPYRIGHT.txt'));
+// Zero art for the loading shell. The same file is imported into the pack for the boot scene.
+await copyFile(join(world, 'web', 'zero_x_zero.webp'), join(out, 'zero_x_zero.webp'));
 
 function run(command, args) {
   return new Promise((resolve) => {
