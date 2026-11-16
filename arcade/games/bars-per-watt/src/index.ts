@@ -197,7 +197,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     playLabel.textContent = busy ? 'LOADING…' : 'PLAY SONG';
     status(catalogError ? 'Could not load the song catalog.' :
       catalogPending ? 'Loading songs…' :
-      !rotationSongs.length ? 'No cleared, charted tracks are ready for today’s rotation.' :
+      !rotationSongs.length ? 'No cleared, charted tracks are ready for today’s rotation. A playable chart and cleared playback copy are needed.' :
       canLoad() ? '' : 'A playable chart and cleared playback copy are needed.');
   }
   function selectSong(next: Song) {
