@@ -11,7 +11,7 @@ if (catalog) {
   } catch { /* Invalid or disallowed catalogs fall back to the metadata-only entry. */ }
 }
 const embed = document.body.hasAttribute('data-embed');
-const events = ['ready','skin-loaded','start','pause','resume','over','share','sound','error','loading','transport-error'];
+const events = ['ready','skin-loaded','start','pause','resume','over','save-score','share','sound','error','loading','transport-error'];
 function originOf(raw, onlyOrigin = false) {
   if (!raw) return null;
   try {
@@ -39,7 +39,7 @@ const picker = document.querySelector('#skins');
 if (picker) { picker.value = skinId; picker.addEventListener('change', () => selectSkin(picker.value)); }
 const log = document.querySelector('#events');
 for (const name of events) game.addEventListener('game:' + name, event => {
-  if (log) log.textContent = (event.type + ' ' + JSON.stringify(event.detail) + '\n' + log.textContent).slice(0,6000);
+  if (log) log.textContent = (event.type + ' ' + JSON.stringify(event.detail) + '\\n' + log.textContent).slice(0,6000);
   if (parentOrigin) parent.postMessage({ source:'punk-arcade', type:event.type, detail:event.detail }, parentOrigin);
 });
 if (parentOrigin) window.addEventListener('message', event => {
