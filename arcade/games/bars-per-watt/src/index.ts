@@ -2,6 +2,7 @@ import { readLocal, writeLocal } from '../../../core/src/storage';
 import { defineArcade, type GameAPI } from '../../../core/src/engine';
 import type { CartridgeProfile } from '../../../core/src/cartridge';
 import { assetUrl, humanZoo, loadCatalog, type Song } from './catalog';
+import { centralRotationDateLabel, DAILY_ROTATION_SIZE, dailyRotation } from './rotation';
 import { compileChart, type Chart, type Difficulty, type Lane } from './chart';
 import { drawHighway } from './render';
 import { PRECISION_THRESHOLD, SCORE_VERSION, RhythmSession } from './session';
@@ -47,6 +48,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const songMenu = root.querySelector<HTMLElement>('[data-song-menu]')!;
   const playfield = root.querySelector<HTMLElement>('.playfield')!;
   const songList = root.querySelector<HTMLElement>('[data-song-list]')!;
+  const rotationLabel = root.querySelector<HTMLElement>('[data-rotation-label]')!;
   const sleeve = root.querySelector<HTMLImageElement>('[data-sleeve]')!;
   const menuSound = root.querySelector<HTMLButtonElement>('[data-menu-sound]')!;
   const playLabel = root.querySelector<HTMLElement>('[data-play-label]')!;
@@ -106,6 +108,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   let song: Song = humanZoo, chart: Chart | null = null, session: RhythmSession | null = null;
   let menu: 'title' | 'songs' | null = 'title';
   let songs: Song[] = [humanZoo], level: Difficulty = 'easy';
+  let rotationSongs: Song[] = [];
   let countdownTimer = 0;
   const lastDifficulty = new Map<string, Difficulty>();
   let catalogError: string | null = null, catalogPending = true;
@@ -168,7 +171,8 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     playfield.inert = view !== null;
     if (!focus) return;
     if (view === 'title') titleMenu.querySelector<HTMLButtonElement>('[data-open-songs]')!.focus();
-    if (view === 'songs') songList.querySelector<HTMLButtonElement>('[aria-pressed=true]')?.focus();
+    if (view === 'songs') (songList.querySelector<HTMLButtonElement>('[aria-pressed=true]') ||
+      songMenu.querySelector<HTMLButtonElement>('[data-back]'))?.focus();
   };
   const canLoad = () => !catalogPending && !catalogError && song.rightsStatus === 'cleared' &&
     Boolean(song.audio && song.audioVersion && song.charts?.[level]);
@@ -193,6 +197,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     playLabel.textContent = busy ? 'LOADING…' : 'PLAY SONG';
     status(catalogError ? 'Could not load the song catalog.' :
       catalogPending ? 'Loading songs…' :
+      !rotationSongs.length ? 'No cleared, charted tracks are ready for today’s rotation.' :
       canLoad() ? '' : 'A playable chart and cleared playback copy are needed.');
   }
   function selectSong(next: Song) {
@@ -218,7 +223,19 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     updateDifficulty();
   }
   function populateSongs() {
-    songList.replaceChildren(...songs.map(item => {
+    rotationSongs = dailyRotation(songs);
+    rotationLabel.textContent = `TODAY’S ROTATION · ${centralRotationDateLabel()} CT · ${rotationSongs.length}/${DAILY_ROTATION_SIZE} READY`;
+    if (!rotationSongs.length) {
+      const empty = document.createElement('p');
+      empty.className = 'song-list-empty';
+      empty.setAttribute('role', 'status');
+      empty.textContent = catalogPending ? 'CHECKING CLEARED TRACKS…' :
+        catalogError ? 'SONG CATALOG UNAVAILABLE' : 'NO CLEARED, CHARTED TRACKS READY';
+      songList.replaceChildren(empty);
+      selectSong(songs.find(item => item.id === song.id) || songs[0] || humanZoo);
+      return;
+    }
+    songList.replaceChildren(...rotationSongs.map(item => {
       const row = document.createElement('button');
       row.type = 'button';
       row.dataset.song = item.id;
@@ -226,7 +243,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       row.addEventListener('click', () => selectSong(item), { signal });
       return row;
     }));
-    selectSong(songs.find(item => item.id === song.id) || songs[0]);
+    selectSong(rotationSongs.find(item => item.id === song.id) || rotationSongs[0]);
   }
   const catalogReady = loadCatalog(catalogUrl, catalogAbort.signal).then(data => {
     if (disposed) return;
@@ -237,7 +254,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     if (!catalogAbort.signal.aborted) {
       catalogPending = false;
       catalogError = String(error);
-      if (menu === 'songs') updateDifficulty();
+      if (menu === 'songs') populateSongs();
     }
   });
   async function loadSelection() {
@@ -310,6 +327,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   choose.addEventListener('click', () => {
     choose.hidden = true;
     element.reset();
+    populateSongs();
     showMenu('songs');
   }, { signal });
   const menuButtons = () => Array.from(
