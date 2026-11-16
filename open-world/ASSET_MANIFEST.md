@@ -12,14 +12,16 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Skate yard | The west quarter is `assets/library/quarter_pipe/quarter_pipe.tscn`: a 2.4 m textured concrete shell, deck, metal coping, and two graffiti panels. Half-pipes, funbox, lanes, and the 12 m rail are still the simpler ramps |
 | Workshop | Open industrial shell, bench, five green battery blocks, eight container ribs on the south face |
 | Resistance rooms | Private shell, bunks, counter. Zero stands here |
-| Solar warehouse arcade | Teal shell, rust band, tilted blue roof cells, roof coping, door, one real cabinet, four mute cabinet boxes |
+| Solar warehouse arcade | **Arcade Phase 1 exterior (local branch `arcade-exterior-p1`)**: `scripts/arcade_exterior.gd` on a 1 m grid with 4 m bays. Ribbed teal sheet (procedural ribs with a distance fade), rust belly band, lit clerestory glazing, steel pilasters, coping/parapet, gutter and downpipes, a flat roof with a 4 × 7 slab solar array, tank, vent and AC units, our own staff door and lit windows, an entry deck with stairs, rails and skate wedges, three planters with Kenney bushes, weeds, and a Kenney container. One toon shader (`shaders/toon_world.gdshader`), one 512² trim sheet and one 2048×1024 art atlas (`assets/arcade/`) serve outside and inside. The greybox shell keeps its collision; its meshes are hidden. The old greybox interior (floor, decoys, posters) is removed; the room is the separate interior scene below |
+| Arcade front shutter | `scripts/arcade_door.gd`: closed roll-up shutter (solid). Interact (E / pad X) rolls it up, fades to black and moves the player into `scenes/arcade_interior.tscn`, the separate interior scene; its exit fades back out and the shutter rolls down. Never opens on approach. A dark entry bay with a far glow sits behind the shutter so the roll-up never shows the empty shell |
+| Arcade interior | `scripts/arcade_interior.gd` (Phase 2, local): same toon shader and trim sheet. Checker runway to the featured ZERO GAME THING PRO 2K (custom side art, attract loop done in `shaders/arcade_screen.gdshader`, no video), two rows of six cabinets each side of the runway, an east-wall line of six, a token counter with prize shelves, and the Bars per Watt corner (power-rack wall, BPW sign, bar and stools, lounge). Soft warm lamps. Playable cabinets (Grind the Terms, Tag Before Training, Cookie Wall, Bars per Watt preview, and the featured cabinet opening the Punk Arcade lab page) open the existing game pages on the same Pages origin in an HTML overlay with a "Back to the Arcade" button (`scripts/arcade_overlay.gd`, `scripts/arcade_cabinet.gd`); game code untouched. The HQ placeholder cabinet (`cabinet.tscn`, same hooks) stands by the counter |
 | Docks | 1.2 m decks and a ride-up slope |
 | Plaza | Benches, cart, awning, stair wedge, seven step boxes, handrail |
 | Gate yard | Lookout block, posts, a flat net quad, container stack |
 | Outside, not playable | Cool tower blocks, west factory blocks, north rail beam |
 | Plants | Five box planters with box shrubs |
 | Lighting | Procedural sunset sky, warmer key, cooler ambient, three-band shader with a sharper edge darkening, one shadow map. Still not inked illustration |
-| Park marks | Flat original panels on the warehouse front and workshop face, an arcade marquee, two poster quads, a cabinet face bar, eave lamps, and two crack lines. No collision. Not the reference painting |
+| Park marks | Flat original panel on the workshop face and two crack lines. No collision. Not the reference painting. (The arcade front mark, marquee bar, eave lamps, billboard ARCADE label and TEMP TAG moved into the Phase 1 exterior; the old poster quads and cabinet face bar went with the greybox interior) |
 | Fony, the player | Painted sprite billboard. Idle, walk, cruise, tricks, grinds, and bails use the v3 clips. The six push cycles are the v5 strokes. The pivot mesh can be shown from the pause menu. Collision is still a separate capsule |
 | Zero | Articulated pivots, not a skin rig. Larger cream CRT, lime screen bars, knob, vent, capsule jacket and limbs, red “?” patch, barcode blocks, metal neck, hands, and knees, coiled cable segments. Idle bob and a raised arm while talking |
 
@@ -53,4 +55,16 @@ Still missing on the characters:
 
 ## Explicitly not in the repo
 
-No music, no samples, no generated paintings, no paid stock, and no franchise logos. The sunset reference painting was used as direction and is not a game texture.
+No music, no samples, no generated audio, no paid stock, and no franchise logos. The sunset reference painting was used as direction and is not a game texture.
+
+**Generated art is allowed for murals and posters, with the band's approval.** The earlier "no generated paintings" line described the first greybox prototype only; it was never a GitHub or legal rule. AI-generated mural and poster art may go in the game once the band approves each piece (approved Sun Nov 15, 2026 for the Arcade). The rule on sound does not change: no music or audio is generated, and no AI processing of music. Current generated and AU art, all Algorithmic Uprising, all rights reserved (see `NOTICE.md`):
+
+| Piece | Where in game | Source |
+|---|---|---|
+| Mural "Insert Human to Continue" | exterior back wall, interior back wall | AI-generated with Grok Bot image generation from our prompt, Nov 15, 2026; original `art-src/arcade/murals/mural_A_insert_human_raw.jpg` |
+| Mural "Press Start to Resist / Game Over" | exterior front east of the shutter, interior west wall | AI-generated, same tool and date; `art-src/arcade/murals/mural_B_press_start_raw.jpg` |
+| Mural "High Score: Zero Privacy" | exterior west wall, interior front wall | AI-generated, same tool and date; `art-src/arcade/murals/mural_C_high_score_raw.jpg` |
+| Wheatpaste covers, AU / PUNK ARCADE marquee, Zero glyph | exterior and interior posters | Algorithmic Uprising release art and logos (`art-src/arcade/covers/`) |
+| Cabinet screens and marquees, ZERO GAME THING PRO 2K side art, Bars per Watt sign, token-counter sign, power-rack cells, rug | interior (`assets/arcade/arcade_screens.png`) | Built by `tools/make_arcade_textures.py` from the Punk Arcade cover art on algorithmicuprising.com (`/assets/zero-tv/arcade-covers/`), the Zero screen face from the site art, and text set in URW Nimbus Sans Narrow Bold (rasterized; no font file in the pck); sources in `art-src/arcade/screens/` |
+
+All three atlases are rebuilt by `tools/make_arcade_textures.py`. Third-party pieces are CC0 only (Kenney, Poly Haven); see `assets/thirdparty/kenney/README.md`.
