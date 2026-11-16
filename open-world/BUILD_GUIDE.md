@@ -120,6 +120,7 @@ District geometry is built in code by `scripts/hq_main.gd` so collisions stay in
 
 | Path | Role |
 |---|---|
+| `scenes/boot.tscn` | First scene: Zero X Game Engine boot screen with the Godot MIT license as fine print, then `main.tscn` (see 4b) |
 | `scenes/main.tscn` | Boots the district, HUD, pause, and dialogue |
 | `scenes/player.tscn` | Third-person body, board, spring-arm camera |
 | `scenes/npc.tscn` | Zero and Fony placeholders |
@@ -148,6 +149,16 @@ District geometry is built in code by `scripts/hq_main.gd` so collisions stay in
 `scripts/player_controller.gd` has test seams (`external_move`, `external_jump`). They do nothing unless a test sets them.
 
 Web exports publish `window.AU_HQ` with position, zone, skate state, session, and input ownership so a browser check can see the simulation. Desktop builds do not eval that script.
+
+## 4b. Zero X Game Engine boot screen and license fine print
+
+The engine is always called the **Zero X Game Engine**: Algorithmic Uprising's punk fork / rename of Godot Engine 4.7.2. We did not build the engine core, so the boot screen says "built on Godot Engine" and carries Godot's license in full.
+
+- `scenes/boot.tscn` + `scripts/zero_x_boot.gd` is `run/main_scene`. It shows the Zero X name, a line from Zero ("Always read the fine print"), and the fine print: the intro line from Godot's "Complying with licenses" page plus `Engine.get_license_text()` (taken from the engine binary, so it always matches the shipped version). Any key, click or tap skips after 1 s; it auto-advances after 8 s. Tapping or scrolling the fine print holds it. `N`, gamepad Y, or the THIRD-PARTY NOTICES key opens a full scroll built from `Engine.get_copyright_info()` and `Engine.get_license_info()`. It then loads `next_scene` (today `scenes/main.tscn`). When the in-game start screen (option C, the puppeteer) is built, point `next_scene` at it; the boot screen comes before it and does not replace it.
+- The UI scales so one UI unit is at least one CSS pixel, so the 12 to 13 px fine print stays readable on a phone. No fonts or images are added (engine default font, about 16 KB of pck growth).
+- `web/zero_x_shell.html` is the custom HTML shell (`html/custom_html_shell`). It is based on Godot 4.7.2's `misc/dist/html/full-size.html` and shows the Zero X name, a LOADING HUMANS progress bar with MB counts, and the same license text while `index.wasm` and `index.pck` download. The text there is static, from `LICENSE.txt` at the `4.7.2-stable` tag. `tests/test_main.gd` fails if it drifts from `Engine.get_license_text()` or from the running version.
+- `web/GODOT_COPYRIGHT.txt` is Godot's official `COPYRIGHT.txt` at `4.7.2-stable`, renamed as the Godot docs suggest. `tools/export-web.mjs` copies it next to `index.html`, and the loading shell links to it.
+- When the pinned Godot version changes, refresh both files from the new tag and update the version line in the shell.
 
 ## 5. Working plot, and optional suggestions
 

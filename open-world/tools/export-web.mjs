@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +16,10 @@ await mkdir(out, { recursive: true });
 
 const code = await run(godot, ['--headless', '--path', world, '--export-release', 'Web', index]);
 if (code !== 0) process.exit(code);
+// Godot's official third-party notices (COPYRIGHT.txt at the pinned tag), linked from the
+// Zero X loading shell. Godot's "Complying with licenses" page suggests shipping it as
+// GODOT_COPYRIGHT.txt.
+await copyFile(join(world, 'web', 'GODOT_COPYRIGHT.txt'), join(out, 'GODOT_COPYRIGHT.txt'));
 
 function run(command, args) {
   return new Promise((resolve) => {

@@ -8,7 +8,7 @@ config_version=5
 config/name="AU Open World HQ Greybox"
 config/description="Provisional HQ skate-park greybox. The engine and the shipping platform are not locked."
 config/version="0.1.0-greybox"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/boot.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
