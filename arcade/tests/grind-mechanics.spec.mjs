@@ -61,16 +61,16 @@ test('correct score metadata and back-to-back starts',async({page})=>{
 });
 
 
-test('sound starts muted and can be toggled without a recording asset',async({page})=>{
+test('sound starts on and can be toggled',async({page})=>{
  await page.goto('/demo/');
  const game=page.locator('grind-the-terms');
  const sound=game.locator('button[part=sound]');
- await expect(sound).toHaveText('SOUND OFF');
- await sound.click();
  await expect(sound).toHaveText('SOUND ON');
+ await sound.click();
+ await expect(sound).toHaveText('SOUND OFF');
  await expect(page.locator('#events')).toContainText('game:sound');
  await sound.click();
- await expect(sound).toHaveText('SOUND OFF');
+ await expect(sound).toHaveText('SOUND ON');
 });
 
 
