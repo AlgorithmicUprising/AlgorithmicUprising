@@ -278,55 +278,37 @@ func _back_wall(deck_in: Vector3, half: float, mat: Material) -> void:
 	add_child(body)
 
 ## Finish pass: the dark finish's steel. Cheek plates over the side faces (just outside them), a light steel angle along the
-## riding edge of each cheek (top flange on the face, side flange down the cheek), and a steel plate on the deck behind the coping.
+## riding edge of each cheek (a flange on the face and one down the cheek), and a steel plate on the deck behind the coping.
+## The thin parts are written double-sided so they read from any side whatever the winding.
 func _dark_trim(outer: Array[Vector3], half: float) -> void:
 	var lip := lip_local()
-	var plate_mat := Blocks.cel(DARK_STEEL, 3.0, 0.3)
-	var trim_mat := Blocks.cel(DARK_TRIM, 3.0, 0.08)
+	var plate_mat := Blocks.cel(DARK_STEEL, 3.0, 0.0)
+	var trim_mat := Blocks.cel(DARK_TRIM, 3.0, 0.0)
+	var flange := 0.08
 	for side in [-1.0, 1.0]:
 		var tag := "L" if side > 0.0 else "R"
-		var z: float = side * (half + 0.006)
 		var n := Vector3(0, 0, side)
 		var cv := PackedVector3Array()
 		var cn := PackedVector3Array()
-		var cu := PackedVector2Array()
 		var tv := PackedVector3Array()
 		var tn := PackedVector3Array()
-		var tu := PackedVector2Array()
-		var flange := 0.07
+		var zc: float = side * (half + 0.01)
+		var zt: float = side * (half + 0.025)
+		var zi: float = side * (half - flange)
 		for i in outer.size() - 1:
 			var a := outer[i]
 			var b := outer[i + 1]
-			var a0 := Vector3(a.x, -0.01, z)
-			var b0 := Vector3(b.x, -0.01, z)
-			var a1 := Vector3(a.x, a.y - 0.004, z)
-			var b1 := Vector3(b.x, b.y - 0.004, z)
-			if side > 0.0:
-				_quad(cv, cn, cu, a1, a0, b0, b1, n, n, n, n, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-			else:
-				_quad(cv, cn, cu, a1, b1, b0, a0, n, n, n, n, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+			# cheek plate: profile down to the ground
+			_quad2(cv, cn, Vector3(a.x, a.y - 0.004, zc), Vector3(a.x, -0.01, zc), Vector3(b.x, -0.01, zc), Vector3(b.x, b.y - 0.004, zc), n)
 			# side flange down the cheek
-			var zs: float = side * (half + 0.012)
-			var sa0 := Vector3(a.x, a.y + 0.012, zs)
-			var sb0 := Vector3(b.x, b.y + 0.012, zs)
-			var sa1 := Vector3(a.x, a.y - flange, zs)
-			var sb1 := Vector3(b.x, b.y - flange, zs)
-			if side > 0.0:
-				_quad(tv, tn, tu, sa0, sa1, sb1, sb0, n, n, n, n, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-			else:
-				_quad(tv, tn, tu, sa0, sb0, sb1, sa1, n, n, n, n, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-			# top flange on the riding face, along the edge
-			var ang_a := Vector3(-(b - a).normalized().y, (b - a).normalized().x, 0.0)
-			var ta0 := a + ang_a * 0.012 + Vector3(0, 0, side * (half + 0.012))
-			var tb0 := b + ang_a * 0.012 + Vector3(0, 0, side * (half + 0.012))
-			var ta1 := a + ang_a * 0.012 + Vector3(0, 0, side * (half - flange))
-			var tb1 := b + ang_a * 0.012 + Vector3(0, 0, side * (half - flange))
-			if side > 0.0:
-				_quad(tv, tn, tu, ta0, tb0, tb1, ta1, ang_a, ang_a, ang_a, ang_a, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-			else:
-				_quad(tv, tn, tu, ta0, ta1, tb1, tb0, ang_a, ang_a, ang_a, ang_a, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-		_add_mesh("Cheek" + tag, cv, cn, cu, plate_mat)
-		_add_mesh("EdgeTrim" + tag, tv, tn, tu, trim_mat)
+			_quad2(tv, tn, Vector3(a.x, a.y + 0.014, zt), Vector3(a.x, a.y - flange, zt), Vector3(b.x, b.y - flange, zt), Vector3(b.x, b.y + 0.014, zt), n)
+			# face flange along the riding edge, lying on the surface
+			var t := (b - a).normalized()
+			var up := Vector3(-t.y, t.x, 0.0)
+			var lift := up * 0.014
+			_quad2(tv, tn, a + lift + Vector3(0, 0, zt), a + lift + Vector3(0, 0, zi), b + lift + Vector3(0, 0, zi), b + lift + Vector3(0, 0, zt), up)
+		_add_mesh("Cheek" + tag, cv, cn, plate_mat)
+		_add_mesh("EdgeTrim" + tag, tv, tn, trim_mat)
 	var deck := MeshInstance3D.new()
 	deck.name = "DeckPlate"
 	var box := BoxMesh.new()
@@ -339,12 +321,15 @@ func _dark_trim(outer: Array[Vector3], half: float) -> void:
 	add_child(deck)
 	triangle_count += 12
 
-func _add_mesh(node_name: String, v: PackedVector3Array, n: PackedVector3Array, uv: PackedVector2Array, mat: Material) -> void:
+func _quad2(v: PackedVector3Array, nrm: PackedVector3Array, a: Vector3, b: Vector3, c: Vector3, d: Vector3, n: Vector3) -> void:
+	v.append_array(PackedVector3Array([a, b, c, a, c, d, a, c, b, a, d, c]))
+	nrm.append_array(PackedVector3Array([n, n, n, n, n, n, -n, -n, -n, -n, -n, -n]))
+
+func _add_mesh(node_name: String, v: PackedVector3Array, n: PackedVector3Array, mat: Material) -> void:
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = v
 	arrays[Mesh.ARRAY_NORMAL] = n
-	arrays[Mesh.ARRAY_TEX_UV] = uv
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	var inst := MeshInstance3D.new()
