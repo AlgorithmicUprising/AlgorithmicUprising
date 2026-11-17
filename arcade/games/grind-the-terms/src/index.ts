@@ -1,5 +1,6 @@
 import { defineArcade, type GameAPI } from '../../../core/src/engine';
 import chunksData from './chunks.json';
+import musicData from '../music/tracks.json';
 import {
   boardHalfWidth, boundsOverlap, courierBody, courierClosing, courierDeck, courierRoof,
   courierSpriteTopOffset, courierWidth, createEye, droneShutdownTime, enterEyePhase,
@@ -22,6 +23,8 @@ type AnimationSpec={start?:number;frames:number|readonly number[];fps:number;loo
 type RailVisual={surfaceCellY:number;groundCellY:number;drawHeight:number;clipTopCellY:number};
 type Art = { images:Record<string,HTMLImageElement>; cloudRaster:Record<string,HTMLCanvasElement>; palette?:Record<string,string>; grid?:Record<string,AtlasGrid>; rail?:RailVisual; anims?:Record<string,AnimationSpec>; name:string };
 const chunks = chunksData as Chunk[];
+type MusicTrack={id:string;title:string;audio:string;fallbackAudio?:string;midi:string;bpm:number;bars:number;durationSeconds:number;volume?:number};
+const musicTracks=(musicData as {tracks:MusicTrack[]}).tracks;
 const clamp = (n:number,low:number,high:number)=>Math.max(low,Math.min(high,n));
 
 // No global listeners: multiple embedded games are independent Web Components.
@@ -62,6 +65,49 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
   let rngState=0x11b00c5;
   let visualFlash=0;
   let currentAnim:Anim='run';
+  let musicAudio:HTMLAudioElement|null=null,musicTrackIndex=0,musicRunActive=false,musicMuted=true;
+  const ensureMusicAudio=()=>{
+    if(!musicTracks.length)return null;
+    if(!musicAudio){
+      musicAudio=new Audio();musicAudio.preload='auto';
+      musicAudio.addEventListener('ended',()=>{
+        if(musicTracks.length<2||!musicRunActive)return;
+        musicTrackIndex=(musicTrackIndex+1)%musicTracks.length;
+        activateMusicTrack(true);
+      });
+    }
+    return musicAudio;
+  };
+  const activateMusicTrack=(rewind=false)=>{
+    const track=musicTracks[musicTrackIndex],audio=ensureMusicAudio();
+    if(!track||!audio)return;
+    const base=new URL('../music/',import.meta.url),oggUrl=new URL(track.audio,base).href;
+    const fallbackUrl=track.fallbackAudio?new URL(track.fallbackAudio,base).href:null;
+    const url=oggUrl.endsWith('.ogg')&&audio.canPlayType('audio/ogg; codecs=vorbis')===''&&fallbackUrl?fallbackUrl:oggUrl;
+    if(audio.src!==url)audio.src=url;
+    audio.loop=musicTracks.length===1;
+    audio.volume=clamp(track.volume??.42,0,1);
+    if(rewind)try{audio.currentTime=0}catch{}
+    emit('game:music',{trackId:track.id,title:track.title,trackNumber:musicTrackIndex+1,trackCount:musicTracks.length,bpm:track.bpm});
+    if(musicRunActive&&!musicMuted)void audio.play().catch(()=>{});
+  };
+  const syncMusic=()=>{
+    if(!musicRunActive||musicMuted){musicAudio?.pause();return;}
+    if(!musicAudio?.src){activateMusicTrack(false);return;}
+    if(musicAudio.paused)void musicAudio.play().catch(()=>{});
+  };
+  const startMusic=()=>{
+    musicRunActive=true;musicTrackIndex=0;
+    if(musicMuted){musicAudio?.pause();if(musicAudio)try{musicAudio.currentTime=0}catch{};return;}
+    activateMusicTrack(true);
+  };
+  const stopMusic=()=>{musicRunActive=false;musicAudio?.pause()};
+  const setMusicMuted=(muted:boolean)=>{musicMuted=muted;syncMusic()};
+  const resumeMusic=()=>{musicRunActive=true;syncMusic()};
+  const disposeMusic=()=>{
+    stopMusic();
+    if(musicAudio){musicAudio.removeAttribute('src');musicAudio.load();musicAudio=null}
+  };
 
   const rng=()=>{rngState=(Math.imul(1664525,rngState)+1013904223)>>>0;return rngState/4294967296};
   const tier=()=>elapsed<20?1:elapsed<45?2:elapsed<90?3:4;
@@ -1065,6 +1111,8 @@ defineArcade('grind-the-terms','GRIND THE TERMS',(emit,host)=>{
     }
   });
   const releaseInput=()=>{leftHeld=false;rightHeld=false;steerTap=0;trickDown=false;boostDown=false;boostExhausted=false;if(grinding)railPop();held=false;};
+  const start=()=>{reset();startMusic()};
+  const over=()=>{const ended=!alive&&bailRemaining===0;if(ended)stopMusic();return ended};
   reset();
-  return {start:reset,input,update,draw,score,over:()=>!alive&&bailRemaining===0,result,setSkin,releaseInput} satisfies GameAPI;
+  return {start,input,update,draw,score,over,result,setSkin,releaseInput,setMuted:setMusicMuted,onPause:stopMusic,onResume:resumeMusic,dispose:disposeMusic} satisfies GameAPI;
 });

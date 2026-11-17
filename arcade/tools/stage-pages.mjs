@@ -10,6 +10,7 @@ for(const game of games){
   await cp(join('games',game,'dist'),join(root,'games',game,'dist'),{recursive:true});
   await cp(join('games',game,'skins'),join(root,'games',game,'skins'),{recursive:true});
   await cp(join('games',game,'demo'),join(root,'games',game,'demo'),{recursive:true});
+  if (game === 'grind-the-terms') await cp(join('games',game,'music'),join(root,'games',game,'music'),{recursive:true});
   if (game === 'bars-per-watt') await cp(join('games',game,'catalog.json'),join(root,'games',game,'catalog.json'));
 }
 // GitHub Pages receives .pages/ as its site root. A root index is essential;
@@ -34,7 +35,7 @@ h1{color:#c0ff39}a{color:#ff5ea9}
 await writeFile(join(root,'index.html'),landing);
 await writeFile(join(root,'.nojekyll'),'');
 // Fail deployment before upload if a required entrypoint or game bundle is missing.
-const required = ['index.html', 'demo/index.html', 'games/tag-before-training/skins/au/background.png', 'games/tag-before-training/skins/au/skater.png', 'games/cookie-wall/demo/page.js', 'games/bars-per-watt/catalog.json', 'games/bars-per-watt/demo/page.js'];
+const required = ['index.html', 'demo/index.html', 'games/tag-before-training/skins/au/background.png', 'games/tag-before-training/skins/au/skater.png', 'games/cookie-wall/demo/page.js', 'games/bars-per-watt/catalog.json', 'games/bars-per-watt/demo/page.js', 'games/grind-the-terms/music/terms-and-conditions-loop-94.54bpm-8bars.ogg', 'games/grind-the-terms/music/terms-and-conditions-loop-8bars.mid', 'games/grind-the-terms/music/terms-and-conditions-loop-3x-preview.mp3'];
 for (const game of games) {
   const prefix = 'games/' + game + '/';
   required.push(prefix + 'dist/' + game + '.js', prefix + 'demo/index.html', prefix + 'demo/embed.html', prefix + 'skins/placeholder/skin.json');

@@ -1,0 +1,15 @@
+{
+  "tracks": [
+    {
+      "id": "terms-and-conditions",
+      "title": "Terms & Conditions",
+      "audio": "terms-and-conditions-loop-94.54bpm-8bars.ogg",
+      "fallbackAudio": "terms-and-conditions-loop-3x-preview.mp3",
+      "midi": "terms-and-conditions-loop-8bars.mid",
+      "bpm": 94.54,
+      "bars": 8,
+      "durationSeconds": 20.30976,
+      "volume": 0.42
+    }
+  ]
+}
