@@ -270,6 +270,8 @@ func _state(ctx: Dictionary) -> String:
 			return "qp_dropin"
 		if qp == "bail":
 			return "qp_bail"
+		if qp == "kickturn" and clips.has("qp_kickturn_bs50_back"):
+			return "qp_kickturn_bs%d" % int(ctx.get("kt_deg", 50))
 	var trick := str(ctx.get("trick", ""))
 	var on_floor := bool(ctx.get("on_floor", true))
 	var speed := float(ctx.get("speed", 0.0))
@@ -350,7 +352,7 @@ func _index(state: String, ctx: Dictionary) -> int:
 		return clampi(int(u * float(count)), 0, count - 1)
 	if state == "kickup" or state == "dropin":
 		return clampi(int(trans_time * _fps(clip)), 0, count - 1)
-	if state == "qp_setup" or state == "qp_bail":
+	if state == "qp_setup" or state == "qp_bail" or state.begins_with("qp_kickturn"):
 		return clampi(int(float(ctx.get("qp_time", 0.0)) * _fps(clip) + 0.001), 0, count - 1)
 	if state == "qp_dropin":
 		return _qp_dropin_index(count, ctx)

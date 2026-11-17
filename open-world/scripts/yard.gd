@@ -2,6 +2,7 @@ extends RefCounted
 
 const Blocks = preload("res://scripts/world_blocks.gd")
 const Palette = preload("res://scripts/palette.gd")
+const Pieces = preload("res://assets/library/skate_park/park_pieces.gd")
 const ArcadeExterior = preload("res://scripts/arcade_exterior.gd")
 
 # Wall centers sit on a 160 m square. The proposed map was 200 m and is not final.
@@ -170,11 +171,12 @@ static func _skate(parent: Node) -> void:
 	pipe.name = "SkateQuarter"
 	pipe.position = Vector3(-54, 0, -12)
 	pipe.rotation.y = PI
+	pipe.finish = "dark"
+	pipe.closed_back = true
 	parent.add_child(pipe)
 	_quarter_steps(parent, pipe)
 	Blocks.solid(parent, "Funbox", Vector3(-48, 0.45, -2), Vector3(4.2, 0.9, 4.2), Palette.FUNBOX)
-	Blocks.add_quarter(parent, "HalfPipeWest", Vector3(-50, 0, -30), PI, 2.0, 6.5, Palette.RAMP)
-	Blocks.add_quarter(parent, "HalfPipeEast", Vector3(-44, 0, -30), 0.0, 2.0, 6.5, Palette.RAMP)
+	_park_expansion(parent)
 	for i in 4:
 		Blocks.visual(parent, "SkateLane%d" % i, Vector3(-46, 0.03, -18.0 + float(i) * 8.0), Vector3(22, 0.02, 0.7), Color("8d5a48"))
 	var rail = load("res://scenes/grind_rail.tscn").instantiate()
@@ -185,9 +187,31 @@ static func _skate(parent: Node) -> void:
 	Blocks.label(parent, "SKATE YARD", Vector3(-52, 3.4, -6), Palette.LABEL, 48)
 	Blocks.label(parent, "RAIL", Vector3(-50, 1.8, 8), Palette.LABEL, 28)
 
+## Phase 4 (LOCAL): more to ride. The two teal block quarters at z -30 become a mini ramp of library quarter pipes (same
+## places, 6 m flat bottom, rideable transitions with the kickturn); the funbox gets kickers on its east and west faces; a
+## manual pad east of the main quarter; a bank against the west side of the yard. Everything stays inside the skate yard
+## (x < -32, -50 < z < 18) on the concept map, clear of the rail line and the bowl.
+static func _park_expansion(parent: Node) -> void:
+	for spec in [["HalfPipeWest", Vector3(-50, 0, -30), PI], ["HalfPipeEast", Vector3(-44, 0, -30), 0.0]]:
+		var q: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+		q.name = spec[0]
+		q.position = spec[1]
+		q.rotation.y = spec[2]
+		q.width = 6.5
+		q.finish = "dark"
+		q.closed_back = true
+		q.add_to_group("mini_ramp")
+		parent.add_child(q)
+	_quarter_steps(parent, parent.get_node("HalfPipeEast"), "MiniRampSteps")
+	Pieces.wedge(parent, "FunboxKickerEast", Vector3(-43.4, 0, -2), PI, 2.5, 0.9, 4.2)
+	Pieces.wedge(parent, "FunboxKickerWest", Vector3(-52.6, 0, -2), 0.0, 2.5, 0.9, 4.2)
+	Pieces.pad(parent, "ManualPad", Vector3(-38, 0, -12), 0.0, Vector3(1.6, 0.3, 7.0))
+	Pieces.wedge(parent, "Bank", Vector3(-63.5, 0, -1), PI, 3.0, 1.2, 9.0, 1.6)
+	Blocks.label(parent, "MINI RAMP", Vector3(-47, 3.0, -30), Palette.LABEL, 30)
+
 ## Phase 2 (LOCAL blockout): steps up the north cheek of SkateQuarter onto its deck (1.58 m). Collision is one smooth slope
 ## (like PlazaStair), so walking and skating both climb it; the treads are visual only.
-static func _quarter_steps(parent: Node, pipe: Node3D) -> void:
+static func _quarter_steps(parent: Node, pipe: Node3D, prefix := "QuarterDeck") -> void:
 	var lip_x: float = pipe.radius * sin(deg_to_rad(pipe.climb_deg))
 	var top: float = pipe.radius * (1.0 - cos(deg_to_rad(pipe.climb_deg)))
 	var half: float = pipe.width * 0.5
@@ -199,12 +223,12 @@ static func _quarter_steps(parent: Node, pipe: Node3D) -> void:
 	var high := Vector3(mid.x, top, mid.z) - out * 0.02
 	var low := high + out * run
 	low.y = 0.08
-	Blocks.add_slope(parent, "QuarterDeckSteps", low, high, pipe.deck_length - 0.1, Palette.RAMP)
+	Blocks.add_slope(parent, prefix + "Steps" if prefix == "QuarterDeck" else prefix, low, high, pipe.deck_length - 0.1, Palette.RAMP)
 	for i in count:
 		var f := (float(i) + 0.5) / float(count)
 		var c := low.lerp(high, f)
 		var y_top: float = c.y
-		Blocks.visual(parent, "QuarterStep%d" % i, Vector3(c.x, y_top * 0.5, c.z), Vector3(pipe.deck_length - 0.1, y_top, run / float(count)), Color("b9a090"))
+		Blocks.visual(parent, ("QuarterStep%d" if prefix == "QuarterDeck" else prefix + "Tread%d") % i, Vector3(c.x, y_top * 0.5, c.z), Vector3(pipe.deck_length - 0.1, y_top, run / float(count)), Color("b9a090"))
 
 static func _plaza(parent: Node) -> void:
 	Blocks.solid(parent, "MuralWall", Vector3(6, 1.3, 20), Vector3(0.4, 2.6, 8), Palette.PARK_WALL)

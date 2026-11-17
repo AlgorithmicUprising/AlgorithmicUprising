@@ -110,6 +110,7 @@ func _physics_process(delta: float) -> void:
 		# Phase 3 drop-in
 		"qp": str(body.qp_state) if "qp_state" in body else "",
 		"qp_time": float(body.qp_time) if "qp_time" in body else 0.0,
+		"kt_deg": int(body.kt_deg) if "kt_deg" in body else 50,
 	}
 	var frame_key: String = anim.step(delta, ctx)
 	var grounded: bool = body.on_ground() if body.has_method("on_ground") else body.is_on_floor()

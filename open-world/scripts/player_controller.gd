@@ -45,6 +45,16 @@ const QP_ROLL_START_M := 0.2943     # board centre along the wall from the lip a
 const QP_ROLL_V0 := 1.2             # m/s down the wall as the front wheels land
 const QP_BAIL_S := 36.0 / 24.0
 const QP_KICKUP_S := 20.0 / 24.0    # puppet kickup clip length (rolling up to the coping: kick up, then set the board)
+const KT_S := 15.0 / 24.0           # Phase 4 backside kickturn: qp_kickturn_bs clip, 15 frames at 24 fps (tools/anim_qp.py); the last (wheels down) shows one frame
+const KT_PIVOT_UP := 0.255          # back truck (the pivot) along the wall above the rig origin
+const KT_START_UP := 0.51           # board centre above the rig origin at frame 0 (origin = board centre at the last frame)
+const KT_MIN_Y := 0.63              # the window opens this high up the transition (about 42 deg on the 2.4 m pipe)
+const KT_LIP_GAP := 0.28            # ... and closes this far below the coping, so the drawn nose never pokes over it
+const KT_MAX_V := 3.0               # slower than this along the wall (near the top of his line)
+const KT_EXIT_V := 1.2              # m/s down the wall, rolling forward, as the front wheels set down
+const KT_VARIANTS := [40, 50, 60]   # wall angles the clip is baked at (the lean is drawn); nearest is used
+# turn (deg past the start heading) against clip time, from the tyaw keys in tools/anim_qp.py
+const KT_TURN_KEYS := [[0.0, 0.0], [0.16, 6.0], [0.25, 52.0], [0.33, 110.0], [0.42, 162.0], [0.46, 180.0]]
 const QP_RIDE_MAX := 1.5            # rolling slower than this at the spot: Shift kicks up and sets up
 # Phase 3b: ease the spring-arm length so the pipe deck never snaps the camera in or out.
 # Before the fix the arm stayed at 5.2 m through set-up and commit, then hit the deck mid-roll
@@ -56,7 +66,13 @@ const CAM_SPRING_SLEW := 2.8        # m/s, ~0.047 m per 60 fps tick
 
 var skating := true
 var input_enabled := true
-var qp_state := ""                  # "" / setup / ready / commit / roll / bail
+var qp_state := ""                  # "" / setup / ready / commit / roll / bail / kickturn (Phase 4)
+var kt_deg := 50                    # baked wall angle of the kickturn clip in use
+var kt_origin_s := 0.0              # arc length of the rig origin (board centre at the last frame)
+var kt_from_yaw := 0.0
+var kt_to_yaw := 0.0
+var kt_count := 0
+var kt_last := {}                   # tests / probes: the last kickturn (entry, angles, timing, exit)
 var qp_time := 0.0
 var qp_reverse := false
 var qp_pipe: Node3D = null
@@ -709,7 +725,7 @@ func _ramp_enter(pipe: Node3D, s: float, z: float) -> void:
 	_reentry = false
 	pipe_air = false
 	pipe_air_pipe = null
-	_event("enter", {"speed": ramp_entry_speed})
+	_event("enter", {"speed": ramp_entry_speed, "pipe": str(pipe.name)})
 	_ramp_place()
 
 func _ramp_step(delta: float) -> void:
@@ -725,6 +741,9 @@ func _ramp_step(delta: float) -> void:
 		return              # a trick popped him off the wall this tick
 	if jumping and bail_time <= 0.0:
 		_ramp_leave(JUMP_VELOCITY, "jump")
+		return
+	if _qp_stick() < -0.4 and kickturn_window():
+		_kickturn_begin()
 		return
 	var wish: Vector3 = _wish()
 	wish_len = wish.length()
@@ -788,7 +807,7 @@ func _ramp_place() -> void:
 	global_position = contact + n * CAPSULE_R - Vector3.UP * CAPSULE_LOW
 	velocity = b * (pipe.profile_tangent(ramp_s) * ramp_v + Vector3(0, 0, ramp_vz))
 	# Phase 3: the drop-in roll-out frames are drawn at the wall angle (all 8 views), so the card itself stays upright
-	ramp_lean_up = Vector3.UP if qp_state == "roll" else n
+	ramp_lean_up = Vector3.UP if qp_state == "roll" or qp_state == "kickturn" else n
 
 ## Off the coping going up: straight up with a small drift back over the transition (plan: vertical launch faked in code).
 func _lip_launch() -> void:
@@ -917,6 +936,8 @@ func qp_ref_world() -> Vector3:
 	if qp_pipe == null or not is_instance_valid(qp_pipe):
 		return global_position + Vector3.UP * 0.325
 	var lip: Vector3 = qp_pipe.lip_local()
+	if qp_state == "kickturn":
+		return qp_pipe.to_global(qp_pipe.profile_point(kt_origin_s, qp_z))
 	var ref: Vector3 = qp_pipe.to_global(Vector3(lip.x, lip.y, qp_z))
 	if qp_state == "setup" or qp_state == "ready":
 		ref += global_position - qp_to
@@ -965,6 +986,9 @@ func _qp_step(delta: float) -> bool:
 			return false
 	if qp_state == "" or qp_state == "roll":
 		return false
+	if qp_state == "kickturn":
+		_kickturn_step(delta)
+		return true
 	external_jump = false
 	trick_request = ""
 	wish_len = 0.0
@@ -1066,3 +1090,82 @@ func _qp_rolled_out() -> void:
 	qp_exit_s = qp_elapsed
 	qp_runs += 1
 	_event("qp_rolled_out", {"speed": qp_exit_speed, "fakie": is_fakie()})
+
+# ---------------------------------------------------------------- Phase 4: backside kickturn (LOCAL puppet test)
+
+## Riding up a library quarter-pipe near the top of his line: holding back (S) here kickturns.
+func kickturn_window() -> bool:
+	if ramp_mode != "ride" or ramp == null or qp_state != "" or not skating or bail_time > 0.0 or trick != "":
+		return false
+	if not ramp.has_method("lip_arc"):
+		return false
+	if ramp.profile_point(ramp_s).y < KT_MIN_Y or ramp_s > ramp.lip_arc() - KT_LIP_GAP:
+		return false
+	return ramp_v > -0.3 and ramp_v < KT_MAX_V
+
+## Turn so far (deg) at clip time t.
+func kt_turn_deg(t: float) -> float:
+	var keys: Array = KT_TURN_KEYS
+	if t <= 0.0:
+		return 0.0
+	for i in range(1, keys.size()):
+		if t <= float(keys[i][0]):
+			var a: Array = keys[i - 1]
+			var b: Array = keys[i]
+			return lerpf(float(a[1]), float(b[1]), (t - float(a[0])) / (float(b[0]) - float(a[0])))
+	return 180.0
+
+func _kickturn_begin() -> void:
+	var pipe: Node3D = ramp
+	var r: float = pipe.radius
+	# the clip starts with the board at the wall angle under it (roll_params(deg) in tools/anim_qp.py): nearest baked angle
+	var wall_deg := rad_to_deg(ramp_s / r)
+	kt_deg = KT_VARIANTS[0]
+	for d in KT_VARIANTS:
+		if absf(float(d) - wall_deg) < absf(float(kt_deg) - wall_deg):
+			kt_deg = d
+	qp_pipe = pipe
+	qp_z = ramp_z
+	kt_origin_s = ramp_s - KT_START_UP
+	# facing up the wall -> facing down it, clockwise from above (backside for his regular stance)
+	var up_wall: Vector3 = pipe.global_transform.basis * Vector3(1, 0, 0)   # +X climbs the library pipe
+	kt_from_yaw = atan2(-up_wall.x, -up_wall.z)
+	kt_to_yaw = kt_from_yaw - PI
+	# the drawing carries the spin in every view; the facing (which picks the view) goes straight to the exit heading
+	if rig != null and rig.has_method("face_world"):
+		rig.face_world(kt_to_yaw)
+	kt_last = {"entry_speed": ramp_entry_speed, "start_s": ramp_s, "start_v": ramp_v, "wall_deg": wall_deg, "deg": kt_deg,
+		"start_y": pipe.profile_point(ramp_s).y, "msec": Time.get_ticks_msec()}
+	qp_state = "kickturn"
+	qp_time = 0.0
+	ramp_v = 0.0
+	ramp_vz = 0.0
+	pumping = false
+	wish_len = 0.0
+	_event("kickturn", {"deg": kt_deg, "wall_deg": wall_deg})
+	_ramp_place()
+
+## The board swings about the back truck: its centre goes from KT_START_UP above the origin to the origin.
+func _kickturn_step(delta: float) -> void:
+	var pipe: Node3D = qp_pipe
+	if pipe == null or not is_instance_valid(pipe):
+		qp_state = ""
+		return
+	external_jump = false
+	trick_request = ""
+	qp_time += delta
+	var turn := kt_turn_deg(qp_time)
+	ramp_s = kt_origin_s + KT_PIVOT_UP + KT_PIVOT_UP * cos(deg_to_rad(turn))
+	ramp_v = 0.0
+	_ramp_place()
+	update_board()
+	if qp_time >= KT_S:
+		ramp_s = kt_origin_s
+		ramp_v = -KT_EXIT_V
+		qp_state = ""
+		kt_count += 1
+		_ramp_place()
+		kt_last["end_s"] = ramp_s
+		kt_last["time"] = qp_time
+		kt_last["fakie"] = is_fakie()
+		_event("kickturn_end", {"fakie": is_fakie()})

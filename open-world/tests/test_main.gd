@@ -13,6 +13,15 @@ var fails: Array[String] = []
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	await get_tree().process_frame
+	if OS.get_environment("AU_TEST_ONLY") == "phase4":
+		# quick loop while working on Phase 4 (the full suite below is what counts)
+		await _kickturn()
+		await _park()
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	_contracts()
 	await _boot()
 	await _input_map()
@@ -26,6 +35,8 @@ func _ready() -> void:
 	await _art_quarter()
 	await _transition()
 	await _dropin()
+	await _kickturn()
+	await _park()
 	await _tricks()
 	await _fony_sprite()
 	await _district()
@@ -2063,3 +2074,309 @@ func _boot() -> void:
 	expect(handed == ["res://scenes/main.tscn"], "boot moves on by itself once the park is loaded")
 	boot.queue_free()
 	await get_tree().process_frame
+
+## Phase 4 (LOCAL puppet test): backside kickturn on the library quarter-pipe. Pipe at the origin, +X climbs; he rides in at
+## v0 coasting and holds back (S) from partway up; the kickturn fires inside its window (high on the wall, slow, below the
+## coping), turns him 180 deg clockwise from above about the back truck and he rolls out forward.
+func _kickturn() -> void:
+	var cat = JsonFile.read("res://assets/library/fony2d/frames_puppet_v1.json")
+	var views := ["back", "back_right", "back_left", "right", "left", "front", "front_right", "front_left"]
+	var missing: Array = []
+	var edge: Array = []
+	var ax := 400.0 * 0.175
+	var ay := 750.0 * 0.175
+	for d in [40, 50, 60]:
+		for v in views:
+			var key := "qp_kickturn_bs%d_%s" % [d, v]
+			if not cat.animations.has(key) or cat.animations[key].frames.size() != 15:
+				missing.append(key)
+				continue
+			for fr in cat.animations[key].frames:
+				var off: Array = fr.anchor_offset
+				var rc: Array = fr.atlas_rect
+				if str(fr.atlas_file) != "fony2d_puppet_v1_kickturn_atlas.png" or float(off[0]) < -ax + 2.0 or float(off[1]) < -ay + 2.0 or float(off[0]) + float(rc[2]) > 800.0 * 0.175 - ax - 2.0 or float(off[1]) + float(rc[3]) > 850.0 * 0.175 - ay - 2.0:
+					edge.append("%s" % key)
+	expect(missing.is_empty(), "kickturn: 24 clips (3 wall angles x 8 views), 15 frames each (missing %s)" % [missing])
+	expect(edge.is_empty(), "kickturn: no frame touches its cell edge (%d bad)" % edge.size())
+	expect(cat.animations.has("qp_kickturn_bs50_front") and int(cat.animations.qp_kickturn_bs50_front.phases.turn_deg) == 180 and str(cat.animations.qp_kickturn_bs50_front.phases.direction).begins_with("backside"), "kickturn: phases say backside 180")
+	expect(load("res://assets/library/fony2d/fony2d_puppet_v1_kickturn_atlas.png") is Texture2D, "kickturn: atlas imports")
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(60, 1, 60), Palette.GROUND)
+	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	host.add_child(pipe)
+	await frames(2)
+	for row in [[5.0, 40], [5.5, 40], [6.5, 50], [7.0, 60]]:
+		var r: Dictionary = await _kickturn_run(host, pipe, float(row[0]), true)
+		var kt: Dictionary = r.kt
+		expect(r.count == 1 and not r.lip and not r.bailed, "kickturn: %.1f m/s entry kickturns once (count %d, lip %s, bail %s)" % [row[0], r.count, r.lip, r.bailed])
+		if r.count != 1:
+			continue
+		expect(int(kt.deg) == int(row[1]), "kickturn: %.1f m/s fires at %.1f deg on the wall, uses the %d deg clip (want %d)" % [row[0], float(kt.wall_deg), int(kt.deg), int(row[1])])
+		expect(absf(r.turn - 180.0) < 5.0 and r.cw, "kickturn: %.1f m/s turns %.1f deg, clockwise from above (backside, regular)" % [row[0], r.turn])
+		expect(float(kt.time) >= 0.45 and float(kt.time) <= 0.7, "kickturn: %.1f m/s takes %.3f s" % [row[0], float(kt.time)])
+		expect(r.max_s < pipe.lip_arc() - 0.2 and r.min_gap > -0.05, "kickturn: %.1f m/s stays on the wall below the coping (max s %.2f of %.2f, min gap %.3f)" % [row[0], r.max_s, pipe.lip_arc(), r.min_gap])
+		expect(r.exited and not r.fakie and r.exit_speed > 0.8, "kickturn: %.1f m/s rolls out forward, not fakie (%.2f m/s)" % [row[0], r.exit_speed])
+		expect(r.clips.size() == 1 and str(r.clips[0]).begins_with("qp_kickturn_bs%d_" % int(row[1])) and r.frames_seen.size() >= 12 and r.mono, "kickturn: %.1f m/s draws one view, frames in order (%s, %d frames)" % [row[0], r.clips, r.frames_seen.size()])
+		expect(r.ref_jump < 0.02, "kickturn: %.1f m/s card anchor never jumps (max %.3f m/tick)" % [row[0], r.ref_jump])
+	var low: Dictionary = await _kickturn_run(host, pipe, 4.0, true)
+	expect(low.count == 0 and low.exited and low.fakie, "kickturn: too low on the wall (4.0 m/s) no kickturn; rolls back fakie")
+	var coast: Dictionary = await _kickturn_run(host, pipe, 6.0, false)
+	expect(coast.count == 0 and coast.exited and coast.fakie, "kickturn: without the stick he still rolls back fakie")
+	host.queue_free()
+	await frames(2)
+
+func _kickturn_run(host: Node, pipe: Node3D, v0: float, hold: bool) -> Dictionary:
+	var player = _player(host, Vector3(-3.0, 0.2, 0))
+	await frames(18)
+	player.skating = true
+	player.camera_yaw = -PI * 0.5
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	await frames(1)
+	player.global_position = Vector3(-1.5, player.global_position.y, 0)
+	player.velocity = Vector3(v0, 0, 0)
+	player.external_move = Vector2.ZERO
+	var face0: float = player.rig.global_rotation.y
+	var r := {"count": 0, "lip": false, "bailed": false, "turn": 0.0, "cw": false, "max_s": 0.0, "min_gap": 1.0, "exited": false,
+		"fakie": false, "exit_speed": 0.0, "clips": [], "frames_seen": [], "mono": true, "ref_jump": 0.0, "kt": {}}
+	var entered := false
+	var last_ref := Vector3.INF
+	var last_i := -1
+	for _i in 420:
+		if not entered and player.ramp_mode == "":
+			player.velocity.x = v0
+		if hold and player.ramp_mode == "ride" and player.qp_state == "" and player.kt_count == 0 and pipe.profile_point(player.ramp_s).y > 0.5:
+			player.external_move = Vector2(0, -1)
+		if player.kt_count > 0 or player.ramp_mode == "":
+			player.external_move = Vector2.ZERO
+		await get_tree().physics_frame
+		if player.ramp_mode == "ride":
+			entered = true
+		if player.trick == "bail":
+			r.bailed = true
+		if player.qp_state == "kickturn":
+			r.max_s = maxf(r.max_s, player.ramp_s)
+			var c: Vector3 = pipe.to_local(player.global_position + Vector3.UP * player.CAPSULE_LOW)
+			r.min_gap = minf(r.min_gap, pipe.radius - Vector2(c.x, pipe.radius - c.y).length() - player.CAPSULE_R)
+			var parts := str(player.sprite_frame).split("#")
+			if parts.size() == 2:
+				if not r.clips.has(parts[0]):
+					r.clips.append(parts[0])
+				var fi := int(parts[1])
+				if fi < last_i:
+					r.mono = false
+				if fi != last_i:
+					r.frames_seen.append(fi)
+				last_i = fi
+			var ref: Vector3 = player.global_position + player.sprite_anchor_offset()
+			if last_ref != Vector3.INF:
+				r.ref_jump = maxf(r.ref_jump, ref.distance_to(last_ref))
+			last_ref = ref
+		if entered and player.ramp_mode == "" and not player.pipe_air and player.global_position.x < -0.3:
+			r.exited = true
+			r.fakie = player.is_fakie()
+			r.exit_speed = Vector2(player.velocity.x, player.velocity.z).length()
+			break
+	r.count = player.kt_count
+	r.kt = player.kt_last
+	var turn := wrapf(player.rig.global_rotation.y - face0, -PI, PI)
+	r.turn = absf(rad_to_deg(turn))
+	r.cw = r.count == 1 and player.kt_to_yaw < player.kt_from_yaw
+	for e in player.ramp_events:
+		if e.what == "lip_launch":
+			r.lip = true
+	player.queue_free()
+	await frames(2)
+	return r
+
+## Phase 4 (LOCAL): the expanded skate yard. The real yard is built; he rides each new piece and must never sink into it,
+## fall through it, or stop dead against it.
+func _park() -> void:
+	const Pieces = preload("res://assets/library/skate_park/park_pieces.gd")
+	var host := _host()
+	load("res://scripts/yard.gd").build(host)
+	await frames(3)
+	for n in ["HalfPipeWest", "HalfPipeEast", "MiniRampSteps", "FunboxKickerEast", "FunboxKickerWest", "ManualPad", "Bank", "SkateQuarter", "Funbox"]:
+		expect(host.get_node_or_null(n) != null, "park has " + n)
+	var pipes := []
+	for q in [host.get_node("SkateQuarter"), host.get_node("HalfPipeWest"), host.get_node("HalfPipeEast")]:
+		pipes.append(q)
+		expect(q.is_in_group("quarter_pipe") and q.finish == "dark" and q.closed_back and q.get_node_or_null("BackCollision") != null, "park: %s is a library quarter pipe, dark finish, closed back" % q.name)
+		var mat: ShaderMaterial = q.get_node("Shell").material_override
+		var tint: Color = mat.get_shader_parameter("albedo")
+		expect(tint.v < 0.8 and tint.v > 0.55 and absf(float(mat.get_shader_parameter("fill_light")) - 1.3) < 0.001, "park: %s dark finish tint %s keeps the fill light" % [q.name, tint.to_html(false)])
+	# no piece overlaps another or the spawn spot
+	var boxes := {}
+	for n in ["SkateQuarter", "QuarterDeckSteps", "HalfPipeWest", "HalfPipeEast", "MiniRampSteps", "Funbox", "FunboxKickerEast", "FunboxKickerWest", "ManualPad", "Bank", "GrindRail"]:
+		boxes[n] = _ground_box(host.get_node(n))
+	var overlaps: Array = []
+	var names: Array = boxes.keys()
+	for i in names.size():
+		for j in range(i + 1, names.size()):
+			var a: Rect2 = boxes[names[i]].grow(-0.05)
+			var b: Rect2 = boxes[names[j]].grow(-0.05)
+			if a.intersects(b) and not ((names[i] == "Funbox" and str(names[j]).begins_with("FunboxKicker")) or (str(names[i]).ends_with("Steps") and names[j] == "SkateQuarter") or (names[i] == "SkateQuarter" and names[j] == "QuarterDeckSteps") or (names[i] == "HalfPipeEast" and names[j] == "MiniRampSteps")):
+				overlaps.append("%s/%s" % [names[i], names[j]])
+	expect(overlaps.is_empty(), "park: pieces do not overlap (%s)" % [overlaps])
+	var spawn := Rect2(-42.6, 1.4, 1.2, 1.2)
+	var crowd: Array = []
+	for n in names:
+		if boxes[n].intersects(spawn):
+			crowd.append(n)
+	expect(crowd.is_empty(), "park: spawn spot (-42, 2) is clear (%s)" % [crowd])
+	var inside := true
+	for n in names:
+		var r: Rect2 = boxes[n]
+		if r.position.x < -78.0 or r.end.x > -32.0 or r.position.y < -50.0 or r.end.y > 18.0:
+			inside = false
+	expect(inside, "park: every piece stays inside the skate yard")
+	# mini ramp: in at 6 m/s, up the east wall, back down fakie, stick toward the west wall, up that one
+	var mr: Dictionary = await _mini_run(host, 6.0, false)
+	expect(mr.walls.size() == 2 and mr.walls.has("HalfPipeEast") and mr.walls.has("HalfPipeWest") and mr.min_clear > -0.06 and not mr.fell, "park: mini ramp rides both walls (%s), never through the flat (min clearance %.3f)" % [mr.walls, mr.min_clear])
+	# kickturn on the mini ramp's east wall
+	var kt: Dictionary = await _mini_run(host, 6.5, true)
+	expect(kt.kickturns == 1 and not kt.fell and not kt.fakie_after, "park: kickturn on the mini ramp's east wall (%d), rolls away forward" % kt.kickturns)
+	# funbox: up the east kicker, across the top, down (or off) the west side
+	var fb: Dictionary = await _park_run(host, Vector3(-40.5, 0.3, -2.0), Vector3(-6.0, 0, 0), Vector2(0, 1), 150, false, PI * 0.5)
+	expect(fb.max_y > 0.8 and fb.final.x < -53.0 and not fb.fell and fb.min_clear > -0.06 and fb.final_speed > 2.0, "park: funbox kicker up, over the top (peak %.2f m), off the far side at x %.1f, %.1f m/s" % [fb.max_y, fb.final.x, fb.final_speed])
+	var fb2: Dictionary = await _park_run(host, Vector3(-55.5, 0.3, -2.0), Vector3(6.0, 0, 0), Vector2(0, 1), 150, false, -PI * 0.5)
+	expect(fb2.max_y > 0.8 and fb2.final.x > -43.0 and not fb2.fell and fb2.min_clear > -0.06, "park: funbox the other way (peak %.2f m, x %.1f)" % [fb2.max_y, fb2.final.x])
+	# bank: up onto its deck and off the back
+	var bk: Dictionary = await _park_run(host, Vector3(-59.0, 0.3, -1.0), Vector3(-6.0, 0, 0), Vector2(0, 1), 150, false, PI * 0.5)
+	var past := {}
+	for tr in bk.trace:
+		if tr[0].x < -69.5:
+			past = {"x": tr[0].x, "y": tr[0].y, "speed": tr[1]}
+			break
+	expect(bk.max_y > 1.1 and not past.is_empty() and float(past.speed) > 2.0 and not bk.fell and bk.min_clear > -0.06, "park: bank up to its deck (peak %.2f m) and off the back, still rolling (%s)" % [bk.max_y, past])
+	var bk2: Dictionary = await _park_run(host, Vector3(-59.0, 0.3, -1.0), Vector3(-4.0, 0, 0), Vector2.ZERO, 150, false, PI * 0.5)
+	expect(bk2.max_y > 0.15 and not bk2.fell and bk2.min_clear > -0.06 and bk2.final.y < 1.3, "park: coasting into the bank climbs it without sinking (peak %.2f m)" % bk2.max_y)
+	# manual pad: ollie onto it, roll along it, roll off the end
+	var mp: Dictionary = await _park_run(host, Vector3(-38.0, 0.3, -4.0), Vector3(0, 0, -6.0), Vector2(0, 1), 150, false, 0.0, 0.25)
+	expect(mp.on_pad > 10 and mp.final.z < -16.5 and not mp.fell and mp.min_clear > -0.06 and mp.final_speed > 2.0, "park: ollie onto the manual pad, %d ticks on top, off the end (z %.1f, %.1f m/s)" % [mp.on_pad, mp.final.z, mp.final_speed])
+	var mp_hit: Dictionary = await _park_run(host, Vector3(-38.0, 0.3, -4.0), Vector3(0, 0, -5.0), Vector2(0, 1), 90, false, 0.0)
+	expect(not mp_hit.fell and mp_hit.min_clear > -0.06 and mp_hit.final.z > -9.0, "park: no ollie, he stops at the pad's face instead of going through it (z %.2f)" % mp_hit.final.z)
+	host.queue_free()
+	await frames(2)
+
+## Top-down footprint (x, z) of a piece from its collision shapes / mesh AABB.
+func _ground_box(n: Node) -> Rect2:
+	var box := AABB()
+	var first := true
+	for m in n.find_children("*", "MeshInstance3D", true, false) + ([n] if n is MeshInstance3D else []):
+		var a: AABB = (m as MeshInstance3D).global_transform * (m as MeshInstance3D).get_aabb()
+		box = a if first else box.merge(a)
+		first = false
+	if n is Node3D and n.has_method("point_at"):
+		var p0: Vector3 = n.point_at(0.0)
+		var p1: Vector3 = n.point_at(1.0)
+		var r := Rect2(Vector2(minf(p0.x, p1.x), minf(p0.z, p1.z)), Vector2(absf(p1.x - p0.x), absf(p1.z - p0.z)))
+		return r.grow(0.2)
+	return Rect2(Vector2(box.position.x, box.position.z), Vector2(box.size.x, box.size.z))
+
+## One ride across the yard: start at pos with velocity v0, stick held (camera yaw cam), optional ollie after `ollie_at` s.
+## Clearance = how far the capsule bottom is above the highest surface under it (negative = sunk into a piece).
+func _park_run(host: Node, pos: Vector3, v0: Vector3, stick: Vector2, ticks: int, kickturn := false, cam := -PI * 0.5, ollie_at := -1.0) -> Dictionary:
+	const Pieces = preload("res://assets/library/skate_park/park_pieces.gd")
+	var player = _player(host, pos)
+	await frames(10)
+	player.skating = true
+	player.camera_yaw = cam
+	player.external_move_active = true
+	player.external_move = stick
+	player.global_position = pos
+	player.velocity = v0
+	if v0.length() > 0.1 and player.rig != null:
+		player.rig.face_world(atan2(-v0.x, -v0.z))
+	var r := {"min_clear": 9.0, "max_y": 0.0, "fell": false, "final": Vector3.ZERO, "final_speed": 0.0, "on_pad": 0, "kickturns": 0, "events": [], "trace": []}
+	var wedges := [host.get_node("FunboxKickerEast"), host.get_node("FunboxKickerWest"), host.get_node("Bank")]
+	var pad: Node3D = host.get_node("ManualPad")
+	var fun: Node3D = host.get_node("Funbox")
+	var pipes := [host.get_node("SkateQuarter"), host.get_node("HalfPipeWest"), host.get_node("HalfPipeEast")]
+	var t := 0.0
+	for _i in ticks:
+		if ollie_at >= 0.0 and t >= ollie_at and t < ollie_at + 0.02:
+			player.external_jump = true
+		if kickturn and player.ramp_mode == "ride" and player.qp_state == "" and player.kt_count == 0 and player.ramp.profile_point(player.ramp_s).y > 0.5:
+			player.external_move = Vector2(0, -1)
+		elif kickturn:
+			player.external_move = Vector2.ZERO
+		await get_tree().physics_frame
+		t += 1.0 / 60.0
+		var foot: Vector3 = player.global_position + Vector3.UP * 0.325
+		var ground := 0.0
+		for w in wedges:
+			ground = maxf(ground, Pieces.surface_y(w, foot))
+		var lp: Vector3 = pad.to_local(foot)
+		var on_pad := absf(lp.x) < 0.8 and absf(lp.z) < 3.5
+		if on_pad:
+			ground = maxf(ground, 0.3)
+			if foot.y > 0.25:
+				r.on_pad += 1
+		var lf: Vector3 = fun.to_local(foot)
+		if absf(lf.x) < 2.1 and absf(lf.z) < 2.1:
+			ground = maxf(ground, 0.9)
+		for q in pipes:
+			var ql: Vector3 = q.to_local(foot)
+			if absf(ql.z) < q.half_width() and ql.x > 0.0:
+				ground = maxf(ground, q.surface_y(ql.x))
+		# on the curve the capsule sits along the normal; only score the flat-ish pieces there
+		if player.ramp_mode != "ride" and player.qp_state == "":
+			r.min_clear = minf(r.min_clear, foot.y - ground)
+		r.max_y = maxf(r.max_y, foot.y)
+		r.trace.append([foot, Vector2(player.velocity.x, player.velocity.z).length()])
+		if foot.y < -0.3:
+			r.fell = true
+	r.final = player.global_position
+	r.final_speed = Vector2(player.velocity.x, player.velocity.z).length()
+	r.kickturns = player.kt_count
+	for e in player.ramp_events:
+		var e2: Dictionary = e.duplicate()
+		r.events.append(e2)
+	player.queue_free()
+	await frames(2)
+	return r
+
+## Mini ramp run: rolling east at v0 from the middle of the flat bottom into HalfPipeEast; once he is back on the flat the
+## stick points west (as a player would steer to the other wall). kickturn = hold back high on the east wall.
+func _mini_run(host: Node, v0: float, kickturn: bool) -> Dictionary:
+	var player = _player(host, Vector3(-47.0, 0.3, -30.0))
+	await frames(10)
+	player.skating = true
+	player.camera_yaw = -PI * 0.5
+	player.external_move_active = true
+	player.external_move = Vector2.ZERO
+	player.global_position = Vector3(-47.0, 0.0, -30.0)
+	player.velocity = Vector3(v0, 0, 0)
+	player.rig.face_world(atan2(-1.0, 0.0))
+	var r := {"walls": [], "min_clear": 9.0, "fell": false, "kickturns": 0, "fakie_after": false}
+	var entered := false
+	var back_on_flat := false
+	for _i in 400:
+		if not entered and player.ramp_mode == "":
+			player.velocity.x = v0
+		if player.ramp_mode == "ride":
+			entered = true
+			if not r.walls.has(str(player.ramp.name)):
+				r.walls.append(str(player.ramp.name))
+			if kickturn and player.qp_state == "" and player.kt_count == 0 and player.ramp.profile_point(player.ramp_s).y > 0.5:
+				player.external_move = Vector2(0, -1)
+			else:
+				player.external_move = Vector2.ZERO
+		elif entered:
+			if not back_on_flat:
+				back_on_flat = true
+				r.fakie_after = player.is_fakie()
+			player.external_move = Vector2(0, -1)     # toward the west wall
+		await get_tree().physics_frame
+		var foot: Vector3 = player.global_position + Vector3.UP * 0.325
+		if player.ramp_mode == "" and foot.x > -49.9 and foot.x < -44.1:
+			r.min_clear = minf(r.min_clear, foot.y)
+		if foot.y < -0.3:
+			r.fell = true
+		if r.walls.size() == 2 and (not kickturn or player.kt_count > 0):
+			break
+	r.kickturns = player.kt_count
+	player.queue_free()
+	await frames(2)
+	return r

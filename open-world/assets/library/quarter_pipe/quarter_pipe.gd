@@ -14,6 +14,13 @@ const Blocks = preload("res://scripts/world_blocks.gd")
 ## Phase 2 (LOCAL): self-lit fill on the shell. The face looks east and the sun is west of it, so the transition sits in the
 ## pipe's own shadow (measured 43/255 in a render). 0 = the pre-Phase-2 look.
 @export var face_fill := 1.3
+## Phase 4 (LOCAL): "dark" = the darker sealed-concrete riding finish from the park painting (deep mauve face, the transition
+## paint goes blue-teal). "" keeps the original warm finish. The fill above still applies, so the face stays readable.
+@export var finish := ""
+## Phase 4 (LOCAL): close the open space under the deck with a back wall (visual and collision), for pipes that stand free.
+@export var closed_back := false
+
+const DARK_TINT := Color("ad97c8")    # measured face luma ~88 in the HQ light (original warm finish 133; Phase 2 fixed a 43 face)
 
 var triangle_count := 0
 var _built := false
@@ -111,7 +118,7 @@ func _build() -> void:
 	var span := maxf(travelled, 0.001)
 	var concrete: Texture2D = load("res://assets/library/quarter_pipe/concrete_albedo.png")
 	var paint: Texture2D = load("res://assets/library/quarter_pipe/graffiti_albedo.png")
-	var shell_mat := Blocks.cel_textured(Color.WHITE, concrete, 3.0, 0.34)
+	var shell_mat := Blocks.cel_textured(DARK_TINT if finish == "dark" else Color.WHITE, concrete, 3.0, 0.34)
 	shell_mat.set_shader_parameter("fill_light", face_fill)
 	var metal_mat := Blocks.cel(Color("e7eef2"), 3.0, 0.08)
 	var paint_mat := Blocks.cel_textured(Color.WHITE, paint, 3.0, 0.16)
@@ -140,6 +147,8 @@ func _build() -> void:
 	coping.material_override = metal_mat
 	add_child(coping)
 	triangle_count += tube.get_faces().size() / 3
+	if closed_back:
+		_back_wall(deck_in, half, shell_mat)
 	_poster(paint_mat, lip, half, 1.0)
 	_poster(paint_mat, lip, -half, -1.0)
 
@@ -233,3 +242,27 @@ func _poster(material: Material, lip: Vector3, z: float, facing: float) -> void:
 	poster.material_override = material
 	add_child(poster)
 	triangle_count += 2
+
+## Back wall under the deck end, ground to the deck's underside (the deck slab itself already has collision).
+func _back_wall(deck_in: Vector3, half: float, mat: Material) -> void:
+	var x := deck_end_x()
+	var top := deck_in.y
+	var t := 0.12
+	var wall := MeshInstance3D.new()
+	wall.name = "BackWall"
+	var box := BoxMesh.new()
+	box.size = Vector3(t, top + 0.02, width)
+	wall.mesh = box
+	wall.position = Vector3(x - t * 0.5, (top - 0.02) * 0.5, 0.0)
+	wall.material_override = mat
+	add_child(wall)
+	triangle_count += 12
+	var body := StaticBody3D.new()
+	body.name = "BackCollision"
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(t, top, width)
+	var col := CollisionShape3D.new()
+	col.shape = shape
+	col.position = Vector3(x - t * 0.5, top * 0.5, 0.0)
+	body.add_child(col)
+	add_child(body)
