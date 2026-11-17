@@ -121,7 +121,7 @@ func _build() -> void:
 	heavy = FontVariation.new()
 	heavy.base_font = ThemeDB.fallback_font
 	heavy.variation_embolden = 0.9
-	var zero_tex: Texture2D = load(ZERO_ART)
+	var zero_tex: Texture2D = _zero_texture()
 	margin = MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -240,6 +240,29 @@ func _build() -> void:
 	bar_fill.anchor_bottom = 1.0
 	bar_fill.anchor_right = 0.0
 	bar.add_child(bar_fill)
+
+## The exported game and an editor with a filled import cache take load(). Headless CI
+## deletes .godot first, so that cache is empty and load() cannot see the WebP yet.
+## Decode the source file in that case. Image.load does not work in an export.
+func _zero_texture() -> Texture2D:
+	var sidecar := FileAccess.get_file_as_string(ZERO_ART + ".import")
+	if sidecar.is_empty() or _imported_ctex_exists(sidecar):
+		return load(ZERO_ART) as Texture2D
+	var image := Image.new()
+	if image.load(ZERO_ART) == OK and image.get_height() > 0:
+		return ImageTexture.create_from_image(image)
+	return load(ZERO_ART) as Texture2D
+
+func _imported_ctex_exists(sidecar: String) -> bool:
+	var key := "path=\""
+	var at := sidecar.find(key)
+	if at < 0:
+		return false
+	var start := at + key.length()
+	var end := sidecar.find("\"", start)
+	if end < 0:
+		return false
+	return FileAccess.file_exists(sidecar.substr(start, end - start))
 
 func _zero(tex: Texture2D) -> TextureRect:
 	var t := TextureRect.new()
