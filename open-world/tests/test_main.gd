@@ -14,6 +14,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	await get_tree().process_frame
 	_contracts()
+	await _boot()
 	await _input_map()
 	await _look()
 	await _heading()
@@ -1999,3 +2000,66 @@ func _dropin_run(host: Node, pipe: Node3D, d: float, off_deg: float, z: float) -
 	p.queue_free()
 	await frames(2)
 	return r
+
+## Zero X Game Engine boot screen: first scene, Godot MIT license in the fine print,
+## Zero on screen, no prompts: it loads the park in the background and moves on by itself.
+func _boot() -> void:
+	expect(ProjectSettings.get_setting("application/run/main_scene") == "res://scenes/boot.tscn", "boot screen is the first scene")
+	var boot = load("res://scenes/boot.tscn").instantiate()
+	boot.auto_change = false
+	var handed := []
+	boot.finished.connect(func(path): handed.append(path))
+	add_child(boot)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var flat := " ".join(boot.fine_label.text.replace("\n", " ").split(" ", false))
+	var license := " ".join(Engine.get_license_text().replace("\n", " ").split(" ", false))
+	expect(license.length() > 900 and flat.contains(license), "boot fine print carries the full Godot license text")
+	expect(flat.contains("This game uses Godot Engine, available under the following license:"), "boot fine print has the Godot docs intro line")
+	expect(flat.contains("GODOT_COPYRIGHT.txt"), "boot fine print points at the third-party notices file")
+	expect(Engine.get_license_text().begins_with("Copyright (c) 2014-present Godot Engine contributors"), "engine license starts with the Godot copyright line")
+	expect("ZERO X" in boot.logo.text and "GAME ENGINE" in boot.engine_word.text, "boot shows the Zero X Game Engine name")
+	expect("built on Godot Engine" in boot.built_on.text, "boot credits Godot as the base engine")
+	expect(boot.zero_stand.texture != null and boot.zero_stand.texture.get_height() > 600, "Zero art is on the boot screen")
+	expect(boot.next_scene == "res://scenes/main.tscn" and ResourceLoader.exists(boot.next_scene), "boot hands off to an existing scene")
+	expect(boot.requested, "boot starts loading the park in the background")
+	var prompts := []
+	for node in boot.find_children("*", "Label", true, false):
+		if node == boot.fine_label:
+			continue  # the license itself says "EXPRESS"
+		var t: String = node.text.to_upper()
+		if "PRESS" in t or "SKIP" in t or "TAP" in t or "CONTINUE" in t or "CLICK" in t:
+			prompts.append(t)
+	expect(prompts.is_empty() and boot.find_children("*", "BaseButton", true, false).is_empty(), "boot asks nothing of the player")
+	var shell := FileAccess.get_file_as_string("res://web/zero_x_shell.html")
+	var tags := RegEx.create_from_string("<[^>]+>")
+	var shell_flat := " ".join(tags.sub(shell, " ", true).replace("\n", " ").replace("\t", " ").split(" ", false))
+	expect(shell_flat.contains(license), "web loading shell carries the same Godot license text")
+	var v := Engine.get_version_info()
+	expect(shell.contains("Godot Engine %s.%s.%s" % [v.major, v.minor, v.patch]), "web loading shell names the running Godot version")
+	expect(shell.contains("$GODOT_CONFIG") and shell.contains("const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;"), "web loading shell keeps the export placeholders")
+	expect(shell.contains("src=\"zero_x_zero.webp\""), "web loading shell shows the same Zero art")
+	var shell_upper := shell_flat.to_upper()
+	expect(not ("PRESS START" in shell_upper or "SKIP" in shell_upper or "CONTINUE" in shell_upper), "web loading shell asks nothing of the player")
+	expect(FileAccess.get_file_as_string("res://web/GODOT_COPYRIGHT.txt").contains("Comment: Godot Engine"), "official Godot COPYRIGHT.txt ships beside the web build")
+	var key := InputEventKey.new()
+	key.keycode = KEY_SPACE
+	key.pressed = true
+	Input.parse_input_event(key)
+	await get_tree().process_frame
+	key.pressed = false
+	Input.parse_input_event(key)
+	await get_tree().process_frame
+	expect(handed.is_empty(), "a key press does not skip the boot screen")
+	for _i in 600:
+		if boot.loaded:
+			break
+		await get_tree().process_frame
+	expect(boot.loaded, "park scene finishes loading in the background")
+	expect(handed.is_empty() == (boot.elapsed < boot.MIN_SHOW), "boot holds for the minimum show time")
+	boot.elapsed = maxf(boot.elapsed, boot.MIN_SHOW)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	expect(handed == ["res://scenes/main.tscn"], "boot moves on by itself once the park is loaded")
+	boot.queue_free()
+	await get_tree().process_frame

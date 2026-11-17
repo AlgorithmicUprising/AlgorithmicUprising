@@ -63,7 +63,7 @@ const pck = added.filter((path) => path.endsWith('.pck'));
 if (wasm.length !== 1 || pck.length !== 1) throw new Error('Expected one wasm and one pck, got ' + wasm.length + ' wasm and ' + pck.length + ' pck');
 const wasmStat = await stat(join(root, wasm[0]));
 const pckStat = await stat(join(root, pck[0]));
-if (pckStat.size > 8 * 1024 * 1024) throw new Error('Pack is unexpectedly large: ' + pckStat.size);
+if (pckStat.size > 16 * 1024 * 1024) throw new Error('Pack is unexpectedly large: ' + pckStat.size);
 const rootIndex = await readFile(join(root, 'index.html'), 'utf8');
 if (!rootIndex.includes('./demo/')) throw new Error('Arcade landing no longer points at ./demo/');
 console.log(JSON.stringify({

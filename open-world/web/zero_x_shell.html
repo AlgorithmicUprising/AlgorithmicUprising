@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<title>Project Zero: The Algorithmic Uprising · Zero X Game Engine</title>
+		<!--
+			Zero X Game Engine loading shell for the HQ web export.
+			Zero X is Algorithmic Uprising's punk fork / rename of Godot Engine. We did not build the engine core,
+			so the Godot MIT license is right here in the fine print while index.wasm and index.pck download.
+			Based on Godot 4.7.2's misc/dist/html/full-size.html. Keep the $GODOT_* placeholders.
+			The license text below must match Engine.get_license_text(); tests/test_main.gd checks it.
+		-->
+		<style>
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+body {
+	color: #efeadb;
+	background-color: #0d0d0b;
+	overflow: hidden;
+	touch-action: none;
+}
+
+#canvas {
+	display: block;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#status {
+	position: absolute;
+	inset: 0;
+	box-sizing: border-box;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+	grid-template-rows: minmax(0, 1fr) auto;
+	gap: 14px 26px;
+	padding: 22px;
+	background-color: #0d0d0b;
+	font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', Arial, sans-serif;
+	visibility: hidden;
+	z-index: 1;
+}
+
+#status::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.16) 0, rgba(0, 0, 0, 0.16) 1px, transparent 1px, transparent 3px);
+}
+
+#zx-brand {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	min-width: 0;
+	min-height: 0;
+}
+
+.zx-zero-art {
+	display: block;
+	flex: 1 1 0;
+	min-height: 120px;
+	max-width: 100%;
+	margin-top: 14px;
+	object-fit: contain;
+	object-position: left bottom;
+}
+
+.zx-kicker {
+	margin: 0;
+	color: #aaa592;
+	font-size: 13px;
+	letter-spacing: 0.04em;
+}
+
+.zx-logo {
+	margin: 4px 0 0;
+	color: #c6ff3d;
+	font: 900 clamp(56px, 9vw, 92px)/0.9 Impact, 'Arial Black', system-ui, sans-serif;
+	letter-spacing: 0.01em;
+	text-shadow: 0 0 0 #2b3d0a, 4px 4px 0 #2b3d0a;
+}
+
+.zx-engine {
+	margin: 2px 0 0;
+	font: 800 clamp(22px, 2.6vw, 30px)/1.1 Impact, 'Arial Black', system-ui, sans-serif;
+	letter-spacing: 0.06em;
+}
+
+.zx-built {
+	margin: 8px 0 0;
+	font-size: 17px;
+}
+
+.zx-zero {
+	margin: 18px 0 0;
+	font-size: 19px;
+	line-height: 1.35;
+	max-width: 34em;
+}
+
+.zx-sticker {
+	display: inline-block;
+	margin-top: 14px;
+	padding: 2px 8px;
+	background: #c6ff3d;
+	color: #0d0d0b;
+	font-size: 14px;
+	font-weight: 700;
+	transform: rotate(-2.5deg);
+}
+
+#zx-fine {
+	min-height: 0;
+	overflow: auto;
+	touch-action: pan-y;
+	-webkit-overflow-scrolling: touch;
+	background: #171713;
+	border: 1px solid #3a3a31;
+	border-left: 3px solid #82a628;
+	padding: 14px;
+	color: #d9d4c3;
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+#zx-fine h2 {
+	margin: 0 0 10px;
+	font-size: 13px;
+	letter-spacing: 0.08em;
+	color: #efeadb;
+}
+
+#zx-fine p {
+	margin: 0 0 10px;
+}
+
+#zx-fine p.cr {
+	margin: 0;
+}
+
+#zx-fine p.cr + p:not(.cr) {
+	margin-top: 10px;
+}
+
+#zx-fine a {
+	color: #c6ff3d;
+}
+
+#zx-load {
+	grid-column: 1 / -1;
+}
+
+#zx-load-text {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 4px 16px;
+	margin-bottom: 8px;
+	color: #c6ff3d;
+	font-size: 15px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+}
+
+#zx-load-bytes {
+	color: #aaa592;
+	font-weight: 400;
+}
+
+#status-progress {
+	display: block;
+	width: 100%;
+	height: 10px;
+	appearance: none;
+	-webkit-appearance: none;
+	border: 1px solid #c6ff3d;
+	background: #1d2410;
+	color: #c6ff3d;
+}
+
+#status-progress::-webkit-progress-bar {
+	background: #1d2410;
+}
+
+#status-progress::-webkit-progress-value {
+	background: #c6ff3d;
+}
+
+#status-progress::-moz-progress-bar {
+	background: #c6ff3d;
+}
+
+#status-notice {
+	display: none;
+	grid-column: 1 / -1;
+	background-color: #5b3943;
+	border: 1px solid #ff4f8b;
+	color: #efeadb;
+	line-height: 1.3;
+	padding: 1rem;
+	text-align: center;
+}
+
+@media (max-width: 859px), (orientation: portrait) {
+	#status {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(0, 1fr) auto;
+		gap: 12px;
+		padding: 16px;
+	}
+
+	.zx-built {
+		font-size: 15px;
+	}
+
+	.zx-zero {
+		margin-top: 10px;
+		font-size: 16px;
+	}
+
+	#zx-fine {
+		font-size: 12px;
+	}
+
+	#zx-brand {
+		padding-right: 96px;
+		min-height: 160px;
+	}
+
+	.zx-zero-art {
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 86px;
+		height: 170px;
+		min-height: 0;
+		margin: 0;
+		object-position: right top;
+	}
+}
+
+@media (max-width: 519px) {
+	.zx-sticker {
+		display: none;
+	}
+}
+		</style>
+		$GODOT_HEAD_INCLUDE
+	</head>
+	<body>
+		<canvas id="canvas">
+			Your browser does not support the canvas tag.
+		</canvas>
+
+		<noscript>
+			Your browser does not support JavaScript.
+		</noscript>
+
+		<div id="status">
+			<header id="zx-brand">
+				<p class="zx-kicker">PROJECT ZERO: THE ALGORITHMIC UPRISING</p>
+				<h1 class="zx-logo">ZERO X</h1>
+				<p class="zx-engine">GAME ENGINE</p>
+				<p class="zx-built">built on Godot Engine 4.7.2-stable &middot; MIT license</p>
+				<p class="zx-zero">ZERO: &ldquo;Always read the fine print. Here&rsquo;s ours, in full. We renamed the engine. Godot&rsquo;s contributors built it.&rdquo;</p>
+				<span class="zx-sticker">MIT &middot; FORK IT &middot; CREDIT IT</span>
+				<img class="zx-zero-art" src="zero_x_zero.webp" width="351" height="694" alt="Zero, a salvaged robot with a CRT head and a leather jacket">
+			</header>
+			<section id="zx-fine" aria-label="Godot Engine license">
+				<h2>THE FINE PRINT</h2>
+				<div id="zx-license">
+					<p>This game uses Godot Engine, available under the following license:</p>
+					<p class="cr">Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md).</p>
+					<p class="cr">Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.</p>
+					<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+					of this software and associated documentation files (the "Software"), to deal
+					in the Software without restriction, including without limitation the rights
+					to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+					copies of the Software, and to permit persons to whom the Software is
+					furnished to do so, subject to the following conditions:</p>
+					<p>The above copyright notice and this permission notice shall be included in all
+					copies or substantial portions of the Software.</p>
+					<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+					IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+					FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+					AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+					LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+					OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+					SOFTWARE.</p>
+				</div>
+				<p>Godot also includes third-party code under its own licenses: <a href="GODOT_COPYRIGHT.txt" target="_blank" rel="noopener">GODOT_COPYRIGHT.txt</a> (Godot&rsquo;s official COPYRIGHT.txt for 4.7.2). More at godotengine.org/license.</p>
+			</section>
+			<div id="zx-load">
+				<div id="zx-load-text"><span id="zx-load-label">LOADING HUMANS&hellip;</span><span id="zx-load-bytes"></span></div>
+				<progress id="status-progress" aria-label="Loading progress"></progress>
+			</div>
+			<div id="status-notice"></div>
+		</div>
+
+		<script src="$GODOT_URL"></script>
+		<script>
+const GODOT_CONFIG = $GODOT_CONFIG;
+const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+	const loadLabel = document.getElementById('zx-load-label');
+	const loadBytes = document.getElementById('zx-load-bytes');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		if (err instanceof Error) {
+			setStatusNotice(err.message);
+		} else if (typeof err === 'string') {
+			setStatusNotice(err);
+		} else {
+			setStatusNotice('An unknown error occurred.');
+		}
+		loadLabel.textContent = 'BOOT FAILED. THE FINE PRINT STILL STANDS.';
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	function mb(bytes) {
+		return (bytes / 1048576).toFixed(1) + ' MB';
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			// Display the message as usual
+			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
+			displayFailureNotice(missingMsg + missing.join('\n'));
+		}
+	} else {
+		setStatusMode('progress');
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+					loadLabel.textContent = 'LOADING HUMANS\u2026 ' + Math.floor((current / total) * 100) + '%';
+					loadBytes.textContent = mb(current) + ' / ' + mb(total);
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+	}
+}());
+		</script>
+	</body>
+</html>
