@@ -149,10 +149,66 @@ def graffiti(w=512, h=512) -> bytes:
     return bytes(buf)
 
 
+def dark_face(w=512, h=512, lip_v=0.65) -> bytes:
+    """Finish pass (Nov 17 2026): the "dark" riding face. u runs across the ramp, v up the profile (0 = the ground, lip_v = the
+    coping, then the deck). Sealed dark-purple ply panels in the park's FACE family, black panel seams with screw heads, pale
+    wheel scuffs running up the transition, and a painted caution band under the coping (the HQ's STEEL / CAUTION palette)."""
+    base = (64, 54, 84)
+    deep = (46, 38, 62)
+    seam = (20, 16, 26)
+    scuff = (112, 102, 132)
+    screw = (150, 148, 160)
+    caution = (240, 193, 74)
+    ink = (21, 22, 26)
+    rows = [0.13, 0.26, 0.39, 0.52]
+    cols = [0.25, 0.5, 0.75]
+    buf = bytearray(w * h * 3)
+    for y in range(h):
+        v = y / (h - 1)                # UV v = arc length from the ground / profile length (image row 0 = the ground)
+        for x in range(w):
+            u = x / (w - 1)
+            n = noise(u * 22.0, v * 18.0)
+            col = mix(base, deep, n * 0.6)
+            # wheel scuffs: soft pale streaks along v, thicker low on the transition
+            s = noise(u * 60.0, v * 2.2)
+            if s > 0.72 and v < lip_v - 0.04:
+                col = mix(col, scuff, min(1.0, (s - 0.72) * 2.4) * (0.55 - v * 0.4))
+            # panel seams: across the width between ply sheets, and staggered joints along v
+            for r in rows:
+                if abs(v - r) < 0.0045:
+                    col = mix(col, seam, 0.9)
+            row = sum(1 for r in rows if v > r)
+            for c in cols:
+                cc = c + (0.125 if row % 2 else 0.0)
+                if abs(u - cc) < 0.0035 and v < lip_v - 0.05:
+                    col = mix(col, seam, 0.85)
+            # screw heads along the seams
+            for r in rows:
+                for k in range(16):
+                    sx = (k + 0.5) / 16.0
+                    if (u - sx) ** 2 * 3.0 + (v - r - 0.012) ** 2 < 0.00002:
+                        col = screw
+            # painted caution band under the coping
+            if lip_v - 0.055 < v < lip_v - 0.012:
+                stripe = int((u * 28.0 + v * 9.0)) % 2
+                col = mix(caution if stripe == 0 else ink, col, n * 0.18)
+            elif lip_v - 0.06 < v <= lip_v - 0.055 or lip_v - 0.012 <= v < lip_v - 0.007:
+                col = ink
+            # deck (covered by the steel deck plate) and the edges toward the cheeks
+            if v >= lip_v:
+                col = mix(deep, seam, 0.4)
+            edge = min(u, 1.0 - u)
+            if edge < 0.012:
+                col = mix(col, seam, (0.012 - edge) / 0.012)
+            buf[(y * w + x) * 3:(y * w + x) * 3 + 3] = bytes(clamp_px(col))
+    return bytes(buf)
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     write_png(OUT / "concrete_albedo.png", 1024, 512, concrete())
     write_png(OUT / "graffiti_albedo.png", 512, 512, graffiti())
+    write_png(OUT / "dark_face_albedo.png", 512, 512, dark_face())
     print("wrote", OUT)
 
 

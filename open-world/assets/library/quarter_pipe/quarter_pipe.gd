@@ -20,7 +20,14 @@ const Blocks = preload("res://scripts/world_blocks.gd")
 ## Phase 4 (LOCAL): close the open space under the deck with a back wall (visual and collision), for pipes that stand free.
 @export var closed_back := false
 
-const DARK_TINT := Color("ad97c8")    # measured face luma ~88 in the HQ light (original warm finish 133; Phase 2 fixed a 43 face)
+const DARK_TINT := Color("ad97c8")    # Phase 4 tint (kept for reference; the finish pass draws the dark face in its own texture)
+## Finish pass (Nov 17 2026): the "dark" finish is a finished surface, not a tint. Dark purple ply face with seams, scuffs and a
+## caution band under the coping (dark_face_albedo.png, tools/make_quarter_textures.py), steel coping, light steel angle along
+## both cheek edges (the park pieces' TRIM), dark steel cheek plates and a steel deck plate (the HQ arcade's STEEL).
+const DARK_COPING := Color("8a8f96")
+const DARK_TRIM := Color("e7eef2")
+const DARK_STEEL := Color("3a3540")
+const DARK_DECK := Color("4a4454")
 
 var triangle_count := 0
 var _built := false
@@ -116,11 +123,12 @@ func _build() -> void:
 	normals.append(Vector3.UP)
 	along.append(travelled)
 	var span := maxf(travelled, 0.001)
-	var concrete: Texture2D = load("res://assets/library/quarter_pipe/concrete_albedo.png")
+	var dark := finish == "dark"
+	var concrete: Texture2D = load("res://assets/library/quarter_pipe/dark_face_albedo.png" if dark else "res://assets/library/quarter_pipe/concrete_albedo.png")
 	var paint: Texture2D = load("res://assets/library/quarter_pipe/graffiti_albedo.png")
-	var shell_mat := Blocks.cel_textured(DARK_TINT if finish == "dark" else Color.WHITE, concrete, 3.0, 0.34)
+	var shell_mat := Blocks.cel_textured(Color.WHITE, concrete, 3.0, 0.34)
 	shell_mat.set_shader_parameter("fill_light", face_fill)
-	var metal_mat := Blocks.cel(Color("e7eef2"), 3.0, 0.08)
+	var metal_mat := Blocks.cel(DARK_COPING if dark else Color("e7eef2"), 3.0, 0.08)
 	var paint_mat := Blocks.cel_textured(Color.WHITE, paint, 3.0, 0.16)
 	var shell := _shell(outer, inner, normals, along, span, half)
 	var shell_mesh := ArrayMesh.new()
@@ -147,8 +155,10 @@ func _build() -> void:
 	coping.material_override = metal_mat
 	add_child(coping)
 	triangle_count += tube.get_faces().size() / 3
+	if dark:
+		_dark_trim(outer, half)
 	if closed_back:
-		_back_wall(deck_in, half, shell_mat)
+		_back_wall(deck_in, half, Blocks.cel(DARK_STEEL, 3.0, 0.3) if dark else shell_mat)
 	_poster(paint_mat, lip, half, 1.0)
 	_poster(paint_mat, lip, -half, -1.0)
 
@@ -266,3 +276,80 @@ func _back_wall(deck_in: Vector3, half: float, mat: Material) -> void:
 	col.position = Vector3(x - t * 0.5, top * 0.5, 0.0)
 	body.add_child(col)
 	add_child(body)
+
+## Finish pass: the dark finish's steel. Cheek plates over the side faces (just outside them), a light steel angle along the
+## riding edge of each cheek (top flange on the face, side flange down the cheek), and a steel plate on the deck behind the coping.
+func _dark_trim(outer: Array[Vector3], half: float) -> void:
+	var lip := lip_local()
+	var plate_mat := Blocks.cel(DARK_STEEL, 3.0, 0.3)
+	var trim_mat := Blocks.cel(DARK_TRIM, 3.0, 0.08)
+	for side in [-1.0, 1.0]:
+		var tag := "L" if side > 0.0 else "R"
+		var z: float = side * (half + 0.006)
+		var n := Vector3(0, 0, side)
+		var cv := PackedVector3Array()
+		var cn := PackedVector3Array()
+		var cu := PackedVector2Array()
+		var tv := PackedVector3Array()
+		var tn := PackedVector3Array()
+		var tu := PackedVector2Array()
+		var flange := 0.07
+		for i in outer.size() - 1:
+			var a := outer[i]
+			var b := outer[i + 1]
+			var a0 := Vector3(a.x, -0.01, z)
+			var b0 := Vector3(b.x, -0.01, z)
+			var a1 := Vector3(a.x, a.y - 0.004, z)
+			var b1 := Vector3(b.x, b.y - 0.004, z)
+			if side > 0.0:
+				_quad(cv, cn, cu, a1, a0, b0, b1, n, n, n, n, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+			else:
+				_quad(cv, cn, cu, a1, b1, b0, a0, n, n, n, n, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+			# side flange down the cheek
+			var zs: float = side * (half + 0.012)
+			var sa0 := Vector3(a.x, a.y + 0.012, zs)
+			var sb0 := Vector3(b.x, b.y + 0.012, zs)
+			var sa1 := Vector3(a.x, a.y - flange, zs)
+			var sb1 := Vector3(b.x, b.y - flange, zs)
+			if side > 0.0:
+				_quad(tv, tn, tu, sa0, sa1, sb1, sb0, n, n, n, n, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+			else:
+				_quad(tv, tn, tu, sa0, sb0, sb1, sa1, n, n, n, n, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+			# top flange on the riding face, along the edge
+			var ang_a := Vector3(-(b - a).normalized().y, (b - a).normalized().x, 0.0)
+			var ta0 := a + ang_a * 0.012 + Vector3(0, 0, side * (half + 0.012))
+			var tb0 := b + ang_a * 0.012 + Vector3(0, 0, side * (half + 0.012))
+			var ta1 := a + ang_a * 0.012 + Vector3(0, 0, side * (half - flange))
+			var tb1 := b + ang_a * 0.012 + Vector3(0, 0, side * (half - flange))
+			if side > 0.0:
+				_quad(tv, tn, tu, ta0, tb0, tb1, ta1, ang_a, ang_a, ang_a, ang_a, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+			else:
+				_quad(tv, tn, tu, ta0, ta1, tb1, tb0, ang_a, ang_a, ang_a, ang_a, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+		_add_mesh("Cheek" + tag, cv, cn, cu, plate_mat)
+		_add_mesh("EdgeTrim" + tag, tv, tn, tu, trim_mat)
+	var deck := MeshInstance3D.new()
+	deck.name = "DeckPlate"
+	var box := BoxMesh.new()
+	var x0 := lip.x + 0.11
+	var x1 := deck_end_x() - 0.02
+	box.size = Vector3(maxf(x1 - x0, 0.05), 0.012, width - 0.04)
+	deck.mesh = box
+	deck.position = Vector3((x0 + x1) * 0.5, lip.y + 0.006, 0.0)
+	deck.material_override = Blocks.cel(DARK_DECK, 3.0, 0.2)
+	add_child(deck)
+	triangle_count += 12
+
+func _add_mesh(node_name: String, v: PackedVector3Array, n: PackedVector3Array, uv: PackedVector2Array, mat: Material) -> void:
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = v
+	arrays[Mesh.ARRAY_NORMAL] = n
+	arrays[Mesh.ARRAY_TEX_UV] = uv
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var inst := MeshInstance3D.new()
+	inst.name = node_name
+	inst.mesh = mesh
+	inst.material_override = mat
+	add_child(inst)
+	triangle_count += v.size() / 3
