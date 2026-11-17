@@ -38,8 +38,8 @@ func _ready() -> void:
 	label.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	label.offset_left = -420
 	label.offset_right = 420
-	label.offset_top = 190
-	label.offset_bottom = 270
+	label.offset_top = 175
+	label.offset_bottom = 255
 	label.pivot_offset = Vector2(420, 40)
 	label.rotation = deg_to_rad(-4.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE

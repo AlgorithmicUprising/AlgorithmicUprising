@@ -373,13 +373,22 @@ func start_visual_demo(kind: String) -> void:
 		velocity = Vector3.ZERO
 		rotation.y = 0.0
 		camera_yaw = PI * 0.5
+	elif DEMO_LINES.has(kind):
+		var line: Dictionary = DEMO_LINES[kind]
+		global_position = line.start
+		velocity = line.dir * float(line.speed)
+		demo_switched = false
+		if rig != null:
+			rig.face_world(atan2(-line.dir.x, -line.dir.z))
 
 func _demo_drive(delta: float) -> void:
 	if visual_demo == "" or demo_cam == null or rig == null:
 		return
 	demo_clock += delta
 	var focus := rig.global_position + Vector3(0, 0.85, 0)
-	if visual_demo == "ramp":
+	if DEMO_LINES.has(visual_demo):
+		_demo_line(DEMO_LINES[visual_demo], focus)
+	elif visual_demo == "ramp":
 		demo_cam.global_position = global_position + Vector3(3.2, 1.5, 4.2)
 		external_move = Vector2(0, 1)
 		if trick == "" and is_on_floor() and global_position.y > 1.05 and demo_clock > 0.35:
@@ -1556,3 +1565,41 @@ func _bsair_land() -> void:
 	trick = "land"
 	trick_time = 0.0
 	_event("bs_air_land", {"u": u})
+
+# ---------------------------------------------------------------- finish pass: browser demos (?demo=<kind>)
+## Scripted runs at the new tricks for the web build's checks (hq_main.gd _maybe_demo): start point, travel direction, entry
+## speed, stick, a fixed camera, and the trick to press on the way.
+const DEMO_LINES := {
+	"rail5050": {"start": Vector3(-41.0, -0.325, 8.2), "dir": Vector3(-1, 0, 0), "speed": 5.6, "stick": 0.62, "cam": Vector3(-51.5, 1.3, 12.8), "ollie_x": -46.4, "switch": ""},
+	"rail5o": {"start": Vector3(-41.0, -0.325, 8.2), "dir": Vector3(-1, 0, 0), "speed": 5.6, "stick": 0.62, "cam": Vector3(-51.5, 1.3, 12.8), "ollie_x": -46.4, "switch": "grab"},
+	"railboard": {"start": Vector3(-41.0, -0.325, 8.2), "dir": Vector3(-1, 0, 0), "speed": 5.6, "stick": 0.62, "cam": Vector3(-51.5, 1.3, 12.8), "ollie_x": -46.4, "switch": "flip"},
+	"downrail": {"start": Vector3(-72.0, 0.895, 2.15), "dir": Vector3(1, 0, 0), "speed": 9.0, "stick": 1.0, "cam": Vector3(-64.6, 2.2, 8.6), "ollie_x": -70.1, "switch": ""},
+	"bsair": {"start": Vector3(-46.0, -0.325, -12.0), "dir": Vector3(-1, 0, 0), "speed": 9.0, "stick": 1.0, "cam": Vector3(-49.0, 2.4, -15.8), "ollie_x": INF, "switch": ""},
+	"kickturn": {"start": Vector3(-49.0, -0.3, -12.0), "dir": Vector3(-1, 0, 0), "speed": 6.5, "stick": 0.0, "cam": Vector3(-50.2, 2.6, -16.6), "ollie_x": INF, "switch": ""},
+}
+var demo_switched := false
+
+func _demo_line(line: Dictionary, focus: Vector3) -> void:
+	var dir: Vector3 = line.dir
+	camera_yaw = atan2(-dir.x, -dir.z) - rotation.y
+	demo_cam.global_position = line.cam
+	external_move = Vector2(0, float(line.stick))
+	var along := global_position.dot(dir)
+	if visual_demo == "kickturn":
+		if ramp_mode == "" and qp_state == "" and kt_count == 0 and not pipe_air:
+			velocity = Vector3(dir.x * float(line.speed), velocity.y, dir.z * float(line.speed))
+		if ramp_mode == "ride" and ramp != null and qp_state == "" and kt_count == 0 and ramp.profile_point(ramp_s).y > 0.5:
+			external_move = Vector2(0, -1)
+		elif ramp_mode == "ride" or kt_count > 0:
+			external_move = Vector2.ZERO
+	if visual_demo == "bsair":
+		if ramp_mode == "ride" or pipe_air:
+			external_move = Vector2.ZERO
+		if not demo_switched and pipe_air and air_kind == "lip" and air_u() >= 0.05:
+			request_trick("grab")
+			demo_switched = true
+	if trick == "" and grind == null and grind_count == 0 and float(line.ollie_x) < INF and along > float(line.ollie_x) * dir.x:
+		request_trick("ollie")
+	if str(line.switch) != "" and grind != null and not demo_switched and grind_clip_t > 0.05:
+		request_trick(str(line.switch))
+		demo_switched = true

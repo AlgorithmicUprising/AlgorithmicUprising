@@ -327,7 +327,7 @@ func _sync_look_catch() -> void:
 	look_catch.visible = show
 	look_catch.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
 	if hint_label != null:
-		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   Q ollie   R kickflip   F grab   E talk\nEnter confirm   Esc pause. Invert mouse Y is in the pause menu." % player.look_sensitivity
+		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   Q ollie   R kickflip   F grab   E talk\nOn a rail: F 5-0, R boardslide.  Quarter pipe: hold S high up to kickturn, F off the coping for a backside air\nEnter confirm   Esc pause. Invert mouse Y is in the pause menu." % player.look_sensitivity
 
 func _on_look_catch(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
@@ -357,6 +357,10 @@ func _maybe_demo() -> void:
 			kind = "grab"
 		elif "demo=ramp" in search:
 			kind = "ramp"
+		else:
+			for k in player.DEMO_LINES.keys():
+				if ("demo=" + str(k)) in search:
+					kind = str(k)
 	demo_armed = true
 	if kind == "":
 		return
@@ -382,7 +386,7 @@ func _publish_web_state() -> void:
 	if player.rig != null:
 		spin = player.rig.board.rotation.z if player.rig.board != null else 0.0
 		pose = str(player.rig.pose_name)
-	var js := "window.AU_HQ={x:%s,y:%s,z:%s,yaw:%s,fx:%s,fz:%s,skating:%s,session:'%s',input:%s,look:%s,paused:%s,invert:%s,trick:'%s',pose:'%s',spin:%s,zone:'%s',frame:'%s',sprite:%s};" % [
+	var js := "window.AU_HQ={x:%s,y:%s,z:%s,yaw:%s,fx:%s,fz:%s,skating:%s,session:'%s',input:%s,look:%s,paused:%s,invert:%s,trick:'%s',pose:'%s',spin:%s,zone:'%s',frame:'%s',sprite:%s,grind:'%s',callout:'%s',calls:%d,bsair:'%s',kickturns:%d};" % [
 		snapped(player.global_position.x, 0.01),
 		snapped(player.global_position.y, 0.01),
 		snapped(player.global_position.z, 0.01),
@@ -401,5 +405,10 @@ func _publish_web_state() -> void:
 		zone_at(player.global_position),
 		player.sprite_frame,
 		"true" if player.use_painted_sprite else "false",
+		(str(player.grind_trick) + "@" + str(player.grind.name)) if player.grind != null else "",
+		str(player.callout).replace("'", ""),
+		int(player.callout_id),
+		str(player.bsair_last.get("result", "")),
+		int(player.kt_count),
 	]
 	JavaScriptBridge.eval(js, true)
