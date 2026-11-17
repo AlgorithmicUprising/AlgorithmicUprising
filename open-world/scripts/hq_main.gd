@@ -40,6 +40,10 @@ func _ready() -> void:
 	add_child(flow)
 	flow.bind(world_sim, player, get_node("/root/AudioOwner"), session, self)
 	_hud()
+	var popup = load("res://scripts/trick_popup.gd").new()
+	popup.name = "TrickPopup"
+	popup.player = player
+	add_child(popup)
 	_apply_story()
 
 func _process(_delta: float) -> void:
@@ -201,7 +205,7 @@ func _hud() -> void:
 	mode_label = Label.new()
 	hint_label = Label.new()
 	var hint := hint_label
-	hint.text = "Click to look. Mouse turns the view; W moves that way. [ ] look speed\nWASD move   Space jump   Shift skate/walk   E talk or cabinet   Enter confirm   Esc pause\nGamepad: left stick move, right stick look, A jump, Y skate, X interact, Start pause"
+	hint.text = "Click to look. Mouse turns the view; W moves that way. [ ] look speed\nWASD move   Space jump   Shift skate/walk   E talk or cabinet   Enter confirm   Esc pause\nQ ollie   R kickflip   F grab   On a rail: F 5-0, R boardslide   Quarter pipe: hold S up high to kickturn, F off the coping for a backside air\nGamepad: left stick move, right stick look, A jump, Y skate, X interact, Start pause"
 	prompt_label = Label.new()
 	for label in [zone_label, mode_label, hint, prompt_label]:
 		label.add_theme_font_size_override("font_size", 18)
@@ -323,7 +327,7 @@ func _sync_look_catch() -> void:
 	look_catch.visible = show
 	look_catch.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
 	if hint_label != null:
-		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   Q ollie   R kickflip   F grab   E talk\nEnter confirm   Esc pause. Invert mouse Y is in the pause menu." % player.look_sensitivity
+		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   Q ollie   R kickflip   F grab   E talk\nOn a rail: F 5-0, R boardslide.  Quarter pipe: hold S high up to kickturn, F off the coping for a backside air\nEnter confirm   Esc pause. Invert mouse Y is in the pause menu." % player.look_sensitivity
 
 func _on_look_catch(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
@@ -337,7 +341,7 @@ func _on_look_catch(event: InputEvent) -> void:
 var demo_armed := false
 
 func _maybe_demo() -> void:
-	if demo_armed or player == null:
+	if demo_armed or player == null or flow == null or flow.boundary.phase != "world":
 		return
 	var kind := ""
 	for arg in OS.get_cmdline_user_args():
@@ -353,11 +357,28 @@ func _maybe_demo() -> void:
 			kind = "grab"
 		elif "demo=ramp" in search:
 			kind = "ramp"
+		else:
+			for k in player.DEMO_LINES.keys():
+				if ("demo=" + str(k)) in search:
+					kind = str(k)
+		if "demo=cabinet-" in search:
+			_demo_cabinet(search.split("demo=cabinet-")[1].split("&")[0])
 	demo_armed = true
 	if kind == "":
 		return
 	visual_demo = true
 	player.start_visual_demo(kind)
+
+## Finish pass browser check (?demo=cabinet-<game id>): open that arcade cabinet the way pressing E at it does
+## (arcade_cabinet.gd interact -> arcade_overlay.gd), so the check sees the real overlay and iframe.
+func _demo_cabinet(id: String) -> void:
+	var door = world_sim.get_node_or_null("ArcadeDoor")
+	if door == null:
+		return
+	var interior = door.ensure_interior()
+	if interior == null or not ("cabinets" in interior) or not interior.cabinets.has(id):
+		return
+	interior.cabinets[id].interact(flow)
 
 func _on_invert_y(enabled: bool) -> void:
 	if player == null:
@@ -378,7 +399,7 @@ func _publish_web_state() -> void:
 	if player.rig != null:
 		spin = player.rig.board.rotation.z if player.rig.board != null else 0.0
 		pose = str(player.rig.pose_name)
-	var js := "window.AU_HQ={x:%s,y:%s,z:%s,yaw:%s,fx:%s,fz:%s,skating:%s,session:'%s',input:%s,look:%s,paused:%s,invert:%s,trick:'%s',pose:'%s',spin:%s,zone:'%s',frame:'%s',sprite:%s};" % [
+	var js := "window.AU_HQ={x:%s,y:%s,z:%s,yaw:%s,fx:%s,fz:%s,skating:%s,session:'%s',input:%s,look:%s,paused:%s,invert:%s,trick:'%s',pose:'%s',spin:%s,zone:'%s',frame:'%s',sprite:%s,grind:'%s',callout:'%s',calls:%d,bsair:'%s',kickturns:%d};" % [
 		snapped(player.global_position.x, 0.01),
 		snapped(player.global_position.y, 0.01),
 		snapped(player.global_position.z, 0.01),
@@ -397,5 +418,10 @@ func _publish_web_state() -> void:
 		zone_at(player.global_position),
 		player.sprite_frame,
 		"true" if player.use_painted_sprite else "false",
+		(str(player.grind_trick) + "@" + str(player.grind.name)) if player.grind != null else "",
+		str(player.callout).replace("'", ""),
+		int(player.callout_id),
+		str(player.bsair_last.get("result", "")),
+		int(player.kt_count),
 	]
 	JavaScriptBridge.eval(js, true)

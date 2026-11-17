@@ -22,7 +22,7 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Plants | Five box planters with box shrubs |
 | Lighting | Procedural sunset sky, warmer key, cooler ambient, three-band shader with a sharper edge darkening, one shadow map. Still not inked illustration |
 | Park marks | Flat original panel on the workshop face and two crack lines. No collision. Not the reference painting. (The arcade front mark, marquee bar, eave lamps, billboard ARCADE label and TEMP TAG moved into the Phase 1 exterior; the old poster quads and cabinet face bar went with the greybox interior) |
-| Fony, the player | Painted sprite billboard. Idle, walk, cruise, tricks, grinds, and bails use the v3 clips. The six push cycles are the v5 strokes. The pivot mesh can be shown from the pause menu. Collision is still a separate capsule |
+| Fony, the player | Painted sprite billboard. Idle, walk, cruise, tricks, grinds, and bails use the v3 clips (LOCAL puppet-v1 test build: the puppet bake overrides most of them; grind round, Nov 16 2026: the 50-50 grind is a puppet clip in all 8 views, `fony2d_puppet_v1_grind_atlas.png`). The six push cycles are the v5 strokes. The pivot mesh can be shown from the pause menu. Collision is still a separate capsule |
 | Zero | Articulated pivots, not a skin rig. Larger cream CRT, lime screen bars, knob, vent, capsule jacket and limbs, red “?” patch, barcode blocks, metal neck, hands, and knees, coiled cable segments. Idle bob and a raised arm while talking |
 
 ## Still needed before this can look like the concept

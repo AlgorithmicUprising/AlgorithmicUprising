@@ -13,6 +13,37 @@ var fails: Array[String] = []
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	await get_tree().process_frame
+	if OS.get_environment("AU_TEST_ONLY") == "grind1":
+		await _grind_round()
+		print("SUMMARY failed=", fails.size())
+		get_tree().quit(1 if fails.size() else 0)
+		return
+	if OS.get_environment("AU_TEST_ONLY") == "grind":
+		# quick loop for the grind round (the full suite below is what counts)
+		await _grind()
+		await _grind_round()
+		await _grind_park()
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
+	if OS.get_environment("AU_TEST_ONLY") == "finish":
+		await _finish_pass()
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
+	if OS.get_environment("AU_TEST_ONLY") == "phase4":
+		# quick loop while working on Phase 4 (the full suite below is what counts)
+		await _kickturn()
+		await _park()
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	_contracts()
 	await _boot()
 	await _input_map()
@@ -21,11 +52,16 @@ func _ready() -> void:
 	await _invert()
 	await _movement()
 	await _grind()
+	await _grind_round()
+	await _grind_park()
 	await _body()
 	await _quarter()
 	await _art_quarter()
 	await _transition()
 	await _dropin()
+	await _kickturn()
+	await _park()
+	await _finish_pass()
 	await _tricks()
 	await _fony_sprite()
 	await _district()
@@ -822,6 +858,304 @@ func _grind() -> void:
 	host.queue_free()
 	await frames(2)
 
+## Grind round: a 0.30 m flat bar (top of the tube) along X at the origin, ground at y = 0. Body origin = contact - 0.325.
+func _grind_bar(host: Node, len := 7.0, drop := 0.0, friction := -1.0) -> Node:
+	var rail = load("res://scenes/grind_rail.tscn").instantiate()
+	rail.length = len
+	rail.drop = drop
+	if friction >= 0.0:
+		rail.friction = friction
+	rail.position = Vector3(0, 0.30 + drop * 0.5, 0)
+	host.add_child(rail)
+	return rail
+
+## Ride +X along z = lateral at `speed` and ollie when the board is `lead` m before the rail start; returns the player.
+func _grind_ride(host: Node, speed: float, lateral := 0.2, lead := 2.6, ollie := true):
+	var player = _player(host, Vector3(-8.0, -0.3, lateral))
+	await frames(8)
+	player.skating = true
+	player.camera_yaw = -PI / 2.0
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	player.global_position = Vector3(-8.0, -0.325, lateral)
+	player.velocity = Vector3(speed, 0, 0)
+	var popped := not ollie
+	for _i in 160:
+		await get_tree().physics_frame
+		if not popped and player.global_position.x > -3.5 - lead:
+			player.request_trick("ollie")
+			popped = true
+		if OS.get_environment("AU_GRIND_DEBUG") == "1":
+			print("dbg x=%.2f y=%.3f vy=%.2f vx=%.2f floor=%s trick=%s" % [player.global_position.x, player.global_position.y, player.velocity.y, player.velocity.x, player.is_on_floor(), player.trick])
+		if player.grind != null or player.trick == "bail":
+			break
+	return player
+
+func _grind_round() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(60, 1, 60), Palette.GROUND)
+	var rail = _grind_bar(host)
+	await frames(2)
+	expect(rail.kind == "rail" and absf(rail.line_point(0.0).y - 0.30) < 0.001 and rail.get_node_or_null("Tube") != null and rail.get_node_or_null("Leg0") != null, "grind: flat bar top at 0.30 m with a tube and legs")
+	# 1. ollie onto the bar, nearly parallel: locks a 50-50, board on the bar, speed carries, rolls off the end and lands
+	var player = await _grind_ride(host, 6.5)
+	expect(player.grind == rail and player.grind_trick == "5050" and player.grind_last.get("how", "") == "ollie", "grind: an ollie onto the bar locks a 50-50 last=%s y=%s" % [player.grind_last, player.global_position.y])
+	if player.grind != null:
+		var entry: float = absf(player.grind_v)
+		# finish pass: the lock eases onto the bar (no pop on the lock tick), then sits on the riding line
+		var snap0: float = player.grind_snap.length()
+		var step_max := 0.0
+		var prev: Vector3 = player.global_position
+		for _i in 9:
+			await get_tree().physics_frame
+			var d: Vector3 = player.global_position - prev
+			step_max = maxf(step_max, Vector2(d.y, d.z).length())
+			prev = player.global_position
+		expect(snap0 > 0.01 and step_max < 0.06, "grind: the lock eases onto the bar (lateral/vertical step per tick %.3f m, snap %.3f m)" % [step_max, snap0])
+		var y_ok: bool = absf(player.global_position.y + 0.325 - (0.30 - player.GRIND_SINK)) < 0.005
+		var z_ok: bool = absf(player.global_position.z) < 0.001
+		expect(y_ok and z_ok and player.on_ground() and player.trick == "", "grind: wheels on the bar top, centred on the axis y=%s z=%s" % [player.global_position.y, player.global_position.z])
+		expect(entry > 5.5, "grind: the approach speed carries onto the bar entry=%s" % entry)
+		player.skate_toggle_pressed()
+		expect(player.skating and player.grind != null, "grind: Shift (kick-up) is ignored on the bar")
+		await frames(21)
+		expect(player.grind != null and absf(player.grind_v) < entry and absf(player.grind_v) > entry - 0.5, "grind: slow friction along the bar v=%s entry=%s" % [player.grind_v, entry])
+		var left := false
+		for _i in 120:
+			await get_tree().physics_frame
+			if player.grind == null:
+				left = true
+				break
+		expect(left and player.grind_last.get("exit", "") == "end" and player.global_position.x > 3.4, "grind: rolls off the end last=%s x=%s" % [player.grind_last, player.global_position.x])
+		var landed := false
+		for _i in 40:
+			await get_tree().physics_frame
+			if player.is_on_floor():
+				landed = true
+				break
+		await frames(2)
+		expect(landed and player.skating and player.bail_time <= 0.0 and player.velocity.x > 4.0, "grind: lands off the end still skating vx=%s" % player.velocity.x)
+		expect(player.trick == "land" or player.trick == "", "grind: touchdown off the end plays the land frames trick=%s" % player.trick)
+		expect(player.grind_count == 1, "grind: one grind counted got %s" % player.grind_count)
+	player.queue_free()
+	await frames(2)
+	# 2. ollie out mid-bar: pops up and drifts back to the side he came from, lands clear of the bar without re-locking
+	player = await _grind_ride(host, 6.5)
+	if player.grind != null:
+		await frames(12)
+		player.request_trick("ollie")
+		await frames(2)
+		expect(player.grind == null and player.grind_last.get("exit", "") == "pop" and player.trick == "ollie" and player.velocity.y > 0.0, "grind: Q pops out of the grind trick=%s vy=%s" % [player.trick, player.velocity.y])
+		expect(player.grind_out_time >= 0.0, "grind: pop-out starts the out frames")
+		var relock := false
+		for _i in 60:
+			await get_tree().physics_frame
+			if player.grind != null:
+				relock = true
+		expect(not relock and player.is_on_floor() and absf(player.global_position.z) > 0.3 and player.skating and player.bail_time <= 0.0, "grind: lands beside the bar after the pop z=%s" % player.global_position.z)
+	else:
+		expect(false, "grind: second ride locks for the pop-out test")
+	player.queue_free()
+	await frames(2)
+	# 3. bad approaches: across the bar at 45 deg, too slow, and riding into it on the ground
+	player = _player(host, Vector3(-1.0, 0.2, 0.1))
+	await frames(2)
+	player.skating = true
+	player.external_move_active = true
+	player.external_move = Vector2.ZERO
+	player.global_position = Vector3(-1.0, 0.30 + 0.06 - 0.325, 0.1)
+	player.velocity = Vector3(4.0, -1.0, -4.0)
+	await frames(3)
+	expect(player.grind == null and player.trick == "bail" and player.last_bail_reason == "grind_bad_angle", "grind: landing on the bar at 45 deg bails reason=%s" % player.last_bail_reason)
+	player.queue_free()
+	await frames(2)
+	player = _player(host, Vector3(-1.0, 0.2, 0.1))
+	await frames(2)
+	player.skating = true
+	player.external_move_active = true
+	player.external_move = Vector2.ZERO
+	player.global_position = Vector3(-1.0, 0.30 + 0.06 - 0.325, 0.1)
+	player.velocity = Vector3(1.0, -1.0, 0.0)
+	await frames(3)
+	expect(player.grind == null and player.trick == "bail" and player.last_bail_reason == "grind_too_slow", "grind: landing on the bar too slow bails reason=%s" % player.last_bail_reason)
+	player.queue_free()
+	await frames(2)
+	player = _player(host, Vector3(0.0, -0.3, -2.0))
+	await frames(8)
+	player.skating = true
+	player.camera_yaw = PI
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	player.velocity = Vector3(0, 0, 6.0)
+	var clipped := false
+	for _i in 60:
+		await get_tree().physics_frame
+		if player.trick == "bail":
+			clipped = true
+			break
+	expect(clipped and player.last_bail_reason == "grind_clipped", "grind: riding into the bar without an ollie bails reason=%s z=%s" % [player.last_bail_reason, player.global_position.z])
+	player.queue_free()
+	await frames(2)
+	# 4. no ollie, approach parallel beside it: nothing happens
+	player = await _grind_ride(host, 6.0, 0.6, 0.0, false)
+	await frames(60)
+	expect(player.grind == null and player.trick != "bail" and player.grind_count == 0, "grind: rolling past beside the bar does nothing")
+	player.queue_free()
+	host.queue_free()
+	await frames(2)
+	# 5. stall: a sticky bar and a slow entry: the trucks catch and he falls off beside it
+	host = _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(60, 1, 60), Palette.GROUND)
+	rail = _grind_bar(host, 7.0, 0.0, 4.0)
+	await frames(2)
+	player = _player(host, Vector3(-2.5, 0.2, 0.1))
+	await frames(2)
+	player.skating = true
+	player.external_move_active = true
+	player.external_move = Vector2.ZERO
+	player.global_position = Vector3(-2.5, 0.30 + 0.06 - 0.325, 0.1)
+	player.velocity = Vector3(2.4, -0.5, 0.0)
+	await frames(2)
+	expect(player.grind == rail, "grind: slow but aligned entry still locks")
+	var stalled := false
+	for _i in 90:
+		await get_tree().physics_frame
+		if player.trick == "bail":
+			stalled = true
+			break
+	expect(stalled and player.last_bail_reason == "grind_stalled" and player.grind == null, "grind: running out of speed on the bar bails reason=%s" % player.last_bail_reason)
+	await frames(30)
+	expect(player.global_position.y < -0.2 and absf(player.global_position.z) > 0.3, "grind: the stall drops him beside the bar y=%s z=%s" % [player.global_position.y, player.global_position.z])
+	host.queue_free()
+	await frames(2)
+	# 6. down rail: gravity along it speeds him up
+	host = _host()
+	Blocks.solid(host, "Ground", Vector3(0, -2.5, 0), Vector3(60, 1, 60), Palette.GROUND)
+	rail = _grind_bar(host, 6.0, 1.0)
+	await frames(2)
+	player = _player(host, Vector3(-12.0, -1.0, 0.1))
+	await frames(2)
+	player.skating = true
+	player.external_move_active = true
+	player.external_move = Vector2.ZERO
+	var top0: Vector3 = rail.line_point(0.5)
+	player.global_position = top0 + Vector3(0, 0.06 - 0.325, 0.1)
+	player.velocity = Vector3(4.0, -0.5, 0.0)
+	await frames(2)
+	var v0: float = absf(player.grind_v) if player.grind != null else 0.0
+	await frames(20)
+	expect(player.grind == rail and absf(player.grind_v) > v0 + 0.5, "grind: a down rail speeds him up v0=%s v=%s" % [v0, player.grind_v])
+	expect(player.grind != null and absf(player.global_position.y + 0.325 + player.GRIND_SINK - rail.line_point(player.grind_along).y) < 0.01, "grind: follows the slope of a down rail")
+	host.queue_free()
+	await frames(2)
+
+## Grind round: the yard has a flat bar and two ledge edges, and both are reachable from a pushed run-up.
+func _grind_park() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(-50, -0.5, 0), Vector3(80, 1, 80), Palette.GROUND)
+	load("res://scripts/yard.gd").build(host)
+	await frames(3)
+	var bar = host.get_node_or_null("GrindRail")
+	expect(bar != null and bar.kind == "rail" and absf(bar.line_point(0.0).y - 0.30) < 0.001 and absf(bar.length - 7.0) < 0.001, "park: GrindRail is a 0.30 m flat bar")
+	var pad: Node3D = host.get_node("ManualPad")
+	for n in ["ManualPadLedgeE", "ManualPadLedgeW"]:
+		var e = host.get_node_or_null(n)
+		var ok: bool = e != null and e.kind == "ledge" and absf(e.line_point(1.0).y - float(pad.get_meta("height"))) < 0.001
+		if ok:
+			var mid: Vector3 = e.line_point(e.length * 0.5)
+			ok = absf(mid.z - pad.position.z) < 0.01 and absf(absf(mid.x - pad.position.x) - 0.78) < 0.01
+		expect(ok, "park: %s runs along the pad's metal edge at its height" % n)
+	# flat bar: push west down the z = 6 lane side from x -40, ollie in, lock
+	var player = _player(host, Vector3(-40.0, -0.3, 8.2))
+	await frames(8)
+	player.skating = true
+	player.camera_yaw = PI / 2.0
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	player.global_position = Vector3(-40.0, -0.325, 8.2)
+	player.velocity = Vector3(-4.0, 0, 0)
+	var locked := false
+	var popped := false
+	for _i in 200:
+		await get_tree().physics_frame
+		if not popped and player.global_position.x < -55.5 + 7.0 + 2.6:
+			player.request_trick("ollie")
+			popped = true
+		if player.grind != null:
+			locked = player.grind == bar
+			break
+		if player.trick == "bail":
+			break
+	expect(locked, "park: pushing west and ollieing locks onto the flat bar last=%s x=%s" % [player.grind_last, player.global_position.x])
+	player.queue_free()
+	await frames(2)
+	# ledge: ride south along the pad's east side, ollie up onto the east edge
+	var east = host.get_node("ManualPadLedgeE")
+	player = _player(host, Vector3(-36.8, -0.3, -3.0))
+	await frames(8)
+	player.skating = true
+	player.camera_yaw = 0.0
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	player.global_position = Vector3(-36.8, -0.325, -3.0)
+	player.velocity = Vector3(0, 0, -5.0)
+	locked = false
+	popped = false
+	for _i in 200:
+		await get_tree().physics_frame
+		if not popped and player.global_position.z < -8.5 + 2.4:
+			player.request_trick("ollie")
+			popped = true
+		if player.grind != null:
+			locked = player.grind == east
+			break
+		if player.trick == "bail":
+			break
+	expect(locked, "park: riding south beside the pad and ollieing locks onto its east ledge last=%s pos=%s" % [player.grind_last, player.global_position])
+	if locked:
+		var left := false
+		for _i in 150:
+			await get_tree().physics_frame
+			if player.grind == null:
+				left = true
+				break
+		expect(left and player.grind_last.get("exit", "") == "end", "park: rides the ledge off its end last=%s" % [player.grind_last])
+	player.queue_free()
+	await frames(2)
+	# ledge pop-out: Q mid-ledge pops him back out to the side he came from, onto the ground beside the pad
+	player = _player(host, Vector3(-36.8, -0.3, -3.0))
+	await frames(8)
+	player.skating = true
+	player.camera_yaw = 0.0
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	player.global_position = Vector3(-36.8, -0.325, -3.0)
+	player.velocity = Vector3(0, 0, -5.0)
+	popped = false
+	for _i in 200:
+		await get_tree().physics_frame
+		if not popped and player.global_position.z < -8.5 + 2.4:
+			player.request_trick("ollie")
+			popped = true
+		if OS.get_environment("AU_GRIND_DEBUG") == "1":
+			print("dbg2 pos=%s v=%s floor=%s trick=%s req=%s" % [player.global_position, player.velocity, player.is_on_floor(), player.trick, player.trick_request])
+		if player.grind != null or player.trick == "bail":
+			break
+	if player.grind == east:
+		await frames(10)
+		player.request_trick("ollie")
+		var down := false
+		for _i in 60:
+			await get_tree().physics_frame
+			if player.is_on_floor() and player.grind == null and player.velocity.y <= 0.0 and player.grind_pop_side == Vector3.ZERO:
+				down = true
+				break
+		expect(down and player.global_position.x > -37.22 + 0.3 and player.global_position.y < -0.3 and player.bail_time <= 0.0 and player.skating, "park: popping out of the ledge lands on the ground outside the pad pos=%s last=%s" % [player.global_position, player.grind_last])
+	else:
+		expect(false, "park: second ledge ride locks for the pop-out")
+	host.queue_free()
+	await frames(2)
+
 func _district() -> void:
 	var main = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
@@ -1050,6 +1384,13 @@ func _arcade_interior(main, inside: Node3D) -> void:
 	player.velocity = Vector3.ZERO
 	await frames(6)
 
+## JSON phase lists load as floats; frame indices are ints.
+func _has_int(list: Array, value: int) -> bool:
+	for item in list:
+		if int(item) == value:
+			return true
+	return false
+
 func _ride_ctx(facing_yaw: float) -> Dictionary:
 	return {
 		"facing_yaw": facing_yaw,
@@ -1099,7 +1440,11 @@ func _fony_sprite() -> void:
 		expect(anim.clips.has("bail_" + dir_name) and anim.clips["bail_" + dir_name].source == "puppet" and anim.clips["bail_" + dir_name].frames.size() == 15, "puppet bail %s is 15 frames" % dir_name)
 		expect(_same_cell(anim.clips["bail_" + dir_name].frames[14], anim.clips["cruise_" + dir_name].frames[0]), "puppet bail %s ends on the cruise drawing" % dir_name)
 		expect(_same_cell(anim.clips["grab_" + dir_name].frames[3], anim.clips["ollie_" + dir_name].frames[3]), "puppet grab %s crouches like the ollie" % dir_name)
-	expect(anim.clips.has("grind_right") and anim.clips["grind_right"].frames.size() == 6, "v3 grind has a right-side loop")
+	# Grind round: the puppet 50-50 (in / hold / out) replaces the three v3 grind paintings in all 8 views.
+	for dir_name in anim.DIRS:
+		var gc: Dictionary = anim.clips.get("grind_" + dir_name, {})
+		expect(gc.get("source", "") == "puppet" and gc.frames.size() == 16 and gc.phases.has("in") and gc.phases.has("hold") and gc.phases.has("out"), "puppet 50-50 grind %s is 16 frames with in / hold / out" % dir_name)
+		expect(str(gc.frames[0].get("atlas_file", "")) == "fony2d_puppet_v1_grind_atlas.png", "puppet grind %s lives in the grind atlas" % dir_name)
 	expect(anim.clips.has("kickup_right") and anim.clips.has("dropin_right"), "v3 kick-up and drop-in have a right side")
 	for dir_name in anim.DIRS:
 		expect(anim.clips.has("idle_" + dir_name) and anim.clips["idle_" + dir_name].frames.size() == 24, "puppet idle breathes in %s" % dir_name)
@@ -1208,6 +1553,19 @@ func _fony_sprite() -> void:
 	grinding.speed = 8.0
 	grinder.step(0.05, grinding)
 	expect(grinder.clip == "grind_back", "grinding away uses grind_back got %s" % grinder.clip)
+	expect(grinder.frame_index == 0, "the grind starts on the touchdown frame got %s" % grinder.frame_index)
+	grinding.grind_t = 0.5
+	grinder.step(0.05, grinding)
+	var hold_frames: Array = grinder._clip("grind_back").phases.hold
+	expect(_has_int(hold_frames, grinder.frame_index), "0.5 s into the grind plays the hold loop got %s" % grinder.frame_index)
+	grinding.grind = false
+	grinding.grind_out = 0.05
+	grinding.vy = 3.0
+	grinder.step(0.05, grinding)
+	expect(grinder.clip == "grind_back" and _has_int(grinder._clip("grind_back").phases.out, grinder.frame_index), "popping out shows the grind out frames got %s#%s" % [grinder.clip, grinder.frame_index])
+	grinding.grind_out = -1.0
+	grinder.step(0.05, grinding)
+	expect(grinder.clip.begins_with("ollie_"), "after the out frames the air uses the ollie frames got %s" % grinder.clip)
 	var bailer = load("res://scripts/fony_sprite_anim.gd").new()
 	var bailing := _ride_ctx(0.0)
 	bailing.skating = false
@@ -1804,8 +2162,10 @@ func _dropin() -> void:
 		var bs := float(ca.get("body_scale", 1.0))
 		var dw := absf(float(ba.rect[2]) * bs - float(ca.rect[2]))
 		var dh := absf(float(ba.rect[3]) * bs - float(ca.rect[3]))
+		# Tolerance was set in 0.5-scale atlas px; scale it with the pack (full-size masters are 1.0).
+		var tol := 6.0 * maxf(1.0, float(ca.get("atlas_scale", 0.5)) / 0.5)
 		bail_end_worst = maxf(bail_end_worst, maxf(dw, dh))
-		bail_end_ok = bail_end_ok and dw <= 6.0 and dh <= 6.0
+		bail_end_ok = bail_end_ok and dw <= tol and dh <= tol
 		for fr in anim.clips["qp_bail_" + dir_name].frames:
 			var bpx: Array = fr.get("board_px", [0, 0])
 			if absf(float(bpx[1])) > 2000.0:
@@ -2063,3 +2423,606 @@ func _boot() -> void:
 	expect(handed == ["res://scenes/main.tscn"], "boot moves on by itself once the park is loaded")
 	boot.queue_free()
 	await get_tree().process_frame
+
+## Phase 4 (LOCAL puppet test): backside kickturn on the library quarter-pipe. Pipe at the origin, +X climbs; he rides in at
+## v0 coasting and holds back (S) from partway up; the kickturn fires inside its window (high on the wall, slow, below the
+## coping), turns him 180 deg clockwise from above about the back truck and he rolls out forward.
+func _kickturn() -> void:
+	var cat = JsonFile.read("res://assets/library/fony2d/frames_puppet_v1.json")
+	var views := ["back", "back_right", "back_left", "right", "left", "front", "front_right", "front_left"]
+	var missing: Array = []
+	var edge: Array = []
+	var sc := float(cat.atlas.scale_from_master)
+	var ax := 400.0 * sc
+	var ay := 750.0 * sc
+	for d in [40, 50, 60]:
+		for v in views:
+			var key := "qp_kickturn_bs%d_%s" % [d, v]
+			if not cat.animations.has(key) or cat.animations[key].frames.size() != 15:
+				missing.append(key)
+				continue
+			for fr in cat.animations[key].frames:
+				var off: Array = fr.anchor_offset
+				var rc: Array = fr.atlas_rect
+				if not str(fr.atlas_file).begins_with("fony2d_puppet_v1_kickturn_atlas") or float(off[0]) < -ax + 2.0 or float(off[1]) < -ay + 2.0 or float(off[0]) + float(rc[2]) > 800.0 * sc - ax - 2.0 or float(off[1]) + float(rc[3]) > 850.0 * sc - ay - 2.0:
+					edge.append("%s" % key)
+	expect(missing.is_empty(), "kickturn: 24 clips (3 wall angles x 8 views), 15 frames each (missing %s)" % [missing])
+	expect(edge.is_empty(), "kickturn: no frame touches its cell edge (%d bad)" % edge.size())
+	expect(cat.animations.has("qp_kickturn_bs50_front") and int(cat.animations.qp_kickturn_bs50_front.phases.turn_deg) == 180 and str(cat.animations.qp_kickturn_bs50_front.phases.direction).begins_with("backside"), "kickturn: phases say backside 180")
+	expect(load("res://assets/library/fony2d/fony2d_puppet_v1_kickturn_atlas.png") is Texture2D, "kickturn: atlas imports")
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(60, 1, 60), Palette.GROUND)
+	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	host.add_child(pipe)
+	await frames(2)
+	for row in [[5.0, 40], [5.5, 40], [6.5, 50], [7.0, 60]]:
+		var r: Dictionary = await _kickturn_run(host, pipe, float(row[0]), true)
+		var kt: Dictionary = r.kt
+		expect(r.count == 1 and not r.lip and not r.bailed, "kickturn: %.1f m/s entry kickturns once (count %d, lip %s, bail %s)" % [row[0], r.count, r.lip, r.bailed])
+		if r.count != 1:
+			continue
+		expect(int(kt.deg) == int(row[1]), "kickturn: %.1f m/s fires at %.1f deg on the wall, uses the %d deg clip (want %d)" % [row[0], float(kt.wall_deg), int(kt.deg), int(row[1])])
+		expect(absf(r.turn - 180.0) < 5.0 and r.cw, "kickturn: %.1f m/s turns %.1f deg, clockwise from above (backside, regular)" % [row[0], r.turn])
+		expect(float(kt.time) >= 0.45 and float(kt.time) <= 0.7, "kickturn: %.1f m/s takes %.3f s" % [row[0], float(kt.time)])
+		expect(r.max_s < pipe.lip_arc() - 0.2 and r.min_gap > -0.05, "kickturn: %.1f m/s stays on the wall below the coping (max s %.2f of %.2f, min gap %.3f)" % [row[0], r.max_s, pipe.lip_arc(), r.min_gap])
+		expect(r.exited and not r.fakie and r.exit_speed > 0.8, "kickturn: %.1f m/s rolls out forward, not fakie (%.2f m/s)" % [row[0], r.exit_speed])
+		expect(r.clips.size() == 1 and str(r.clips[0]).begins_with("qp_kickturn_bs%d_" % int(row[1])) and r.frames_seen.size() >= 12 and r.mono, "kickturn: %.1f m/s draws one view, frames in order (%s, %d frames)" % [row[0], r.clips, r.frames_seen.size()])
+		expect(r.ref_jump < 0.02, "kickturn: %.1f m/s card anchor never jumps (max %.3f m/tick)" % [row[0], r.ref_jump])
+	var low: Dictionary = await _kickturn_run(host, pipe, 4.0, true)
+	expect(low.count == 0 and low.exited and low.fakie, "kickturn: too low on the wall (4.0 m/s) no kickturn; rolls back fakie")
+	var coast: Dictionary = await _kickturn_run(host, pipe, 6.0, false)
+	expect(coast.count == 0 and coast.exited and coast.fakie, "kickturn: without the stick he still rolls back fakie")
+	host.queue_free()
+	await frames(2)
+
+func _kickturn_run(host: Node, pipe: Node3D, v0: float, hold: bool) -> Dictionary:
+	var player = _player(host, Vector3(-3.0, 0.2, 0))
+	await frames(18)
+	player.skating = true
+	player.camera_yaw = -PI * 0.5
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	await frames(1)
+	player.global_position = Vector3(-1.5, player.global_position.y, 0)
+	player.velocity = Vector3(v0, 0, 0)
+	player.external_move = Vector2.ZERO
+	var face0: float = player.rig.global_rotation.y
+	var r := {"count": 0, "lip": false, "bailed": false, "turn": 0.0, "cw": false, "max_s": 0.0, "min_gap": 1.0, "exited": false,
+		"fakie": false, "exit_speed": 0.0, "clips": [], "frames_seen": [], "mono": true, "ref_jump": 0.0, "kt": {}}
+	var entered := false
+	var last_ref := Vector3.INF
+	var last_i := -1
+	for _i in 420:
+		if not entered and player.ramp_mode == "":
+			player.velocity.x = v0
+		if hold and player.ramp_mode == "ride" and player.qp_state == "" and player.kt_count == 0 and pipe.profile_point(player.ramp_s).y > 0.5:
+			player.external_move = Vector2(0, -1)
+		if player.kt_count > 0 or player.ramp_mode == "":
+			player.external_move = Vector2.ZERO
+		await get_tree().physics_frame
+		if player.ramp_mode == "ride":
+			entered = true
+		if player.trick == "bail":
+			r.bailed = true
+		if player.qp_state == "kickturn":
+			r.max_s = maxf(r.max_s, player.ramp_s)
+			var c: Vector3 = pipe.to_local(player.global_position + Vector3.UP * player.CAPSULE_LOW)
+			r.min_gap = minf(r.min_gap, pipe.radius - Vector2(c.x, pipe.radius - c.y).length() - player.CAPSULE_R)
+			var parts := str(player.sprite_frame).split("#")
+			if parts.size() == 2:
+				if not r.clips.has(parts[0]):
+					r.clips.append(parts[0])
+				var fi := int(parts[1])
+				if fi < last_i:
+					r.mono = false
+				if fi != last_i:
+					r.frames_seen.append(fi)
+				last_i = fi
+			var ref: Vector3 = player.global_position + player.sprite_anchor_offset()
+			if last_ref != Vector3.INF:
+				r.ref_jump = maxf(r.ref_jump, ref.distance_to(last_ref))
+			last_ref = ref
+		if entered and player.ramp_mode == "" and not player.pipe_air and player.global_position.x < -0.3:
+			r.exited = true
+			r.fakie = player.is_fakie()
+			r.exit_speed = Vector2(player.velocity.x, player.velocity.z).length()
+			break
+	r.count = player.kt_count
+	r.kt = player.kt_last
+	var turn := wrapf(player.rig.global_rotation.y - face0, -PI, PI)
+	r.turn = absf(rad_to_deg(turn))
+	r.cw = r.count == 1 and player.kt_to_yaw < player.kt_from_yaw
+	for e in player.ramp_events:
+		if e.what == "lip_launch":
+			r.lip = true
+	player.queue_free()
+	await frames(2)
+	return r
+
+## Phase 4 (LOCAL): the expanded skate yard. The real yard is built; he rides each new piece and must never sink into it,
+## fall through it, or stop dead against it.
+func _park() -> void:
+	const Pieces = preload("res://assets/library/skate_park/park_pieces.gd")
+	var host := _host()
+	load("res://scripts/yard.gd").build(host)
+	await frames(3)
+	for n in ["HalfPipeWest", "HalfPipeEast", "MiniRampSteps", "FunboxKickerEast", "FunboxKickerWest", "ManualPad", "Bank", "SkateQuarter", "Funbox"]:
+		expect(host.get_node_or_null(n) != null, "park has " + n)
+	var pipes := []
+	for q in [host.get_node("SkateQuarter"), host.get_node("HalfPipeWest"), host.get_node("HalfPipeEast")]:
+		pipes.append(q)
+		expect(q.is_in_group("quarter_pipe") and q.finish == "dark" and q.closed_back and q.get_node_or_null("BackCollision") != null, "park: %s is a library quarter pipe, dark finish, closed back" % q.name)
+		var mat: ShaderMaterial = q.get_node("Shell").material_override
+		var tint: Color = mat.get_shader_parameter("albedo")
+		var face_tex = mat.get_shader_parameter("albedo_tex")
+		expect(face_tex is Texture2D and str(face_tex.resource_path).ends_with("dark_face_albedo.png") and tint == Color.WHITE and absf(float(mat.get_shader_parameter("fill_light")) - 1.3) < 0.001, "park: %s dark finish face (finish pass texture, tint %s) keeps the fill light" % [q.name, tint.to_html(false)])
+	# no piece overlaps another or the spawn spot
+	var boxes := {}
+	for n in ["SkateQuarter", "QuarterDeckSteps", "HalfPipeWest", "HalfPipeEast", "MiniRampSteps", "Funbox", "FunboxKickerEast", "FunboxKickerWest", "ManualPad", "Bank", "GrindRail"]:
+		boxes[n] = _ground_box(host.get_node(n))
+	var overlaps: Array = []
+	var names: Array = boxes.keys()
+	for i in names.size():
+		for j in range(i + 1, names.size()):
+			var a: Rect2 = boxes[names[i]].grow(-0.05)
+			var b: Rect2 = boxes[names[j]].grow(-0.05)
+			if a.intersects(b) and not ((names[i] == "Funbox" and str(names[j]).begins_with("FunboxKicker")) or (str(names[i]).ends_with("Steps") and names[j] == "SkateQuarter") or (names[i] == "SkateQuarter" and names[j] == "QuarterDeckSteps") or (names[i] == "HalfPipeEast" and names[j] == "MiniRampSteps")):
+				overlaps.append("%s/%s" % [names[i], names[j]])
+	expect(overlaps.is_empty(), "park: pieces do not overlap (%s)" % [overlaps])
+	var spawn := Rect2(-42.6, 1.4, 1.2, 1.2)
+	var crowd: Array = []
+	for n in names:
+		if boxes[n].intersects(spawn):
+			crowd.append(n)
+	expect(crowd.is_empty(), "park: spawn spot (-42, 2) is clear (%s)" % [crowd])
+	var inside := true
+	for n in names:
+		var r: Rect2 = boxes[n]
+		if r.position.x < -78.0 or r.end.x > -32.0 or r.position.y < -50.0 or r.end.y > 18.0:
+			inside = false
+	expect(inside, "park: every piece stays inside the skate yard")
+	# mini ramp: in at 6 m/s, up the east wall, back down fakie, stick toward the west wall, up that one
+	var mr: Dictionary = await _mini_run(host, 6.0, false)
+	expect(mr.walls.size() == 2 and mr.walls.has("HalfPipeEast") and mr.walls.has("HalfPipeWest") and mr.min_clear > -0.06 and not mr.fell, "park: mini ramp rides both walls (%s), never through the flat (min clearance %.3f)" % [mr.walls, mr.min_clear])
+	# kickturn on the mini ramp's east wall
+	var kt: Dictionary = await _mini_run(host, 6.5, true)
+	expect(kt.kickturns == 1 and not kt.fell and not kt.fakie_after, "park: kickturn on the mini ramp's east wall (%d), rolls away forward" % kt.kickturns)
+	# funbox: up the east kicker, across the top, down (or off) the west side
+	var fb: Dictionary = await _park_run(host, Vector3(-40.5, 0.3, -2.0), Vector3(-6.0, 0, 0), Vector2(0, 1), 150, false, PI * 0.5)
+	expect(fb.max_y > 0.8 and fb.final.x < -53.0 and not fb.fell and fb.min_clear > -0.06 and fb.final_speed > 2.0, "park: funbox kicker up, over the top (peak %.2f m), off the far side at x %.1f, %.1f m/s" % [fb.max_y, fb.final.x, fb.final_speed])
+	var fb2: Dictionary = await _park_run(host, Vector3(-55.5, 0.3, -2.0), Vector3(6.0, 0, 0), Vector2(0, 1), 150, false, -PI * 0.5)
+	expect(fb2.max_y > 0.8 and fb2.final.x > -43.0 and not fb2.fell and fb2.min_clear > -0.06, "park: funbox the other way (peak %.2f m, x %.1f)" % [fb2.max_y, fb2.final.x])
+	# bank: up onto its deck and off the back
+	# 120 ticks: off the back and rolling on, stopping short of the yard's west wall (the finish pass added a run-up behind the
+	# bank; at 150 ticks the run hit the wall and the capsule's one-tick dip there read as sinking into the ground)
+	var bk: Dictionary = await _park_run(host, Vector3(-59.0, 0.3, -1.0), Vector3(-6.0, 0, 0), Vector2(0, 1), 120, false, PI * 0.5)
+	var past := {}
+	for tr in bk.trace:
+		if tr[0].x < -69.5:
+			past = {"x": tr[0].x, "y": tr[0].y, "speed": tr[1]}
+			break
+	expect(bk.max_y > 1.1 and not past.is_empty() and float(past.speed) > 2.0 and not bk.fell and bk.min_clear > -0.06, "park: bank up to its deck (peak %.2f m) and off the back, still rolling (%s, fell %s, min clear %.3f)" % [bk.max_y, past, bk.fell, bk.min_clear])
+	var bk2: Dictionary = await _park_run(host, Vector3(-59.0, 0.3, -1.0), Vector3(-4.0, 0, 0), Vector2.ZERO, 150, false, PI * 0.5)
+	expect(bk2.max_y > 0.15 and not bk2.fell and bk2.min_clear > -0.06 and bk2.final.y < 1.3, "park: coasting into the bank climbs it without sinking (peak %.2f m)" % bk2.max_y)
+	# manual pad: ollie onto it, roll along it, roll off the end
+	var mp: Dictionary = await _park_run(host, Vector3(-38.0, 0.3, -4.0), Vector3(0, 0, -6.0), Vector2(0, 1), 150, false, 0.0, 0.25)
+	expect(mp.on_pad > 10 and mp.final.z < -16.5 and not mp.fell and mp.min_clear > -0.06 and mp.final_speed > 2.0, "park: ollie onto the manual pad, %d ticks on top, off the end (z %.1f, %.1f m/s)" % [mp.on_pad, mp.final.z, mp.final_speed])
+	var mp_hit: Dictionary = await _park_run(host, Vector3(-38.0, 0.3, -4.0), Vector3(0, 0, -5.0), Vector2(0, 1), 90, false, 0.0)
+	expect(not mp_hit.fell and mp_hit.min_clear > -0.06 and mp_hit.final.z > -9.0, "park: no ollie, he stops at the pad's face instead of going through it (z %.2f)" % mp_hit.final.z)
+	host.queue_free()
+	await frames(2)
+
+## Top-down footprint (x, z) of a piece from its collision shapes / mesh AABB.
+func _ground_box(n: Node) -> Rect2:
+	var box := AABB()
+	var first := true
+	for m in n.find_children("*", "MeshInstance3D", true, false) + ([n] if n is MeshInstance3D else []):
+		var a: AABB = (m as MeshInstance3D).global_transform * (m as MeshInstance3D).get_aabb()
+		box = a if first else box.merge(a)
+		first = false
+	if n is Node3D and n.has_method("point_at"):
+		var p0: Vector3 = n.point_at(0.0)
+		var p1: Vector3 = n.point_at(1.0)
+		var r := Rect2(Vector2(minf(p0.x, p1.x), minf(p0.z, p1.z)), Vector2(absf(p1.x - p0.x), absf(p1.z - p0.z)))
+		return r.grow(0.2)
+	return Rect2(Vector2(box.position.x, box.position.z), Vector2(box.size.x, box.size.z))
+
+## One ride across the yard: start at pos with velocity v0, stick held (camera yaw cam), optional ollie after `ollie_at` s.
+## Clearance = how far the capsule bottom is above the highest surface under it (negative = sunk into a piece).
+func _park_run(host: Node, pos: Vector3, v0: Vector3, stick: Vector2, ticks: int, kickturn := false, cam := -PI * 0.5, ollie_at := -1.0) -> Dictionary:
+	const Pieces = preload("res://assets/library/skate_park/park_pieces.gd")
+	var player = _player(host, pos)
+	await frames(10)
+	player.skating = true
+	player.camera_yaw = cam
+	player.external_move_active = true
+	player.external_move = stick
+	player.global_position = pos
+	player.velocity = v0
+	if v0.length() > 0.1 and player.rig != null:
+		player.rig.face_world(atan2(-v0.x, -v0.z))
+	var r := {"min_clear": 9.0, "max_y": 0.0, "fell": false, "final": Vector3.ZERO, "final_speed": 0.0, "on_pad": 0, "kickturns": 0, "events": [], "trace": []}
+	var wedges := [host.get_node("FunboxKickerEast"), host.get_node("FunboxKickerWest"), host.get_node("Bank")]
+	var pad: Node3D = host.get_node("ManualPad")
+	var fun: Node3D = host.get_node("Funbox")
+	var pipes := [host.get_node("SkateQuarter"), host.get_node("HalfPipeWest"), host.get_node("HalfPipeEast")]
+	var t := 0.0
+	for _i in ticks:
+		if ollie_at >= 0.0 and t >= ollie_at and t < ollie_at + 0.02:
+			player.external_jump = true
+		if kickturn and player.ramp_mode == "ride" and player.qp_state == "" and player.kt_count == 0 and player.ramp.profile_point(player.ramp_s).y > 0.5:
+			player.external_move = Vector2(0, -1)
+		elif kickturn:
+			player.external_move = Vector2.ZERO
+		await get_tree().physics_frame
+		t += 1.0 / 60.0
+		var foot: Vector3 = player.global_position + Vector3.UP * 0.325
+		var ground := 0.0
+		for w in wedges:
+			ground = maxf(ground, Pieces.surface_y(w, foot))
+		var lp: Vector3 = pad.to_local(foot)
+		var on_pad := absf(lp.x) < 0.8 and absf(lp.z) < 3.5
+		if on_pad:
+			ground = maxf(ground, 0.3)
+			if foot.y > 0.25:
+				r.on_pad += 1
+		var lf: Vector3 = fun.to_local(foot)
+		if absf(lf.x) < 2.1 and absf(lf.z) < 2.1:
+			ground = maxf(ground, 0.9)
+		for q in pipes:
+			var ql: Vector3 = q.to_local(foot)
+			if absf(ql.z) < q.half_width() and ql.x > 0.0:
+				ground = maxf(ground, q.surface_y(ql.x))
+		# on the curve the capsule sits along the normal; only score the flat-ish pieces there
+		if player.ramp_mode != "ride" and player.qp_state == "":
+			r.min_clear = minf(r.min_clear, foot.y - ground)
+		r.max_y = maxf(r.max_y, foot.y)
+		r.trace.append([foot, Vector2(player.velocity.x, player.velocity.z).length()])
+		if foot.y < -0.3:
+			r.fell = true
+	r.final = player.global_position
+	r.final_speed = Vector2(player.velocity.x, player.velocity.z).length()
+	r.kickturns = player.kt_count
+	for e in player.ramp_events:
+		var e2: Dictionary = e.duplicate()
+		r.events.append(e2)
+	player.queue_free()
+	await frames(2)
+	return r
+
+## Mini ramp run: rolling east at v0 from the middle of the flat bottom into HalfPipeEast; once he is back on the flat the
+## stick points west (as a player would steer to the other wall). kickturn = hold back high on the east wall.
+func _mini_run(host: Node, v0: float, kickturn: bool) -> Dictionary:
+	var player = _player(host, Vector3(-47.0, 0.3, -30.0))
+	await frames(10)
+	player.skating = true
+	player.camera_yaw = -PI * 0.5
+	player.external_move_active = true
+	player.external_move = Vector2.ZERO
+	player.global_position = Vector3(-47.0, 0.0, -30.0)
+	player.velocity = Vector3(v0, 0, 0)
+	player.rig.face_world(atan2(-1.0, 0.0))
+	var r := {"walls": [], "min_clear": 9.0, "fell": false, "kickturns": 0, "fakie_after": false}
+	var entered := false
+	var back_on_flat := false
+	for _i in 400:
+		if not entered and player.ramp_mode == "":
+			player.velocity.x = v0
+		if player.ramp_mode == "ride":
+			entered = true
+			if not r.walls.has(str(player.ramp.name)):
+				r.walls.append(str(player.ramp.name))
+			if kickturn and player.qp_state == "" and player.kt_count == 0 and player.ramp.profile_point(player.ramp_s).y > 0.5:
+				player.external_move = Vector2(0, -1)
+			else:
+				player.external_move = Vector2.ZERO
+		elif entered:
+			if not back_on_flat:
+				back_on_flat = true
+				r.fakie_after = player.is_fakie()
+			player.external_move = Vector2(0, -1)     # toward the west wall
+		await get_tree().physics_frame
+		var foot: Vector3 = player.global_position + Vector3.UP * 0.325
+		if player.ramp_mode == "" and foot.x > -49.9 and foot.x < -44.1:
+			r.min_clear = minf(r.min_clear, foot.y)
+		if foot.y < -0.3:
+			r.fell = true
+		if r.walls.size() == 2 and (not kickturn or player.kt_count > 0):
+			break
+	r.kickturns = player.kt_count
+	player.queue_free()
+	await frames(2)
+	return r
+
+# ------------------------------------------------------------------ finish pass (Nov 17 2026)
+
+func _finish_pass() -> void:
+	await _finish_catalog()
+	await _finish_grind_tricks()
+	await _finish_down_rail()
+	await _finish_bs_air()
+	await _finish_quarter_art()
+
+## The new puppet clips: 5-0 and boardslide (12 frames, in / hold / out) and the backside air (16 frames, rise / hold / release),
+## all 8 views, each frame inside its 800x850 master cell, on the grind / air sheets.
+func _finish_catalog() -> void:
+	var cat = JsonFile.read("res://assets/library/fony2d/frames_puppet_v1.json")
+	var views := ["back", "back_right", "back_left", "right", "left", "front", "front_right", "front_left"]
+	var sc := float(cat.atlas.scale_from_master)
+	var ax := 400.0 * sc
+	var ay := 750.0 * sc
+	for spec in [["grind_5o", 12, "fony2d_puppet_v1_grind_atlas.png", ["in", "hold", "out"]], ["grind_board", 12, "fony2d_puppet_v1_grind_atlas.png", ["in", "hold", "out"]],
+			["air_bs", 16, "fony2d_puppet_v1_air_atlas.png", ["rise", "hold", "release"]]]:
+		var bad: Array = []
+		for v in views:
+			var key := "%s_%s" % [spec[0], v]
+			if not cat.animations.has(key) or cat.animations[key].frames.size() != int(spec[1]):
+				bad.append(key + " missing")
+				continue
+			for ph in spec[3]:
+				if not cat.animations[key].phases.has(ph):
+					bad.append(key + " no " + ph)
+			for fr in cat.animations[key].frames:
+				var off: Array = fr.anchor_offset
+				var rc: Array = fr.atlas_rect
+				if str(fr.atlas_file) != str(spec[2]) or float(off[0]) < -ax + 2.0 or float(off[1]) < -ay + 2.0 or float(off[0]) + float(rc[2]) > 800.0 * sc - ax - 2.0 or float(off[1]) + float(rc[3]) > 850.0 * sc - ay - 2.0:
+					bad.append(key)
+					break
+		expect(bad.is_empty(), "finish: %s clip in all 8 views, %d frames, on %s, inside the cell (%s)" % [spec[0], spec[1], spec[2], bad])
+	expect(load("res://assets/library/fony2d/fony2d_puppet_v1_air_atlas.png") is Texture2D, "finish: air atlas imports")
+	var a = cat.animations.get("air_bs_back", {})
+	expect(int(a.get("phases", {}).get("turn_deg", 0)) == 180 and str(a.get("phases", {}).get("direction", "")).begins_with("backside") and str(a.get("phases", {}).get("grab", "")).contains("left"), "finish: backside air phases say backside 180, left hand grab")
+
+## Flat bar: lock a 50-50, switch to a 5-0 (F) and a boardslide (R) and back, each eased (no pop), each with its own clip, its
+## own height on the bar and drag; the popup shows the names; rolling off reports the line.
+func _finish_grind_tricks() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(80, 1, 80), Palette.GROUND)
+	var rail = _grind_bar(host, 24.0)
+	await frames(2)
+	var popup = load("res://scripts/trick_popup.gd").new()
+	host.add_child(popup)
+	var player = await _grind_ride(host, 7.5)
+	popup.player = player
+	await frames(2)
+	expect(player.grind == rail and player.grind_trick == "5050" and player.callout == "50-50" and player.callout_kind == "grind", "finish: the lock calls out 50-50 (callout %s)" % player.callout)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	expect(popup.shown == "50-50" and popup.label.modulate.a > 0.5, "finish: the popup shows 50-50 (%s)" % popup.shown)
+	if player.grind == null:
+		expect(false, "finish: grind tricks need the lock")
+		host.queue_free()
+		await frames(2)
+		return
+	await frames(10)
+	var results := {}
+	for step in [["grab", "5o", "5-0"], ["flip", "board", "BOARDSLIDE"], ["flip", "5050", "50-50"]]:
+		player.request_trick(step[0])
+		var prev: Vector3 = player.global_position
+		var jump := 0.0
+		var clip := ""
+		var v0: float = absf(player.grind_v)
+		for i in 14:
+			await get_tree().physics_frame
+			await get_tree().process_frame
+			var d: Vector3 = player.global_position - prev
+			jump = maxf(jump, absf(d.y))
+			prev = player.global_position
+			if i == 12:
+				clip = str(player.sprite_frame).split("#")[0]
+		var drag: float = (v0 - absf(player.grind_v)) / (14.0 / 60.0)
+		var want_y: float = rail.line_point(player.grind_along).y - 0.325 - float(player.GRIND_TRICKS[step[1]].sink)
+		results[step[1]] = drag
+		expect(player.grind == rail and player.grind_trick == step[1] and player.callout == step[2], "finish: %s on the bar switches to %s (callout %s)" % [step[0], step[1], player.callout])
+		expect(jump < 0.03 and absf(player.global_position.y - want_y) < 0.005, "finish: %s eases to its height on the bar (step %.3f m/tick, off %.3f m)" % [step[1], jump, player.global_position.y - want_y])
+		var want_clip: String = {"5o": "grind_5o_", "board": "grind_board_", "5050": "grind_"}[step[1]]
+		expect(clip.begins_with(want_clip) and (step[1] != "5050" or not (clip.begins_with("grind_5o") or clip.begins_with("grind_board"))), "finish: %s draws its own clip (%s)" % [step[1], clip])
+		expect(popup.shown == step[2], "finish: the popup shows %s (%s)" % [step[2], popup.shown])
+	expect(results.get("board", 0.0) > results.get("5050", 0.0) + 0.2 and results.get("5o", 0.0) > results.get("5050", 0.0) * 0.4, "finish: drag 50-50 %.2f, 5-0 %.2f, boardslide %.2f m/s^2" % [results.get("5050", 0.0), results.get("5o", 0.0), results.get("board", 0.0)])
+	var left := false
+	for _i in 200:
+		await get_tree().physics_frame
+		if player.grind == null:
+			left = true
+			break
+	expect(left and player.grind_last.get("tricks", []) == ["5050", "5o", "board", "5050"] and player.callout.contains("+") and player.callout.contains("5-0"), "finish: rolling off calls the line (%s / %s)" % [player.grind_last.get("tricks", []), player.callout])
+	# popup: a name fades out within ~1.2 s
+	await frames(80)
+	await get_tree().process_frame
+	expect(popup.shown == "" and popup.label.modulate.a == 0.0, "finish: the popup fades out (%s)" % popup.shown)
+	# the ollie and kickflip call out too
+	player.queue_free()
+	await frames(2)
+	player = _player(host, Vector3(0, -0.3, 10))
+	popup.player = player
+	await frames(12)
+	player.skating = true
+	player.external_move_active = true
+	player.request_trick("flip")
+	await frames(14)
+	await get_tree().process_frame
+	expect(player.callout == "KICKFLIP" and popup.shown == "KICKFLIP", "finish: a kickflip calls out KICKFLIP (%s / %s)" % [player.callout, popup.shown])
+	host.queue_free()
+	await frames(2)
+
+## The yard's down rail: a bar down the bank's face from the deck end, reachable from the run-up deck; ollie on, it speeds up and
+## rolls off the bottom.
+func _finish_down_rail() -> void:
+	var host := _host()
+	load("res://scripts/yard.gd").build(host)
+	await frames(3)
+	var rail = host.get_node_or_null("DownRail")
+	var bank: Node3D = host.get_node_or_null("Bank")
+	var run: Node3D = host.get_node_or_null("DownRailRunUp")
+	expect(rail != null and bank != null and run != null and rail.kind == "rail" and float(rail.drop) > 1.0, "finish: the yard has a down rail on the bank and a run-up")
+	if rail == null or bank == null or run == null:
+		host.queue_free()
+		await frames(2)
+		return
+	var top: Vector3 = rail.line_point(0.0)
+	var bottom: Vector3 = rail.line_point(rail.length)
+	var clear_min := 9.0
+	var clear_max := -9.0
+	for i in 21:
+		var p: Vector3 = rail.line_point(rail.length * float(i) / 20.0)
+		var hit: Dictionary = host.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(p + Vector3.UP * 0.0, p + Vector3.DOWN * 3.0))
+		if hit.is_empty():
+			continue
+		clear_min = minf(clear_min, p.y - hit.position.y)
+		clear_max = maxf(clear_max, p.y - hit.position.y)
+	expect(top.y > 1.4 and bottom.y < 0.35 and bottom.x > top.x and clear_min > 0.12 and clear_max < 0.5, "finish: the down rail runs east down the bank 0.12-0.5 m over the surface (top %.2f, bottom %.2f, clear %.2f..%.2f)" % [top.y, bottom.y, clear_min, clear_max])
+	var deck_y: float = float(run.get_meta("height"))
+	var player = _player(host, Vector3(-70.5, deck_y + 0.2, rail.position.z))
+	await frames(10)
+	player.skating = true
+	player.camera_yaw = -PI / 2.0
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	player.global_position = Vector3(-70.5, deck_y - 0.325 + 0.01, rail.position.z + 0.15)
+	player.velocity = Vector3(9.0, 0, 0)
+	var pop_x := -70.1               # Q at the start of the run-up deck: the crouch then pops ~0.3 m before the deck end
+	var popped := false
+	var locked := false
+	var v_lock := 0.0
+	var v_max := 0.0
+	for _i in 200:
+		await get_tree().physics_frame
+		if not popped and player.global_position.x > pop_x:
+			player.request_trick("ollie")
+			popped = true
+		if player.grind == rail and not locked:
+			locked = true
+			v_lock = absf(player.grind_v)
+		if player.grind == rail:
+			v_max = maxf(v_max, absf(player.grind_v))
+		if OS.get_environment("AU_DR_DEBUG") == "1":
+			print("dr x=%.2f y=%.3f vx=%.2f vy=%.2f floor=%s trick=%s grind=%s" % [player.global_position.x, player.global_position.y, player.velocity.x, player.velocity.y, player.is_on_floor(), player.trick, player.grind])
+		if locked and player.grind == null:
+			break
+	expect(locked and v_max > v_lock + 0.5, "finish: ollie off the run-up deck locks onto the down rail and it speeds up (%.2f -> %.2f m/s, last %s)" % [v_lock, v_max, player.grind_last])
+	var landed := false
+	for _i in 60:
+		await get_tree().physics_frame
+		if player.is_on_floor():
+			landed = true
+			break
+	await frames(4)
+	expect(landed and player.grind_last.get("exit", "") == "end" and player.skating and player.bail_time <= 0.0, "finish: rolls off the bottom of the down rail and rides away (%s)" % player.grind_last)
+	host.queue_free()
+	await frames(2)
+
+## Phase 5: backside air. Off the coping at speed, grab early: the backside 180 is drawn (air_bs), he lets go on the way down and
+## re-enters forward; holding the grab into the landing bails; a late grab is the old melon.
+func _finish_bs_air() -> void:
+	var host := _host()
+	Blocks.solid(host, "Ground", Vector3(0, -0.5, 0), Vector3(60, 1, 60), Palette.GROUND)
+	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	host.add_child(pipe)
+	await frames(2)
+	var ok: Dictionary = await _bsair_run(host, pipe, 0.05, false)
+	expect(ok.started and ok.callout == "BACKSIDE AIR", "finish: grab off the coping starts a backside air (%s)" % ok.callout)
+	expect(ok.clips.size() == 1 and str(ok.clips[0]).begins_with("air_bs_") and ok.mono and ok.frames_seen.size() >= 10, "finish: one view of the air_bs clip, frames in order (%s, %d frames)" % [ok.clips, ok.frames_seen.size()])
+	expect(ok.released and ok.landed == "landed" and ok.landing == "transition" and not ok.bailed, "finish: lets go and re-enters the transition (%s, %s)" % [ok.landed, ok.landing])
+	expect(ok.exited and not ok.fakie and absf(ok.turn - 180.0) < 5.0, "finish: rolls out forward after the 180 (fakie %s, turn %.1f)" % [ok.fakie, ok.turn])
+	var held: Dictionary = await _bsair_run(host, pipe, 0.05, true)
+	expect(held.started and held.bailed and held.reason == "bs_air_grab_held", "finish: holding the grab into the re-entry bails (%s)" % held.reason)
+	var late: Dictionary = await _bsair_run(host, pipe, 0.6, false)
+	expect(not late.started and late.callout == "MELON", "finish: a late grab is the plain melon (%s)" % late.callout)
+	host.queue_free()
+	await frames(2)
+
+func _bsair_run(host: Node, pipe: Node3D, grab_u: float, hold: bool) -> Dictionary:
+	var player = _player(host, Vector3(-3.0, 0.2, 0))
+	await frames(18)
+	player.skating = true
+	player.camera_yaw = -PI * 0.5
+	player.external_move_active = true
+	player.external_move = Vector2(0, 1)
+	await frames(1)
+	player.global_position = Vector3(-1.5, player.global_position.y, 0)
+	player.velocity = Vector3(9.0, 0, 0)
+	player.external_move = Vector2.ZERO
+	player.grab_hold = hold
+	var face0: float = player.rig.global_rotation.y
+	var r := {"started": false, "callout": "", "clips": [], "frames_seen": [], "mono": true, "released": false, "landed": "", "landing": "",
+		"bailed": false, "reason": "", "exited": false, "fakie": false, "turn": 0.0}
+	var entered := false
+	var grabbed := false
+	var last_i := -1
+	for _i in 420:
+		if not entered and player.ramp_mode == "":
+			player.velocity.x = 9.0
+		await get_tree().physics_frame
+		await get_tree().process_frame
+		if player.ramp_mode == "ride":
+			entered = true
+		if not grabbed and player.pipe_air and player.air_kind == "lip" and player.air_u() >= grab_u:
+			player.request_trick("grab")
+			grabbed = true
+		if player.trick == "bs_air":
+			r.started = true
+			var parts := str(player.sprite_frame).split("#")
+			if parts.size() == 2:
+				if not r.clips.has(parts[0]):
+					r.clips.append(parts[0])
+				var fi := int(parts[1])
+				if fi < last_i:
+					r.mono = false
+				if fi != last_i:
+					r.frames_seen.append(fi)
+				last_i = fi
+		if grabbed and r.callout == "" and player.callout != "":
+			r.callout = player.callout
+		if player.bsair_release_u >= 0.0:
+			r.released = true
+		if player.trick == "bail":
+			r.bailed = true
+			r.reason = player.last_bail_reason
+		if r.landing == "" and player.last_landing != "":
+			r.landing = player.last_landing
+		if entered and player.ramp_mode == "" and not player.pipe_air and player.global_position.x < -0.3:
+			r.exited = true
+			r.fakie = player.is_fakie()
+			break
+	r.landed = str(player.bsair_last.get("result", ""))
+	r.turn = absf(rad_to_deg(wrapf(player.rig.global_rotation.y - face0, -PI, PI)))
+	player.queue_free()
+	await frames(2)
+	return r
+
+## Park art: the quarter pipes' dark finish (riding face, coping, edges).
+func _finish_quarter_art() -> void:
+	var host := _host()
+	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	pipe.finish = "dark"
+	pipe.closed_back = true
+	host.add_child(pipe)
+	await frames(2)
+	var shell: MeshInstance3D = pipe.get_node_or_null("Shell")
+	var face_tex = (shell.material_override as ShaderMaterial).get_shader_parameter("albedo_tex") if shell != null else null
+	expect(face_tex is Texture2D and str(face_tex.resource_path).ends_with("dark_face_albedo.png"), "finish: dark quarter pipe has the dark sealed face texture (%s)" % (face_tex.resource_path if face_tex is Texture2D else "none"))
+	var img: Image = (face_tex as Texture2D).get_image() if face_tex is Texture2D else null
+	var luma := 1.0
+	if img != null:
+		if img.is_compressed():
+			img.decompress()
+		var sum := 0.0
+		for y in range(0, img.get_height(), 16):
+			for x in range(0, img.get_width(), 16):
+				sum += img.get_pixel(x, y).get_luminance()
+		luma = sum / float((img.get_height() / 16) * (img.get_width() / 16))
+	expect(luma > 0.12 and luma < 0.32, "finish: dark face texture mean luma %.3f" % luma)
+	var coping: MeshInstance3D = pipe.get_node_or_null("Coping")
+	var cop_col: Color = (coping.material_override as ShaderMaterial).get_shader_parameter("albedo") if coping != null else Color.WHITE
+	expect(coping != null and cop_col.v < 0.6, "finish: dark coping steel %s" % cop_col.to_html(false))
+	var trims := 0
+	for n in ["EdgeTrimL", "EdgeTrimR", "DeckPlate", "CheekL", "CheekR"]:
+		if pipe.get_node_or_null(n) != null:
+			trims += 1
+	expect(trims == 5, "finish: steel edge trim on both cheeks, a deck plate and dark cheek plates (%d of 5)" % trims)
+	var plain: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	host.add_child(plain)
+	await frames(2)
+	expect(plain.get_node_or_null("EdgeTrimL") == null and str(((plain.get_node("Shell") as MeshInstance3D).material_override as ShaderMaterial).get_shader_parameter("albedo_tex").resource_path).ends_with("concrete_albedo.png"), "finish: the original finish is unchanged")
+	host.queue_free()
+	await frames(2)

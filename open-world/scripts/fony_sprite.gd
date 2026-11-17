@@ -103,6 +103,15 @@ func _physics_process(delta: float) -> void:
 		"bail_time": float(body.bail_time),
 		"grab_held": body.has_method("_grab_held") and body._grab_held(),
 		"grind": body.grind != null,
+		"grind_t": float(body.grind_clip_t) if "grind_clip_t" in body else (float(body.grind_time) if "grind_time" in body else 0.0),
+		"grind_trick": str(body.grind_trick) if "grind_trick" in body else "5050",
+		"grind_out": float(body.grind_out_time) if "grind_out_time" in body else -1.0,
+		# Phase 5 backside air
+		"air_u": float(body.air_u()) if body.has_method("air_u") else 0.0,
+		"bsair_u0": float(body.bsair_u0) if "bsair_u0" in body else 0.0,
+		"bsair_release_u": float(body.bsair_release_u) if "bsair_release_u" in body else -1.0,
+		"bsair_rise_u": float(body.BSAIR_RISE_U),
+		"bsair_release_at": float(body.BSAIR_RELEASE_U),
 		"pop_vy": float(body.OLLIE_POP_VELOCITY),
 		"gravity": float(body.GRAVITY),
 		"crouch_s": float(body.OLLIE_CROUCH_S),
@@ -110,6 +119,7 @@ func _physics_process(delta: float) -> void:
 		# Phase 3 drop-in
 		"qp": str(body.qp_state) if "qp_state" in body else "",
 		"qp_time": float(body.qp_time) if "qp_time" in body else 0.0,
+		"kt_deg": int(body.kt_deg) if "kt_deg" in body else 50,
 	}
 	var frame_key: String = anim.step(delta, ctx)
 	var grounded: bool = body.on_ground() if body.has_method("on_ground") else body.is_on_floor()
@@ -157,6 +167,12 @@ func _apply(airborne: bool, cam: Camera3D = null) -> void:
 	lean_roll = 0.0
 	lean_pitch = 0.0
 	if anim.clip.begins_with("qp_"):
+		_apply_qp(fr, side_px, anchor_y, h)
+		return
+	# Grind round: the rail is thin, so the Phase 1d toward-camera ground shift (right for a flat floor) slides the drawn board
+	# off the bar in the 3/4 and back views. Stand the drawn ground point (body_px = wheel contact under the body) on the body
+	# instead, in the billboard plane, the way the Phase 3 qp_ frames are placed: the wheels then sit on the rail in every view.
+	if anim.clip.begins_with("grind_") and str(fr.get("source", "")) == "puppet":
 		_apply_qp(fr, side_px, anchor_y, h)
 		return
 	if cam != null and is_inside_tree() and (lean_up.angle_to(Vector3.UP) > 0.01 or anchor_extra.length() > 0.001):

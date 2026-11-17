@@ -2,6 +2,7 @@ extends RefCounted
 
 const Blocks = preload("res://scripts/world_blocks.gd")
 const Palette = preload("res://scripts/palette.gd")
+const Pieces = preload("res://assets/library/skate_park/park_pieces.gd")
 const ArcadeExterior = preload("res://scripts/arcade_exterior.gd")
 
 # Wall centers sit on a 160 m square. The proposed map was 200 m and is not final.
@@ -170,24 +171,88 @@ static func _skate(parent: Node) -> void:
 	pipe.name = "SkateQuarter"
 	pipe.position = Vector3(-54, 0, -12)
 	pipe.rotation.y = PI
+	pipe.finish = "dark"
+	pipe.closed_back = true
 	parent.add_child(pipe)
 	_quarter_steps(parent, pipe)
 	Blocks.solid(parent, "Funbox", Vector3(-48, 0.45, -2), Vector3(4.2, 0.9, 4.2), Palette.FUNBOX)
-	Blocks.add_quarter(parent, "HalfPipeWest", Vector3(-50, 0, -30), PI, 2.0, 6.5, Palette.RAMP)
-	Blocks.add_quarter(parent, "HalfPipeEast", Vector3(-44, 0, -30), 0.0, 2.0, 6.5, Palette.RAMP)
+	_park_expansion(parent)
 	for i in 4:
 		Blocks.visual(parent, "SkateLane%d" % i, Vector3(-46, 0.03, -18.0 + float(i) * 8.0), Vector3(22, 0.02, 0.7), Color("8d5a48"))
+	_grind_spots(parent)
+	Blocks.label(parent, "SKATE YARD", Vector3(-52, 3.4, -6), Palette.LABEL, 48)
+
+## Grind round (LOCAL, Nov 16 2026). The old 1.05 m rail (Space-jump height, above an ollie) becomes a real flat bar: 0.30 m to
+## the top of a 5 cm round tube, 7 m long, on the z = 8 line just north of the z = 6 skate lane, so he lines up by pushing west
+## down the lane from the open east side of the yard (x -32 .. -46: 10+ m of run-up). The manual pad's two long metal edges
+## (0.30 m) are grindable ledges along Z; line up on its east side riding south from the spawn side.
+static func _grind_spots(parent: Node) -> void:
 	var rail = load("res://scenes/grind_rail.tscn").instantiate()
 	rail.name = "GrindRail"
-	rail.length = 12.0
-	rail.position = Vector3(-50, 1.05, 8)
+	rail.length = 7.0
+	rail.position = Vector3(-52, 0.30, 8)
 	parent.add_child(rail)
-	Blocks.label(parent, "SKATE YARD", Vector3(-52, 3.4, -6), Palette.LABEL, 48)
-	Blocks.label(parent, "RAIL", Vector3(-50, 1.8, 8), Palette.LABEL, 28)
+	Blocks.label(parent, "FLAT BAR", Vector3(-52, 2.2, 10.5), Palette.LABEL, 24)
+	var pad: Node3D = parent.get_node_or_null("ManualPad")
+	if pad == null:
+		return
+	var h := float(pad.get_meta("height"))
+	var half_w := 0.8
+	for m in pad.find_children("*", "MeshInstance3D", false, false):
+		if (m as MeshInstance3D).mesh is BoxMesh and ((m as MeshInstance3D).mesh as BoxMesh).size.y > 0.1:
+			half_w = ((m as MeshInstance3D).mesh as BoxMesh).size.x * 0.5
+			break
+	for sx in [-1.0, 1.0]:
+		var edge = load("res://scenes/grind_rail.tscn").instantiate()
+		edge.name = "ManualPadLedge%s" % ("E" if sx > 0.0 else "W")
+		edge.kind = "ledge"
+		edge.length = 7.0
+		# the pad's long axis is its local Z; the rail's axis is its local X
+		var p: Vector3 = pad.position + pad.basis * Vector3(sx * (half_w - 0.02), 0.0, 0.0)
+		edge.position = Vector3(p.x, pad.position.y + h * 0.5, p.z)
+		edge.rotation.y = pad.rotation.y + PI * 0.5
+		parent.add_child(edge)
+
+## Phase 4 (LOCAL): more to ride. The two teal block quarters at z -30 become a mini ramp of library quarter pipes (same
+## places, 6 m flat bottom, rideable transitions with the kickturn); the funbox gets kickers on its east and west faces; a
+## manual pad east of the main quarter; a bank against the west side of the yard. Everything stays inside the skate yard
+## (x < -32, -50 < z < 18) on the concept map, clear of the rail line and the bowl.
+static func _park_expansion(parent: Node) -> void:
+	for spec in [["HalfPipeWest", Vector3(-50, 0, -30), PI], ["HalfPipeEast", Vector3(-44, 0, -30), 0.0]]:
+		var q: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+		q.name = spec[0]
+		q.position = spec[1]
+		q.rotation.y = spec[2]
+		q.width = 6.5
+		q.finish = "dark"
+		q.closed_back = true
+		q.add_to_group("mini_ramp")
+		parent.add_child(q)
+	_quarter_steps(parent, parent.get_node("HalfPipeEast"), "MiniRampSteps")
+	Pieces.wedge(parent, "FunboxKickerEast", Vector3(-43.4, 0, -2), PI, 2.5, 0.9, 4.2)
+	Pieces.wedge(parent, "FunboxKickerWest", Vector3(-52.6, 0, -2), 0.0, 2.5, 0.9, 4.2)
+	Pieces.pad(parent, "ManualPad", Vector3(-38, 0, -12), 0.0, Vector3(1.6, 0.3, 7.0))
+	Pieces.wedge(parent, "Bank", Vector3(-63.5, 0, -1), PI, 3.0, 1.2, 9.0, 1.6)
+	_down_rail(parent)
+	Blocks.label(parent, "MINI RAMP", Vector3(-47, 3.0, -30), Palette.LABEL, 30)
+
+## Finish pass (Nov 17 2026): a down rail on the bank. The bank (low edge x -63.5, deck 1.2 m from x -66.5 back to -68.1) gets
+## a round bar following its slope 0.18 m above the face (it starts 0.30 m over the deck, flat-bar height, so an ollie off the
+## deck reaches it; 0.14 m at the bottom), riding east (+X) downhill. A run-up wedge with a 2.5 m deck behind the bank (x -74.6 .. -68.1, 1.2 m) gives a flat roll at deck height to
+## ollie onto the top of the bar; gravity along the bar speeds the grind up (player_controller.gd _step_grind).
+static func _down_rail(parent: Node) -> void:
+	Pieces.wedge(parent, "DownRailRunUp", Vector3(-74.6, 0, 2.0), 0.0, 4.0, 1.2, 3.0, 2.5)
+	var rail = load("res://scenes/grind_rail.tscn").instantiate()
+	rail.name = "DownRail"
+	rail.length = 3.4
+	rail.drop = 1.36
+	rail.position = Vector3(-65.1, 0.82, 2.0)
+	parent.add_child(rail)
+	Blocks.label(parent, "DOWN RAIL", Vector3(-66.0, 3.4, 2.0), Palette.LABEL, 24)
 
 ## Phase 2 (LOCAL blockout): steps up the north cheek of SkateQuarter onto its deck (1.58 m). Collision is one smooth slope
 ## (like PlazaStair), so walking and skating both climb it; the treads are visual only.
-static func _quarter_steps(parent: Node, pipe: Node3D) -> void:
+static func _quarter_steps(parent: Node, pipe: Node3D, prefix := "QuarterDeck") -> void:
 	var lip_x: float = pipe.radius * sin(deg_to_rad(pipe.climb_deg))
 	var top: float = pipe.radius * (1.0 - cos(deg_to_rad(pipe.climb_deg)))
 	var half: float = pipe.width * 0.5
@@ -199,12 +264,12 @@ static func _quarter_steps(parent: Node, pipe: Node3D) -> void:
 	var high := Vector3(mid.x, top, mid.z) - out * 0.02
 	var low := high + out * run
 	low.y = 0.08
-	Blocks.add_slope(parent, "QuarterDeckSteps", low, high, pipe.deck_length - 0.1, Palette.RAMP)
+	Blocks.add_slope(parent, prefix + "Steps" if prefix == "QuarterDeck" else prefix, low, high, pipe.deck_length - 0.1, Palette.RAMP)
 	for i in count:
 		var f := (float(i) + 0.5) / float(count)
 		var c := low.lerp(high, f)
 		var y_top: float = c.y
-		Blocks.visual(parent, "QuarterStep%d" % i, Vector3(c.x, y_top * 0.5, c.z), Vector3(pipe.deck_length - 0.1, y_top, run / float(count)), Color("b9a090"))
+		Blocks.visual(parent, ("QuarterStep%d" if prefix == "QuarterDeck" else prefix + "Tread%d") % i, Vector3(c.x, y_top * 0.5, c.z), Vector3(pipe.deck_length - 0.1, y_top, run / float(count)), Color("b9a090"))
 
 static func _plaza(parent: Node) -> void:
 	Blocks.solid(parent, "MuralWall", Vector3(6, 1.3, 20), Vector3(0.4, 2.6, 8), Palette.PARK_WALL)

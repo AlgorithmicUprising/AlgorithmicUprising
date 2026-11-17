@@ -43,6 +43,8 @@ jobs:
           : > open-world/node_modules/.gdignore
           : > open-world/build/.gdignore
           rm -rf open-world/.godot
+          # A game run does not import. The suite checks imported atlases and the dark quarter face, so import first.
+          "${{ steps.godot.outputs.bin }}" --headless --path open-world --import
           "${{ steps.godot.outputs.bin }}" --headless --path open-world res://tests/test_main.tscn
       - name: Export web build and stage the composite tree
         env:
