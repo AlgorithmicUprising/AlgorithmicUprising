@@ -241,9 +241,9 @@ func _build() -> void:
 	bar_fill.anchor_right = 0.0
 	bar.add_child(bar_fill)
 
-## The exported game and an editor with a filled import cache take load(). Headless CI
-## deletes .godot first, so that cache is empty and load() cannot see the WebP yet.
-## Decode the source file in that case. Image.load does not work in an export.
+## The exported game and an editor with a filled import cache take load().
+## If that cache is missing, load() cannot see the WebP yet, so decode the source
+## file. Image.load does not work in an export.
 func _zero_texture() -> Texture2D:
 	var sidecar := FileAccess.get_file_as_string(ZERO_ART + ".import")
 	if sidecar.is_empty() or _imported_ctex_exists(sidecar):
