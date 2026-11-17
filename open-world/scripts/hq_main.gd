@@ -341,7 +341,7 @@ func _on_look_catch(event: InputEvent) -> void:
 var demo_armed := false
 
 func _maybe_demo() -> void:
-	if demo_armed or player == null:
+	if demo_armed or player == null or flow == null or flow.boundary.phase != "world":
 		return
 	var kind := ""
 	for arg in OS.get_cmdline_user_args():
@@ -361,11 +361,24 @@ func _maybe_demo() -> void:
 			for k in player.DEMO_LINES.keys():
 				if ("demo=" + str(k)) in search:
 					kind = str(k)
+		if "demo=cabinet-" in search:
+			_demo_cabinet(search.split("demo=cabinet-")[1].split("&")[0])
 	demo_armed = true
 	if kind == "":
 		return
 	visual_demo = true
 	player.start_visual_demo(kind)
+
+## Finish pass browser check (?demo=cabinet-<game id>): open that arcade cabinet the way pressing E at it does
+## (arcade_cabinet.gd interact -> arcade_overlay.gd), so the check sees the real overlay and iframe.
+func _demo_cabinet(id: String) -> void:
+	var door = world_sim.get_node_or_null("ArcadeDoor")
+	if door == null:
+		return
+	var interior = door.ensure_interior()
+	if interior == null or not ("cabinets" in interior) or not interior.cabinets.has(id):
+		return
+	interior.cabinets[id].interact(flow)
 
 func _on_invert_y(enabled: bool) -> void:
 	if player == null:
