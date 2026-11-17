@@ -25,11 +25,16 @@ export class TrackVisual {
 
   setTrack(sleeve: URL | null = null, clip: URL | null = null) {
     this.stop();
+    this.panel.style.opacity = '1';
     this.clip = clip;
     this.still.hidden = !sleeve;
     this.panel.hidden = !sleeve;
     if (sleeve) this.still.src = sleeve.href;
     else this.still.removeAttribute('src');
+  }
+
+  setFade(opacity: number) {
+    this.panel.style.opacity = String(Math.max(0, Math.min(1, opacity)));
   }
 
   sync(enabled: boolean, playing: boolean) {

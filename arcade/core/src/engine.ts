@@ -101,7 +101,13 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     return this.dispatchEvent(new CustomEvent(name, { detail: { ...identity, ...detail }, bubbles: true, composed: true, cancelable }));
   }
   private addSaveScoreButton(overlay: HTMLElement) {
-    if (!this.hasAttribute('save-score') || overlay.querySelector('[part=save-score]')) return;
+    const existing = overlay.querySelector('[part=save-score]');
+    const result = this.game.result?.() || {};
+    if (result.practiceMode === true || result.leaderboardEligible === false) {
+      existing?.remove();
+      return;
+    }
+    if (!this.hasAttribute('save-score') || existing) return;
     let actions = overlay.querySelector('.actions');
     if (!actions) {
       actions = document.createElement('div');

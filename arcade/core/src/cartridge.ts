@@ -41,7 +41,7 @@ export function showPanel(root: ShadowRoot, phase: Phase, strings: Texts, score:
   if (phase === 'paused') {
     heading = strings.paused; detail = strings.pause_hint;
   } else if (phase === 'over') {
-    heading = strings.gameover_title;
+    heading = typeof result.heading === 'string' ? result.heading : strings.gameover_title;
     detail = typeof result.causeLine === 'string' ? result.causeLine : strings.gameover_any;
     summary.push(strings.hud_score + ' ' + score, strings.best + ' ' + best);
     const stats = result.stats as Record<string, number> | undefined;

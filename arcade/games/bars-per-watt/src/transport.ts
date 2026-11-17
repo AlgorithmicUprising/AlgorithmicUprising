@@ -1,9 +1,12 @@
 /** One native compressed-media stream owns the song clock. No RAF delta enters timing. */
+export const ENDING_FADE_SECONDS = 3.25;
+
 export class MediaTransport {
   private audio = new Audio();
   private generation = 0;
   private disposed = false;
   private stalled = false;
+  private readonly fadeOutSec = ENDING_FADE_SECONDS;
   onEnd: (() => void) | null = null;
   onState: (() => void) | null = null;
   constructor() {
@@ -28,7 +31,7 @@ export class MediaTransport {
     // Cross-origin playback remains anonymous on approved first-party hosts.
     if (url.origin === location.origin) this.audio.removeAttribute('crossorigin');
     else this.audio.crossOrigin = 'anonymous';
-    this.stalled = true; this.audio.src = url.href; this.audio.load();
+    this.stalled = true; this.audio.volume = 1; this.audio.src = url.href; this.audio.load();
     try {
       await new Promise<void>((resolve, reject) => {
         const timeout = window.setTimeout(() => reject(Error('Audio load timed out')), 30000);
@@ -56,14 +59,21 @@ export class MediaTransport {
   }
   async play(fromStart = false) {
     if (this.disposed) return;
-    if (fromStart) this.audio.currentTime = 0;
+    if (fromStart) { this.audio.currentTime = 0; this.audio.volume = 1; }
     this.stalled = false;
     await this.audio.play();
+  }
+  updateEndingFade() {
+    const duration = this.audio.duration;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+    const remaining = Math.max(0, duration - this.audio.currentTime);
+    this.audio.volume = Math.max(0, Math.min(1, remaining / this.fadeOutSec));
   }
   pause() { this.audio.pause(); }
   reset() {
     this.audio.pause();
     if (this.audio.readyState) this.audio.currentTime = 0;
+    this.audio.volume = 1;
   }
   unload() {
     ++this.generation;

@@ -8,7 +8,7 @@ import { drawHighway } from './render';
 import { PRECISION_THRESHOLD, SCORE_VERSION, RhythmSession } from './session';
 import { Skin } from './skin';
 import { TrackVisual } from './track-visual';
-import { MediaTransport } from './transport';
+import { ENDING_FADE_SECONDS, MediaTransport } from './transport';
 import css from './cabinet.css';
 import markup from './cabinet.html';
 
@@ -53,6 +53,8 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const menuSound = root.querySelector<HTMLButtonElement>('[data-menu-sound]')!;
   const playLabel = root.querySelector<HTMLElement>('[data-play-label]')!;
   const difficultyButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-difficulty]'));
+  const practiceButton = root.querySelector<HTMLButtonElement>('[data-practice]')!;
+  const practiceNote = root.querySelector<HTMLElement>('[data-practice-note]')!;
   const countIn = root.querySelector<HTMLElement>('[data-count-in]')!;
   const loading = root.querySelector<HTMLElement>('[data-loading]')!;
   const judge = root.querySelector<HTMLElement>('[data-judge]')!;
@@ -61,6 +63,10 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const score = root.querySelector<HTMLElement>('[data-score]')!;
   const combo = root.querySelector<HTMLElement>('[data-combo]')!;
   const accuracy = root.querySelector<HTMLElement>('[data-accuracy]')!;
+  const batteryStat = root.querySelector<HTMLElement>('[data-battery-stat]')!;
+  const batteryGauge = root.querySelector<HTMLElement>('[data-battery]')!;
+  const batteryFill = root.querySelector<HTMLElement>('[data-battery-fill]')!;
+  const batteryLabel = root.querySelector<HTMLOutputElement>('[data-battery-label]')!;
   const hit = root.querySelector<HTMLElement>('[data-hit]')!;
   const timing = root.querySelector<HTMLElement>('[data-timing]')!;
   const precision = root.querySelector<HTMLElement>('[data-precision]')!;
@@ -71,6 +77,9 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   const meterBars = Array.from(root.querySelectorAll<HTMLElement>('.meter-bars i'));
   let feedbackAnimation: Animation | null = null, seenMilestone = 0;
   const bill = root.querySelector<HTMLElement>('.bill')!;
+  const billState = root.querySelector<HTMLElement>('[data-bill-state]')!;
+  const billMode = root.querySelector<HTMLOutputElement>('[data-bill-mode]')!;
+  const billBattery = root.querySelector<HTMLOutputElement>('[data-bill-battery]')!;
   const choose = root.querySelector<HTMLButtonElement>('[data-choose]')!;
   const dialog = root.querySelector<HTMLDialogElement>('dialog')!;
   const visualControl = root.querySelector<HTMLInputElement>('[data-visual-offset]')!;
@@ -103,17 +112,33 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     root.querySelector<HTMLOutputElement>('[data-scroll-value]')!.textContent = settings.scrollSpeed.toFixed(2) + '×';
   };
   updateValues();
+  const updateBattery = (value = session?.battery ?? 100) => {
+    const remaining = Math.max(0, Math.min(100, Math.round(value)));
+    batteryLabel.textContent = remaining + '%';
+    batteryGauge.setAttribute('aria-valuenow', String(remaining));
+    batteryGauge.setAttribute('aria-valuetext', remaining + '% battery');
+    batteryFill.style.width = remaining + '%';
+    batteryStat.dataset.low = String(remaining <= 25);
+  };
   const catalogUrl = new URL(host.getAttribute('catalog') || '../catalog.json', import.meta.url);
   let catalogAbort = new AbortController(), selectionAbort: AbortController | null = null;
   let song: Song = humanZoo, chart: Chart | null = null, session: RhythmSession | null = null;
   let menu: 'title' | 'songs' | null = 'title';
   let songs: Song[] = [humanZoo], level: Difficulty = 'easy';
+  let practiceMode = false;
   let rotationSongs: Song[] = [];
   let countdownTimer = 0;
   const lastDifficulty = new Map<string, Difficulty>();
   let catalogError: string | null = null, catalogPending = true;
   let inputMode: 'unclassified' | 'keyboard' | 'touch' | 'gamepad' | 'mixed' = 'unclassified';
   let generation = 0, busy = false, disposed = false;
+  const syncPracticeChoice = () => {
+    practiceButton.setAttribute('aria-pressed', String(practiceMode));
+    practiceButton.textContent = practiceMode ? 'PRACTICE MODE: ON' : 'PRACTICE MODE: OFF';
+    practiceNote.textContent = practiceMode ? 'UNRANKED · NO LEADERBOARD SUBMISSION' :
+      'Practice runs are excluded from leaderboards.';
+  };
+  syncPracticeChoice();
   const status = (text: string) => { loading.textContent = text; root.querySelector<HTMLElement>('.live')!.textContent = text; };
   const prefersReducedMotion = () => settings.reducedMotion || systemMotion.matches;
   function syncTrackVisual(reducedMotion = prefersReducedMotion()) {
@@ -131,6 +156,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     precision.textContent = skin.current.strings.precision + ' 0/' + PRECISION_THRESHOLD;
     precision.dataset.active = 'false'; screen.classList.remove('is-overclocked');
     meter.classList.remove('is-overclocked'); comboStat.classList.remove('is-streak');
+    updateBattery(100);
     meterLabel.textContent = 'READY'; meterBars.forEach(bar => bar.classList.remove('is-lit'));
   };
   const drawFeedback = (at: number, reducedMotion: boolean) => {
@@ -194,7 +220,7 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
       option.setAttribute('aria-pressed', String(option.dataset.difficulty === level));
     }
     loadButton.disabled = busy || !canLoad();
-    playLabel.textContent = busy ? 'LOADING…' : 'PLAY SONG';
+    playLabel.textContent = busy ? 'LOADING…' : practiceMode ? 'START PRACTICE' : 'PLAY SONG';
     status(catalogError ? 'Could not load the song catalog.' :
       catalogPending ? 'Loading songs…' :
       !rotationSongs.length ? 'No cleared, charted tracks are ready for today’s rotation. A playable chart and cleared playback copy are needed.' :
@@ -316,6 +342,11 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
   }, { signal });
   sleeve.addEventListener('error', () => { sleeve.hidden = true; }, { signal });
   menuSound.addEventListener('click', () => root.querySelector<HTMLButtonElement>('[part=sound]')!.click(), { signal });
+  practiceButton.addEventListener('click', () => {
+    practiceMode = !practiceMode;
+    syncPracticeChoice();
+    updateDifficulty();
+  }, { signal });
   loadButton.addEventListener('click', () => void loadSelection(), { signal });
   for (const option of difficultyButtons) option.addEventListener('click', () => {
     const next = option.dataset.difficulty as Difficulty;
@@ -376,7 +407,11 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     if (!session) return;
     bill.hidden = false; choose.hidden = false;
     root.querySelector<HTMLElement>('[data-bill-song]')!.textContent = song.title.toUpperCase();
-    judge.textContent = 'METER SETTLED';
+    const depleted = session.failed;
+    billState.textContent = depleted ? 'POWER CUT' : 'TRACK COMPLETE';
+    billMode.textContent = practiceMode ? 'PRACTICE / UNRANKED' : 'STANDARD / LEADERBOARD ELIGIBLE';
+    billBattery.textContent = session.battery + '%';
+    judge.textContent = depleted ? 'BATTERY DEPLETED · RUN OVER' : 'TRACK COMPLETE · CHART CLOSED';
     root.querySelector<HTMLOutputElement>('[data-bill-score]')!.textContent = String(session.score);
     root.querySelector<HTMLOutputElement>('[data-bill-best]')!.textContent = String(element.best);
     root.querySelector<HTMLOutputElement>('[data-bill-total]')!.textContent = String(session.score);
@@ -489,7 +524,13 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     },
     update() {
       if (!session || !transport.playing) return;
-      session.advance(transport.time);
+      const at = transport.time;
+      transport.updateEndingFade();
+      session.advance(at);
+      if (session.complete) {
+        transport.pause();
+        trackVisual.stop();
+      }
     },
     draw(ctx, w, h) {
       const at = transport.time;
@@ -500,6 +541,8 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
         settings.contrast, reducedMotion, settings.scrollSpeed);
       if (!session) return;
       drawFeedback(at, reducedMotion);
+      trackVisual.setFade(Math.max(0, Math.min(1, (song.durationSec - at) / ENDING_FADE_SECONDS)));
+      updateBattery(session.battery);
       score.textContent = String(session.score); combo.textContent = String(session.combo);
       accuracy.textContent = session.accuracy + '%';
       progress.value = Math.min(at, song.durationSec); time.textContent = timeLabel(at);
@@ -529,9 +572,14 @@ defineArcade('bars-per-watt', 'BARS PER WATT', (emit, host) => {
     },
     score: () => session?.score || 0,
     over: () => session?.complete || false,
-    bestKey: () => chart ? 'best:' + SCORE_VERSION + ':' + song.id + ':' + chart.id + ':' + chart.difficulty + ':' + inputMode : 'best:' + SCORE_VERSION,
+    bestKey: () => chart ? 'best:' + SCORE_VERSION + ':' + (practiceMode ? 'practice:' : '') +
+      song.id + ':' + chart.id + ':' + chart.difficulty + ':' + inputMode : 'best:' + SCORE_VERSION,
     result: () => ({
-      cause: 'complete', causeLine: skin.current.strings.gameover_any,
+      cause: session?.failed ? 'battery-depleted' : 'track-complete',
+      heading: session?.failed ? 'POWER CUT' : 'TRACK COMPLETE',
+      causeLine: session?.failed ? 'BATTERY DEPLETED · RUN OVER' :
+        practiceMode ? 'PRACTICE RUN COMPLETE · NOT LEADERBOARD ELIGIBLE' : 'ARCADE EDIT COMPLETE · CHART CLOSED',
+      practiceMode, leaderboardEligible: !practiceMode, batteryRemaining: session?.battery ?? 100,
       songId: song.id, chartId: chart?.id, audioVersion: chart?.audioVersion, difficulty: chart?.difficulty,
       inputMode, scoreVersion: SCORE_VERSION, accuracy: session?.accuracy || 0, maxCombo: session?.maxCombo || 0,
       maxPrecision: session?.maxPrecision || 0,

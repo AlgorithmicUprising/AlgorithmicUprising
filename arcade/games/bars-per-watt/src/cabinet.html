@@ -8,7 +8,12 @@
     <div class="brand"><b>Ø</b><span>BARS<br>PER WATT</span></div>
     <div class="hud"><div><small>BARS BANKED</small><output data-score>0</output></div>
       <div class="combo-stat"><small>COMBO</small><output data-combo>0</output></div>
-      <div><small>ACCURACY</small><output data-accuracy>0%</output></div></div>
+      <div><small>ACCURACY</small><output data-accuracy>0%</output></div>
+      <div class="battery-stat" data-battery-stat>
+        <div class="battery-readout"><small>BATTERY</small><output data-battery-label>100%</output></div>
+        <div class="battery-gauge" data-battery role="progressbar" aria-label="Battery life"
+          aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><i data-battery-fill></i></div>
+      </div></div>
   </header>
   <div class="screen">
     <canvas role="img" aria-label="Four-lane rhythm highway: left, down, up, right"></canvas>
@@ -21,7 +26,9 @@
       <section class="card">
         <span class="eyebrow">ZERO GAME THING 2000 / 04</span>
         <h2>BARS PER WATT</h2><p data-detail>Drop bars. Not the grid.</p><p data-summary hidden></p>
-        <div class="bill" hidden><strong>ELECTRIC BILL / <span data-bill-song></span></strong>
+        <div class="bill" hidden><strong><span data-bill-state>TRACK COMPLETE</span> / <span data-bill-song></span></strong>
+          <div><span>RUN TYPE</span><output data-bill-mode>STANDARD</output></div>
+          <div><span>BATTERY LEFT</span><output data-bill-battery>100%</output></div>
           <div><span>BEAT CHARGE</span><output data-bill-score>0</output></div>
           <div><span>BEST</span><output data-bill-best>0</output></div>
           <div><span>ACCURACY</span><output data-bill-accuracy>0%</output></div>
@@ -95,6 +102,10 @@
             <button type="button" data-difficulty="medium" aria-pressed="false">MEDIUM</button>
             <button type="button" data-difficulty="hard" aria-pressed="false">HARD</button>
           </div>
+          <div class="practice-choice">
+            <button type="button" data-practice aria-pressed="false">PRACTICE MODE: OFF</button>
+            <small data-practice-note>Practice runs are excluded from leaderboards.</small>
+          </div>
         </div>
       </article>
     </div>
@@ -112,6 +123,7 @@
     <label>BACKGROUND VIDEO <input data-background-video type="checkbox" checked></label>
     <p>Scroll speed changes arrow spacing. Song speed and scoring stay the same. Hold an arrow until its end cap meets the hit line, then release.</p>
     <p>ROOT ACCESS: within 50 ms. IN SYNC: within 90 ms. BIT ROUGH: within 120 ms. Five perfect hits in a row: OVERCLOCKED! A Good or OK hit keeps your combo but resets precision. A miss or dropped hold breaks both.</p>
+    <p>Battery starts full. A miss drains 10%; every five-hit streak restores 5%. Empty battery ends the run.</p>
     <p>Offsets are local to this device. The song clock always controls scoring.</p>
     <button type="submit">DONE</button></form></dialog>
   <span class="live" aria-live="polite" aria-atomic="true"></span>

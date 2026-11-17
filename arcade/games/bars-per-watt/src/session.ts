@@ -7,6 +7,10 @@ export interface HitFeedback { kind: Judgement | 'hold'; lane: Lane; at: number;
 export const WINDOWS = { perfect: 0.05, good: 0.09, ok: 0.12 } as const;
 export const PRECISION_THRESHOLD = 5;
 export const SCORE_VERSION = 'timing-v2';
+export const BATTERY_MAX = 100;
+export const BATTERY_MISS_DRAIN = 10;
+export const BATTERY_STREAK_SIZE = 5;
+export const BATTERY_STREAK_CHARGE = 5;
 // Inclusive boundaries must survive subtracting timestamps deep into a song.
 const EPSILON = 1e-9;
 const isMilestone = (count: number) => count === 10 || count === 25 || (count > 0 && count % 50 === 0);
@@ -14,6 +18,7 @@ const isMilestone = (count: number) => count === 10 || count === 25 || (count > 
 export class RhythmSession {
   readonly notes: SessionNote[];
   score = 0; combo = 0; maxCombo = 0;
+  battery = BATTERY_MAX; failed = false;
   precision = 0; maxPrecision = 0;
   totals = { perfect: 0, good: 0, ok: 0, miss: 0, holds: 0 };
   latest: Judgement | 'hold' | null = null;
@@ -48,9 +53,17 @@ export class RhythmSession {
     this.feedback(kind, lane, at, errorSec);
     this.precision = kind === 'perfect' ? this.precision + 1 : 0;
     this.maxPrecision = Math.max(this.maxPrecision, this.precision);
-    if (kind === 'miss') { this.combo = 0; this.milestone = null; }
-    else {
+    if (kind === 'miss') {
+      this.combo = 0; this.milestone = null;
+      this.battery = Math.max(0, this.battery - BATTERY_MISS_DRAIN);
+      if (this.battery === 0) {
+        this.failed = true; this.complete = true;
+        this.holding.clear(); this.pressed.clear();
+      }
+    } else {
       this.combo++; this.maxCombo = Math.max(this.maxCombo, this.combo);
+      if (this.combo % BATTERY_STREAK_SIZE === 0)
+        this.battery = Math.min(BATTERY_MAX, this.battery + BATTERY_STREAK_CHARGE);
       this.score += kind === 'perfect' ? 1000 : kind === 'good' ? 750 : 500;
       if (this.precision === PRECISION_THRESHOLD || isMilestone(this.precision))
         this.milestone = { id: ++this.milestoneId, kind: 'precision', count: this.precision, at };
@@ -66,6 +79,7 @@ export class RhythmSession {
       if (item.state !== 'pending') { this.pendingCursor++; continue; }
       if (at <= item.note.time + WINDOWS.ok + EPSILON) break;
       item.state = 'missed'; this.judge('miss', item.note.lane, at); this.pendingCursor++;
+      if (this.complete) return;
     }
     for (const item of this.holding) {
       if (item.note.endTime !== undefined && at >= item.note.endTime - EPSILON) {
@@ -74,7 +88,9 @@ export class RhythmSession {
           this.score += 500; this.totals.holds++;
           this.feedback('hold', item.note.lane, item.note.endTime);
         } else {
-          item.state = 'missed'; this.judge('miss', item.note.lane, at); this.holding.delete(item);
+          item.state = 'missed'; this.holding.delete(item);
+          this.judge('miss', item.note.lane, at);
+          if (this.complete) return;
         }
       }
     }
@@ -84,6 +100,7 @@ export class RhythmSession {
     if (this.complete || !Number.isFinite(at)) return;
     if (down) this.pressed.add(lane);
     this.advance(at);
+    if (this.complete) { this.pressed.delete(lane); return; }
     if (!down) this.pressed.delete(lane);
     if (down) {
       const item = this.notes.find(n => n.note.lane === lane && n.state === 'pending' &&
@@ -105,10 +122,12 @@ export class RhythmSession {
   }
   finish() {
     if (this.complete) return;
-    for (const item of this.notes)
+    for (const item of this.notes) {
+      if (this.complete) break;
       if (item.state === 'pending' || item.state === 'holding') {
         item.state = 'missed'; this.judge('miss', item.note.lane, this.chart.durationSec);
       }
+    }
     this.holding.clear(); this.pressed.clear(); this.complete = true;
   }
 }
