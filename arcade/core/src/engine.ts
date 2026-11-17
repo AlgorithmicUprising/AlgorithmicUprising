@@ -89,7 +89,10 @@ export function defineArcade(tag:string,label:string,create:(emit:(name:string,d
     return prefix + ':v1:' + tag + ':' + (scoped || suffix);
   }
   private readStorage() {
-    const initialMute = !profile || !['false', '0', 'off'].includes(this.getAttribute('muted') || '');
+    const mutedAttribute = this.getAttribute('muted');
+    const initialMute = mutedAttribute === null && tag === 'grind-the-terms'
+      ? false
+      : !profile || !['false', '0', 'off'].includes(mutedAttribute || '');
     let best = 0, savedMute: string | null = null;
     best = Number(readLocal(this.storageKey('best'))) || 0;
     savedMute = readLocal(this.storageKey('muted'));
