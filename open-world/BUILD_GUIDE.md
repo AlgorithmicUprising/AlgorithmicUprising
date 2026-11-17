@@ -52,7 +52,7 @@ Verified here, on this Linux machine, with Godot 4.7.2:
 | Gamepad mapping | Synthetic axis `0.1` did not press `move_right`; axis `1.0` did; button A pressed `jump` |
 | Movement | Skate forward, jump leaves and returns to the floor, a wall stops the body |
 | Ramp | Wedge ramp, max feet height about 1.20 m while still on the floor |
-| Grind | Airborne approach attaches, travels, jump detaches; skating on the ground under the rail does not attach |
+| Grind | Airborne approach attaches, travels, jump detaches; skating on the ground under the rail does not attach. Grind round (LOCAL, Nov 16 2026): ollie onto the 0.30 m flat bar locks a 50-50, speed carries with slow friction, rolls off the end or pops out with Q / Space; 45 deg, too slow, a stall or riding into the bar is a bail; a down rail speeds him up; the manual pad's edges are ledges (`_grind_round()`, `_grind_park()`) |
 | Yard | 160 m block: one south gate, bowl, half-pipe, quarter, rail, warehouse arcade, workshop, resistance rooms. Headless `SUMMARY failed=0` |
 | Cabinet | Placeholder session pauses world sim and input, holds the single audio owner, finish/abort restores them, 10 re-entries do not stick |
 | Save | `user://au-open-world-save-v1.json` reloaded with 11 results |
@@ -103,7 +103,7 @@ Wall centers sit on a **160 m** square (`scripts/yard.gd`, `HALF = 80`). The dia
 | Drainage bowl, banks about 3 m | Floor at y = −3 m, four straight bank plates |
 | Mini half-pipe, 2 m | Two facing quarter-segments, radius 2.0 m, plus coping |
 | Quarter about 2 m | One mesh, radius 2.4 m, climbing onto a short deck. Coping is visual. Not a smooth sculpt |
-| Flat rail | 12 m straight rail, y = 1.05 m, same grind rules as before |
+| Flat rail | Grind round (LOCAL): 7 m flat bar, 0.30 m to the top of a 5 cm tube on two legs, z = 8 north of the skate lane (was a 12 m rail at y = 1.05 m, above an ollie). The manual pad's two long metal edges are 0.30 m ledges |
 | Funbox, height not fixed | 0.9 m so the current jump, about 1.1 m, can land on it |
 | Loading docks +1.2 m | 1.2 m decks plus a ride-up slope, because the jump does not clear 1.2 m by itself |
 | Roof stair | One slope to the solar roof, about 9.1 m, on the east side of the warehouse |
@@ -125,7 +125,7 @@ District geometry is built in code by `scripts/hq_main.gd` so collisions stay in
 | `scenes/player.tscn` | Third-person body, board, spring-arm camera |
 | `scenes/npc.tscn` | Zero and Fony placeholders |
 | `scenes/cabinet.tscn` | Arcade cabinet |
-| `scenes/grind_rail.tscn` | Straight rail, no collision mesh |
+| `scenes/grind_rail.tscn` | Grindable edge (`scripts/grind_rail.gd`): kind rail (flat bar mesh) or ledge (marks an existing edge), optional drop for a down rail, no collision mesh |
 | `scenes/session_overlay.tscn` | Placeholder cabinet UI |
 | `scripts/player_controller.gd` | Walk, skate, jump, camera, grind |
 | `scripts/hq_flow.gd` | Dialogue, pause, session handoff, save |
@@ -339,7 +339,7 @@ Merging this visual branch would replace that HQ with the 160 m yard. Leave the 
 - Fony is the player and Zero is the NPC. Both are pivot rigs of capsules, spheres, and cylinders, not skin-weighted meshes. See `ASSET_MANIFEST.md`.
 - The cel shader is three light bands plus a little edge darkening. It is not an ink contour and not the painted concept. Shadows are one directional map. On llvmpipe they are visible and not a measured sharpness.
 - The bowl is four flat banks around a floor at −3 m. The plates overlap the yard and do not form a smooth concrete bowl.
-- One straight grind rail. Leaving the end shoves the body forward. There is no grind trick.
+- Grind round (LOCAL): one trick, the frontside 50-50, on one flat bar and the manual pad's two ledges. No balance meter (the grind locks), no 5-0 / boardslide yet, no score.
 - The cabinet does not load Grind, Tag, Cookie Wall, or Bars per Watt.
 - No networking, no missions, no second neighborhood.
 - No performance numbers. LlvmPipe and SwiftShader were used because that is what this machine offered. They are not a target device.

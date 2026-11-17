@@ -279,6 +279,9 @@ func _state(ctx: Dictionary) -> String:
 		return "bail"
 	if bool(ctx.get("grind", false)):
 		return "grind"
+	# Grind round: the first frames after popping / rolling off a rail show the grind clip's "out" frames
+	if float(ctx.get("grind_out", -1.0)) >= 0.0 and clips.has("grind_back") and _clip("grind_back").get("phases", {}).has("out"):
+		return "grind"
 	if trick == "crouch" or trick == "ollie" or trick == "flip" or trick == "grab" or trick == "land":
 		if trick == "flip":
 			return "kickflip"
@@ -343,6 +346,8 @@ func _index(state: String, ctx: Dictionary) -> int:
 		return clampi(int(float(ctx.get("flip_turns", 0.0)) * float(count)), 0, count - 1)
 	if state == "grab":
 		return _grab_index(count, ctx)
+	if state == "grind" and _clip(clip).get("phases", {}).has("hold"):
+		return _grind_index(count, ctx)
 	if state == "push":
 		return clampi(int(push_frame), 0, count - 1)
 	if state == "pump":
@@ -434,6 +439,23 @@ func _puppet_grab_index(count: int, phases: Dictionary, ctx: Dictionary) -> int:
 	if bool(ctx.get("grab_held", false)) and int(u * float(air.size())) >= first_release and not hold.is_empty():
 		return clampi(int(hold[hold.size() - 1]), 0, count - 1)
 	return clampi(int(air[clampi(int(u * float(air.size())), 0, air.size() - 1)]), 0, count - 1)
+
+## Grind round (puppet 50-50): "in" frames (touchdown, absorb) for the first GRIND_IN frames after the lock, then the "hold" loop;
+## after popping or rolling off, the "out" frames (weight back, nose up, legs extend) by the time since the exit.
+func _grind_index(count: int, ctx: Dictionary) -> int:
+	var phases: Dictionary = _clip(clip).get("phases", {})
+	var fps := _fps(clip)
+	var out_t := float(ctx.get("grind_out", -1.0))
+	if not bool(ctx.get("grind", false)) and out_t >= 0.0:
+		var outs := _phase_list(phases, "out")
+		return clampi(int(outs[clampi(int(out_t * fps), 0, outs.size() - 1)]), 0, count - 1)
+	var t := float(ctx.get("grind_t", 0.0))
+	var ins := _phase_list(phases, "in")
+	var i := int(t * fps)
+	if i < ins.size():
+		return clampi(int(ins[i]), 0, count - 1)
+	var hold := _phase_list(phases, "hold")
+	return clampi(int(hold[posmod(i - ins.size(), hold.size())]), 0, count - 1)
 
 ## Phase 3 drop-in: commit frames by the commit clock; roll-out frames by the wall angle under him (drawn at 70..0 deg).
 func _qp_dropin_index(count: int, ctx: Dictionary) -> int:

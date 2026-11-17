@@ -64,6 +64,31 @@ const CAM_SPRING_DEFAULT := 5.2
 const CAM_SPRING_QP := 1.20
 const CAM_SPRING_SLEW := 2.8        # m/s, ~0.047 m per 60 fps tick
 
+# Grind round (LOCAL, Nov 16 2026): frontside 50-50 on a flat bar or a ledge edge ("grind_rail" group, scripts/grind_rail.gd).
+# Reference: Trick Dojo "How to 50-50 Grind", Skate Labs "50-50 Grind", Braille "How to Frontside 50-50 a Rail": approach close
+# and nearly parallel at steady speed, ollie a little higher than the edge, land both trucks at once, weight centred, knees bent,
+# board flat and parallel to the rail, roll off the end or pop out; too slow and the trucks catch.
+# Lock: airborne, the board's contact point coming down through the rail top (GRIND_CATCH_UP above .. GRIND_CATCH_DOWN below),
+# within GRIND_SNAP_R of the axis sideways, inside the rail. Then the approach decides: within GRIND_MAX_ANGLE of the axis and at
+# least GRIND_MIN_SPEED along it locks a 50-50; anything else is a bail. On the rail the speed along it carries through, minus the
+# rail's friction (and plus gravity along a down rail). Below GRIND_STALL_SPEED the trucks catch: bail. Off the end he rolls off
+# with his speed; Q (ollie) or Space (jump) pops out with a small sideways drift back to the side he came from.
+# Running into a rail below its top (on the ground or too low in the air) is a bail too ("clipped").
+const GRIND_SNAP_R := 0.32          # m sideways from the axis (rail default; grind_rail.gd catch_r, ledges 0.5)
+const GRIND_CATCH_UP := 0.12        # contact point at most this far above the top ...
+const GRIND_CATCH_DOWN := 0.10      # ... or this far below it while coming down (one 60 Hz tick at 6 m/s is 0.1 m)
+const GRIND_MAX_ANGLE := 25.0       # deg between the approach and the rail ("nearly parallel")
+const GRIND_MIN_SPEED := 2.0        # m/s along the rail to lock
+const GRIND_STALL_SPEED := 0.6      # m/s: the trucks catch and he falls off
+const GRIND_END_MARGIN := 0.15      # m of rail needed past the lock point
+const GRIND_SINK := 0.04            # wheel bottoms sit this far below the rail top (trucks' hangers on the bar)
+const GRIND_POP_DRIFT := 0.9        # m/s sideways when popping out
+const GRIND_LOCKOUT_S := 0.3
+const GRIND_OUT_S := 4.0 / 24.0     # grind clip "out" frames shown at the start of a pop-out
+const GRIND_IN_S := 4.0 / 24.0      # grind clip "in" frames (touchdown + absorb) before the hold loop
+const GRIND_CLIP_R := 0.12          # m: inside this of the axis and below the top = ran into the rail
+const GRIND_CLIP_DEPTH := 0.6       # ... unless the top is more than this above his contact point (riding under it)
+
 var skating := true
 var input_enabled := true
 var qp_state := ""                  # "" / setup / ready / commit / roll / bail / kickturn (Phase 4)
@@ -93,6 +118,18 @@ var camera_pitch := -0.18
 var grind = null
 var grind_progress := 0.0
 var grind_lockout := 0.0
+var grind_along := 0.0              # m from the rail start along its axis
+var grind_v := 0.0                  # m/s along the rail (+ = toward its end)
+var grind_time := 0.0               # s since the lock
+var grind_out_time := -1.0          # s since popping / rolling out (-1 = not just out); drives the clip's out frames
+var grind_side := 0.0               # which side of the axis he came from (+1 / -1)
+var grind_land_pending := false     # rolled off the end: the next touchdown plays the land frames
+var grind_trick := "5050"
+var grind_count := 0
+var grind_last := {}                # tests / probes: the last grind or grind bail (trick, entry, distance, time, exit)
+var grind_pop_side := Vector3.ZERO  # unit sideways drift held through a pop-out's air (cleared on touchdown)
+var grind_left_rail = null          # the rail he just left: no re-lock onto it before touching down
+var _grind_prev := {}               # rail -> last lateral offset (crossing check)
 var external_move := Vector2.ZERO
 var external_move_active := false
 var external_jump := false
@@ -248,6 +285,10 @@ func respawn() -> void:
 	velocity = Vector3.ZERO
 	grind = null
 	grind_lockout = 0.2
+	grind_out_time = -1.0
+	grind_land_pending = false
+	grind_pop_side = Vector3.ZERO
+	grind_left_rail = null
 	ramp_mode = ""
 	ramp = null
 	pipe_air = false
@@ -259,11 +300,9 @@ func respawn() -> void:
 	rotation.y = spawn_yaw
 	camera_yaw = spawn_yaw
 
+## Lock onto `rail` at `along` (0..1, older callers) with the current velocity; grind_check() is the normal way in.
 func begin_grind(rail, along: float) -> void:
-	grind = rail
-	grind_progress = along
-	velocity = rail.direction * rail.speed
-	global_position = rail.point_at(along)
+	_grind_lock(rail, along * float(rail.length), "direct")
 
 func _physics_process(delta: float) -> void:
 	if qp_state == "commit" or qp_state == "roll":
@@ -356,6 +395,13 @@ func _simulate(delta: float) -> void:
 		horizontal = horizontal.move_toward(Vector3(wish.x, 0.0, wish.z) * speed, accel * delta)
 		if rig != null and rig.has_method("face_world"):
 			rig.face_world(atan2(-wish.x, -wish.z))
+	if grind_pop_side != Vector3.ZERO:
+		# popping out of a grind: the sideways drift off the rail survives the air steering until touchdown
+		var lat := horizontal.dot(grind_pop_side)
+		if lat < GRIND_POP_DRIFT:
+			horizontal += grind_pop_side * (GRIND_POP_DRIFT - lat)
+		if is_on_floor() and velocity.y <= 0.0:
+			grind_pop_side = Vector3.ZERO
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
 	var was_air := pipe_air
@@ -371,7 +417,16 @@ func _simulate(delta: float) -> void:
 	if is_on_floor():
 		if was_air:
 			_pipe_air_landed()
+		if grind_land_pending:
+			grind_land_pending = false
+			if trick == "":
+				trick = "land"
+				trick_time = 0.0
 		_try_ramp_entry()
+	if grind_out_time >= 0.0:
+		grind_out_time += delta
+		if grind_out_time > GRIND_OUT_S:
+			grind_out_time = -1.0
 	_try_grind()
 	update_board()
 
@@ -476,43 +531,191 @@ func _update_cam_arm(delta: float) -> void:
 	arm.spring_length = _cam_arm_len
 
 func _try_grind() -> void:
-	if grind != null or grind_lockout > 0.0 or is_on_floor():
+	if grind != null or grind_lockout > 0.0 or not skating or bail_time > 0.0 or ramp_mode != "" or qp_state != "":
+		_grind_prev.clear()
 		return
-	if velocity.y > 2.5:
+	if not is_inside_tree():
 		return
-	if Vector2(velocity.x, velocity.z).length() < 3.0:
-		return
+	if grind_left_rail != null and is_on_floor():
+		grind_left_rail = null
 	for node in get_tree().get_nodes_in_group("grind_rail"):
-		if node.has_method("try_attach") and node.try_attach(self):
+		if not node.has_method("locate") or node == grind_left_rail:
+			continue
+		var verdict := grind_check(node)
+		if verdict == "lock" or verdict.begins_with("bail"):
 			return
 
+## One rail against the body this tick: "" (nothing), "lock" (now grinding), or "bail:<reason>" (now bailing).
+func grind_check(rail) -> String:
+	var contact := global_position + Vector3.UP * 0.325
+	var at: Dictionary = rail.locate(contact)
+	var along := float(at.along)
+	var lateral := float(at.lateral)
+	var above := float(at.above)
+	var length := float(rail.length)
+	var prev = _grind_prev.get(rail, null)
+	_grind_prev[rail] = lateral
+	if along < 0.0 or along > length:
+		return ""
+	# ran into a rail below its top: lateral crossing this tick (or riding along inside it) with the board under the top
+	if str(rail.kind) == "rail" and above < -0.05 and above > -GRIND_CLIP_DEPTH and Vector2(velocity.x, velocity.z).length() > 1.0:
+		var crossed: bool = prev != null and signf(float(prev)) != signf(lateral) and absf(float(prev)) < 0.6
+		if absf(lateral) < GRIND_CLIP_R or crossed:
+			_grind_bail(rail, "clipped", along, lateral)
+			return "bail:clipped"
+	if is_on_floor():
+		return ""
+	if absf(lateral) > float(rail.catch_r) or above > GRIND_CATCH_UP or above < -GRIND_CATCH_DOWN or velocity.y > 0.5:
+		return ""
+	if along < GRIND_END_MARGIN * 0.5 or along > length - GRIND_END_MARGIN:
+		return ""
+	var flat_dir: Vector3 = Vector3(rail.direction.x, 0.0, rail.direction.z).normalized()
+	var vh := Vector3(velocity.x, 0.0, velocity.z)
+	var along_v := vh.dot(flat_dir)
+	var angle := rad_to_deg(acos(clampf(absf(along_v) / maxf(vh.length(), 0.001), 0.0, 1.0))) if vh.length() > 0.05 else 90.0
+	if angle > GRIND_MAX_ANGLE:
+		_grind_bail(rail, "bad_angle", along, lateral, angle)
+		return "bail:bad_angle"
+	if absf(along_v) < GRIND_MIN_SPEED:
+		_grind_bail(rail, "too_slow", along, lateral, angle)
+		return "bail:too_slow"
+	# a trick still going wrong in the air lands on the rail as badly as on the ground
+	if trick == "flip" and not board_caught:
+		_grind_bail(rail, "flip_not_caught", along, lateral, angle)
+		return "bail:flip_not_caught"
+	if trick == "grab" and _grab_held():
+		_grind_bail(rail, "grab_held", along, lateral, angle)
+		return "bail:grab_held"
+	grind_side = signf(lateral) if absf(lateral) > 0.01 else 1.0
+	_grind_lock(rail, along, "ollie" if trick != "" else "air", angle)
+	return "lock"
+
+func _grind_lock(rail, along_m: float, how: String, angle := 0.0) -> void:
+	var flat_dir: Vector3 = Vector3(rail.direction.x, 0.0, rail.direction.z).normalized()
+	grind = rail
+	grind_along = clampf(along_m, 0.0, float(rail.length))
+	grind_progress = grind_along / float(rail.length)
+	grind_v = Vector3(velocity.x, 0.0, velocity.z).dot(flat_dir)
+	if absf(grind_v) < 0.01:
+		grind_v = float(rail.speed)
+	grind_time = 0.0
+	grind_out_time = -1.0
+	grind_land_pending = false
+	grind_pop_side = Vector3.ZERO
+	trick = ""
+	trick_next = ""
+	trick_time = 0.0
+	board_caught = true
+	grind_trick = "5050"
+	grind_count += 1
+	grind_last = {"trick": grind_trick, "rail": str(rail.name), "kind": str(rail.kind), "entry_speed": absf(grind_v),
+		"angle_deg": angle, "start_along": grind_along, "how": how, "msec": Time.get_ticks_msec()}
+	_event("grind_lock", {"rail": str(rail.name), "speed": absf(grind_v), "angle": angle})
+	_grind_place()
+
+## Board on the riding line, facing the way he travels.
+func _grind_place() -> void:
+	var rail = grind
+	global_position = rail.line_point(grind_along) + Vector3.UP * (-0.325 - GRIND_SINK)
+	var dir: Vector3 = rail.line_dir() * signf(grind_v if absf(grind_v) > 0.001 else 1.0)
+	velocity = dir * absf(grind_v)
+	if rig != null and rig.has_method("face_world"):
+		rig.face_world(atan2(-dir.x, -dir.z))
+
 func _step_grind(delta: float) -> void:
+	var rail = grind
+	if rail == null or not is_instance_valid(rail):
+		grind = null
+		return
 	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
 	external_jump = false
-	if jumping:
-		_leave_grind(true)
+	var popping := trick_request == "ollie" or (not external_move_active and InputMap.has_action("trick_ollie") and Input.is_action_just_pressed("trick_ollie"))
+	trick_request = ""
+	wish_len = 0.0
+	if jumping or popping:
+		_leave_grind(true, JUMP_VELOCITY if jumping else OLLIE_POP_VELOCITY)
 		return
-	grind_progress += delta * grind.speed / grind.length
-	if grind_progress >= 1.0:
+	grind_time += delta
+	# rolling resistance against the travel, gravity along a down rail
+	var slope_a: float = GRAVITY * float(rail.drop) / maxf(float(rail.length), 0.001)
+	grind_v += slope_a * delta
+	grind_v = move_toward(grind_v, 0.0, float(rail.friction) * delta)
+	if absf(grind_v) < GRIND_STALL_SPEED:
+		_grind_bail(rail, "stalled", grind_along, grind_side * 0.2)
+		return
+	grind_along += grind_v * delta
+	grind_progress = grind_along / float(rail.length)
+	if grind_along >= float(rail.length) or grind_along <= 0.0:
+		grind_along = clampf(grind_along, 0.0, float(rail.length))
 		_leave_grind(false)
 		return
-	global_position = grind.point_at(grind_progress)
-	velocity = grind.direction * grind.speed
-	if rig != null and rig.has_method("face_world"):
-		rig.face_world(atan2(-velocity.x, -velocity.z))
+	_grind_place()
 
-func _leave_grind(jumped: bool) -> void:
+## Off the rail: popped (Q / Space) or rolled off the end.
+func _leave_grind(jumped: bool, pop := JUMP_VELOCITY) -> void:
 	var rail = grind
-	var direction: Vector3 = rail.direction
+	var dir: Vector3 = rail.line_dir() * signf(grind_v if absf(grind_v) > 0.001 else 1.0)
+	var speed := absf(grind_v)
 	grind = null
-	grind_lockout = 0.35
+	grind_lockout = GRIND_LOCKOUT_S
+	grind_left_rail = rail
+	_grind_prev.clear()
+	grind_last["time"] = grind_time
+	grind_last["distance"] = absf(grind_along - float(grind_last.get("start_along", 0.0)))
+	grind_last["exit_speed"] = speed
 	if jumped:
-		velocity = direction * rail.speed + Vector3.UP * JUMP_VELOCITY
-		global_position += Vector3.UP * 0.15
+		var side: Vector3 = rail.locate(global_position).side
+		var flat := Vector3(dir.x, 0.0, dir.z)
+		velocity = flat * speed + side * (grind_side * GRIND_POP_DRIFT) + Vector3.UP * pop
+		grind_pop_side = side * grind_side
+		global_position += Vector3.UP * 0.05
+		grind_out_time = 0.0
+		board_caught = true
+		if pop == OLLIE_POP_VELOCITY:
+			trick = "ollie"         # Q: an ollie out; lands through _finish_trick like any ollie
+			trick_time = 0.0
+		else:
+			trick = ""              # Space: the plain jump (frames follow the velocity), lands with the land frames
+			grind_land_pending = true
+		grind_last["exit"] = "pop"
+		_event("grind_pop", {"speed": speed})
 	else:
-		global_position = rail.point_at(1.0) + direction * 0.45
-		velocity = direction * rail.speed
-		velocity.y = 0.4
+		global_position = rail.line_point(grind_along) + Vector3.UP * (-0.325 + 0.02) + Vector3(dir.x, 0.0, dir.z) * 0.05
+		velocity = dir * speed
+		velocity.y = minf(velocity.y, 0.0)
+		grind_out_time = 0.0
+		grind_land_pending = true
+		grind_last["exit"] = "end"
+		_event("grind_end", {"speed": speed})
+
+## Bad approach, a stall, or running into the rail: same bail as a bad landing (Phase 1e), he ends up beside the rail.
+func _grind_bail(rail, reason: String, along: float, lateral: float, angle := -1.0) -> void:
+	var was_on := grind != null
+	grind = null
+	grind_lockout = 0.6
+	_grind_prev.clear()
+	grind_out_time = -1.0
+	grind_land_pending = false
+	last_bail_reason = "grind_" + reason
+	trick = "bail"
+	trick_time = 0.0
+	bail_time = 0.6
+	skating = false
+	var side: Vector3 = rail.locate(global_position).side
+	var s := signf(lateral) if absf(lateral) > 0.01 else 1.0
+	if was_on:
+		# fall off the side he came from, onto the ground beside the rail
+		global_position = rail.line_point(along) + side * (s * 0.45) + Vector3.UP * (-0.325)
+	elif str(rail.kind) == "rail" and absf(lateral) < 0.45:
+		# hit it: knocked back out to the side he came from (never left standing inside the bar)
+		global_position += side * (s * 0.45 - lateral)
+	velocity.x *= 0.35
+	velocity.z *= 0.35
+	velocity += side * (s * 1.2)
+	velocity.y = minf(velocity.y, 0.0)
+	grind_last = {"trick": "bail", "reason": reason, "rail": str(rail.name), "angle_deg": angle, "along": along,
+		"was_grinding": was_on, "msec": Time.get_ticks_msec()}
+	_event("grind_bail", {"reason": reason, "angle": angle})
 
 var trick := ""
 var trick_time := 0.0
@@ -648,7 +851,7 @@ func _pose(delta: float) -> void:
 
 ## True while the board is on something: flat ground or the curve.
 func on_ground() -> bool:
-	return qp_state != "" or ramp_mode == "ride" or is_on_floor()
+	return grind != null or qp_state != "" or ramp_mode == "ride" or is_on_floor()
 
 ## Rolling backwards relative to where he faces (fakie). Facing comes from the stick on the flat only.
 func is_fakie() -> bool:
@@ -880,6 +1083,8 @@ func _pipe_air_landed() -> void:
 
 ## Shift (skate_toggle). On the drop-in spot it sets up / backs out instead of the flat kick-up / drop.
 func skate_toggle_pressed() -> void:
+	if grind != null:
+		return              # grind round: Shift does nothing on a rail (no kick-up mid-grind)
 	if qp_state == "setup" or qp_state == "ready":
 		_qp_back_out()
 		return

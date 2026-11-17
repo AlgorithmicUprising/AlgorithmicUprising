@@ -103,6 +103,8 @@ func _physics_process(delta: float) -> void:
 		"bail_time": float(body.bail_time),
 		"grab_held": body.has_method("_grab_held") and body._grab_held(),
 		"grind": body.grind != null,
+		"grind_t": float(body.grind_time) if "grind_time" in body else 0.0,
+		"grind_out": float(body.grind_out_time) if "grind_out_time" in body else -1.0,
 		"pop_vy": float(body.OLLIE_POP_VELOCITY),
 		"gravity": float(body.GRAVITY),
 		"crouch_s": float(body.OLLIE_CROUCH_S),
@@ -158,6 +160,12 @@ func _apply(airborne: bool, cam: Camera3D = null) -> void:
 	lean_roll = 0.0
 	lean_pitch = 0.0
 	if anim.clip.begins_with("qp_"):
+		_apply_qp(fr, side_px, anchor_y, h)
+		return
+	# Grind round: the rail is thin, so the Phase 1d toward-camera ground shift (right for a flat floor) slides the drawn board
+	# off the bar in the 3/4 and back views. Stand the drawn ground point (body_px = wheel contact under the body) on the body
+	# instead, in the billboard plane, the way the Phase 3 qp_ frames are placed: the wheels then sit on the rail in every view.
+	if anim.clip.begins_with("grind_") and str(fr.get("source", "")) == "puppet":
 		_apply_qp(fr, side_px, anchor_y, h)
 		return
 	if cam != null and is_inside_tree() and (lean_up.angle_to(Vector3.UP) > 0.01 or anchor_extra.length() > 0.001):

@@ -179,13 +179,39 @@ static func _skate(parent: Node) -> void:
 	_park_expansion(parent)
 	for i in 4:
 		Blocks.visual(parent, "SkateLane%d" % i, Vector3(-46, 0.03, -18.0 + float(i) * 8.0), Vector3(22, 0.02, 0.7), Color("8d5a48"))
+	_grind_spots(parent)
+	Blocks.label(parent, "SKATE YARD", Vector3(-52, 3.4, -6), Palette.LABEL, 48)
+
+## Grind round (LOCAL, Nov 16 2026). The old 1.05 m rail (Space-jump height, above an ollie) becomes a real flat bar: 0.30 m to
+## the top of a 5 cm round tube, 7 m long, on the z = 8 line just north of the z = 6 skate lane, so he lines up by pushing west
+## down the lane from the open east side of the yard (x -32 .. -46: 10+ m of run-up). The manual pad's two long metal edges
+## (0.30 m) are grindable ledges along Z; line up on its east side riding south from the spawn side.
+static func _grind_spots(parent: Node) -> void:
 	var rail = load("res://scenes/grind_rail.tscn").instantiate()
 	rail.name = "GrindRail"
-	rail.length = 12.0
-	rail.position = Vector3(-50, 1.05, 8)
+	rail.length = 7.0
+	rail.position = Vector3(-52, 0.30, 8)
 	parent.add_child(rail)
-	Blocks.label(parent, "SKATE YARD", Vector3(-52, 3.4, -6), Palette.LABEL, 48)
-	Blocks.label(parent, "RAIL", Vector3(-50, 1.8, 8), Palette.LABEL, 28)
+	Blocks.label(parent, "FLAT BAR", Vector3(-52, 2.2, 10.5), Palette.LABEL, 24)
+	var pad: Node3D = parent.get_node_or_null("ManualPad")
+	if pad == null:
+		return
+	var h := float(pad.get_meta("height"))
+	var half_w := 0.8
+	for m in pad.find_children("*", "MeshInstance3D", false, false):
+		if (m as MeshInstance3D).mesh is BoxMesh and ((m as MeshInstance3D).mesh as BoxMesh).size.y > 0.1:
+			half_w = ((m as MeshInstance3D).mesh as BoxMesh).size.x * 0.5
+			break
+	for sx in [-1.0, 1.0]:
+		var edge = load("res://scenes/grind_rail.tscn").instantiate()
+		edge.name = "ManualPadLedge%s" % ("E" if sx > 0.0 else "W")
+		edge.kind = "ledge"
+		edge.length = 7.0
+		# the pad's long axis is its local Z; the rail's axis is its local X
+		var p: Vector3 = pad.position + pad.basis * Vector3(sx * (half_w - 0.02), 0.0, 0.0)
+		edge.position = Vector3(p.x, pad.position.y + h * 0.5, p.z)
+		edge.rotation.y = pad.rotation.y + PI * 0.5
+		parent.add_child(edge)
 
 ## Phase 4 (LOCAL): more to ride. The two teal block quarters at z -30 become a mini ramp of library quarter pipes (same
 ## places, 6 m flat bottom, rideable transitions with the kickturn); the funbox gets kickers on its east and west faces; a
