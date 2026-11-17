@@ -233,7 +233,22 @@ static func _park_expansion(parent: Node) -> void:
 	Pieces.wedge(parent, "FunboxKickerWest", Vector3(-52.6, 0, -2), 0.0, 2.5, 0.9, 4.2)
 	Pieces.pad(parent, "ManualPad", Vector3(-38, 0, -12), 0.0, Vector3(1.6, 0.3, 7.0))
 	Pieces.wedge(parent, "Bank", Vector3(-63.5, 0, -1), PI, 3.0, 1.2, 9.0, 1.6)
+	_down_rail(parent)
 	Blocks.label(parent, "MINI RAMP", Vector3(-47, 3.0, -30), Palette.LABEL, 30)
+
+## Finish pass (Nov 17 2026): a down rail on the bank. The bank (low edge x -63.5, deck 1.2 m from x -66.5 back to -68.1) gets
+## a round bar following its slope 0.18 m above the face (it starts 0.30 m over the deck, flat-bar height, so an ollie off the
+## deck reaches it; 0.14 m at the bottom), riding east (+X) downhill. A run-up wedge with a 2.5 m deck behind the bank (x -74.6 .. -68.1, 1.2 m) gives a flat roll at deck height to
+## ollie onto the top of the bar; gravity along the bar speeds the grind up (player_controller.gd _step_grind).
+static func _down_rail(parent: Node) -> void:
+	Pieces.wedge(parent, "DownRailRunUp", Vector3(-74.6, 0, 2.0), 0.0, 4.0, 1.2, 3.0, 2.5)
+	var rail = load("res://scenes/grind_rail.tscn").instantiate()
+	rail.name = "DownRail"
+	rail.length = 3.4
+	rail.drop = 1.36
+	rail.position = Vector3(-65.1, 0.82, 2.0)
+	parent.add_child(rail)
+	Blocks.label(parent, "DOWN RAIL", Vector3(-66.0, 3.4, 2.0), Palette.LABEL, 24)
 
 ## Phase 2 (LOCAL blockout): steps up the north cheek of SkateQuarter onto its deck (1.58 m). Collision is one smooth slope
 ## (like PlazaStair), so walking and skating both climb it; the treads are visual only.

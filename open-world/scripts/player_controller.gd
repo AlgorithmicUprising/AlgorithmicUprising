@@ -88,6 +88,27 @@ const GRIND_OUT_S := 4.0 / 24.0     # grind clip "out" frames shown at the start
 const GRIND_IN_S := 4.0 / 24.0      # grind clip "in" frames (touchdown + absorb) before the hold loop
 const GRIND_CLIP_R := 0.12          # m: inside this of the axis and below the top = ran into the rail
 const GRIND_CLIP_DEPTH := 0.6       # ... unless the top is more than this above his contact point (riding under it)
+# Finish pass (Nov 17 2026). Lock-in ease: the board used to jump straight onto the riding line on the lock tick (up to the
+# catch radius sideways and the catch window up or down). Now the gap at the lock eases out over GRIND_SNAP_S (smoothstep).
+const GRIND_DOWN_CATCH := 0.6      # extra catch height per unit of down-rail slope (0.4 slope -> 0.24 m more)
+const GRIND_SNAP_S := 0.12
+# Grinds on the rail. 50-50 by default; F (trick_grab) switches to a 5-0 (back truck, nose up), R (trick_flip) to a boardslide
+# (deck across the bar); pressing the same key again goes back to the 50-50. References: The Trickonomicon "5-0", Hooked "Backside
+# 5-0" (5-0s run faster than 50-50s), Skate Labs "Boardslide", Braille "How to Backside Boardslide" (the deck slides on the bar).
+const GRIND_TRICKS := {
+	"5050": {"name": "50-50", "friction": 1.0, "sink": 0.04},
+	"5o": {"name": "5-0", "friction": 0.7, "sink": 0.04},
+	# the deck sits on the bar: wheel bottoms hang 0.13 m under its top (puppet board deck_y 73.9 rig px at 502 px/m, minus the deck)
+	"board": {"name": "BOARDSLIDE", "friction": 1.8, "sink": 0.13},
+}
+# Phase 5: backside air off the coping. F (trick_grab) in a lip air grabs the heel edge with the front hand and turns 180 backside
+# (clockwise from above, like the Phase 4 kickturn); he lands forward. Tap F: the hand lets go at BSAIR_RELEASE_U of the air;
+# hold F: he keeps the grab, and still holding it at re-entry is a bail (Phase 1e rule). References: MasterClass "How to Backside
+# Air", sk8tricktip "Backside Air", Land The Trick "Melon": let go and extend only once the wheels clear the coping.
+const BSAIR_START_MAX_U := 0.4      # the grab has to start in the first part of the air
+const BSAIR_RISE_U := 0.15          # air fraction from the grab to the hand on the board (frames 0-3)
+const BSAIR_RELEASE_U := 0.72       # the turn is done and the hand lets go here (frames 12-15 after it)
+const BSAIR_MIN_AIR_S := 0.3        # predicted lip air shorter than this cannot fit the trick: the grab stays a plain grab
 
 var skating := true
 var input_enabled := true
@@ -129,6 +150,25 @@ var grind_count := 0
 var grind_last := {}                # tests / probes: the last grind or grind bail (trick, entry, distance, time, exit)
 var grind_pop_side := Vector3.ZERO  # unit sideways drift held through a pop-out's air (cleared on touchdown)
 var grind_left_rail = null          # the rail he just left: no re-lock onto it before touching down
+var grind_snap := Vector3.ZERO      # lock-in offset still easing out (world m)
+var grind_snap_t := 0.0             # s since that offset started easing
+var grind_clip_t := 0.0             # s since the current grind trick started (drives that clip's in / hold frames)
+var grind_tricks_done: Array = []   # the grinds of this rail visit, in order
+var grind_switches := 0
+# Trick name popup (scripts/trick_popup.gd reads these): callout_id bumps on every new name
+var callout := ""
+var callout_kind := ""              # trick / grind / bail
+var callout_id := 0
+var callout_log: Array = []
+# Phase 5 backside air
+var air_kind := ""                  # "lip" (off the coping) / "pop" (ollie or jump off the wall) while pipe_air
+var air_time := 0.0                 # s since leaving the wall
+var air_total := 0.0                # predicted lip air (s) back down to the take-off height
+var bsair_u0 := 0.0                 # air fraction when the grab started
+var bsair_release_u := -1.0         # air fraction when the hand let go (-1 = still on the board)
+var bsair_from_yaw := 0.0
+var bsair_count := 0
+var bsair_last := {}
 var _grind_prev := {}               # rail -> last lateral offset (crossing check)
 var external_move := Vector2.ZERO
 var external_move_active := false
@@ -405,6 +445,8 @@ func _simulate(delta: float) -> void:
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
 	var was_air := pipe_air
+	if pipe_air:
+		air_time += delta
 	move_and_slide()
 	if pipe_air:
 		# the board left the wall at air_from_y (body height at take-off): the rise since then is the board's height above
@@ -565,7 +607,10 @@ func grind_check(rail) -> String:
 			return "bail:clipped"
 	if is_on_floor():
 		return ""
-	if absf(lateral) > float(rail.catch_r) or above > GRIND_CATCH_UP or above < -GRIND_CATCH_DOWN or velocity.y > 0.5:
+	# a down rail falls away under an ollie's arc (at 9 m/s a 0.4 slope drops 3.6 m/s), so it catches from higher up; the lock
+	# then eases him down onto it (GRIND_SNAP_S) instead of a pop
+	var up_window: float = GRIND_CATCH_UP + GRIND_DOWN_CATCH * absf(float(rail.drop)) / maxf(length, 0.001)
+	if absf(lateral) > float(rail.catch_r) or above > up_window or above < -GRIND_CATCH_DOWN or velocity.y > 0.5:
 		return ""
 	if along < GRIND_END_MARGIN * 0.5 or along > length - GRIND_END_MARGIN:
 		return ""
@@ -607,16 +652,27 @@ func _grind_lock(rail, along_m: float, how: String, angle := 0.0) -> void:
 	trick_time = 0.0
 	board_caught = true
 	grind_trick = "5050"
+	grind_clip_t = 0.0
+	grind_tricks_done = ["5050"]
+	grind_switches = 0
 	grind_count += 1
 	grind_last = {"trick": grind_trick, "rail": str(rail.name), "kind": str(rail.kind), "entry_speed": absf(grind_v),
 		"angle_deg": angle, "start_along": grind_along, "how": how, "msec": Time.get_ticks_msec()}
 	_event("grind_lock", {"rail": str(rail.name), "speed": absf(grind_v), "angle": angle})
+	var before := global_position
+	grind_snap = Vector3.ZERO
+	grind_snap_t = 0.0
 	_grind_place()
+	# start from where he really was and ease onto the riding line (no pop on the lock tick)
+	grind_snap = before - global_position
+	global_position = before
+	say(GRIND_TRICKS[grind_trick].name, "grind")
 
 ## Board on the riding line, facing the way he travels.
 func _grind_place() -> void:
 	var rail = grind
-	global_position = rail.line_point(grind_along) + Vector3.UP * (-0.325 - GRIND_SINK)
+	var sink := float(GRIND_TRICKS.get(grind_trick, GRIND_TRICKS["5050"]).sink)
+	global_position = rail.line_point(grind_along) + Vector3.UP * (-0.325 - sink) + grind_snap_left()
 	var dir: Vector3 = rail.line_dir() * signf(grind_v if absf(grind_v) > 0.001 else 1.0)
 	velocity = dir * absf(grind_v)
 	if rig != null and rig.has_method("face_world"):
@@ -630,16 +686,27 @@ func _step_grind(delta: float) -> void:
 	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
 	external_jump = false
 	var popping := trick_request == "ollie" or (not external_move_active and InputMap.has_action("trick_ollie") and Input.is_action_just_pressed("trick_ollie"))
+	var asked := trick_request
 	trick_request = ""
 	wish_len = 0.0
 	if jumping or popping:
 		_leave_grind(true, JUMP_VELOCITY if jumping else OLLIE_POP_VELOCITY)
 		return
+	if asked == "" and not external_move_active:
+		if InputMap.has_action("trick_grab") and Input.is_action_just_pressed("trick_grab"):
+			asked = "grab"
+		elif InputMap.has_action("trick_flip") and Input.is_action_just_pressed("trick_flip"):
+			asked = "flip"
+	if asked == "grab" or asked == "flip":
+		var want := "5o" if asked == "grab" else "board"
+		set_grind_trick("5050" if grind_trick == want else want)
 	grind_time += delta
+	grind_clip_t += delta
+	grind_snap_t += delta
 	# rolling resistance against the travel, gravity along a down rail
 	var slope_a: float = GRAVITY * float(rail.drop) / maxf(float(rail.length), 0.001)
 	grind_v += slope_a * delta
-	grind_v = move_toward(grind_v, 0.0, float(rail.friction) * delta)
+	grind_v = move_toward(grind_v, 0.0, float(rail.friction) * float(GRIND_TRICKS[grind_trick].friction) * delta)
 	if absf(grind_v) < GRIND_STALL_SPEED:
 		_grind_bail(rail, "stalled", grind_along, grind_side * 0.2)
 		return
@@ -650,6 +717,38 @@ func _step_grind(delta: float) -> void:
 		_leave_grind(false)
 		return
 	_grind_place()
+
+## Lock-in / switch offset not yet eased out (world m).
+func grind_snap_left() -> Vector3:
+	if grind_snap == Vector3.ZERO or grind_snap_t >= GRIND_SNAP_S:
+		return Vector3.ZERO
+	return grind_snap * (1.0 - smoothstep(0.0, 1.0, grind_snap_t / GRIND_SNAP_S))
+
+## Switch grinds on the rail ("5050" / "5o" / "board"): the new clip plays its lock-in frames, the board's height on the bar follows.
+func set_grind_trick(kind: String) -> void:
+	if grind == null or not GRIND_TRICKS.has(kind) or kind == grind_trick:
+		return
+	var old_sink := float(GRIND_TRICKS[grind_trick].sink)
+	grind_trick = kind
+	grind_clip_t = 0.0
+	grind_switches += 1
+	grind_tricks_done.append(kind)
+	grind_last["trick"] = kind
+	grind_last["tricks"] = grind_tricks_done.duplicate()
+	# ease the height change too (a boardslide sits lower on the bar than the trucks)
+	grind_snap = grind_snap_left() + Vector3.UP * (float(GRIND_TRICKS[kind].sink) - old_sink)
+	grind_snap_t = 0.0
+	_event("grind_switch", {"trick": kind})
+	say(GRIND_TRICKS[kind].name, "grind")
+
+## Name a trick on screen (scripts/trick_popup.gd). kind: trick / grind / bail.
+func say(text: String, kind := "trick") -> void:
+	callout = text
+	callout_kind = kind
+	callout_id += 1
+	callout_log.append(text)
+	if callout_log.size() > 32:
+		callout_log.pop_front()
 
 ## Off the rail: popped (Q / Space) or rolled off the end.
 func _leave_grind(jumped: bool, pop := JUMP_VELOCITY) -> void:
@@ -663,6 +762,13 @@ func _leave_grind(jumped: bool, pop := JUMP_VELOCITY) -> void:
 	grind_last["time"] = grind_time
 	grind_last["distance"] = absf(grind_along - float(grind_last.get("start_along", 0.0)))
 	grind_last["exit_speed"] = speed
+	grind_last["tricks"] = grind_tricks_done.duplicate()
+	grind_snap = Vector3.ZERO
+	var names: Array = []
+	for t in grind_tricks_done:
+		if names.is_empty() or names[names.size() - 1] != GRIND_TRICKS[t].name:
+			names.append(GRIND_TRICKS[t].name)
+	say("%s  %.1f M" % [" + ".join(names), float(grind_last["distance"])], "grind")
 	if jumped:
 		var side: Vector3 = rail.locate(global_position).side
 		var flat := Vector3(dir.x, 0.0, dir.z)
@@ -715,7 +821,9 @@ func _grind_bail(rail, reason: String, along: float, lateral: float, angle := -1
 	velocity.y = minf(velocity.y, 0.0)
 	grind_last = {"trick": "bail", "reason": reason, "rail": str(rail.name), "angle_deg": angle, "along": along,
 		"was_grinding": was_on, "msec": Time.get_ticks_msec()}
+	grind_snap = Vector3.ZERO
 	_event("grind_bail", {"reason": reason, "angle": angle})
+	say("BAIL!", "bail")
 
 var trick := ""
 var trick_time := 0.0
@@ -770,10 +878,13 @@ func _tricks(delta: float) -> void:
 			trick = "crouch"
 			trick_next = "grab"
 			trick_time = 0.0
+		elif not is_on_floor() and bsair_ready():
+			_bsair_begin()
 		elif not is_on_floor():
 			trick = "grab"
 			board_caught = true
 			trick_time = 0.0
+			say("MELON")
 	if trick == "crouch":
 		trick_time += delta
 		if trick_time >= OLLIE_CROUCH_S:
@@ -787,6 +898,13 @@ func _tricks(delta: float) -> void:
 				flip_turns = 1.0
 		if is_on_floor() and trick_time > AIR_GUARD_S:
 			_finish_trick()
+	elif trick == "bs_air":
+		trick_time += delta
+		if bsair_release_u < 0.0 and air_u() >= BSAIR_RELEASE_U and not _grab_held():
+			bsair_release_u = air_u()
+		if is_on_floor() and not pipe_air and trick_time > AIR_GUARD_S:
+			trick = "land"          # safety: touched down without the pipe-air landing (respawn, a ledge)
+			trick_time = 0.0
 	elif trick == "land":
 		trick_time += delta
 		if trick_time >= LAND_S:
@@ -794,6 +912,7 @@ func _tricks(delta: float) -> void:
 	_push_trick()
 
 func _start_air(kind: String) -> void:
+	say({"ollie": "OLLIE", "flip": "KICKFLIP", "grab": "MELON"}.get(kind, kind.to_upper()))
 	trick = kind
 	trick_next = ""
 	trick_time = 0.0
@@ -816,6 +935,7 @@ func _finish_trick() -> void:
 	var grab_bail := trick == "grab" and _grab_held()
 	if (trick == "flip" and not board_caught) or grab_bail:
 		last_bail_reason = "grab_held" if grab_bail else "flip_not_caught"
+		say("BAIL!", "bail")
 		trick = "bail"
 		bail_time = 0.6
 		skating = false
@@ -1026,6 +1146,9 @@ func _lip_launch() -> void:
 	air_from_y = global_position.y
 	air_anchor = sprite_anchor_offset()
 	velocity = b * Vector3(-LIP_DRIFT, v_lip, ramp_vz)
+	air_kind = "lip"
+	air_time = 0.0
+	air_total = 2.0 * v_lip / GRAVITY
 	_event("lip_launch", {"speed": v_lip})
 	ramp_mode = ""
 	pipe_air = true
@@ -1040,6 +1163,9 @@ func _ramp_leave(pop: float, why: String) -> void:
 	var b: Basis = pipe.global_transform.basis
 	var n: Vector3 = (b * pipe.profile_normal(ramp_s)).normalized()
 	velocity = b * (pipe.profile_tangent(ramp_s) * ramp_v + Vector3(0, 0, ramp_vz)) + n * pop
+	air_kind = "pop"
+	air_time = 0.0
+	air_total = 0.0
 	air_peak_above_lip = 0.0
 	air_from_y = global_position.y
 	air_anchor = sprite_anchor_offset()
@@ -1053,6 +1179,9 @@ func _ramp_leave(pop: float, why: String) -> void:
 
 func _pipe_air_landed() -> void:
 	pipe_air = false
+	if trick == "bs_air":
+		_bsair_land()
+	air_kind = ""
 	var pipe: Node3D = pipe_air_pipe
 	pipe_air_pipe = null
 	if pipe == null or not is_instance_valid(pipe):
@@ -1287,6 +1416,7 @@ func _qp_roll_start() -> void:
 	trick = ""
 	qp_state = "roll"
 	_event("qp_roll", {"t": qp_time})
+	say("DROP IN")
 	_ramp_place()
 
 func _qp_rolled_out() -> void:
@@ -1348,6 +1478,7 @@ func _kickturn_begin() -> void:
 	pumping = false
 	wish_len = 0.0
 	_event("kickturn", {"deg": kt_deg, "wall_deg": wall_deg})
+	say("BS KICKTURN")
 	_ramp_place()
 
 ## The board swings about the back truck: its centre goes from KT_START_UP above the origin to the origin.
@@ -1374,3 +1505,54 @@ func _kickturn_step(delta: float) -> void:
 		kt_last["time"] = qp_time
 		kt_last["fakie"] = is_fakie()
 		_event("kickturn_end", {"fakie": is_fakie()})
+
+# ---------------------------------------------------------------- Phase 5: backside air (finish pass, Nov 17 2026)
+
+## Fraction of the predicted lip air flown (0 at the coping, 1 back at the take-off height).
+func air_u() -> float:
+	if air_total <= 0.0:
+		return 0.0
+	return clampf(air_time / air_total, 0.0, 1.5)
+
+## A grab pressed now turns into a backside air: off the coping (not an ollie off the wall), enough air, early enough in it.
+func bsair_ready() -> bool:
+	return pipe_air and air_kind == "lip" and air_total >= BSAIR_MIN_AIR_S and air_u() <= BSAIR_START_MAX_U \
+		and (trick == "" or trick == "ollie") and bail_time <= 0.0
+
+func _bsair_begin() -> void:
+	trick = "bs_air"
+	trick_next = ""
+	trick_time = 0.0
+	board_caught = true
+	bsair_u0 = air_u()
+	bsair_release_u = -1.0
+	# the drawing carries the 180 in every view (air_bs_<view>, tyaw 0 -> 180); the facing that picks the view stays on the
+	# take-off heading until he lands, then turns to the landing heading (_bsair_land)
+	bsair_from_yaw = rig.global_rotation.y if rig != null else rotation.y
+	bsair_last = {"start_u": bsair_u0, "air_total": air_total, "lip_speed": lip_launch_speed, "msec": Time.get_ticks_msec()}
+	_event("bs_air", {"u": bsair_u0, "air": air_total})
+	say("BACKSIDE AIR")
+
+## Re-entry (or any touchdown) during a backside air: let go in time = land forward; still on the board = bail.
+func _bsair_land() -> void:
+	var u := air_u()
+	bsair_last["land_u"] = u
+	bsair_last["release_u"] = bsair_release_u
+	if bsair_release_u < 0.0:
+		bsair_last["result"] = "bail"
+		last_bail_reason = "bs_air_grab_held" if u >= BSAIR_RELEASE_U else "bs_air_short"
+		say("BAIL!", "bail")
+		trick = "bail"
+		bail_time = 0.6
+		skating = false
+		velocity.x *= 0.35
+		velocity.z *= 0.35
+		_event("bs_air_bail", {"u": u})
+		return
+	bsair_count += 1
+	bsair_last["result"] = "landed"
+	if rig != null and rig.has_method("face_world"):
+		rig.face_world(wrapf(bsair_from_yaw - PI, -PI, PI))
+	trick = "land"
+	trick_time = 0.0
+	_event("bs_air_land", {"u": u})

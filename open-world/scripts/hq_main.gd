@@ -40,6 +40,10 @@ func _ready() -> void:
 	add_child(flow)
 	flow.bind(world_sim, player, get_node("/root/AudioOwner"), session, self)
 	_hud()
+	var popup = load("res://scripts/trick_popup.gd").new()
+	popup.name = "TrickPopup"
+	popup.player = player
+	add_child(popup)
 	_apply_story()
 
 func _process(_delta: float) -> void:
@@ -201,7 +205,7 @@ func _hud() -> void:
 	mode_label = Label.new()
 	hint_label = Label.new()
 	var hint := hint_label
-	hint.text = "Click to look. Mouse turns the view; W moves that way. [ ] look speed\nWASD move   Space jump   Shift skate/walk   E talk or cabinet   Enter confirm   Esc pause\nGamepad: left stick move, right stick look, A jump, Y skate, X interact, Start pause"
+	hint.text = "Click to look. Mouse turns the view; W moves that way. [ ] look speed\nWASD move   Space jump   Shift skate/walk   E talk or cabinet   Enter confirm   Esc pause\nQ ollie   R kickflip   F grab   On a rail: F 5-0, R boardslide   Quarter pipe: hold S up high to kickturn, F off the coping for a backside air\nGamepad: left stick move, right stick look, A jump, Y skate, X interact, Start pause"
 	prompt_label = Label.new()
 	for label in [zone_label, mode_label, hint, prompt_label]:
 		label.add_theme_font_size_override("font_size", 18)

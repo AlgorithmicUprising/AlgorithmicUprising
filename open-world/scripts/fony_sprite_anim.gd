@@ -278,10 +278,13 @@ func _state(ctx: Dictionary) -> String:
 	if trick == "bail":
 		return "bail"
 	if bool(ctx.get("grind", false)):
-		return "grind"
+		return _grind_state(ctx)
 	# Grind round: the first frames after popping / rolling off a rail show the grind clip's "out" frames
 	if float(ctx.get("grind_out", -1.0)) >= 0.0 and clips.has("grind_back") and _clip("grind_back").get("phases", {}).has("out"):
-		return "grind"
+		return _grind_state(ctx)
+	# Phase 5: backside air off the coping (air_bs_<view> draws the grab and the 180)
+	if trick == "bs_air" and clips.has("air_bs_back"):
+		return "air_bs"
 	if trick == "crouch" or trick == "ollie" or trick == "flip" or trick == "grab" or trick == "land":
 		if trick == "flip":
 			return "kickflip"
@@ -307,6 +310,15 @@ func _state(ctx: Dictionary) -> String:
 	if push_frame >= 0.0:
 		return "push"
 	return "cruise"
+
+## Finish pass: the 50-50 is "grind"; the 5-0 and the boardslide have their own clips.
+func _grind_state(ctx: Dictionary) -> String:
+	var t := str(ctx.get("grind_trick", "5050"))
+	if t == "5o" and clips.has("grind_5o_back"):
+		return "grind_5o"
+	if t == "board" and clips.has("grind_board_back"):
+		return "grind_board"
+	return "grind"
 
 func _dir(ctx: Dictionary) -> String:
 	return direction_name(float(ctx.get("facing_yaw", 0.0)), float(ctx.get("camera_x", 0.0)), float(ctx.get("camera_z", 4.0)), float(ctx.get("origin_x", 0.0)), float(ctx.get("origin_z", 0.0)))
@@ -346,8 +358,10 @@ func _index(state: String, ctx: Dictionary) -> int:
 		return clampi(int(float(ctx.get("flip_turns", 0.0)) * float(count)), 0, count - 1)
 	if state == "grab":
 		return _grab_index(count, ctx)
-	if state == "grind" and _clip(clip).get("phases", {}).has("hold"):
+	if state.begins_with("grind") and _clip(clip).get("phases", {}).has("hold"):
 		return _grind_index(count, ctx)
+	if state == "air_bs":
+		return _air_bs_index(count, ctx)
 	if state == "push":
 		return clampi(int(push_frame), 0, count - 1)
 	if state == "pump":
@@ -456,6 +470,29 @@ func _grind_index(count: int, ctx: Dictionary) -> int:
 		return clampi(int(ins[i]), 0, count - 1)
 	var hold := _phase_list(phases, "hold")
 	return clampi(int(hold[posmod(i - ins.size(), hold.size())]), 0, count - 1)
+
+## Phase 5 backside air: frames follow the fraction of the lip air flown (ctx air_u): rise (hand to the board) for BSAIR_RISE_U
+## after the grab, the hold (the 180 is drawn across it) up to the release, then the release frames down to the re-entry.
+## Still holding the grab past the release point keeps the last hold frame.
+func _air_bs_index(count: int, ctx: Dictionary) -> int:
+	var phases: Dictionary = _clip(clip).get("phases", {})
+	var rise := _phase_list(phases, "rise")
+	var hold := _phase_list(phases, "hold")
+	var rel := _phase_list(phases, "release")
+	if rise.is_empty() or hold.is_empty() or rel.is_empty():
+		return 0
+	var u := float(ctx.get("air_u", 0.0))
+	var u0 := float(ctx.get("bsair_u0", 0.0))
+	var rise_u := float(ctx.get("bsair_rise_u", 0.15))
+	var rel_at := float(ctx.get("bsair_release_at", 0.72))
+	var released := float(ctx.get("bsair_release_u", -1.0))
+	if u < u0 + rise_u:
+		return clampi(int(rise[clampi(int((u - u0) / maxf(rise_u, 0.01) * float(rise.size())), 0, rise.size() - 1)]), 0, count - 1)
+	if released < 0.0 or u < released:
+		var a := clampf((u - u0 - rise_u) / maxf(rel_at - u0 - rise_u, 0.01), 0.0, 0.999)
+		return clampi(int(hold[int(a * float(hold.size()))]), 0, count - 1)
+	var b := clampf((u - released) / maxf(1.0 - released, 0.05), 0.0, 0.999)
+	return clampi(int(rel[int(b * float(rel.size()))]), 0, count - 1)
 
 ## Phase 3 drop-in: commit frames by the commit clock; roll-out frames by the wall angle under him (drawn at 70..0 deg).
 func _qp_dropin_index(count: int, ctx: Dictionary) -> int:
