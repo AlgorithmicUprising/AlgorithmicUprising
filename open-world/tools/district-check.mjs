@@ -105,7 +105,8 @@ async function run(name, handler) {
 
 async function plain() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-  await page.goto(base + '/open-world/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  // ?play=free: straight past the start screen into free roam (the plain URL opens the title menu).
+  await page.goto(base + '/open-world/?play=free', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForFunction(() => window.AU_HQ && window.AU_HQ.session === 'world', { timeout: 60000 });
   await page.waitForTimeout(1500);
   const r = await page.evaluate(() => ({ district: window.AU_DISTRICT || null, zone: window.AU_HQ.zone }));

@@ -1,5 +1,5 @@
 // M1 (Nov 19 2026): P.1 Practice Run in the web export, for review. Serves the staged composite, then
-//   part A: real keyboard input from ?story=p1 (flyer, push, kick up, drop on, ollie, the hesitation prompt,
+//   part A: real keyboard input from ?story=p1 (P.1 opening line, push, kick up, drop on, ollie, the hesitation prompt,
 //           T back to the quarter-pipe checkpoint and riding it, the rail),
 //   part B: ?story=p1&story_demo=1, the review autopilot playing the whole of P.1, recorded as video.
 // Writes screenshots, a video and story-check.json to AU_STORY_OUT. Does not deploy anything.
@@ -66,7 +66,7 @@ async function partA() {
   const log = report.a;
   await open(page, '?story=p1');
   await page.waitForTimeout(1500);
-  await shot(page, 'a01-flyer-card', log);
+  await shot(page, 'a01-p1-opening', log);
   await page.click('canvas');
   const pushing = await waitStory(page, (s) => s.objective === 'push' && s.talk !== '', 30000);
   await shot(page, 'a02-push-objective', log);
