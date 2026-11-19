@@ -16,6 +16,7 @@ config/icon="res://icon.svg"
 
 InputBindings="*res://scripts/input_bindings.gd"
 AudioOwner="*res://audio/audio_owner.gd"
+GameSession="*res://scripts/front/game_session.gd"
 
 [display]
 

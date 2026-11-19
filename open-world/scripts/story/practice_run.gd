@@ -14,6 +14,7 @@ const Hud = preload("res://scripts/story/story_hud.gd")
 const Sfx = preload("res://scripts/story/sfx.gd")
 const JsonFile = preload("res://scripts/json_file.gd")
 const Autopilot = preload("res://scripts/story/story_autopilot.gd")
+const Protagonist = preload("res://scripts/front/protagonist.gd")
 
 const DEF_PATH := "res://data/missions/p1_practice_run.json"
 const SPEED_GOAL_CHECK := 5.5
@@ -65,7 +66,9 @@ func toggle() -> void:
 	else:
 		start()
 
-func start() -> bool:
+## resume (front end, Load Game): a mission saved mid-run picks up at its last checkpoint instead of starting over.
+## The P key and ?story=p1 keep starting P.1 from the top (resume false), as in M1.
+func start(resume := false) -> bool:
 	if active or player == null:
 		return false
 	var data = JsonFile.read(DEF_PATH)
@@ -116,12 +119,20 @@ func start() -> bool:
 	if not player.skate_event.is_connected(_on_skate):
 		player.skate_event.connect(_on_skate)
 	flow.save.set_flag("story_started")
+	flow.save.story["current"] = runner.id
+	var saved_state := str(rec.get("state", ""))
 	if int(rec.get("completions", 0)) > 0:
 		# replay: the tutorial is done; straight to the line with the board up on the marquee
 		runner.from_save(rec)
 		_teleport("line")
 		hud.set_objective(runner.title, "Run the line: bowl, quarter, rail. Beat the Zero Score.")
 		_say_all([["SYSTEM", "Practice Run (replay). T puts you back at the bowl."]])
+	elif resume and (saved_state == "active" or saved_state == "failed"):
+		runner.from_save(rec)
+		runner.resume()
+		var o: Dictionary = runner.current()
+		_teleport(str(o.get("spawn", "yard")))
+		_say_all([["SYSTEM", "Loaded. Back at the checkpoint: %s." % str(o.get("text", ""))]])
 	else:
 		_teleport("yard")
 		_say_all(def.get("intro", []))
@@ -169,6 +180,7 @@ func stop() -> void:
 		sfx.queue_free()
 		sfx = null
 	_hide_free_roam(false)
+	flow.save.story["current"] = ""
 	if autopilot != null:
 		autopilot.queue_free()
 		autopilot = null
@@ -412,7 +424,9 @@ func _tick_talk(delta: float) -> void:
 		return
 	var next: Array = queue.pop_front()
 	var who: String = next[0]
-	var text: String = next[1]
+	# front end: the protagonist's name is the player's chosen character name (Fony by default)
+	var pname := Protagonist.current(get_tree())
+	var text: String = Protagonist.text(next[1], pname)
 	spoken.append(who + "|" + text)
 	if who == "CARD":
 		hud.card(text)
@@ -421,7 +435,8 @@ func _tick_talk(delta: float) -> void:
 		return
 	talking = who
 	talk_left = clampf(1.0 + 0.045 * text.length(), 1.8, 6.0)
-	hud.say(who if who != "SYSTEM" else "", text if who != "MARQUEE" else "ON-SCREEN: " + text)
+	hud.protagonist_tag = pname.to_upper()
+	hud.say(Protagonist.speaker(who, pname) if who != "SYSTEM" else "", text if who != "MARQUEE" else "ON-SCREEN: " + text)
 	if who.begins_with("VOICE"):
 		World.crt(dressing, true, face_on)
 		sfx.play("crt")

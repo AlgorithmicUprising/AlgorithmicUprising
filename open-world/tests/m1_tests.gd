@@ -203,11 +203,11 @@ func _barks() -> void:
 
 func _save_v2() -> void:
 	var s = SaveScript.new()
-	ok(s.VERSION == 2 and s.to_dict().contract_version == 2 and s.to_dict().has("story"), "save v2 writes a story section")
+	ok(s.VERSION == 3 and s.to_dict().contract_version == 3 and s.to_dict().has("story"), "save v3 (front end) still writes the v2 story section")
 	var v1 = SaveScript.new()
 	ok(v1.apply_dict({"contract": "au.world_save", "contract_version": 1, "meetings": {"zero": true}, "results": []}).get("ok") == true and v1.migrated_from == 1, "save: a v1 file loads and is marked migrated")
-	ok(v1.met.zero == true and v1.story.missions.is_empty() and v1.to_dict().contract_version == 2, "save: v1 keeps its meetings and is written back as v2")
-	ok(SaveScript.new().apply_dict({"contract": "au.world_save", "contract_version": 3, "meetings": {}, "results": []}).get("reason") == "contract", "save: an unknown version is refused")
+	ok(v1.met.zero == true and v1.story.missions.is_empty() and v1.to_dict().contract_version == 3, "save: v1 keeps its meetings and is written back as v3")
+	ok(SaveScript.new().apply_dict({"contract": "au.world_save", "contract_version": 4, "meetings": {}, "results": []}).get("reason") == "contract", "save: an unknown version is refused")
 	s.set_mission("p1_practice_run", {"state": "done", "completions": 1})
 	ok(s.note_score("p1_practice_run", 3200) and not s.note_score("p1_practice_run", 3000) and s.mission("p1_practice_run").best_score == 3200, "save: best score only goes up")
 	s.mission("p1_practice_run")["zero_score"] = 3500
@@ -316,11 +316,12 @@ func _practice_run() -> void:
 	ok(not main.hint_label.visible and not main.world_sim.get_node("NPCZero").visible, "story: the long controls hint and the block Zero step out")
 	ok(pl.locked_grinds.has("5o") and pl.locked_grinds.has("board"), "story: 5-0 and boardslide are gated")
 	ok(story.runner.current_id() == "push" and story.zero_score == 0, "story: P.1 starts on push with no Zero Score yet")
-	# the flyer card holds the hesitation clock
+	# front end (Nov 19 2026): the intro video carries the flyer now; P.1 opens with no "fifty thousand" card
 	await frames(30)
-	ok(story.card_left > 0.0 and story.hud.card_panel.visible and story.runner.time_on == 0.0, "story: the Sunburn Open flyer is up and the hesitation clock waits for it")
-	story.card_left = 0.01
-	await frames(4)
+	ok(story.card_left <= 0.0 and not story.hud.card_panel.visible, "story: no flyer card at the start of P.1 (the intro video covers it)")
+	var said := "\n".join(story.spoken)
+	ok(not ("fifty thousand" in said.to_lower()) and not ("CARD|" in said), "story: nothing in P.1 still says fifty thousand")
+	story.runner.time_on = 0.0
 	# hesitation prompt: nothing until 6 s on push
 	ok(not story.hud.prompt_panel.visible, "prompt: hidden while he has not hesitated")
 	story.runner.time_on = 6.2

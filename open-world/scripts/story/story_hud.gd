@@ -20,6 +20,8 @@ var meter_back: ColorRect
 var meter_fill: ColorRect
 var talk_panel: PanelContainer
 var speaker_label: Label
+## Front end: the protagonist's on-screen tag (the chosen character name in capitals), coloured like FONY.
+var protagonist_tag := "FONY"
 var talk_label: Label
 var prompt_panel: PanelContainer
 var prompt_label: Label
@@ -142,7 +144,7 @@ func say(speaker: String, text: String) -> void:
 	talk_panel.visible = true
 	speaker_label.text = speaker
 	var voice := speaker.begins_with("VOICE") or speaker == "MARQUEE"
-	speaker_label.add_theme_color_override("font_color", LIME if voice else (COPPER if speaker == "FONY" else PAPER))
+	speaker_label.add_theme_color_override("font_color", LIME if voice else (COPPER if speaker == "FONY" or speaker == protagonist_tag else PAPER))
 	talk_label.text = text
 
 func hush() -> void:

@@ -98,6 +98,17 @@ func start() -> bool:
 	_save()
 	return true
 
+## Front end (Nov 19 2026): after from_save() of a mission saved mid-run, start the restored objective again (the
+## checkpoint) so its spawn, lines and hesitation clock run as if the player had just reached it.
+func resume() -> bool:
+	if state != "active" or index >= required.size():
+		return false
+	counts.erase(current_id())
+	time_on = 0.0
+	_begin()
+	_save()
+	return true
+
 func _begin() -> void:
 	var o := current()
 	if bool(o.get("checkpoint", false)):

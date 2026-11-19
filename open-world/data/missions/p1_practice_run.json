@@ -23,10 +23,9 @@
     "rail": [-40.0, 0.5, 8.2, 1.5708],
     "line": [-48.0, 0.8, 20.5, 3.1416]
   },
-  "intro": [
-    ["CARD", "THE SUNBURN OPEN\nGlitchport's Street Skating Championship\nGlass Row. Qualifiers this Saturday. Grand prize: fifty thousand.\n\nPresented by Dusk Dynamics. Entrants agree to all terms."],
-    ["FONY", "(to himself) Five days."]
-  ],
+  "intro_video": {"id": "pz_intro_v1", "first_run_only": true, "skippable": true, "config": "res://data/intro_video.json",
+    "note": "Front end (Nov 19 2026): the intro video (start screen > New Game) now carries the Sunburn Open flyer ($500,000) and 'Five days.', so the old flyer CARD (which still said fifty thousand) is gone. P.1 v2's Beat 0 phone lines come with the phone-text code task."},
+  "intro": [],
   "objectives": [
     {"id": "push", "text": "Push up to speed", "event": "speed", "match": {"speed": 5.5}, "hesitate_s": 6.0, "spawn": "yard",
       "prompt": {"verb": "PUSH", "kb": "W", "pad": "Left stick"},
@@ -39,7 +38,7 @@
       "prompt": {"verb": "DROP IN", "kb": "Shift", "pad": "Y"}},
     {"id": "ollie", "text": "Ollie", "event": "trick_land", "hesitate_s": 6.0, "spawn": "yard", "checkpoint": true,
       "prompt": {"verb": "OLLIE", "kb": "Q", "pad": "not bound yet"},
-      "on_done": [["FONY", "Pop. Easy. Five days, Fony."]]},
+      "on_done": [["FONY", "Pop. Easy. Five days, {name}."]]},
     {"id": "quarter", "text": "Ride up the quarter pipe", "event": "quarter", "match": {"peak": 0.8}, "hesitate_s": 12.0, "spawn": "quarter", "checkpoint": true,
       "prompt": {"verb": "QUARTER PIPE", "kb": "W at the ramp, hold W to pump", "pad": "Left stick"},
       "on_done": [["FONY", "Higher. The judges like air. The judges like anything you can put on a highlight reel."]]},

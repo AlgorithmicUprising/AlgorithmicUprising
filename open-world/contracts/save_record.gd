@@ -4,8 +4,12 @@ const Result = preload("res://contracts/minigame_result.gd")
 const CONTRACT := "au.world_save"
 ## M1 (Nov 19 2026): v2 adds the "story" section (missions, flags, day and time, Zero Score bests, Signal). A v1 file
 ## still loads: it is migrated in memory (empty story) and written back as v2 on the next save.
-const VERSION := 2
-const READS := [1, 2]
+## Front end (Nov 19 2026): v3 adds "meta" (character name, account, created/saved time, play time, slot kind),
+## "player" (story or free roam, district and zone, position, heading, skating) and "settings" (invert Y, look speed,
+## painted sprite), plus story.current (the mission in progress). v1 and v2 files still load: the new sections start
+## empty (meta.migrated_from records it) and the file is written back as v3 on the next save.
+const VERSION := 3
+const READS := [1, 2, 3]
 const STORY_VERSION := 1
 const MAX_RESULTS := 20
 const BANNED := ["viewport", "node", "texture", "renderer", "audio_context", "canvas"]
@@ -18,10 +22,17 @@ var results: Array = []
 const EXPLORATION_VERSION := 1
 var exploration := {"version": EXPLORATION_VERSION, "districts": {}}
 var story := _fresh_story()
-var migrated_from := 0              # 1 when the last apply_dict() read a v1 file
+var migrated_from := 0              # 1 or 2 when the last apply_dict() read an older file (0 = it was current)
+## v3. meta: who and when. player: where (free roam) or which mission (story). settings: per-character options.
+var meta := _fresh_meta()
+var player := {}
+var settings := {}
 
 static func _fresh_story() -> Dictionary:
-	return {"version": STORY_VERSION, "missions": {}, "flags": {}, "day": 1, "time_of_day": "dawn", "signal": 0}
+	return {"version": STORY_VERSION, "missions": {}, "flags": {}, "day": 1, "time_of_day": "dawn", "signal": 0, "current": ""}
+
+static func _fresh_meta() -> Dictionary:
+	return {"character": "", "account": "", "created_unix": 0, "saved_unix": 0, "play_time_s": 0.0, "kind": "auto", "build": ""}
 
 ## Mission record, created on first use. Keys: state, objective, checkpoint, done, completions, fails (from
 ## mission_runner.gd to_save()), plus best_score and zero_score (ints, 0 = none yet).
@@ -73,6 +84,31 @@ func to_dict() -> Dictionary:
 		"results": results.duplicate(true),
 		"exploration": exploration.duplicate(true),
 		"story": story.duplicate(true),
+		"meta": meta.duplicate(true),
+		"player": player.duplicate(true),
+		"settings": settings.duplicate(true),
+	}
+
+## A short line for the Load Game list: mission or zone, play time. Pure, so tests and the menu share it.
+static func summary_of(data: Dictionary) -> Dictionary:
+	var m: Dictionary = data.get("meta", {}) if typeof(data.get("meta", {})) == TYPE_DICTIONARY else {}
+	var p: Dictionary = data.get("player", {}) if typeof(data.get("player", {})) == TYPE_DICTIONARY else {}
+	var st: Dictionary = data.get("story", {}) if typeof(data.get("story", {})) == TYPE_DICTIONARY else {}
+	var where := ""
+	var current := str(st.get("current", ""))
+	if current != "":
+		var rec = st.get("missions", {}).get(current, {})
+		var obj := str(rec.get("objective", "")) if typeof(rec) == TYPE_DICTIONARY else ""
+		where = current + ((" / " + obj) if obj != "" else "")
+	elif str(p.get("zone", "")) != "":
+		where = str(p.get("zone", ""))
+	return {
+		"character": str(m.get("character", "")),
+		"where": where,
+		"play_time_s": float(m.get("play_time_s", 0.0)),
+		"saved_unix": int(m.get("saved_unix", 0)),
+		"kind": str(m.get("kind", "auto")),
+		"version": int(data.get("contract_version", 0)),
 	}
 
 ## Stats for one district, created on first use. Keys:
@@ -153,7 +189,8 @@ func apply_dict(data: Dictionary) -> Dictionary:
 			return {"ok": false, "reason": "renderer_field", "key": key}
 	if str(data.get("contract", "")) != CONTRACT or not READS.has(int(data.get("contract_version", -1))):
 		return {"ok": false, "reason": "contract"}
-	migrated_from = 1 if int(data.get("contract_version", -1)) == 1 else 0
+	var version := int(data.get("contract_version", -1))
+	migrated_from = version if version < VERSION else 0
 	var meetings = data.get("meetings", null)
 	if typeof(meetings) != TYPE_DICTIONARY:
 		return {"ok": false, "reason": "meetings"}
@@ -171,7 +208,54 @@ func apply_dict(data: Dictionary) -> Dictionary:
 	var explored := _apply_exploration(data.get("exploration", null))
 	if not bool(explored.get("ok", false)):
 		return explored
-	return _apply_story(data.get("story", null) if migrated_from == 0 else null)
+	var told := _apply_story(data.get("story", null) if version >= 2 else null)
+	if not bool(told.get("ok", false)):
+		return told
+	return _apply_v3(data if version >= 3 else {})
+
+## v3 sections. Unknown keys are dropped; numbers are clamped; a v1/v2 file gets empty sections.
+func _apply_v3(data: Dictionary) -> Dictionary:
+	meta = _fresh_meta()
+	player = {}
+	settings = {}
+	var m = data.get("meta", {})
+	if typeof(m) == TYPE_DICTIONARY:
+		meta["character"] = str(m.get("character", "")).substr(0, 32)
+		meta["account"] = str(m.get("account", "")).substr(0, 80)
+		meta["created_unix"] = maxi(0, int(m.get("created_unix", 0)))
+		meta["saved_unix"] = maxi(0, int(m.get("saved_unix", 0)))
+		meta["play_time_s"] = maxf(0.0, float(m.get("play_time_s", 0.0)))
+		meta["kind"] = "manual" if str(m.get("kind", "auto")) == "manual" else "auto"
+		meta["build"] = str(m.get("build", "")).substr(0, 40)
+		if m.has("migrated_from"):
+			meta["migrated_from"] = clampi(int(m.migrated_from), 0, VERSION)
+		if m.has("imported_from"):
+			meta["imported_from"] = str(m.imported_from).substr(0, 120)
+	if migrated_from > 0:
+		meta["migrated_from"] = migrated_from
+	var p = data.get("player", {})
+	if typeof(p) == TYPE_DICTIONARY and not p.is_empty():
+		var pos = p.get("pos", [])
+		var clean_pos: Array = []
+		if typeof(pos) == TYPE_ARRAY and pos.size() == 3:
+			for v in pos:
+				clean_pos.append(clampf(float(v), -100000.0, 100000.0))
+		player = {
+			"mode": "story" if str(p.get("mode", "free")) == "story" else "free",
+			"district": str(p.get("district", "")).substr(0, 40),
+			"zone": str(p.get("zone", "")).substr(0, 40),
+			"pos": clean_pos,
+			"yaw": float(p.get("yaw", 0.0)),
+			"skating": bool(p.get("skating", true)),
+		}
+	var s = data.get("settings", {})
+	if typeof(s) == TYPE_DICTIONARY:
+		for k in ["invert_y", "painted_sprite"]:
+			if s.has(k):
+				settings[k] = bool(s[k])
+		if s.has("look_sensitivity"):
+			settings["look_sensitivity"] = clampf(float(s["look_sensitivity"]), 0.0008, 0.008)
+	return {"ok": true}
 
 ## Only the story section of a save on disk (M1). Free roam does not read its save back at start, so main merges this
 ## (and only this) before anything persists, so a free-roam save never wipes mission progress.
@@ -218,6 +302,7 @@ func _apply_story(data) -> Dictionary:
 	clean["day"] = maxi(1, int(data.get("day", 1)))
 	clean["time_of_day"] = str(data.get("time_of_day", "dawn"))
 	clean["signal"] = maxi(0, int(data.get("signal", 0)))
+	clean["current"] = str(data.get("current", ""))
 	story = clean
 	return {"ok": true}
 
@@ -228,6 +313,8 @@ func apply_json(text: String) -> Dictionary:
 	return apply_dict(parsed)
 
 func save_user(path: String) -> Dictionary:
+	if not DirAccess.dir_exists_absolute(path.get_base_dir()):
+		DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		return {"ok": false, "reason": "write"}
