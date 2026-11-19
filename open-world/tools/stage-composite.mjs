@@ -7,7 +7,7 @@ import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readPack, summarize } from './pack-report.mjs';
 
-// Pack budgets (M0, Nov 18 2026). The user raised the main pack limit from 16 MiB to 50 MiB for lossless Fony art.
+// Pack budgets (M0, Nov 18 2026). The user raised the main pack limit from 16 MiB to 50 MiB for higher-quality Fony art (near-lossless WebP q0.97, about 22 MiB).
 // District packs (data/districts.json) stream in on demand; each has its own budget_bytes, capped at DISTRICT_PACK_MAX.
 export const MAIN_PACK_MAX = 50 * 1024 * 1024;
 export const DISTRICT_PACK_MAX = 8 * 1024 * 1024;

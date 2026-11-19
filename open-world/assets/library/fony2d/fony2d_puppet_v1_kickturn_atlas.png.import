@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/fony2d_puppet_v1_kickturn_atlas.png-74a35a862
 
 [params]
 
-compress/mode=0
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.75
+compress/lossy_quality=0.97
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

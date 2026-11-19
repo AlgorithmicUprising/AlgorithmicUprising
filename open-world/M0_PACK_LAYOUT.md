@@ -1,37 +1,47 @@
-# M0: pack layout, lossless Fony, district packs (Nov 18 2026)
+# M0: pack layout, near-lossless Fony, district packs (Nov 18 2026)
 
 Project Zero Act I, milestone M0. Local branch `pz-m0-pack-space`, based on `main` at 3101ed94. Preview only: nothing here is merged, pushed or deployed.
 
 ## Decisions this is built to
 
 - The main pack budget went from 16 MiB to **50 MiB** (`MAIN_PACK_MAX` in `tools/stage-composite.mjs`). The user chose this over shrinking Fony.
-- Fony's atlases import **lossless**. No lossy compression.
+- Fony's atlases import **near-lossless**: lossy WebP at **q0.97** (live was q0.75). The first M0 commit used full lossless; the user then chose near-lossless to keep the main pack around 25 MiB or less.
 - Districts ship as **separate packs** that load on demand while the player keeps skating.
 - The whole game is skateable. Loading a district must never stop Fony or change his speed or state.
 - Milestones stay on preview builds.
 
 ## Sizes
 
-| | Before (live, main 3101ed94) | After (this branch) |
-|---|---|---|
-| `index.pck` | 15,684,864 bytes (14.96 MiB) | 42,427,096 bytes (40.46 MiB) |
-| `index.pck` gzip transfer (GitHub Pages serves `.pck` gzipped) | 14,860,200 bytes (14.17 MiB), measured from the live site | about 41,630,825 bytes (39.70 MiB), gzip level 6 measured locally |
-| Fony atlases inside the pack | 13,402,006 bytes (lossy WebP q0.75) | 40,100,784 bytes (lossless WebP) |
-| Headroom under the budget | 1.04 MiB under 16 MiB | 9.54 MiB under 50 MiB |
-| `districts/test_district.pck` | n/a | 8,580 bytes (6,684 gzip). Its budget is 1 MiB |
-| `index.wasm` | 39,514,754 bytes | unchanged |
+| | Before (live, main 3101ed94) | M0 commit 1 (lossless) | **This branch (q0.97)** |
+|---|---|---|---|
+| `index.pck` | 15,684,864 bytes (14.96 MiB) | 42,427,096 bytes (40.46 MiB) | **22,633,704 bytes (21.59 MiB)** |
+| `index.pck` gzip transfer (GitHub Pages serves `.pck` gzipped) | 14,860,200 bytes (14.17 MiB), measured from the live site | about 41,630,825 bytes (39.70 MiB) | **21,811,342 bytes (20.80 MiB)**, gzip level 6 measured locally (brotli about 21,780,289) |
+| Fony atlases inside the pack | 13,402,006 bytes (WebP q0.75) | 40,100,784 bytes (lossless WebP) | 20,307,356 bytes (WebP q0.97) |
+| Headroom under the budget | 1.04 MiB under 16 MiB | 9.54 MiB under 50 MiB | 28.41 MiB under 50 MiB |
+| `districts/test_district.pck` | n/a | 8,580 bytes | 8,580 bytes (6,682 gzip). Its budget is 1 MiB |
+| `index.wasm` | 39,514,754 bytes | unchanged | unchanged |
 
-WebP data barely compresses, so the gzip transfer is close to the raw size. The first visit to the HQ downloads about 2.8x more pack data than before. GPU memory doesn't change: the atlases were already uncompressed RGBA8 on the GPU (`vram_texture: false`).
+q0.95 was also exported and measured: 21,195,832 bytes (20.21 MiB), gzip 20,373,788 bytes (19.43 MiB). WebP data barely compresses, so the gzip transfer is close to the raw size. The first visit to the HQ downloads about 1.45x the pack data it did before. GPU memory doesn't change: the atlases were already uncompressed RGBA8 on the GPU (`vram_texture: false`).
 
 `node tools/pack-report.mjs build/web/index.pck` prints the bytes per folder, the largest files and the gzip size. `stage-composite.mjs` prints the same budget block in CI.
 
 ## What changed for Fony's art
 
-- All 7 `assets/library/fony2d/*.png.import` files now use `compress/mode=0` (lossless) and `detect_3d/compress_to=0`. That second setting stops the editor from switching them to VRAM compression on its own.
-- `project.godot` sets `rendering/textures/webp_compression/compression_method=6` and `lossless_compression_factor=100`. Lossless WebP comes out about 0.7 MB smaller, and import takes about 50 s instead of 7 s. Pixels are unchanged.
-- The source PNGs and the atlas scale (0.35 of the 510x648 masters) are unchanged. Every pixel with alpha of at least 50% now matches its source PNG exactly. In the front atlas, the old lossy import was at 30.2 dB PSNR, with a maximum error of 78/255. Edge pixels with lower alpha still get Godot's `fix_alpha_border` treatment, as before.
+- All 7 `assets/library/fony2d/*.png.import` files now use `compress/mode=1` (lossy WebP), `compress/lossy_quality=0.97` and `detect_3d/compress_to=0`. That last setting stops the editor from switching them to VRAM compression on its own.
+- `project.godot` sets `rendering/textures/webp_compression/compression_method=6` (slowest, best encoder effort; import takes about 80 s) and `lossless_compression_factor=100` (only used if an atlas goes back to lossless).
+- The source PNGs and the atlas scale (0.35 of the 510x648 masters) are unchanged. Error against the source PNG, front atlas, pixels with alpha of at least 50%:
+
+  | Setting | PSNR | Max error (8-bit) | Fony atlases in pack |
+  |---|---|---|---|
+  | live q0.75 | 30.2 dB | 78 | 13.4 MB |
+  | q0.95 | 33.41 dB | 61 | 18.9 MB |
+  | **q0.97 (chosen)** | **33.57 dB** | **59** | 20.3 MB |
+  | lossless (M0 commit 1) | exact | 0 | 40.1 MB |
+
+- **Why q0.97.** At 2x zoom, q0.95 showed slight softening on the face and jacket: a warm halo under the chin and at the hood edge, and blurred jacket creases and patch detail. q0.97 is the best quality within the about 25 MiB target. It's marginally cleaner but looks almost the same. The remaining softening most likely comes from the lossy WebP format's half-resolution colour (4:2:0 chroma subsampling), so raising the quality further would barely help. Only lossless removes it. In the game view at normal distance, none of this is noticeable.
+- Comparison image (outside the repo): `/workspace/pz-m0-evidence/fony_q_compare_2x.png`, with live q0.75, lossless and q0.97 side by side at 2x. The q0.75 panel comes from the live build's capture, so Fony sits slightly differently in the frame.
 - Higher-resolution frames: `art-src/` has no higher-resolution puppet-v1 frames, only older v2, v3 and raw sets. The 510x648 and 800x850 masters live outside the repo, on the box (`/workspace/hq-map/fony-2d-sprites/puppet-v1`, `/workspace/fony-*/work/masters`). Lossless at a larger scale doesn't fit the budget: 0.5 scale would be about 78 MiB of atlases (estimated from the area ratio). See "Needs a decision" below.
-- `tools/rebake_fony_web_atlases.py` writes lossless imports by default. Set `AU_IMPORT_MODE=1` to go back to lossy.
+- `tools/rebake_fony_web_atlases.py` writes lossy q0.97 imports by default (`AU_IMPORT_MODE=1`, `AU_WEBP_Q=0.97`). Set `AU_IMPORT_MODE=0` for lossless.
 - Evidence is in `tests/capture_m0_fony.gd`. It saves a gameplay shot and a long-lens close-up, and prints the atlas error.
 
 ## Pack layout
@@ -131,7 +141,7 @@ CARD = {"id": "...", "title": "...", "body": "...",
 ## Tests and checks
 
 - `tests/test_main.gd` gains `_m0_packs()`. On its own it runs with `AU_TEST_ONLY=m0`. It covers:
-  - lossless import settings, and the imported atlas matching its source pixel for pixel;
+  - the q0.97 import settings on all 7 atlases, and the imported air atlas staying at 32 dB PSNR or better against its source (it measures 32.8 dB);
   - card validation and tier picks;
   - exploration save round trips, old saves and broken blocks;
   - the registry and export presets;
@@ -143,5 +153,5 @@ CARD = {"id": "...", "title": "...", "body": "...",
 
 ## Needs a decision
 
-- **Download size versus sharpness.** Lossless puts the first HQ load at about 40 MiB of pack, up from 14 MiB, over gzip. A visually near-identical lossy setting (q0.95 or higher) would land at about 22 MiB (estimated by re-encoding the current atlases, not exported). Lossless at a higher atlas scale would need a budget above 50 MiB.
+- **Download size versus sharpness.** Decided: near-lossless q0.97. The first HQ load is about 21 MiB over gzip (lossless would be about 40 MiB; live is 14 MiB). If the slight chroma softening ever matters, the options are lossless (about 40 MiB) or lossless for the front atlas only. A higher atlas scale at q0.97 would be about 2x the atlas bytes for 0.5 scale (estimated).
 - **District entry in free roam.** The test district only arms with the flag. When the first real district lands, choose where its edge goes and set `free_roam` to true.

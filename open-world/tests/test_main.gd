@@ -3036,7 +3036,7 @@ func _finish_quarter_art() -> void:
 	host.queue_free()
 	await frames(2)
 
-## M0 (Nov 18 2026): pack budget, lossless Fony atlases, district packs, loading cards and exploration stats.
+## M0 (Nov 18 2026): pack budget, near-lossless (q0.97) Fony atlases, district packs, loading cards and exploration stats.
 const M0Cards = preload("res://scripts/loading_cards.gd")
 
 func _m0_packs() -> void:
@@ -3049,7 +3049,8 @@ func _m0_packs() -> void:
 	await _m0_district_skate_across()
 
 func _m0_fony_lossless() -> void:
-	var lossless := 0
+	# Near-lossless since M0 commit 2: lossy WebP at q0.97 (live was q0.75), 3D detection off so nothing turns into VRAM.
+	var ok := 0
 	var total := 0
 	for name in DirAccess.get_files_at("res://assets/library/fony2d"):
 		if not name.ends_with(".png.import"):
@@ -3057,9 +3058,9 @@ func _m0_fony_lossless() -> void:
 		total += 1
 		var cfg := ConfigFile.new()
 		cfg.load("res://assets/library/fony2d/" + name)
-		if int(cfg.get_value("params", "compress/mode", -1)) == 0 and int(cfg.get_value("params", "detect_3d/compress_to", -1)) == 0:
-			lossless += 1
-	expect(total == 7 and lossless == total, "m0: all %d Fony atlases import lossless with 3D detection off (%d)" % [total, lossless])
+		if int(cfg.get_value("params", "compress/mode", -1)) == 1 and absf(float(cfg.get_value("params", "compress/lossy_quality", 0.0)) - 0.97) < 0.001 and int(cfg.get_value("params", "detect_3d/compress_to", -1)) == 0:
+			ok += 1
+	expect(total == 7 and ok == total, "m0: all %d Fony atlases import as WebP q0.97 with 3D detection off (%d)" % [total, ok])
 	var path := "res://assets/library/fony2d/fony2d_puppet_v1_air_atlas.png"
 	var got: Image = (load(path) as Texture2D).get_image()
 	if got.is_compressed():
@@ -3067,17 +3068,19 @@ func _m0_fony_lossless() -> void:
 	got.convert(Image.FORMAT_RGBA8)
 	var src := Image.load_from_file(ProjectSettings.globalize_path(path))
 	src.convert(Image.FORMAT_RGBA8)
-	var diff := 0
+	var sq := 0.0
 	var seen := 0
 	for y in range(0, src.get_height(), 5):
 		for x in range(0, src.get_width(), 5):
 			var a := src.get_pixel(x, y)
 			if a.a8 < 128:
 				continue
+			var g := got.get_pixel(x, y)
 			seen += 1
-			if a.to_rgba32() != got.get_pixel(x, y).to_rgba32():
-				diff += 1
-	expect(seen > 1000 and diff == 0, "m0: imported Fony atlas matches its source PNG pixel for pixel (%d of %d samples differ)" % [diff, seen])
+			sq += (pow(a.r - g.r, 2.0) + pow(a.g - g.g, 2.0) + pow(a.b - g.b, 2.0)) / 3.0
+	var psnr := 99.0 if sq == 0.0 else 10.0 * log(1.0 / (sq / maxf(1.0, seen))) / log(10.0)
+	# The old q0.75 import measured about 30 dB on the front atlas; q0.97 measures about 33.5 dB.
+	expect(seen > 1000 and psnr >= 32.0, "m0: imported Fony atlas stays close to its source PNG (%.2f dB PSNR over %d samples)" % [psnr, seen])
 
 func _m0_cards() -> void:
 	var data := M0Cards.read("res://data/loading_cards/test_district.json")
