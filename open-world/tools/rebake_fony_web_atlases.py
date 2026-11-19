@@ -13,8 +13,8 @@ The web catalog drops the per-frame 'file' and 'source' strings (bake provenance
 never reads them). The full catalog stays with the masters.
 
 Usage: AU_FONY_MASTERS=/path/to/puppet-v1 python3 tools/rebake_fony_web_atlases.py
-Env: AU_ATLAS_SCALE (default 1.0; the shipped pack uses 0.5 with AU_WEBP_Q=0.9), AU_SHEET_MAX (default 4096), AU_WEBP_Q (import lossy quality,
-default 0.95), AU_FONY_DEST (default the repo pack).
+Env: AU_ATLAS_SCALE (default 1.0; the shipped pack uses 0.35), AU_IMPORT_MODE (1 lossy WebP, the default; 0 lossless), AU_SHEET_MAX (default 4096), AU_WEBP_Q (import lossy quality,
+default 0.97, the shipped setting since M0), AU_FONY_DEST (default the repo pack).
 """
 import glob, hashlib, json, os, re
 from PIL import Image
@@ -25,7 +25,10 @@ SRC_JSON = os.path.join(ROOT, 'bake/frames_puppet_v1.json')
 DEST = os.environ.get('AU_FONY_DEST', os.path.join(HERE, '..', 'assets', 'library', 'fony2d'))
 AS = float(os.environ.get('AU_ATLAS_SCALE', '1.0'))
 SHEET = int(os.environ.get('AU_SHEET_MAX', '4096'))
-QUALITY = float(os.environ.get('AU_WEBP_Q', '0.95'))
+QUALITY = float(os.environ.get('AU_WEBP_Q', '0.97'))
+# M0 (Nov 18 2026): Fony's atlases import near-lossless: lossy WebP at q0.97 (was q0.75). The user chose this over full
+# lossless to keep the main pack near 22 MiB under the 50 MiB budget. AU_IMPORT_MODE=0 gives lossless WebP.
+MODE = int(os.environ.get('AU_IMPORT_MODE', '1'))
 MASTER = (510, 648)
 ANCHOR = (255, 632)
 BASE_SCALE = 0.5          # game PIXEL 0.007167 m per atlas px at scale_from_master 0.5
@@ -49,7 +52,7 @@ source_file="res://assets/library/fony2d/{name}"
 
 [params]
 
-compress/mode=1
+compress/mode={mode}
 compress/high_quality=false
 compress/lossy_quality={q}
 compress/uastc_level=0
@@ -84,9 +87,10 @@ def write_import(name: str) -> None:
     if os.path.exists(path):
         txt = open(path).read()
         txt = re.sub(r'compress/lossy_quality=[0-9.]+', f'compress/lossy_quality={QUALITY}', txt)
+        txt = re.sub(r'compress/mode=[0-9]+', f'compress/mode={MODE}', txt)
         open(path, 'w').write(txt)
     else:
-        open(path, 'w').write(IMPORT_TMPL.format(name=name, q=QUALITY))
+        open(path, 'w').write(IMPORT_TMPL.format(name=name, q=QUALITY, mode=MODE))
 
 
 def tile_of(path):

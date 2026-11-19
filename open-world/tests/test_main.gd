@@ -35,6 +35,14 @@ func _ready() -> void:
 			print("FAIL ", item)
 		get_tree().quit(1 if fails.size() else 0)
 		return
+	if OS.get_environment("AU_TEST_ONLY") == "m0":
+		_contracts()
+		await _m0_packs()
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	if OS.get_environment("AU_TEST_ONLY") == "phase4":
 		# quick loop while working on Phase 4 (the full suite below is what counts)
 		await _kickturn()
@@ -65,6 +73,7 @@ func _ready() -> void:
 	await _tricks()
 	await _fony_sprite()
 	await _district()
+	await _m0_packs()
 	print("SUMMARY failed=", fails.size())
 	for item in fails:
 		print("FAIL ", item)
@@ -3025,4 +3034,197 @@ func _finish_quarter_art() -> void:
 	await frames(2)
 	expect(plain.get_node_or_null("EdgeTrimL") == null and str(((plain.get_node("Shell") as MeshInstance3D).material_override as ShaderMaterial).get_shader_parameter("albedo_tex").resource_path).ends_with("concrete_albedo.png"), "finish: the original finish is unchanged")
 	host.queue_free()
+	await frames(2)
+
+## M0 (Nov 18 2026): pack budget, near-lossless (q0.97) Fony atlases, district packs, loading cards and exploration stats.
+const M0Cards = preload("res://scripts/loading_cards.gd")
+
+func _m0_packs() -> void:
+	_m0_fony_lossless()
+	_m0_cards()
+	_m0_exploration()
+	_m0_registry()
+	await _m0_free_roam_unchanged()
+	await _m0_district_fail_keeps_rolling()
+	await _m0_district_skate_across()
+
+func _m0_fony_lossless() -> void:
+	# Near-lossless since M0 commit 2: lossy WebP at q0.97 (live was q0.75), 3D detection off so nothing turns into VRAM.
+	var ok := 0
+	var total := 0
+	for name in DirAccess.get_files_at("res://assets/library/fony2d"):
+		if not name.ends_with(".png.import"):
+			continue
+		total += 1
+		var cfg := ConfigFile.new()
+		cfg.load("res://assets/library/fony2d/" + name)
+		if int(cfg.get_value("params", "compress/mode", -1)) == 1 and absf(float(cfg.get_value("params", "compress/lossy_quality", 0.0)) - 0.97) < 0.001 and int(cfg.get_value("params", "detect_3d/compress_to", -1)) == 0:
+			ok += 1
+	expect(total == 7 and ok == total, "m0: all %d Fony atlases import as WebP q0.97 with 3D detection off (%d)" % [total, ok])
+	var path := "res://assets/library/fony2d/fony2d_puppet_v1_air_atlas.png"
+	var got: Image = (load(path) as Texture2D).get_image()
+	if got.is_compressed():
+		got.decompress()
+	got.convert(Image.FORMAT_RGBA8)
+	var src := Image.load_from_file(ProjectSettings.globalize_path(path))
+	src.convert(Image.FORMAT_RGBA8)
+	var sq := 0.0
+	var seen := 0
+	for y in range(0, src.get_height(), 5):
+		for x in range(0, src.get_width(), 5):
+			var a := src.get_pixel(x, y)
+			if a.a8 < 128:
+				continue
+			var g := got.get_pixel(x, y)
+			seen += 1
+			sq += (pow(a.r - g.r, 2.0) + pow(a.g - g.g, 2.0) + pow(a.b - g.b, 2.0)) / 3.0
+	var psnr := 99.0 if sq == 0.0 else 10.0 * log(1.0 / (sq / maxf(1.0, seen))) / log(10.0)
+	# The old q0.75 import measured about 30 dB on the front atlas; q0.97 measures about 33.5 dB.
+	expect(seen > 1000 and psnr >= 32.0, "m0: imported Fony atlas stays close to its source PNG (%.2f dB PSNR over %d samples)" % [psnr, seen])
+
+func _m0_cards() -> void:
+	var data := M0Cards.read("res://data/loading_cards/test_district.json")
+	expect(not data.is_empty() and M0Cards.validate(data).get("ok") == true, "m0 cards: test district card file is valid")
+	var picks := []
+	for visit in [1, 2, 3, 4, 5]:
+		picks.append(str(M0Cards.pick(data, visit).get("id", "")))
+	expect(picks == ["test_intro", "test_faction", "test_tip_ledge", "test_tip_bank", "test_tip_ledge"], "m0 cards: visit 1 intro, 2 faction, 3+ rotate tips %s" % str(picks))
+	var faction := M0Cards.pick(data, 2)
+	expect(str(faction.get("portrait", "")) != "" and ResourceLoader.exists(str(faction["portrait"])) and str(faction.get("tier")) == "faction", "m0 cards: the faction card has a portrait that exists")
+	for visit in [1, 2, 3]:
+		var art := str(M0Cards.pick(data, visit).get("art", ""))
+		expect(art != "" and ResourceLoader.exists(art), "m0 cards: visit %d art exists in the main pack (%s)" % [visit, art])
+	expect(str(M0Cards.pick({}, 1, "SOMEWHERE").get("title")) == "SOMEWHERE", "m0 cards: a district with no card file still gets a title card")
+	var bad := data.duplicate(true)
+	bad["tiers"][0]["pick"] = "shuffle"
+	expect(M0Cards.validate(bad).get("ok") == false, "m0 cards: unknown pick mode is rejected")
+	var rnd := {"contract": "au.loading_cards", "version": 1, "district": "x", "tiers": [{"id": "t", "from_visit": 1, "pick": "random", "cards": [{"id": "a", "title": "A"}, {"id": "b", "title": "B"}, {"id": "c", "title": "C"}]}]}
+	expect(M0Cards.pick(rnd, 7).get("id") == M0Cards.pick(rnd, 7).get("id"), "m0 cards: random pick is stable for a visit")
+
+func _m0_exploration() -> void:
+	var save = SaveScript.new()
+	expect(save.district_visits("test_district") == 0, "m0 save: no visits before the first")
+	expect(save.record_district_visit("test_district", 1000) == 1 and save.record_district_visit("test_district", 2000) == 2, "m0 save: visits count up")
+	var st: Dictionary = save.district_stats("test_district")
+	expect(int(st.first_visit_unix) == 1000 and int(st.last_visit_unix) == 2000, "m0 save: first visit time kept, last visit time moves")
+	expect(save.discover("test_district", "shortcuts", "bank_gap") and not save.discover("test_district", "shortcuts", "bank_gap"), "m0 save: a shortcut is discovered once")
+	expect(st.discovered.secrets == [] and st.discovered.shortcuts == ["bank_gap"], "m0 save: discovered holds shortcuts and an empty secrets set")
+	var round = SaveScript.new()
+	expect(round.apply_json(JSON.stringify(save.to_dict())).get("ok") == true and round.district_visits("test_district") == 2 and round.district_stats("test_district").discovered.shortcuts == ["bank_gap"], "m0 save: exploration survives a JSON roundtrip")
+	var old = SaveScript.new()
+	expect(old.apply_dict({"contract": "au.world_save", "contract_version": 1, "meetings": {}, "results": []}).get("ok") == true and old.district_visits("test_district") == 0, "m0 save: a pre-M0 save without exploration still loads")
+	expect(SaveScript.new().apply_dict({"contract": "au.world_save", "contract_version": 1, "meetings": {}, "results": [], "exploration": {"districts": 3}}).get("ok") == false, "m0 save: a broken exploration block is rejected")
+	var path := "user://m0-test-save.json"
+	save.save_user(path)
+	var only = SaveScript.new()
+	expect(only.load_exploration_user(path).get("ok") == true and only.district_visits("test_district") == 2 and only.results.is_empty(), "m0 save: exploration loads alone from disk")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+func _m0_registry() -> void:
+	var reg = JsonFile.read("res://data/districts.json")
+	var td: Dictionary = reg.get("districts", {}).get("test_district", {}) if typeof(reg) == TYPE_DICTIONARY else {}
+	expect(str(td.get("pack", "")) == "districts/test_district.pck" and str(td.get("scene", "")).begins_with("res://districts/"), "m0 registry: test district pack and scene paths")
+	expect(int(td.get("budget_bytes", 0)) > 0 and int(td.get("budget_bytes", 0)) <= 8 * 1024 * 1024 and td.get("free_roam") == false, "m0 registry: test district has a budget and is off in free roam")
+	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
+	expect(presets.contains("districts/*\"") and presets.contains("name=\"District test_district\""), "m0 export: main preset excludes districts/, a district preset exists")
+
+func _m0_main() -> Node:
+	var main = load("res://scenes/main.tscn").instantiate()
+	add_child(main)
+	await frames(10)
+	return main
+
+func _m0_free_roam_unchanged() -> void:
+	var main = await _m0_main()
+	var loader = main.get_node_or_null("Districts")
+	expect(loader != null and loader.armed.is_empty(), "m0 free roam: no district armed without a flag")
+	expect(main.world_sim.find_child("DistrictApron_*", false, false) == null and not loader.view.visible, "m0 free roam: no apron and no loading card")
+	expect(main.zone_at(main.player.global_position) == "SKATE YARD" and loader.zone_for(main.player.global_position) == "", "m0 free roam: spawn zone unchanged")
+	main.queue_free()
+	await frames(2)
+
+func _m0_arm(main, pack_dir: String, force_pack: bool) -> Node:
+	var loader = main.get_node("Districts")
+	main.flow.save_path = "user://m0-district-save.json"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(main.flow.save_path))
+	loader.pack_dir = pack_dir
+	loader.force_pack = force_pack
+	loader.arm("test_district")
+	return loader
+
+## Push east down Rust Avenue across the district edge (x = 70). Returns the speed log.
+func _m0_ride(main, x_from: float, x_to: float) -> Dictionary:
+	var pl = main.player
+	pl.global_position = Vector3(x_from, 0.5, 90.0)
+	pl.velocity = Vector3.ZERO
+	pl.camera_yaw = -PI * 0.5 - pl.rotation.y   # camera yaw is relative to the body: face +X (east)
+	pl.skating = true
+	pl.external_move_active = true
+	pl.external_move = Vector2(0, 1)
+	var log := {"edge_speed": 0.0, "min_after": 999.0, "min_y": 99.0, "skating": true, "input": true, "paused": false, "ticks": 0, "state_at_edge": ""}
+	for i in 900:
+		await get_tree().physics_frame
+		var v := Vector2(pl.velocity.x, pl.velocity.z).length()
+		var x: float = pl.global_position.x
+		log.min_y = minf(log.min_y, pl.global_position.y)
+		if x < 66.0:
+			log.edge_speed = v
+		else:
+			if log.state_at_edge == "":
+				log.state_at_edge = main.get_node("Districts").state("test_district")
+			log.min_after = minf(log.min_after, v)
+			log.skating = log.skating and pl.skating
+			log.input = log.input and pl.input_enabled
+			log.paused = log.paused or get_tree().paused
+		log.ticks = i
+		if OS.get_environment("AU_M0_DEBUG") != "" and i % 60 == 0:
+			print("m0 dbg ", i, " ", pl.global_position, " v=", pl.velocity, " sk=", pl.skating, " in=", pl.input_enabled, " fr=", pl.sprite_frame, " fwd=", pl.camera_flat_forward())
+		if x >= x_to:
+			break
+	log["x"] = pl.global_position.x
+	pl.external_move = Vector2.ZERO
+	pl.external_move_active = false
+	return log
+
+func _m0_district_fail_keeps_rolling() -> void:
+	var main = await _m0_main()
+	var loader = _m0_arm(main, "/nonexistent-m0-dir", true)
+	expect(main.world_sim.get_node_or_null("DistrictApron_test_district") != null, "m0 fail: the edge apron is down before any pack")
+	var ride := await _m0_ride(main, 35.0, 84.0)
+	expect(loader.state("test_district") == "failed" and str(loader.info.test_district.reason) == "no_source", "m0 fail: a missing pack fails cleanly (%s)" % str(loader.info.test_district.reason))
+	expect(ride.x >= 84.0 and ride.min_y > -0.5 and ride.skating and ride.input and not ride.paused, "m0 fail: Fony rolls onto the apron with input and skating intact (x %.1f, y min %.2f)" % [ride.x, ride.min_y])
+	expect(str(loader.info.test_district.card.get("id")) == "test_intro" and loader.view.status.text.contains("NO SIGNAL"), "m0 fail: the card says the district did not load (%s)" % loader.view.status.text)
+	expect(main.flow.save.district_visits("test_district") == 1, "m0 fail: crossing the edge still counts as a visit")
+	main.queue_free()
+	await frames(2)
+
+func _m0_district_skate_across() -> void:
+	var main = await _m0_main()
+	var dir := ProjectSettings.globalize_path("res://build/web/districts")
+	var have_pack := FileAccess.file_exists(dir.path_join("test_district.pck"))
+	var loader = _m0_arm(main, dir if have_pack else "/nonexistent-m0-dir", false)
+	var states := []
+	loader.state_changed.connect(func(_id, s): states.append(s))
+	var ride := await _m0_ride(main, 35.0, 104.0)
+	print("m0 ride: source=%s states=%s edge_speed=%.2f min_after=%.2f state_at_edge=%s ticks=%d" % ["pack" if have_pack else "res", str(states), ride.edge_speed, ride.min_after, ride.state_at_edge, ride.ticks])
+	expect(loader.state("test_district") == "ready" and main.world_sim.get_node_or_null("District_test_district") != null, "m0 district: the test district is in the world (%s)" % ("from the built pack" if have_pack else "from res://, no built pack yet"))
+	expect(main.world_sim.get_node_or_null("DistrictApron_test_district") == null, "m0 district: the apron is gone once the district is in")
+	expect(ride.edge_speed > 6.0 and ride.min_after >= ride.edge_speed * 0.85, "m0 district: speed carries across the edge (%.2f m/s before, min %.2f after)" % [ride.edge_speed, ride.min_after])
+	expect(ride.skating and ride.input and not ride.paused and ride.min_y > -0.5, "m0 district: loading never pauses, takes input or drops Fony")
+	expect(main.flow.save.district_visits("test_district") == 1 and int(main.flow.save.district_stats("test_district").first_visit_unix) > 0, "m0 district: the first visit is recorded with a time")
+	expect(str(loader.info.test_district.card.get("id")) == "test_intro", "m0 district: visit 1 showed the intro card")
+	expect(main.get_node("Districts").zone_for(main.player.global_position) == "TEST DISTRICT", "m0 district: the zone reads TEST DISTRICT")
+	var d: Node3D = main.world_sim.get_node("District_test_district")
+	expect(d.get_node_or_null("TestLedge") != null and d.get_node_or_null("TestFlatBar") != null and d.get_node_or_null("TestBank") != null, "m0 district: the district has a ledge, a flat bar and a bank")
+	expect(d.get_node("TestLedge").is_in_group("grind_rail") and d.get_node("TestFlatBar").is_in_group("grind_rail"), "m0 district: its ledge and bar are grindable")
+	# Leave and come back: visit 2 shows the faction card.
+	main.player.global_position = Vector3(0.0, 0.5, 40.0)   # back in the yard, more than prefetch + 20 m from the edge
+	await frames(3)
+	var back := await _m0_ride(main, 35.0, 80.0)
+	expect(main.flow.save.district_visits("test_district") == 2 and str(loader.info.test_district.card.get("id")) == "test_faction", "m0 district: visit 2 shows the faction card (%s)" % str(loader.info.test_district.card.get("id")))
+	expect(back.min_after >= back.edge_speed * 0.85, "m0 district: re-entry keeps speed too")
+	var saved = SaveScript.new()
+	expect(saved.load_exploration_user(main.flow.save_path).get("ok") == true and saved.district_visits("test_district") == 2, "m0 district: visits are persisted")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(main.flow.save_path))
+	main.queue_free()
 	await frames(2)

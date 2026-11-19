@@ -1,0 +1,34 @@
+{
+  "contract": "au.districts",
+  "version": 1,
+  "note": "M0 district registry. Each district ships as its own Godot pack next to index.pck (build/web/districts/<id>.pck) and streams in while the player keeps skating. The 'apron' is a plain main-pack floor over the district footprint (with low side and end walls) that stands in until the pack arrives or if it fails, so the wheels never drop. Loading cards live in the main pack so they show before the district arrives. 'free_roam': false means the district only arms with ?district=<id> (web) or the district=<id> user arg; free roam is unchanged.",
+  "districts": {
+    "test_district": {
+      "title": "TEST DISTRICT",
+      "zone": "TEST DISTRICT",
+      "pack": "districts/test_district.pck",
+      "scene": "res://districts/test_district/test_district.tscn",
+      "budget_bytes": 1048576,
+      "cards": "res://data/loading_cards/test_district.json",
+      "origin": [
+        70.0,
+        0.0,
+        90.0
+      ],
+      "bounds": [
+        70.0,
+        78.0,
+        134.0,
+        102.0
+      ],
+      "apron": [
+        70.0,
+        78.0,
+        134.0,
+        102.0
+      ],
+      "prefetch_m": 30.0,
+      "free_roam": false
+    }
+  }
+}

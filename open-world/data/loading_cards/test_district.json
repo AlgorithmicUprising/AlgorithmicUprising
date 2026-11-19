@@ -1,0 +1,57 @@
+{
+  "contract": "au.loading_cards",
+  "version": 1,
+  "district": "test_district",
+  "min_seconds": 4.0,
+  "note": "PLACEHOLDER cards for the M0 test district. Real art and copy come later. Tiers are matched by visit number (1 = first visit); the first tier whose range holds the visit wins.",
+  "tiers": [
+    {
+      "id": "intro",
+      "from_visit": 1,
+      "to_visit": 1,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "test_intro",
+          "title": "TEST DISTRICT",
+          "body": "Placeholder intro. The street past Rust Avenue streams in while you roll. Keep pushing.",
+          "art": "res://assets/loading_cards/test_district/intro.png"
+        }
+      ]
+    },
+    {
+      "id": "faction",
+      "from_visit": 2,
+      "to_visit": 2,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "test_faction",
+          "title": "WHO RUNS THESE STREETS",
+          "body": "Placeholder faction card. A district's crew or main character gets introduced on the second visit.",
+          "art": "res://assets/loading_cards/test_district/faction.png",
+          "portrait": "res://assets/loading_cards/test_district/portrait.png",
+          "portrait_name": "PLACEHOLDER"
+        }
+      ]
+    },
+    {
+      "id": "tips",
+      "from_visit": 3,
+      "pick": "rotate",
+      "cards": [
+        {
+          "id": "test_tip_ledge",
+          "title": "TIP · LEDGE",
+          "body": "Placeholder tip. The ledge on the right runs with the lane. Ollie onto it from a straight line.",
+          "art": "res://assets/loading_cards/test_district/tip.png"
+        },
+        {
+          "id": "test_tip_bank",
+          "title": "SHORTCUT · BANK",
+          "body": "Placeholder shortcut. Carry speed over the bank at the far end instead of pushing around it."
+        }
+      ]
+    }
+  ]
+}

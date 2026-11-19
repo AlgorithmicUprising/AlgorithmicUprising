@@ -237,6 +237,8 @@ The two song entries are untitled placeholders. They are not a claim that those 
 
 Lazy load, now: `request_playback` reads metadata already in the JSON and refuses to fetch. There is one small district in memory. Nothing streams.
 
+M0 update (Nov 18 2026, local branch `pz-m0-pack-space`): districts can now stream as their own packs (`build/web/districts/<id>.pck`) while the player keeps skating, with data-driven loading cards and per-district exploration stats in the save. The main pack budget is 50 MiB, and Fony's atlases import as near-lossless WebP (q0.97, main pack about 21.6 MiB). See [M0_PACK_LAYOUT.md](M0_PACK_LAYOUT.md). Music still does not stream.
+
 Lazy load, proposed and not measured: resolve one catalog row at a time, fetch only a cleared external file for the selected song, cancel the previous fetch, and do not keep four decoded songs. A four-minute 48 kHz stereo buffer is about 87.9 MiB of PCM; that figure is arithmetic from the earlier Bars per Watt note, not a measurement of this slice. Neighborhoods later should be separate scenes loaded at the boundary and unloaded when left. The cabinet must not keep the district simulating behind a real minigame.
 
 This machine's desktop run had no audio device. That does not say anything about mix latency.

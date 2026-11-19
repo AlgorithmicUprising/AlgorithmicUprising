@@ -1,4 +1,4 @@
-import { copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +16,16 @@ await mkdir(out, { recursive: true });
 
 const code = await run(godot, ['--headless', '--path', world, '--export-release', 'Web', index]);
 if (code !== 0) process.exit(code);
+// M0 district packs: one export preset per district ("District <id>"), written next to index.pck as
+// districts/<id>.pck. The main preset excludes districts/*, so district content never lands in index.pck.
+const registry = JSON.parse(await readFile(join(world, 'data', 'districts.json'), 'utf8'));
+await rm(join(out, 'districts'), { recursive: true, force: true });
+for (const [id, entry] of Object.entries(registry.districts || {})) {
+  const target = join(out, entry.pack);
+  await mkdir(dirname(target), { recursive: true });
+  const status = await run(godot, ['--headless', '--path', world, '--export-pack', 'District ' + id, target]);
+  if (status !== 0) process.exit(status);
+}
 // Godot's official third-party notices (COPYRIGHT.txt at the pinned tag), linked from the
 // Zero X loading shell. Godot's "Complying with licenses" page suggests shipping it as
 // GODOT_COPYRIGHT.txt.
