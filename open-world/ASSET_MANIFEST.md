@@ -25,6 +25,14 @@ This list is the visual pass on the 160 m yard. Nothing here is a finished illus
 | Fony, the player | Painted sprite billboard. Idle, walk, cruise, tricks, grinds, and bails use the v3 clips (LOCAL puppet-v1 test build: the puppet bake overrides most of them; grind round, Nov 16 2026: the 50-50 grind is a puppet clip in all 8 views, `fony2d_puppet_v1_grind_atlas.png`). The six push cycles are the v5 strokes. The pivot mesh can be shown from the pause menu. Collision is still a separate capsule |
 | Zero | Articulated pivots, not a skin rig. Larger cream CRT, lime screen bars, knob, vent, capsule jacket and limbs, red “?” patch, barcode blocks, metal neck, hands, and knees, coiled cable segments. Idle bob and a raised arm while talking |
 
+## Front end (Nov 19 2026)
+
+| Piece | How it is made |
+|---|---|
+| Start screen | The approved puppeteer art (option C, Nov 15 2026): `assets/start_screen/` plate (JPEG, 1920x1080) plus alpha-cropped layers (strings left/right, eye glow, title, PRESS START), placed by `data/start_screen.json`. The strings sway, the eyes pulse, and scanlines are drawn in engine. About 830 KB of source, lossy-imported. All rights reserved (see NOTICE.md) |
+| Menu font | Press Start 2P (OFL), `assets/fonts/` |
+| Act I intro video | Not in the repo or the pack. The web build plays `media/intro/*.mp4` next to the pack. The export makes a labelled ffmpeg placeholder; the real cut comes in through `AU_INTRO_MP4` |
+
 ## Still needed before this can look like the concept
 
 Original art, made for Algorithmic Uprising, not copied from Grand Theft Auto, Jet Set Radio, or any other game:

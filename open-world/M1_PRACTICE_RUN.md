@@ -4,9 +4,9 @@ Branch `pz-m1-practice-run`, built on main `88cb49a` (M0). Local and preview onl
 
 ## What plays
 
-Press **P** in free roam, or open with `?story=p1` (web) or `-- story=p1` (desktop).
+From the start screen: **New Game** → character name → the Act I intro video → P.1 (see [FRONT_END.md](FRONT_END.md)). Or press **P** in free roam, or open with `?story=p1` (web) or `-- story=p1` (desktop).
 
-1. A flyer card for the Sunburn Open. "Five days."
+1. Updated Nov 19 2026: the flyer card ("fifty thousand") is gone. The intro video carries the Sunburn Open setup ($500,000), and P.1 opens on its first line ("Five days, {name}.").
 2. Contextual objectives, each with a prompt that appears after the player hesitates: push up to speed → stop and kick the board up → drop it and step on → ollie → ride the quarter pipe → land a 50-50 on the rail.
 3. The first bail on the rail wakes Zero's VOICE in the arcade window. It shows as on-screen text with a CRT face and a procedural "fony" blip, and it reads the real bail angle. After that, free-skate and bail barks run from pools that use cooldowns and avoid repeats.
 4. The line runs bowl → quarter → rail, inside 60 s with no bail. The first clean line sets the **Zero Score** on the arcade marquee and on the HUD board. The optional objective is to beat it. When P.1 is done, the mission is saved and you go back to free skate.
@@ -24,7 +24,7 @@ The park is dressed derelict: leaves and bags in the bowl, weeds, cracks, rust o
 - `scripts/mission/combo_meter.gd`: the combo speed system.
 - `scripts/mission/line_tracker.gd`: timed ordered lines.
 - `scripts/mission/barks.gd`: voice line pools.
-- `contracts/save_record.gd` is now **v2**. It reads v1 and migrates it. It adds a `story` section (missions, flags, day, time of day, signal). The story section is merged on load, so a free-roam save never wipes it.
+- `contracts/save_record.gd` is now **v3** (front end: meta, player, settings, current mission; see FRONT_END.md). v2 added: It reads v1 and migrates it. It adds a `story` section (missions, flags, day, time of day, signal). The story section is merged on load, so a free-roam save never wipes it.
 
 ## Combo speed system
 
