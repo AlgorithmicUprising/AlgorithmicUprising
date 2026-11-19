@@ -6,7 +6,9 @@
     "export-web": "node tools/export-web.mjs",
     "stage-composite": "node tools/stage-composite.mjs",
     "serve-composite": "node tools/serve-composite.mjs",
-    "browser-check": "node tools/browser-check.mjs"
+    "browser-check": "node tools/browser-check.mjs",
+    "district-check": "node tools/district-check.mjs",
+    "pack-report": "node tools/pack-report.mjs build/web/index.pck build/web/districts/test_district.pck"
   },
   "devDependencies": {
     "playwright": "^1.56.1"

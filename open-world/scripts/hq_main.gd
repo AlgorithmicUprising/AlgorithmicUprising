@@ -4,6 +4,7 @@ const Palette = preload("res://scripts/palette.gd")
 const Yard = preload("res://scripts/yard.gd")
 const JsonFile = preload("res://scripts/json_file.gd")
 const FlowScript = preload("res://scripts/hq_flow.gd")
+const DistrictLoader = preload("res://scripts/district_loader.gd")
 
 var flow: Node
 var world_sim: Node3D
@@ -19,6 +20,8 @@ var visual_demo := false
 var look_label: Label
 var hint_label: Label
 var invert_check: CheckButton
+## M0 district packs (scripts/district_loader.gd). Idle unless a district is armed; free roam is unchanged.
+var districts: Node
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -44,12 +47,17 @@ func _ready() -> void:
 	popup.name = "TrickPopup"
 	popup.player = player
 	add_child(popup)
+	districts = DistrictLoader.new()
+	districts.name = "Districts"
+	districts.bind(self)
+	add_child(districts)
 	_apply_story()
 
 func _process(_delta: float) -> void:
 	if player == null:
 		return
-	zone_label.text = zone_at(player.global_position)
+	var district_zone: String = districts.zone_for(player.global_position) if districts != null else ""
+	zone_label.text = district_zone if district_zone != "" else zone_at(player.global_position)
 	var mode := "SKATE" if player.skating else "WALK"
 	if player.sprite_frame.begins_with("kickup"):
 		mode = "KICK UP"
@@ -415,7 +423,7 @@ func _publish_web_state() -> void:
 		player.trick,
 		pose,
 		snapped(spin, 0.01),
-		zone_at(player.global_position),
+		zone_label.text if zone_label != null else zone_at(player.global_position),
 		player.sprite_frame,
 		"true" if player.use_painted_sprite else "false",
 		(str(player.grind_trick) + "@" + str(player.grind.name)) if player.grind != null else "",
