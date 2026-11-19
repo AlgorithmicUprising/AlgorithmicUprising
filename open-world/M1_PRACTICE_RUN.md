@@ -36,7 +36,7 @@ The park is dressed derelict: leaves and bags in the bowl, weeds, cracks, rust o
 ## Provisional (flagged)
 
 - **Fail/retry**: P.1 never fails ("none"). The plan's proposed checkpoint fail rule for P.2+ is built and tested, but marked `fail_rule_status: "proposed"`.
-- **Zero Score rule**: the next 500 strictly above the first clean line's score. The autopilot run sets 3,500. A typical hand-played run sets about 4,000, which matches the script.
+- **Zero Score rule**: the next 500 strictly above the first clean line's score. The autopilot run sets 3,500. The script's number is 4,000, and points were tuned to land near it. Hand-played scores have not been measured yet.
 - **Point values** were scaled ×4 so a plain line scores about 3,200: OLLIE 400, KICKFLIP 1000, MELON 800, DROP IN 600, BS KICKTURN 600, BACKSIDE AIR 1600, TRANSITION 400, grind 400 + 160/m.
 - **Line rule**: 60 s, no bail.
 - **Keys**: P and T, keyboard only. See `CONTROLS.md`.
