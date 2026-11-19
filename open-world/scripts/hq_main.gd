@@ -5,6 +5,7 @@ const Yard = preload("res://scripts/yard.gd")
 const JsonFile = preload("res://scripts/json_file.gd")
 const FlowScript = preload("res://scripts/hq_flow.gd")
 const DistrictLoader = preload("res://scripts/district_loader.gd")
+const PracticeRun = preload("res://scripts/story/practice_run.gd")
 
 var flow: Node
 var world_sim: Node3D
@@ -22,6 +23,9 @@ var hint_label: Label
 var invert_check: CheckButton
 ## M0 district packs (scripts/district_loader.gd). Idle unless a district is armed; free roam is unchanged.
 var districts: Node
+## M1 story mode (scripts/story/practice_run.gd): P.1 Practice Run. Idle until P (provisional key), story=p1 on the
+## command line or ?story=p1 in the web build. Free roam is unchanged while it is idle.
+var story: Node
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -52,6 +56,12 @@ func _ready() -> void:
 	districts.bind(self)
 	add_child(districts)
 	_apply_story()
+	# save v2: keep mission progress in memory so a free-roam save never wipes it
+	flow.save.load_story_user(flow.save_path)
+	story = PracticeRun.new()
+	story.name = "Story"
+	story.bind(self)
+	add_child(story)
 
 func _process(_delta: float) -> void:
 	if player == null:
@@ -101,6 +111,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if not player.input_enabled:
+		return
+	if event.is_action_pressed("story_toggle") and story != null:
+		story.toggle()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("mission_retry") and story != null and story.active:
+		story.retry()
+		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.physical_keycode == KEY_BRACKETLEFT:
@@ -335,7 +353,7 @@ func _sync_look_catch() -> void:
 	look_catch.visible = show
 	look_catch.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
 	if hint_label != null:
-		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   Q ollie   R kickflip   F grab   E talk\nOn a rail: F 5-0, R boardslide.  Quarter pipe: hold S high up to kickturn, F off the coping for a backside air\nEnter confirm   Esc pause. Invert mouse Y is in the pause menu." % player.look_sensitivity
+		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   Q ollie   R kickflip   F grab   E talk\nOn a rail: F 5-0, R boardslide.  Quarter pipe: hold S high up to kickturn, F off the coping for a backside air\nEnter confirm   Esc pause. Invert mouse Y is in the pause menu.   P story: Practice Run" % player.look_sensitivity
 
 func _on_look_catch(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
@@ -372,6 +390,8 @@ func _maybe_demo() -> void:
 		if "demo=cabinet-" in search:
 			_demo_cabinet(search.split("demo=cabinet-")[1].split("&")[0])
 	demo_armed = true
+	if story != null and not story.active and (OS.get_cmdline_user_args().has("story=p1") or (OS.has_feature("web") and "story=p1" in str(JavaScriptBridge.eval("window.location.search", true)))):
+		story.start()
 	if kind == "":
 		return
 	visual_demo = true

@@ -43,6 +43,18 @@ func _ready() -> void:
 			print("FAIL ", item)
 		get_tree().quit(1 if fails.size() else 0)
 		return
+	if OS.get_environment("AU_TEST_ONLY") == "m1" or OS.get_environment("AU_TEST_ONLY") == "m1pilot":
+		var m1 = preload("res://tests/m1_tests.gd").new()
+		if OS.get_environment("AU_TEST_ONLY") == "m1pilot":
+			m1.t = self
+			await m1.autopilot_run()
+		else:
+			await m1.run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	if OS.get_environment("AU_TEST_ONLY") == "phase4":
 		# quick loop while working on Phase 4 (the full suite below is what counts)
 		await _kickturn()
@@ -74,6 +86,7 @@ func _ready() -> void:
 	await _fony_sprite()
 	await _district()
 	await _m0_packs()
+	await preload("res://tests/m1_tests.gd").new().run(self)
 	print("SUMMARY failed=", fails.size())
 	for item in fails:
 		print("FAIL ", item)

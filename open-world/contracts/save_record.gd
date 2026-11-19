@@ -2,7 +2,11 @@ extends RefCounted
 
 const Result = preload("res://contracts/minigame_result.gd")
 const CONTRACT := "au.world_save"
-const VERSION := 1
+## M1 (Nov 19 2026): v2 adds the "story" section (missions, flags, day and time, Zero Score bests, Signal). A v1 file
+## still loads: it is migrated in memory (empty story) and written back as v2 on the next save.
+const VERSION := 2
+const READS := [1, 2]
+const STORY_VERSION := 1
 const MAX_RESULTS := 20
 const BANNED := ["viewport", "node", "texture", "renderer", "audio_context", "canvas"]
 
@@ -13,6 +17,39 @@ var results: Array = []
 ## future achievements / bonuses system. Shape: see EXPLORATION_VERSION and district_stats().
 const EXPLORATION_VERSION := 1
 var exploration := {"version": EXPLORATION_VERSION, "districts": {}}
+var story := _fresh_story()
+var migrated_from := 0              # 1 when the last apply_dict() read a v1 file
+
+static func _fresh_story() -> Dictionary:
+	return {"version": STORY_VERSION, "missions": {}, "flags": {}, "day": 1, "time_of_day": "dawn", "signal": 0}
+
+## Mission record, created on first use. Keys: state, objective, checkpoint, done, completions, fails (from
+## mission_runner.gd to_save()), plus best_score and zero_score (ints, 0 = none yet).
+func mission(id: String) -> Dictionary:
+	var missions: Dictionary = story["missions"]
+	if not missions.has(id):
+		missions[id] = {"state": "available", "objective": "", "checkpoint": "", "done": [], "completions": 0, "fails": 0, "best_score": 0, "zero_score": 0}
+	return missions[id]
+
+func set_mission(id: String, snapshot: Dictionary) -> void:
+	var m := mission(id)
+	for k in ["state", "objective", "checkpoint", "done", "completions", "fails"]:
+		if snapshot.has(k):
+			m[k] = snapshot[k]
+
+## Keeps the higher score. Returns true when it is a new best.
+func note_score(id: String, score: int) -> bool:
+	var m := mission(id)
+	if score > int(m.get("best_score", 0)):
+		m["best_score"] = score
+		return true
+	return false
+
+func set_flag(name: String, value := true) -> void:
+	story["flags"][name] = value
+
+func flag(name: String) -> bool:
+	return bool(story["flags"].get(name, false))
 
 func note_meeting(id: String) -> void:
 	if met.has(id):
@@ -35,6 +72,7 @@ func to_dict() -> Dictionary:
 		"meetings": met.duplicate(true),
 		"results": results.duplicate(true),
 		"exploration": exploration.duplicate(true),
+		"story": story.duplicate(true),
 	}
 
 ## Stats for one district, created on first use. Keys:
@@ -113,8 +151,9 @@ func apply_dict(data: Dictionary) -> Dictionary:
 	for key in BANNED:
 		if data.has(key):
 			return {"ok": false, "reason": "renderer_field", "key": key}
-	if str(data.get("contract", "")) != CONTRACT or int(data.get("contract_version", -1)) != VERSION:
+	if str(data.get("contract", "")) != CONTRACT or not READS.has(int(data.get("contract_version", -1))):
 		return {"ok": false, "reason": "contract"}
+	migrated_from = 1 if int(data.get("contract_version", -1)) == 1 else 0
 	var meetings = data.get("meetings", null)
 	if typeof(meetings) != TYPE_DICTIONARY:
 		return {"ok": false, "reason": "meetings"}
@@ -129,7 +168,58 @@ func apply_dict(data: Dictionary) -> Dictionary:
 		var added := add_result(item)
 		if not bool(added.get("ok", false)):
 			return added
-	return _apply_exploration(data.get("exploration", null))
+	var explored := _apply_exploration(data.get("exploration", null))
+	if not bool(explored.get("ok", false)):
+		return explored
+	return _apply_story(data.get("story", null) if migrated_from == 0 else null)
+
+## Only the story section of a save on disk (M1). Free roam does not read its save back at start, so main merges this
+## (and only this) before anything persists, so a free-roam save never wipes mission progress.
+func load_story_user(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {"ok": true, "fresh": true}
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {"ok": false, "reason": "not_object"}
+	if int(parsed.get("contract_version", -1)) == 1:
+		story = _fresh_story()
+		return {"ok": true, "migrated_from": 1}
+	return _apply_story(parsed.get("story", null))
+
+func _apply_story(data) -> Dictionary:
+	if data == null:
+		story = _fresh_story()
+		return {"ok": true, "fresh": true}
+	if typeof(data) != TYPE_DICTIONARY or typeof(data.get("missions", null)) != TYPE_DICTIONARY:
+		return {"ok": false, "reason": "story"}
+	var clean := _fresh_story()
+	for id in data["missions"]:
+		var m = data["missions"][id]
+		if typeof(m) != TYPE_DICTIONARY:
+			return {"ok": false, "reason": "story_mission"}
+		var done: Array = []
+		if typeof(m.get("done", [])) == TYPE_ARRAY:
+			for d in m.get("done", []):
+				done.append(str(d))
+		clean["missions"][str(id)] = {
+			"state": str(m.get("state", "available")),
+			"objective": str(m.get("objective", "")),
+			"checkpoint": str(m.get("checkpoint", "")),
+			"done": done,
+			"completions": maxi(0, int(m.get("completions", 0))),
+			"fails": maxi(0, int(m.get("fails", 0))),
+			"best_score": maxi(0, int(m.get("best_score", 0))),
+			"zero_score": maxi(0, int(m.get("zero_score", 0))),
+		}
+	var flags = data.get("flags", {})
+	if typeof(flags) == TYPE_DICTIONARY:
+		for f in flags:
+			clean["flags"][str(f)] = bool(flags[f])
+	clean["day"] = maxi(1, int(data.get("day", 1)))
+	clean["time_of_day"] = str(data.get("time_of_day", "dawn"))
+	clean["signal"] = maxi(0, int(data.get("signal", 0)))
+	story = clean
+	return {"ok": true}
 
 func apply_json(text: String) -> Dictionary:
 	var parsed = JSON.parse_string(text)
