@@ -1,0 +1,16 @@
+{
+  "contract": "au.intro_video",
+  "contract_version": 1,
+  "id": "pz_intro_v1",
+  "title": "Project Zero intro (Glitchport, Fony, first contact)",
+  "source_docs": ["Intro Video Shot List v2 (Doc 1wDbja_wzInpd7j8h_WPqe7_Miw3nWHJLlDPxRN2INCU)", "P.1 Practice Run v2 (Doc 1kWXSyqag-MJWUQFTmXbgLq4BGl6w9ZvWqrBn1AGRf9k)"],
+  "web": {
+    "sources": ["media/intro/project-zero-intro-720p.mp4", "media/intro/intro-placeholder.mp4"],
+    "note": "Tried in order, relative to the game page (open-world/index.html) unless absolute. tools/export-web.mjs copies the real 720p MP4 from AU_INTRO_MP4 and writes the ffmpeg placeholder. Override per page with ?intro=<url>, or ?intro=skip."
+  },
+  "native_ogv": ["res://media/intro/project-zero-intro.ogv", "user://intro/project-zero-intro.ogv"],
+  "skip": {"hold_s": 1.0, "hold_s_after_seen": 0.0},
+  "missing_card_s": 4.0,
+  "first_run_only": true,
+  "status": "placeholder; the real video is being generated (Nov 19 2026)"
+}

@@ -55,6 +55,13 @@ func _ready() -> void:
 			print("FAIL ", item)
 		get_tree().quit(1 if fails.size() else 0)
 		return
+	if OS.get_environment("AU_TEST_ONLY") == "front":
+		await preload("res://tests/front_tests.gd").new().run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	if OS.get_environment("AU_TEST_ONLY") == "phase4":
 		# quick loop while working on Phase 4 (the full suite below is what counts)
 		await _kickturn()
@@ -87,6 +94,7 @@ func _ready() -> void:
 	await _district()
 	await _m0_packs()
 	await preload("res://tests/m1_tests.gd").new().run(self)
+	await preload("res://tests/front_tests.gd").new().run(self)
 	print("SUMMARY failed=", fails.size())
 	for item in fails:
 		print("FAIL ", item)
@@ -2403,7 +2411,7 @@ func _boot() -> void:
 	expect("ZERO X" in boot.logo.text and "GAME ENGINE" in boot.engine_word.text, "boot shows the Zero X Game Engine name")
 	expect("built on Godot Engine" in boot.built_on.text, "boot credits Godot as the base engine")
 	expect(boot.zero_stand.texture != null and boot.zero_stand.texture.get_height() > 600, "Zero art is on the boot screen")
-	expect(boot.next_scene == "res://scenes/main.tscn" and ResourceLoader.exists(boot.next_scene), "boot hands off to an existing scene")
+	expect(boot.next_scene == "res://scenes/start_screen.tscn" and ResourceLoader.exists(boot.next_scene), "boot hands off to an existing scene (the start screen)")
 	expect(boot.requested, "boot starts loading the park in the background")
 	var prompts := []
 	for node in boot.find_children("*", "Label", true, false):
@@ -2437,12 +2445,12 @@ func _boot() -> void:
 		if boot.loaded:
 			break
 		await get_tree().process_frame
-	expect(boot.loaded, "park scene finishes loading in the background")
+	expect(boot.loaded, "start screen finishes loading in the background")
 	expect(handed.is_empty() == (boot.elapsed < boot.MIN_SHOW), "boot holds for the minimum show time")
 	boot.elapsed = maxf(boot.elapsed, boot.MIN_SHOW)
 	await get_tree().process_frame
 	await get_tree().process_frame
-	expect(handed == ["res://scenes/main.tscn"], "boot moves on by itself once the park is loaded")
+	expect(handed == ["res://scenes/start_screen.tscn"], "boot moves on by itself once the start screen is loaded")
 	boot.queue_free()
 	await get_tree().process_frame
 

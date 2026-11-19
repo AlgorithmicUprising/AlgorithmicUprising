@@ -17,6 +17,8 @@ var last_title := ""
 var opens := 0
 var closes := 0
 var player: Node
+## Front end (Nov 19 2026): the start screen's Uprising Arcade console reuses this overlay with its own back label.
+var back_label := "BACK TO THE ARCADE"
 var _web := false
 
 func _ready() -> void:
@@ -70,9 +72,10 @@ func _process(_delta: float) -> void:
 func _open_js(title: String, path: String) -> String:
 	var t := JSON.stringify(title)
 	var p := JSON.stringify(path)
+	var back := JSON.stringify("\u2715 " + back_label)
 	return """
 (function(){
-  var title=%s, path=%s;
+  var title=%s, path=%s, back=%s;
   var old=document.getElementById('au-arcade-overlay'); if(old) old.remove();
   if(document.pointerLockElement) document.exitPointerLock();
   var base=new URL('../', window.location.href);
@@ -83,7 +86,7 @@ func _open_js(title: String, path: String) -> String:
   var bar=document.createElement('div');
   bar.style.cssText='display:flex;align-items:center;gap:12px;padding:8px 12px;background:#121310;border-bottom:3px solid #dbff00';
   var h=document.createElement('strong'); h.textContent='\\u00d8 '+title; h.style.cssText='color:#dbff00;letter-spacing:.06em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-  var b=document.createElement('button'); b.type='button'; b.textContent='\\u2715 BACK TO THE ARCADE';
+  var b=document.createElement('button'); b.type='button'; b.textContent=back;
   b.style.cssText='font:inherit;font-weight:bold;padding:8px 14px;background:#ff3d7f;color:#121310;border:0;border-radius:4px;cursor:pointer;min-height:40px';
   var f=document.createElement('iframe'); f.src=src; f.title=title;
   f.setAttribute('allow','autoplay; fullscreen; gamepad; clipboard-write');
@@ -104,4 +107,4 @@ func _open_js(title: String, path: String) -> String:
     try { f.contentWindow.focus(); } catch(e) {}
   });
 })();
-""" % [t, p]
+""" % [t, p, back]
