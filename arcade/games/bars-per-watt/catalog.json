@@ -19,9 +19,17 @@
     {
       "id": "AU-052",
       "title": "Known Issues",
-      "durationSec": 177.2,
+      "durationSec": 160,
       "explicit": false,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "known-issues-arcade-edit-v1-87bc2f20",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-052/known-issues-arcade-edit-v1-87bc2f20/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-052/known-issues-arcade-edit-v1-87bc2f20/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-052/known-issues-arcade-edit-v1-87bc2f20/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-052/known-issues-arcade-edit-v1-87bc2f20/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-002",
