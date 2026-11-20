@@ -1,6 +1,6 @@
 # Front end: start menu, Act I intro video, saves and accounts
 
-Nov 19 2026, branch `pz-m1-practice-run` (local only, not pushed or deployed).
+Nov 19 2026, branch `pz-m1-practice-run`, then `pz-act1` (local only, not pushed or deployed). Act I story notes: `ACT1.md`.
 
 ## Flow
 
@@ -17,7 +17,8 @@ Dev and test ways past the menu (first load only, so Quit to title still lands o
 
 ## Intro video
 
-- Config: `data/intro_video.json`. Sources are tried in order: `media/intro/project-zero-intro-720p.mp4` (the real cut), then `media/intro/intro-placeholder.mp4`. `?intro=<url>` plays another file. `?intro=skip` goes straight to P.1.
+- Config: `data/intro_video.json`. Sources are tried in order: `media/intro/project-zero-intro-720p.mp4` (a copy written at export from `AU_INTRO_MP4=<file>`; a cheap 404 when absent), then the **hosted cut** (`https://algorithmicuprising.com/media/uploads/1cd5a1cf-…-pz-intro-web-720p.mp4`, which 307-redirects to media-edge with byte ranges, FR-040), then `media/intro/intro-placeholder.mp4`. `?intro=<url>` plays another file. `?intro=skip` goes straight to P.1.
+- Fallbacks (Act I, Nov 19 2026), so the game is never stuck: a per-source load timeout (`load_timeout_s` 15) or a media error moves to the next source; if play() is refused even muted, a **TAP TO PLAY / SKIP INTRO ›** card shows; a stall over `stall_s` (8) shows **TRY AGAIN / SKIP**, and after `stall_giveup_s` (20) the intro ends itself; a hard cap (`max_extra_s` past the duration) ends it too. If the overlay cannot be built at all, Godot goes straight on to P.1. `tools/intro-check.mjs` (`npm run intro-check`) checks all of these in Chrome.
 - Web: an HTML `<video>` overlay (`#pz-intro`) injected by `scripts/front/intro_player.gd` through JavaScriptBridge. The file is **outside the pack**, next to it in `media/intro/`. The loading shell is untouched, because it must ask nothing of the player.
   - If no source loads, a 4 s "INTRO VIDEO IN PRODUCTION" card shows instead.
   - If the browser blocks sound autoplay, the video plays muted with a "CLICK FOR SOUND" button.
