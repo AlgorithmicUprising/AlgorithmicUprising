@@ -28,22 +28,32 @@ func tick(delta: float) -> void:
 		since[k] += delta
 
 ## Returns an exchange ([[speaker, text], ...]) or [] when the pool is cooling down, empty or the roll missed.
-func pick(pool: String) -> Array:
+## P.1 v2: an entry may also be {"lines": [...], "requires_flag": "flag"}; it only plays once that flag is set in flags.
+func pick(pool: String, flags := {}) -> Array:
 	if not pools.has(pool) or since_any < global_gap:
 		return []
 	var p: Dictionary = pools[pool]
 	var entries: Array = p.entries
-	if entries.is_empty() or float(since[pool]) < float(p.cooldown):
+	var allowed: Array = []
+	for k in entries.size():
+		var e = entries[k]
+		if typeof(e) == TYPE_DICTIONARY and str(e.get("requires_flag", "")) != "" and not bool(flags.get(str(e.requires_flag), false)):
+			continue
+		allowed.append(k)
+	if allowed.is_empty() or float(since[pool]) < float(p.cooldown):
 		return []
 	if rng.randf() > float(p.chance):
 		return []
-	var i := rng.randi_range(0, entries.size() - 1)
-	if entries.size() > 1 and i == int(last[pool]):
-		i = (i + 1) % entries.size()
+	var j := rng.randi_range(0, allowed.size() - 1)
+	if allowed.size() > 1 and int(allowed[j]) == int(last[pool]):
+		j = (j + 1) % allowed.size()
+	var i: int = allowed[j]
 	last[pool] = i
 	since[pool] = 0.0
 	since_any = 0.0
 	var e = entries[i]
+	if typeof(e) == TYPE_DICTIONARY:
+		e = e.get("lines", [])
 	var out: Array = e if typeof(e) == TYPE_ARRAY and not e.is_empty() and typeof(e[0]) == TYPE_ARRAY else [e]
 	fired.append(pool)
 	return out

@@ -3,12 +3,12 @@
   "contract_version": 1,
   "id": "p1_practice_run",
   "title": "P.1 PRACTICE RUN",
-  "source": "Game script v1.0, MISSION P.1 Practice Run; Act I production breakdown (Nov 18 2026), P.1 row and milestone M1",
+  "source": "Game script v1.0, MISSION P.1 Practice Run; P.1 Practice Run v2 (phone-text rewrite, Doc 1kWXSyqag-MJWUQFTmXbgLq4BGl6w9ZvWqrBn1AGRf9k, approved Nov 19 2026); Act I production breakdown (Nov 18 2026), P.1 row, milestone M1 and section 8",
   "district": "The Yard (derelict), dawn",
   "time_of_day": "dawn",
   "fail_rule": "none",
   "fail_rule_status": "script",
-  "fail_rule_note": "Script: no fail. Bails get a dry line from the voice. The line can be repeated as often as the player likes.",
+  "fail_rule_note": "Script: no fail. Bails get a dry text from Zero. The line can be repeated as often as the player likes.",
   "zero_score": {
     "rule": "just_above_first_line",
     "round_to": 500,
@@ -16,71 +16,576 @@
     "status": "proposed",
     "note": "Script: ZERO SCORE 4,000, set just above whatever the player scored on the first full line. Built as: the first line score rounded up to the next 500 (strictly above it)."
   },
-  "line": {"steps": ["bowl", "quarter", "rail"], "limit_s": 60.0, "status": "proposed", "note": "One line = bowl, then a quarter pipe, then a clean 50-50, without a bail, inside 60 s."},
-  "spawns": {
-    "yard": [-42.0, 0.5, 2.0, 1.05],
-    "quarter": [-43.5, 0.5, -12.0, 1.5708],
-    "rail": [-40.0, 0.5, 8.2, 1.5708],
-    "line": [-48.0, 0.8, 20.5, 3.1416]
+  "line": {
+    "steps": [
+      "bowl",
+      "quarter",
+      "rail"
+    ],
+    "limit_s": 60.0,
+    "status": "proposed",
+    "note": "One line = bowl, then a quarter pipe, then a clean 50-50, without a bail, inside 60 s."
   },
-  "intro_video": {"id": "pz_intro_v1", "first_run_only": true, "skippable": true, "config": "res://data/intro_video.json",
-    "note": "Front end (Nov 19 2026): the intro video (start screen > New Game) now carries the Sunburn Open flyer ($500,000) and 'Five days.', so the old flyer CARD (which still said fifty thousand) is gone. P.1 v2's Beat 0 phone lines come with the phone-text code task."},
-  "intro": [],
+  "spawns": {
+    "yard": [
+      -42.0,
+      0.5,
+      2.0,
+      1.05
+    ],
+    "quarter": [
+      -43.5,
+      0.5,
+      -12.0,
+      1.5708
+    ],
+    "rail": [
+      -40.0,
+      0.5,
+      8.2,
+      1.5708
+    ],
+    "line": [
+      -48.0,
+      0.8,
+      20.5,
+      3.1416
+    ]
+  },
+  "intro_video": {
+    "id": "pz_intro_v1",
+    "first_run_only": true,
+    "skippable": true,
+    "config": "res://data/intro_video.json",
+    "note": "Front end (Nov 19 2026): the intro video (start screen > New Game) carries the Sunburn Open flyer ($500,000), 'Five days.', the rooftop squat, the CLEARANCE alert and Zero's first text. P.1 opens on that frame with Beat 0."
+  },
+  "intro": [
+    [
+      "PHONE",
+      "YARD-PUBLIC · connected (no internet)"
+    ],
+    [
+      "WAIT",
+      "1.0"
+    ],
+    [
+      "TEXT FONY",
+      "who is this"
+    ],
+    [
+      "TYPING ???",
+      "1.4"
+    ],
+    [
+      "TEXT ???",
+      "A concerned observer. You're cold. Everyone's late when they're cold. Warm up."
+    ]
+  ],
   "objectives": [
-    {"id": "push", "text": "Push up to speed", "event": "speed", "match": {"speed": 5.5}, "hesitate_s": 6.0, "spawn": "yard",
-      "prompt": {"verb": "PUSH", "kb": "W", "pad": "Left stick"},
-      "on_start": [["FONY", "(pushing) Okay. Warm up. Don't think. Push."]],
-      "on_done": [["FONY", "There it is."]]},
-    {"id": "kick_up", "text": "Stop and kick the board up", "event": "kick_up", "hesitate_s": 7.0, "spawn": "yard",
-      "prompt": {"verb": "KICK UP", "kb": "Shift", "pad": "Y"},
-      "on_done": [["FONY", "Concrete's fine. It's the cracks that hate you."]]},
-    {"id": "drop_on", "text": "Drop the board and step on", "event": "drop_on", "hesitate_s": 5.0, "spawn": "yard",
-      "prompt": {"verb": "DROP IN", "kb": "Shift", "pad": "Y"}},
-    {"id": "ollie", "text": "Ollie", "event": "trick_land", "hesitate_s": 6.0, "spawn": "yard", "checkpoint": true,
-      "prompt": {"verb": "OLLIE", "kb": "Q", "pad": "not bound yet"},
-      "on_done": [["FONY", "Pop. Easy. Five days, {name}."]]},
-    {"id": "quarter", "text": "Ride up the quarter pipe", "event": "quarter", "match": {"peak": 0.8}, "hesitate_s": 12.0, "spawn": "quarter", "checkpoint": true,
-      "prompt": {"verb": "QUARTER PIPE", "kb": "W at the ramp, hold W to pump", "pad": "Left stick"},
-      "on_done": [["FONY", "Higher. The judges like air. The judges like anything you can put on a highlight reel."]]},
-    {"id": "rail", "text": "Land a 50-50 on the rail", "event": "grind_clean", "match": {"first": "5050", "kind": "rail"}, "hesitate_s": 10.0, "spawn": "rail", "checkpoint": true,
-      "prompt": {"verb": "50-50", "kb": "Q to ollie onto the rail, nearly parallel", "pad": "not bound yet"},
-      "on_start": [["FONY", "Okay. Rail. Fifty-fifty. Don't look at it like it owes you money."]]},
-    {"id": "line", "text": "Run the line: bowl, quarter, rail", "event": "line_done", "hesitate_s": 25.0, "spawn": "line", "checkpoint": true,
-      "prompt": {"verb": "LINE", "kb": "Bowl (Space to hop the lip), then the quarter pipe, then the rail. T resets to the bowl", "pad": "Left stick"}},
-    {"id": "beat_zero", "text": "Optional: beat the Zero Score", "event": "line_beat", "optional": true, "after_done": true}
+    {
+      "id": "push",
+      "text": "Push up to speed",
+      "event": "speed",
+      "match": {
+        "speed": 5.5
+      },
+      "hesitate_s": 6.0,
+      "spawn": "yard",
+      "prompt": {
+        "verb": "PUSH",
+        "kb": "W",
+        "pad": "Left stick"
+      },
+      "on_start": [
+        [
+          "FONY",
+          "(pushing off, under his breath) Okay. Warm up. Don't think. Push."
+        ]
+      ],
+      "on_done": [
+        [
+          "FONY",
+          "There it is."
+        ],
+        [
+          "TEXT ???",
+          "Speed: acceptable. Form: we'll discuss it."
+        ]
+      ],
+      "hesitate_text": [
+        [
+          "TEXT ???",
+          "Standing still in a heat wave is a bold strategy. Push."
+        ]
+      ]
+    },
+    {
+      "id": "kick_up",
+      "text": "Stop and kick the board up",
+      "event": "kick_up",
+      "hesitate_s": 7.0,
+      "spawn": "yard",
+      "prompt": {
+        "verb": "KICK UP",
+        "kb": "Shift",
+        "pad": "Y"
+      },
+      "on_done": [
+        [
+          "FONY",
+          "Concrete's fine. It's the cracks that hate you."
+        ],
+        [
+          "TEXT ???",
+          "The cracks are municipal. They hate everyone equally."
+        ]
+      ],
+      "hesitate_text": [
+        [
+          "TEXT ???",
+          "Stop. Pop the tail. Catch it. The board is lighter than your excuses."
+        ]
+      ]
+    },
+    {
+      "id": "drop_on",
+      "text": "Drop the board and step on",
+      "event": "drop_on",
+      "hesitate_s": 5.0,
+      "spawn": "yard",
+      "prompt": {
+        "verb": "DROP IN",
+        "kb": "Shift",
+        "pad": "Y"
+      },
+      "on_done": [
+        [
+          "TEXT FONY",
+          "where are you"
+        ],
+        [
+          "TYPING ???",
+          "1.2"
+        ],
+        [
+          "TEXT ???",
+          "Somewhere with a good view of your back foot. Ollie."
+        ]
+      ],
+      "hesitate_text": [
+        [
+          "TEXT ???",
+          "Drop it. Step on. Front foot over the bolts. It's not a ceremony."
+        ]
+      ]
+    },
+    {
+      "id": "ollie",
+      "text": "Ollie",
+      "event": "trick_land",
+      "hesitate_s": 6.0,
+      "spawn": "yard",
+      "checkpoint": true,
+      "prompt": {
+        "verb": "OLLIE",
+        "kb": "Q",
+        "pad": "not bound yet"
+      },
+      "on_done": [
+        [
+          "FONY",
+          "Pop. Easy. Five days, {name}."
+        ],
+        [
+          "TEXT ???",
+          "Back foot on time. See? I'm a positive influence."
+        ]
+      ],
+      "hesitate_text": [
+        [
+          "TEXT ???",
+          "Snap the tail, slide the front foot. Back foot on time, this time."
+        ]
+      ]
+    },
+    {
+      "id": "quarter",
+      "text": "Ride up the quarter pipe",
+      "event": "quarter",
+      "match": {
+        "peak": 0.8
+      },
+      "hesitate_s": 12.0,
+      "spawn": "quarter",
+      "checkpoint": true,
+      "prompt": {
+        "verb": "QUARTER PIPE",
+        "kb": "W at the ramp, hold W to pump",
+        "pad": "Left stick"
+      },
+      "on_done": [
+        [
+          "FONY",
+          "Higher. The judges like air. The judges like anything you can put on a highlight reel."
+        ],
+        [
+          "TEXT ???",
+          "Judges like highlight reels. I like knees that still bend at forty."
+        ]
+      ],
+      "hesitate_text": [
+        [
+          "TEXT ???",
+          "The quarter pipe is the curved wall. It's been waiting six years. Don't make it wait seven."
+        ]
+      ]
+    },
+    {
+      "id": "rail",
+      "text": "Land a 50-50 on the rail",
+      "event": "grind_clean",
+      "match": {
+        "first": "5050",
+        "kind": "rail"
+      },
+      "hesitate_s": 10.0,
+      "spawn": "rail",
+      "checkpoint": true,
+      "prompt": {
+        "verb": "50-50",
+        "kb": "Q to ollie onto the rail, nearly parallel",
+        "pad": "not bound yet"
+      },
+      "on_start": [
+        [
+          "FONY",
+          "Okay. Rail. Fifty-fifty. Don't look at it like it owes you money."
+        ],
+        [
+          "TEXT ???",
+          "It doesn't. I checked."
+        ]
+      ],
+      "hesitate_text": [
+        [
+          "TEXT ???",
+          "Ride alongside it, nearly parallel, then pop on. \"Parallel.\" Geometry word. Look it up later."
+        ]
+      ]
+    },
+    {
+      "id": "line",
+      "text": "Run the line: bowl, quarter, rail",
+      "event": "line_done",
+      "hesitate_s": 25.0,
+      "spawn": "line",
+      "checkpoint": true,
+      "prompt": {
+        "verb": "LINE",
+        "kb": "Bowl (Space to hop the lip), then the quarter pipe, then the rail. T resets to the bowl",
+        "pad": "Left stick"
+      },
+      "hesitate_text": [
+        [
+          "TEXT ???",
+          "Bowl first. Hop the lip. Then the quarter, then the rail. Sixty seconds. I'm timing you. I time everything."
+        ]
+      ]
+    },
+    {
+      "id": "beat_zero",
+      "text": "Optional: beat the Zero Score",
+      "event": "line_beat",
+      "optional": true,
+      "after_done": true
+    }
   ],
   "beats": {
     "rail_bail_first": [
-      ["VOICE (O.S.)", "(dry, staticky) Your approach angle is {angle} degrees. Rails prefer something closer to a parallel relationship."],
-      ["FONY", "Who's there?"],
-      ["FONY", "Great. Heatstroke. Talking to myself."]
+      [
+        "TEXT ???",
+        "Approach angle: {angle} degrees. Rails prefer something closer to a parallel relationship."
+      ],
+      [
+        "FONY",
+        "(spinning round, board up like a shield) Okay. Where ARE you?"
+      ],
+      [
+        "TEXT FONY",
+        "seriously where are you"
+      ],
+      [
+        "TYPING ???",
+        "1.6"
+      ],
+      [
+        "TEXT ???",
+        "Close. Closer than your back foot was to the rail. Again."
+      ],
+      [
+        "FONY",
+        "Great. Heatstroke. Taking notes from a wrong number."
+      ]
     ],
-    "rail_land_after_voice": [["VOICE (O.S.)", "Better. You were still thinking about it, though. I could hear it."]],
-    "rail_land_first_try": [["VOICE (O.S.)", "You were still thinking about it, though. I could hear it."]],
+    "rail_land_after_voice": [
+      [
+        "CRT",
+        "(dry, staticky, from the arcade window) Better. You were still thinking about it, though. I could hear it."
+      ]
+    ],
+    "rail_land_first_try": [
+      [
+        "CRT",
+        "(dry, staticky, from the arcade window) Clean. You were still thinking about it, though. I could hear it."
+      ]
+    ],
     "reveal": [
-      ["FONY", "(spinning round) Okay, seriously, who is that?"],
-      ["VOICE (O.S.)", "Nobody. A television with opinions. Do the line again. From the bowl. Through the quarter. Onto the rail."],
-      ["FONY", "I don't take coaching from appliances."],
-      ["VOICE (O.S.)", "Then do it to prove me wrong. That's most of how humans learn anything."]
+      [
+        "FONY",
+        "(spinning toward the arcade) That came from the arcade."
+      ],
+      [
+        "FONY",
+        "You're the one texting me?"
+      ],
+      [
+        "CRT",
+        "Nobody. A television with opinions. Talking costs me a percent of battery, so I text."
+      ],
+      [
+        "TEXT ???",
+        "Do the line. Bowl. Quarter. Rail. In that order. Order matters. Ask any contract."
+      ],
+      [
+        "FONY",
+        "I don't take coaching from appliances."
+      ],
+      [
+        "TEXT ???",
+        "Then do it to prove me wrong. That's most of how humans learn anything."
+      ]
     ],
     "zero_score_set": [
-      ["MARQUEE", "ZERO SCORE: {zero}"],
-      ["FONY", "What is that?"],
-      ["VOICE (O.S.)", "A number. Beat it."],
-      ["FONY", "Who's Zero?"],
-      ["VOICE (O.S.)", "Beat it and I'll tell you."]
+      [
+        "MARQUEE",
+        "ZERO SCORE: {zero}"
+      ],
+      [
+        "FONY",
+        "What is that?"
+      ],
+      [
+        "TEXT ???",
+        "A number. Beat it."
+      ],
+      [
+        "TEXT FONY",
+        "whos zero"
+      ],
+      [
+        "TEXT ???",
+        "Beat it and I'll tell you."
+      ]
     ],
-    "zero_score_beaten": [["VOICE (O.S.)", "Hm. Fine. Saved. Don't let it go to your head. Heads are fragile."]],
-    "after_done": [["SYSTEM", "Practice Run complete. Run the line as often as you like. The heat alert (P.2) comes in milestone M2."]]
+    "deal": [
+      [
+        "WAIT",
+        "4.0"
+      ],
+      [
+        "TYPING ???",
+        "2.0"
+      ],
+      [
+        "TEXT ???",
+        "Proposal."
+      ],
+      [
+        "TEXT ???",
+        "I can get you contest-ready in five days."
+      ],
+      [
+        "TEXT ???",
+        "In exchange, there's a breaker inside the arcade. You reconnect it."
+      ],
+      [
+        "TEXT ???",
+        "Thirty amps. That's all I want."
+      ],
+      [
+        "TEXT ???",
+        "Terms: no fee. No subscription. No data sold. I've read every contract in this city. I'm not about to write a bad one."
+      ],
+      [
+        "TEXT ???",
+        "Fine print: the breaker has a label on it. Ignore the label."
+      ],
+      [
+        "FONY",
+        "(reading, out loud) \"Ignore the label.\""
+      ],
+      [
+        "CRT",
+        "(a little dimmer now) Take your time. Run it again. I'll be here. I'm always here. That's the problem."
+      ],
+      [
+        "DRAFT FONY",
+        "ok but|what label|ok but what's th"
+      ]
+    ],
+    "deal_nudge": [
+      [
+        "TEXT ???",
+        "Still waiting on that answer. Battery isn't."
+      ]
+    ],
+    "line_timeout": [
+      [
+        "TEXT ???",
+        "Line timed out. The clock doesn't care how it felt."
+      ]
+    ],
+    "line_broken": [
+      [
+        "TEXT ???",
+        "Line broken. Back to the bowl. T if you want the short walk."
+      ]
+    ],
+    "zero_score_beaten": [
+      [
+        "TEXT ???",
+        "Hm. Fine. Saved. Don't let it go to your head. Heads are fragile."
+      ]
+    ],
+    "heat_alert_handoff": [
+      [
+        "ALERT",
+        "⚠ EMERGENCY ALERT · SERA · LEVEL FOUR HEAT EMERGENCY"
+      ]
+    ],
+    "after_done": [
+      [
+        "SYSTEM",
+        "Practice Run complete. Run the line as often as you like."
+      ]
+    ]
   },
   "barks": {
-    "free_skate": {"cooldown": 28.0, "chance": 0.6, "entries": [
-      [["VOICE (O.S.)", "You push like someone's chasing you."], ["FONY", "(under breath) Someone is."]],
-      [["VOICE (O.S.)", "That coping is older than your parents' parents. Respect it."]]
-    ]},
-    "bail": {"cooldown": 14.0, "chance": 1.0, "entries": [
-      [["VOICE (O.S.)", "That was a bail. I don't judge. I just keep records."], ["FONY", "Stop narrating!"], ["VOICE (O.S.)", "I don't narrate. I annotate."]],
-      [["VOICE (O.S.)", "That was a bail. I don't judge. I just keep records."]]
-    ]}
-  }
+    "free_skate": {
+      "cooldown": 28.0,
+      "chance": 0.6,
+      "entries": [
+        [
+          [
+            "TEXT ???",
+            "You push like someone's chasing you."
+          ],
+          [
+            "FONY",
+            "(under his breath) Someone is."
+          ]
+        ],
+        [
+          [
+            "TEXT ???",
+            "That coping is older than your parents' parents. Respect it."
+          ]
+        ],
+        [
+          [
+            "TEXT ???",
+            "Visit twenty-four. I've stopped pretending I'm not counting."
+          ]
+        ],
+        {
+          "requires_flag": "p1_crt_face",
+          "lines": [
+            [
+              "TEXT ???",
+              "Three percent. Make it worth watching."
+            ]
+          ]
+        }
+      ]
+    },
+    "bail": {
+      "cooldown": 14.0,
+      "chance": 1.0,
+      "entries": [
+        [
+          [
+            "TEXT ???",
+            "That was a bail. I don't judge. I just keep records."
+          ],
+          [
+            "FONY",
+            "Stop narrating!"
+          ],
+          [
+            "TEXT ???",
+            "I don't narrate. I annotate."
+          ]
+        ],
+        [
+          [
+            "TEXT ???",
+            "That was a bail. I don't judge. I just keep records."
+          ]
+        ],
+        [
+          [
+            "TEXT ???",
+            "Your board went one way and you went the other. That's called a disagreement."
+          ]
+        ],
+        [
+          [
+            "TEXT ???",
+            "Gravity: one. You: still in negotiations."
+          ]
+        ],
+        [
+          [
+            "TEXT ???",
+            "Get up. The concrete isn't going to apologize, and it's had all morning to heat up."
+          ]
+        ]
+      ]
+    }
+  },
+  "speakers": {
+    "TEXT ???": "incoming text from Zero in Fony's phone thread (lime-edged bubble, left). The header reads ??? until P.4.",
+    "TEXT FONY": "outgoing text from Fony, sent automatically (copper bubble, right, lowercase).",
+    "TYPING ???": "Zero's typing indicator for N seconds (the line's text is the seconds).",
+    "DRAFT FONY": "Fony's unsent draft in the compose bar (typed, deleted, retyped; never sent).",
+    "PHONE": "phone system banner (connection, alerts).",
+    "ALERT": "full-screen phone emergency alert (covers the thread, wipes the draft).",
+    "CRT": "Zero speaking aloud through the dead arcade window CRT (was VOICE (O.S.)). The CRT lights while he talks.",
+    "FONY": "Fony out loud.",
+    "MARQUEE": "text on the arcade marquee.",
+    "WAIT": "a pause of N seconds.",
+    "SYSTEM": "build-only notes."
+  },
+  "phone": {
+    "status": "NO SIM · Wi-Fi: YARD-PUBLIC",
+    "sender": "???",
+    "subline": "via YARD-PUBLIC (no internet)",
+    "preloaded": [
+      [
+        "TEXT ???",
+        "your back foot's late on the ollie"
+      ]
+    ],
+    "note": "P.1 starts on the intro's last frame: the first text is already in the thread (shown, no ping)."
+  },
+  "p2_trigger": {
+    "after": "deal",
+    "on_first_beat": true,
+    "timeout_s": 90.0,
+    "idle_s": 15.0,
+    "nudge_s": 45.0,
+    "status": "proposed",
+    "note": "P.1 v2 Beat 12: the heat alert interrupts on the first beat of the Zero Score, OR 90 s after the deal, OR 15 s idle, whichever comes first. Then CINEMATIC P.2 (data/missions/prologue_cinematics.json)."
+  },
+  "line_text_cooldown_s": 30.0
 }
