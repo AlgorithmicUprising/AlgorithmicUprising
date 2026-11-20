@@ -8,6 +8,7 @@ const SaveScript = preload("res://contracts/save_record.gd")
 const JsonFile = preload("res://scripts/json_file.gd")
 const P3 = preload("res://scripts/story/p3_power_on.gd")
 const Sfx = preload("res://scripts/story/sfx.gd")
+const World = preload("res://scripts/story/story_world.gd")
 
 const SAVE := "user://m4-test-save.json"
 
@@ -75,7 +76,7 @@ func _data() -> void:
 	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
 	ok("District solar_arcade_dark" in presets and "build/web/districts/solar_arcade_dark.pck" in presets, "export: a District solar_arcade_dark preset")
 	ok(Sfx.CUES.has("pickup") and Sfx.CUES.has("breaker") and Sfx.make("breaker").data.size() > 0, "sfx: synthesized pickup and breaker cues (no audio files)")
-	ok(P3._bar(0.0) == "▯▯▯▯▯▯▯▯▯▯" and P3._bar(0.55) == "▮▮▮▮▮▯▯▯▯▯", "the sweep bar")
+	ok(P3._bar(0.0) == "[----------]" and P3._bar(0.55) == "[#####-----]" and P3._bar(0.55).to_ascii_buffer().get_string_from_ascii() == P3._bar(0.55), "the sweep bar is plain ASCII (no tofu glyphs)")
 	var room = load(str(e.scene)).instantiate()
 	t.add_child(room)
 	ok(room.get_node_or_null("BreakerLabel") != null and room.get_node_or_null("FuseCoinBox") != null and room.get_node_or_null("FuseToolbox") != null and room.get_node_or_null("FuseFixture") != null and room.get_node_or_null("ToppledCabinet") != null and room.get_node_or_null("BenchCRT") != null, "pack: breaker, three fuses, the toppled cabinet, the CRT on the workbench")
@@ -103,6 +104,13 @@ func _power_full() -> void:
 		if c.has_meta("district_id") and c.get_meta("district_id") == "solar_arcade_dark":
 			room = c
 	ok(room != null, "the dark arcade pack is in")
+	ok(World.sun_energy(main) == 0.0 and room.get_node_or_null("RoofPanel2") != null and room.get_node_or_null("CrtGlow") is OmniLight3D and room.get_node_or_null("ExitGlow") is OmniLight3D, "dark inside: no sun, the roof closed, lit by practicals (CRT, exit sign, bench lamp)")
+	var shaft = room.get_node_or_null("LightShaft2")
+	ok(shaft != null and shaft.material_override != null and shaft.material_override.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA, "the broken-panel light shafts are a thin haze, not solid pillars")
+	var sign = room.get_node_or_null("BreakerLabel")
+	ok(sign != null and sign.billboard == BaseMaterial3D.BILLBOARD_DISABLED and sign.pixel_size < 0.01 and "\n" in sign.text, "the breaker sign: flat on the box, two lines, small enough to fit on screen")
+	await frames(2)
+	ok(story.hud.zero_label.text.begins_with("FUSES") and story.hud.best_label.text.begins_with("SWEEP") and not "ZERO TIME" in story.hud.zero_label.text, "HUD: no ZERO TIME in the arcade; the score box shows the fuses and the sweep (%s)" % story.hud.zero_label.text)
 	ok(not p.interact(), "nothing to take at the door")
 	# the sweep finds him once (shortened), the room resets to the last fuse found
 	p.def["sweep_s"] = 1000.0
@@ -145,6 +153,9 @@ func _power_full() -> void:
 	ok(p.state == "done" and main.flow.save.flag("p3_power_done") and story.phase == "slice_end", "P.3 done; the slice ends at the breaker")
 	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|") and "P.4" in str(l)), "end card: CINEMATIC P.4 Zero is next")
 	ok(story.sfx.played.has("pickup") and story.sfx.played.has("breaker"), "sfx: pickup and breaker played")
+	story.retry()
+	await frames(2)
+	ok(story.phase == "p2_run" and World.sun_energy(main) > 0.5 and "ZERO TIME" in story.hud.zero_label.text, "T after the slice: back out to the Yard's dawn, ZERO TIME back on the HUD")
 	await _done(main)
 
 func _reload_mid() -> void:

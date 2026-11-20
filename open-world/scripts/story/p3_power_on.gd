@@ -14,6 +14,7 @@ signal finished
 
 const JsonFile = preload("res://scripts/json_file.gd")
 const Protagonist = preload("res://scripts/front/protagonist.gd")
+const World = preload("res://scripts/story/story_world.gd")
 const DEF_PATH := "res://data/missions/p3_power_on.json"
 const ID := "p3_power_on"
 const DISTRICT := "solar_arcade_dark"
@@ -66,6 +67,7 @@ func start() -> void:
 	host.flow.save.story["current"] = ID
 	host.flow.persist()
 	prefetch(host.main)
+	World.apply(host.main, World.INTERIOR_DARK)
 	host.hud.fade_to(1.0, 0.01)
 	_place_reset()
 	var pl = host.player
@@ -84,6 +86,9 @@ func start() -> void:
 	log.append("start:%d" % fuses.size())
 
 func teardown() -> void:
+	World.apply(host.main, World.DAWN)
+	if host.run != null:
+		host.run._hud_zero()
 	if sweep_light != null and is_instance_valid(sweep_light):
 		sweep_light.queue_free()
 	sweep_light = null
@@ -135,11 +140,18 @@ func tick(delta: float) -> void:
 			if state_left <= 0.0 and host.talking == "" and host.queue.is_empty():
 				_finish()
 	_sweep_tick()
+	_hud()
+
+## The score box shows P.3's own state (no ZERO TIME in here): the fuse count and the sweep.
+func _hud() -> void:
+	host.hud.zero_label.text = "FUSES  %d/3" % fuses.size()
+	host.hud.best_label.text = "SWEEP  " + _bar(sweep)
 	host.hud.set_line("FUSES %d/3   ·   SWEEP %s%s" % [fuses.size(), _bar(sweep), ("   ·   FOUND x%d" % fails if fails > 0 else "")])
 
+## Font-safe (ASCII) sweep bar: [#####-----].
 static func _bar(v: float) -> String:
 	var n := int(clampf(v, 0.0, 1.0) * 10.0)
-	return "▮".repeat(n) + "▯".repeat(10 - n)
+	return "[" + "#".repeat(n) + "-".repeat(10 - n) + "]"
 
 ## What is in reach right now: a fuse id, "breaker", or "".
 func in_reach() -> String:
