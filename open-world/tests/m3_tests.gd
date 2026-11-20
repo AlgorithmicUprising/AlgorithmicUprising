@@ -212,13 +212,16 @@ func _run_full() -> void:
 	# P.3 itself is m4_tests.gd; finish it here so the slice ends
 	story.power.fuses = {"coin_box": true, "toolbox": true, "fixture": true}
 	story.power._finish()
+	await frames(2)
+	if story.in_cinematic():
+		story.cinematic.skip()   # CINEMATIC P.4 (m4_tests.gd covers it)
 	for _i in 600:
 		story.talk_left = 0.001
 		story.card_left = 0.0
 		await t.get_tree().process_frame
 		if story.phase == "slice_end" and story.queue.is_empty():
 			break
-	ok(story.phase == "slice_end" and story.spoken.any(func(l): return str(l).begins_with("CARD|") and "P.4" in str(l)), "end card: CINEMATIC P.4 Zero is next")
+	ok(story.phase == "slice_end" and story.spoken.any(func(l): return str(l).begins_with("CARD|") and "1.1" in str(l)), "end card after P.4: Act I 1.1 Fine Print is next")
 	var disk = SaveScript.new()
 	disk.load_user(SAVE)
 	ok(disk.flag("p2_run_done") and int(disk.mission("p2_run").zero_score) == int(rec.zero_score), "save: the escape and Zero's time are on disk")
