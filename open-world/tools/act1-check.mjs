@@ -99,7 +99,7 @@ async function run() {
     'p4-power-on': (s, r, q) => s.cine === 'p4_zero' && q && q.lit,
     'p4-zero-awake': (s, r, q) => q && q.zero === 'awake' && q.header === 'ZERO',
     'p4-plate': (s, r, q) => q && /reads the plate/.test(q.last),
-    'p4-heat-wont-wait': (s, r, q) => q && /The heat won/.test(q.last),
+    'p4-heat-wont-wait': (s, r, q) => q && /contest will wait/.test(q.last),  // the probe keeps 48 chars and drops apostrophes
     'p4-title-card': (s, r, q) => q && /^CARD\|PROJECT ZERO/.test(q.last),
     'end-card': (s, r) => s.phase === 'slice_end',
   };
