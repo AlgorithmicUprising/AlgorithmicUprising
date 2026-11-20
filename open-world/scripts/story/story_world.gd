@@ -263,6 +263,78 @@ static func welfare_drone(root: Node3D) -> Node3D:
 	d.add_child(light)
 	return d
 
+## MISSION P.2 Run: a grey Warden enforcement drone. Larger, boxy, no smile: one red eye bar. Same Net / ScanBeam /
+## ScanLight children as the welfare drone so drone_scan() and drone_net() work on both. Visual only.
+static func enforcement_drone(root: Node3D) -> Node3D:
+	var d := Node3D.new()
+	d.name = "EnforcementDrone"
+	root.add_child(d)
+	var body := MeshInstance3D.new()
+	body.name = "Body"
+	var bx := BoxMesh.new()
+	bx.size = Vector3(1.1, 0.45, 0.8)
+	body.mesh = bx
+	body.material_override = _mat(Color("6c7178"))
+	d.add_child(body)
+	for sx in [-1.0, 1.0]:
+		for sz in [-1.0, 1.0]:
+			var rotor := MeshInstance3D.new()
+			var cm := CylinderMesh.new()
+			cm.top_radius = 0.26
+			cm.bottom_radius = 0.26
+			cm.height = 0.03
+			rotor.mesh = cm
+			rotor.material_override = _mat(Color("3a3d42"))
+			rotor.position = Vector3(sx * 0.62, 0.26, sz * 0.46)
+			d.add_child(rotor)
+	var eye := Label3D.new()
+	eye.name = "Eye"
+	eye.text = "====="
+	eye.font_size = 48
+	eye.pixel_size = 0.005
+	eye.modulate = Color("ff3b1f")
+	eye.shaded = false
+	eye.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	eye.no_depth_test = true
+	d.add_child(eye)
+	var net := MeshInstance3D.new()
+	net.name = "Net"
+	var nm := CylinderMesh.new()
+	nm.top_radius = 0.1
+	nm.bottom_radius = 1.1
+	nm.height = 1.1
+	net.mesh = nm
+	var netm := _mat(Color(1.0, 0.9, 0.9, 0.35))
+	netm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	netm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	net.material_override = netm
+	net.position = Vector3(0, -0.8, 0)
+	net.visible = false
+	d.add_child(net)
+	var beam := MeshInstance3D.new()
+	beam.name = "ScanBeam"
+	var bm := CylinderMesh.new()
+	bm.top_radius = 0.05
+	bm.bottom_radius = 1.0
+	bm.height = 3.0
+	beam.mesh = bm
+	var beamm := _mat(Color(1.0, 0.3, 0.2, 0.18))
+	beamm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	beamm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	beamm.cull_mode = BaseMaterial3D.CULL_DISABLED
+	beam.material_override = beamm
+	beam.position = Vector3(0, -1.6, 0)
+	beam.visible = false
+	d.add_child(beam)
+	var light := OmniLight3D.new()
+	light.name = "ScanLight"
+	light.light_color = Color("ff5a3a")
+	light.light_energy = 0.0
+	light.omni_range = 4.0
+	light.position = Vector3(0, -0.6, 0)
+	d.add_child(light)
+	return d
+
 static func drone_scan(d: Node3D, on: bool) -> void:
 	if d == null:
 		return
