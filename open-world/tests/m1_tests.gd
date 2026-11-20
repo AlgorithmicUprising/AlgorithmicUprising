@@ -551,23 +551,23 @@ func _act1() -> void:
 	var pname: String = story.Protagonist.current(t.get_tree())
 	var id_line: Array = story.spoken.filter(func(l): return "Identity confirmed" in str(l))
 	ok(id_line.size() == 1 and pname in str(id_line[0]), "CINEMATIC P.3: the drone's ID line uses the character name (%s)" % [id_line])
-	ok(main.flow.save.flag("p3_flagged_seen") and story.phase == "slice_end" and pl.input_enabled, "slice end: P.3 seen, the Yard is open again")
+	ok(main.flow.save.flag("p3_flagged_seen") and story.phase == "p2_run" and story.run.active(), "after P.3: MISSION P.2 Run starts (M3; the run itself is in m3_tests.gd)")
 	ok(story.cinematic.ran.has("p2_heat_alert:CHIME") and story.cinematic.ran.has("p3_flagged:DRONE"), "cinematics: every step ran")
 	for _i in 120:
 		story.talk_left = 0.001
 		story.card_left = 0.0
 		await t.get_tree().process_frame
-	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|") and "PLAYABLE PROLOGUE" in str(l)), "slice end: the end-of-slice card")
+	ok(not story.spoken.any(func(l): return str(l).begins_with("CARD|") and "PLAYABLE PROLOGUE" in str(l)), "after P.3: no end card yet (it comes at the arcade door)")
 	# reload after the slice: no replays of the cinematics
 	story.stop()
 	await frames(2)
 	story.start()
 	await frames(3)
-	ok(story.phase == "slice_end" and not story.in_cinematic() and story.cinematic.billboard_key == "postponed", "reload: after P.3 the slice stays ended, billboard postponed")
+	ok(story.phase == "p2_run" and not story.in_cinematic() and story.cinematic.billboard_key == "postponed", "reload: after P.3 the run resumes (no cinematic replay), billboard postponed")
 	# skip: hold Enter skips a cinematic and still lands its end state
 	ok(story.cinematic.play("p3_flagged"), "skip: a cinematic can be replayed for the test")
 	story.cinematic.skip()
-	ok(not story.in_cinematic() and story.cinematic.last_skipped and story.phase == "slice_end" and pl.input_enabled and not story.hud.letterbox_top.visible, "skip: skipping unlocks input and drops the letterbox")
+	ok(not story.in_cinematic() and story.cinematic.last_skipped and story.phase == "p2_run" and not story.hud.letterbox_top.visible, "skip: skipping drops the letterbox and goes on to the run")
 	story.stop()
 	main.queue_free()
 	await frames(2)
