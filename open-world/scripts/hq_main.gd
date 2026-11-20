@@ -94,7 +94,7 @@ func _process(_delta: float) -> void:
 	var target = null
 	if player.input_enabled and flow.boundary.phase == "world" and not flow.dialogue_open and not flow.paused:
 		target = _nearest(2.5)
-	prompt_label.text = target.prompt() if target != null and target.has_method("prompt") else ""
+	prompt_label.text = target.prompt() if target != null and target.has_method("prompt") and not story_hides_prompts() else ""
 	if player.look_captured and not _can_look():
 		_release_look()
 	_sync_look_catch()
@@ -387,6 +387,9 @@ func _sync_look_catch() -> void:
 	var show := false
 	if flow.boundary.phase == "in_session" or flow.dialogue_open:
 		show = false
+	elif story_hides_prompts() and not flow.paused:
+		# Act I: no "Click to look" (or any input prompt) over a cutscene or a fade
+		show = false
 	elif flow.paused:
 		show = true
 		look_label.text = "Paused\nClick to resume and look"
@@ -397,6 +400,10 @@ func _sync_look_catch() -> void:
 	look_catch.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
 	if hint_label != null:
 		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   Q ollie   R kickflip   F grab   E talk\nOn a rail: F 5-0, R boardslide.  Quarter pipe: hold S high up to kickturn, F off the coping for a backside air\nEnter confirm   Esc pause. Invert mouse Y is in the pause menu.   P story: Practice Run" % player.look_sensitivity
+
+## True while the story plays a cutscene (or a chase fade): HUD input prompts stay hidden.
+func story_hides_prompts() -> bool:
+	return story != null and story.has_method("hides_prompts") and story.hides_prompts()
 
 func _on_look_catch(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:

@@ -56,6 +56,11 @@ var letterbox_top: ColorRect
 var letterbox_bottom: ColorRect
 var skip_label: Label
 var phone_sender := "???"
+var fade_rect: ColorRect
+var fade_target := 0.0
+var fade_speed := 2.0
+var right_column: VBoxContainer      # the Zero Score + score stack; the phone docks under it
+const PHONE_GAP := 10.0
 
 func _ready() -> void:
 	layer = 12
@@ -80,6 +85,7 @@ func _ready() -> void:
 	right.add_theme_constant_override("separation", 6)
 	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(right)
+	right_column = right
 	zero_panel = _boxed(right, true)
 	var zcol := VBoxContainer.new()
 	zero_panel.add_child(zcol)
@@ -173,11 +179,51 @@ func _ready() -> void:
 	skip_label.visible = false
 	root.add_child(skip_label)
 	_build_alert(root)
+	# full-screen fade (P.2 Run: caught by the net, the culvert)
+	fade_rect = ColorRect.new()
+	fade_rect.name = "Fade"
+	fade_rect.color = Color(0, 0, 0, 0)
+	fade_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(fade_rect)
+	root.move_child(fade_rect, card_panel.get_index())
 
 func _process(delta: float) -> void:
 	toast_age += delta
 	toast_label.modulate.a = clampf(1.6 - toast_age, 0.0, 1.0)
 	_phone_tick(delta)
+	dock_phone()
+	if fade_rect != null and fade_rect.color.a != fade_target:
+		fade_rect.color.a = move_toward(fade_rect.color.a, fade_target, delta * fade_speed)
+
+## Fades the screen to black (1.0) or back (0.0) over secs. snap() for tests.
+func fade_to(alpha: float, secs := 0.6) -> void:
+	fade_target = clampf(alpha, 0.0, 1.0)
+	fade_speed = 1.0 / maxf(0.01, secs)
+
+func fade_alpha() -> float:
+	return fade_rect.color.a if fade_rect != null else 0.0
+
+## Keeps the phone (and its chip) docked under the score stack, whatever height that stack has at this resolution
+## (it grows with the Zero Score line, the best line and the combo row). Never overlaps it.
+func dock_phone() -> void:
+	if right_column == null or phone_panel == null:
+		return
+	var top := right_column.offset_top + right_column.get_combined_minimum_size().y + PHONE_GAP
+	top = maxf(top, right_column.position.y + right_column.size.y + PHONE_GAP)
+	for c in [phone_panel, phone_chip]:
+		c.offset_top = top
+		c.offset_bottom = top
+
+## Tests: the phone does not overlap the score stack, the talk box or the prompt.
+func layout_ok() -> bool:
+	dock_phone()
+	var ph := phone_panel.get_global_rect()
+	if ph.intersects(right_column.get_global_rect()):
+		return false
+	if talk_panel.visible and ph.intersects(talk_panel.get_global_rect()):
+		return false
+	return true
 
 func set_objective(title: String, text: String) -> void:
 	title_label.text = title
