@@ -153,6 +153,13 @@ func _run(op: Array) -> void:
 		"CARD":
 			host.hud.card(str(op[1]))
 			wait_left = float(op[2]) if op.size() > 2 else 5.0
+		"CAM":
+			# a fixed camera in world coordinates: ["CAM", [from x, y, z], [look x, y, z]] (P.4, inside the arcade)
+			cam_at(Vector3(float(op[1][0]), float(op[1][1]), float(op[1][2])), Vector3(float(op[2][0]), float(op[2][1]), float(op[2][2])))
+		"HOST":
+			# a story hook: ["HOST", method, args...] (P.4: the power cascade, Zero's puppet stages, the phone header)
+			if host.has_method(str(op[1])):
+				host.callv(str(op[1]), op.slice(2))
 
 func _end(skipped: bool) -> void:
 	playing = false
@@ -168,6 +175,10 @@ func _end(skipped: bool) -> void:
 			drone_t = 1.0
 		drone_do("scan_on")
 		drone_do("net")
+	for m in es.get("host", []):
+		# a skip still lands the end state (P.4: power on, Zero awake, the ZERO header)
+		if host.has_method(str(m)):
+			host.call(str(m))
 	if str(d.get("flag", "")) != "":
 		host.flow.save.set_flag(str(d.flag))
 		host.flow.persist()
@@ -188,6 +199,16 @@ func set_billboard(key: String) -> void:
 	World.billboard(host.dressing, BILLBOARDS[key][0], "fixed", BILLBOARDS[key][1])
 
 # ------------------------------------------------------------------ camera
+
+func cam_at(from: Vector3, look: Vector3) -> void:
+	shot = "cam"
+	if camera == null:
+		camera = Camera3D.new()
+		camera.name = "CinematicCamera"
+		camera.fov = 58.0
+		host.dressing.add_child(camera)
+	camera.look_at_from_position(from, look, Vector3.UP)
+	camera.make_current()
 
 func set_shot(name: String) -> void:
 	shot = name
