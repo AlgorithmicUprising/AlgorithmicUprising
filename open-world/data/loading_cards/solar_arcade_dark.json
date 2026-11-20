@@ -1,0 +1,34 @@
+{
+  "contract": "au.loading_cards",
+  "version": 1,
+  "district": "solar_arcade_dark",
+  "min_seconds": 2.5,
+  "note": "PLACEHOLDER copy for the dark Solar Arcade (Act I M4). Shown while the pack streams in.",
+  "tiers": [
+    {
+      "id": "intro",
+      "from_visit": 1,
+      "to_visit": 1,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "solar_arcade_intro",
+          "title": "SOLAR ARCADE",
+          "body": "Dark, hot, dusty. Something on the workbench is listening."
+        }
+      ]
+    },
+    {
+      "id": "later",
+      "from_visit": 2,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "solar_arcade_back",
+          "title": "SOLAR ARCADE",
+          "body": "Dark, hot, dusty. Something on the workbench is listening."
+        }
+      ]
+    }
+  ]
+}
