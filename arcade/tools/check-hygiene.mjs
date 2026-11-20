@@ -6,5 +6,5 @@ const allowedRuntimeMedia=new Set([
 'games/grind-the-terms/music/terms-and-conditions-loop-3x-preview.mp3'
 ]);
 const banned=/\.(mp3|wav|ogg|m4a|aac|flac|opus|mid|webm|mp4|m4v|mov|flv|aiff?)$/i;
-function walk(dir){for(const e of readdirSync(dir,{withFileTypes:true})){if(e.name==='node_modules'||e.name==='dist')continue;const p=join(dir,e.name);if(e.isDirectory())walk(p);else{if(banned.test(p)&&!allowedRuntimeMedia.has(p.replaceAll('\\\\','/')))throw Error('Forbidden audio: '+p);if(/\.(ts|js|mjs|json|html|md)$/.test(p)){const c=readFileSync(p,'utf8');if(/(?:BEGIN (?:RSA |OPENSSH )?PRIVATE KEY|sk-[a-zA-Z0-9]{30})/.test(c))throw Error('Possible secret in '+p);}}}}
+function walk(dir){for(const e of readdirSync(dir,{withFileTypes:true})){if(e.name==='node_modules'||e.name==='dist')continue;const p=join(dir,e.name);if(e.isDirectory())walk(p);else{if(banned.test(p)&&!allowedRuntimeMedia.has(p.replaceAll('\\','/')))throw Error('Forbidden audio: '+p);if(/\.(ts|js|mjs|json|html|md)$/.test(p)){const c=readFileSync(p,'utf8');if(/(?:BEGIN (?:RSA |OPENSSH )?PRIVATE KEY|sk-[a-zA-Z0-9]{30})/.test(c))throw Error('Possible secret in '+p);}}}}
 walk('core');walk('games');console.log('Hygiene checks passed');
