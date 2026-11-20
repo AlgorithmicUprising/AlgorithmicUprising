@@ -30,6 +30,15 @@ func frames(n: int) -> void:
 		await t.get_tree().physics_frame
 
 func _main() -> Node:
+	# earlier suites can leave a park in the tree; its walls share this physics world (the east wall would block the gap)
+	var left := 0
+	for c in t.get_tree().root.find_children("*", "Node", true, false):
+		if c.has_method("story_hides_prompts") and not c.is_queued_for_deletion():
+			c.queue_free()
+			left += 1
+	if left > 0:
+		print("m3: freed %d leftover park(s)" % left)
+		await frames(3)
 	var main = load("res://scenes/main.tscn").instantiate()
 	t.add_child(main)
 	await frames(10)
