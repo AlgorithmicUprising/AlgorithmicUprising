@@ -72,7 +72,7 @@ async function run() {
   await page.waitForTimeout(2500);
   await shot('p1-beat0-phone');
   const s0 = await story();
-  step('P.1 starts on Beat 0 with the autopilot', s0.objective === 'push' && s0.texts >= 1, s0);
+  step('P.1 starts with the autopilot (Beat 0 text in; it may already be past the push)', ['push', 'ollie'].includes(s0.objective) && s0.texts >= 1, s0);
 
   // follow the story to the end card
   const seen = new Set();
