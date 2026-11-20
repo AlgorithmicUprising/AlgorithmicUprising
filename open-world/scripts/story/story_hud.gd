@@ -29,6 +29,33 @@ var card_panel: PanelContainer
 var card_label: Label
 var toast_label: Label
 var toast_age := 99.0
+# P.1 v2 (Nov 19 2026): Fony's phone. A compact thread docked top right (P.1 v2 "Phone UI spec").
+const PHONE_DARK := Color("0f0d10")
+const SERA_BLUE := Color("9fd8ff")
+const MAX_BUBBLES := 3
+const COLLAPSE_S := 8.0
+var phone_panel: PanelContainer
+var phone_name: Label
+var phone_sub: Label
+var phone_status: Label
+var phone_avatar: Label
+var phone_thread: VBoxContainer
+var phone_typing: Label
+var phone_compose: Label
+var phone_chip: PanelContainer
+var phone_chip_label: Label
+var phone_log: Array = []           # tests / probes: {"from", "text", "out"} in order
+var phone_idle := 0.0
+var typing_left := 0.0
+var draft_text := ""
+var draft_parts := PackedStringArray()
+var draft_t := 0.0
+var alert_panel: Control
+var alert_label: Label
+var letterbox_top: ColorRect
+var letterbox_bottom: ColorRect
+var skip_label: Label
+var phone_sender := "???"
 
 func _ready() -> void:
 	layer = 12
@@ -117,10 +144,40 @@ func _ready() -> void:
 	toast_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	toast_label.add_theme_constant_override("outline_size", 6)
 	root.add_child(toast_label)
+	_build_phone(root)
+	# cinematic letterbox and hold-to-skip hint (CINEMATIC P.2 / P.3)
+	letterbox_top = ColorRect.new()
+	letterbox_top.color = Color.BLACK
+	letterbox_top.anchor_right = 1.0
+	letterbox_top.offset_bottom = 64
+	letterbox_top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	letterbox_top.visible = false
+	root.add_child(letterbox_top)
+	letterbox_bottom = ColorRect.new()
+	letterbox_bottom.color = Color.BLACK
+	letterbox_bottom.anchor_top = 1.0
+	letterbox_bottom.anchor_right = 1.0
+	letterbox_bottom.anchor_bottom = 1.0
+	letterbox_bottom.offset_top = -64
+	letterbox_bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	letterbox_bottom.visible = false
+	root.add_child(letterbox_bottom)
+	skip_label = Label.new()
+	skip_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	skip_label.offset_left = -330
+	skip_label.offset_top = -48
+	skip_label.offset_right = -18
+	skip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	skip_label.add_theme_font_size_override("font_size", 14)
+	skip_label.add_theme_color_override("font_color", Color("efeadb"))
+	skip_label.visible = false
+	root.add_child(skip_label)
+	_build_alert(root)
 
 func _process(delta: float) -> void:
 	toast_age += delta
 	toast_label.modulate.a = clampf(1.6 - toast_age, 0.0, 1.0)
+	_phone_tick(delta)
 
 func set_objective(title: String, text: String) -> void:
 	title_label.text = title
@@ -143,9 +200,12 @@ func set_score(score: int, meter: float, mult: int, speed_mult: float) -> void:
 func say(speaker: String, text: String) -> void:
 	talk_panel.visible = true
 	speaker_label.text = speaker
-	var voice := speaker.begins_with("VOICE") or speaker == "MARQUEE"
-	speaker_label.add_theme_color_override("font_color", LIME if voice else (COPPER if speaker == "FONY" or speaker == protagonist_tag else PAPER))
+	var voice := speaker.begins_with("VOICE") or speaker.begins_with("CRT") or speaker == "MARQUEE"
+	var sera := speaker.begins_with("SERA") or speaker.begins_with("WELFARE") or speaker.begins_with("BILLBOARD")
+	speaker_label.add_theme_color_override("font_color", LIME if voice else (SERA_BLUE if sera else (Color("b8b8b0") if speaker.begins_with("ENFORCEMENT") else (COPPER if speaker == "FONY" or speaker == protagonist_tag else PAPER))))
 	talk_label.text = text
+	# narration (stage directions) reads dimmer and in italics-style parentheses
+	talk_label.add_theme_color_override("font_color", Color("cfc6bb") if speaker == "" and text.begins_with("(") else PAPER)
 
 func hush() -> void:
 	talk_panel.visible = false
@@ -222,3 +282,198 @@ func _label(parent: Node, size: int, color: Color, slanted := false) -> Label:
 		l.add_theme_font_override("font", font)
 	parent.add_child(l)
 	return l
+
+# ------------------------------------------------------------------ the phone (P.1 v2)
+
+func _build_phone(root: Control) -> void:
+	phone_panel = PanelContainer.new()
+	phone_panel.name = "Phone"
+	phone_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	phone_panel.anchor_left = 1.0
+	phone_panel.anchor_right = 1.0
+	phone_panel.offset_left = -346
+	phone_panel.offset_right = -16
+	phone_panel.offset_top = 214
+	phone_panel.add_theme_stylebox_override("panel", _style(Color(0.04, 0.035, 0.045, 0.88), Color(0.78, 1.0, 0.23, 0.35)))
+	root.add_child(phone_panel)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	phone_panel.add_child(col)
+	phone_status = _label(col, 11, Color("aaa592"))
+	var head := HBoxContainer.new()
+	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(head)
+	var av := PanelContainer.new()
+	av.custom_minimum_size = Vector2(30, 30)
+	av.add_theme_stylebox_override("panel", _style(Color("2a282c"), Color("3a383c"), 1))
+	head.add_child(av)
+	phone_avatar = _label(av, 12, Color("8a8890"))
+	phone_avatar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var names := VBoxContainer.new()
+	names.add_theme_constant_override("separation", 0)
+	head.add_child(names)
+	phone_name = _label(names, 16, PAPER)
+	phone_sub = _label(names, 11, Color("aaa592"))
+	phone_thread = VBoxContainer.new()
+	phone_thread.add_theme_constant_override("separation", 5)
+	phone_thread.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(phone_thread)
+	phone_typing = _label(col, 16, LIME)
+	phone_typing.visible = false
+	phone_compose = _label(col, 13, Color("2a1a12"))
+	phone_compose.visible = false
+	var cst := _style(COPPER.lightened(0.25), COPPER, 1)
+	cst.set_content_margin_all(6)
+	phone_compose.add_theme_stylebox_override("normal", cst)
+	phone_chip = PanelContainer.new()
+	phone_chip.anchor_left = 1.0
+	phone_chip.anchor_right = 1.0
+	phone_chip.offset_left = -196
+	phone_chip.offset_right = -16
+	phone_chip.offset_top = 214
+	phone_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	phone_chip.add_theme_stylebox_override("panel", _style(Color(0.04, 0.035, 0.045, 0.8), Color(0.78, 1.0, 0.23, 0.35)))
+	root.add_child(phone_chip)
+	phone_chip_label = _label(phone_chip, 13, LIME)
+	phone_panel.visible = false
+	phone_chip.visible = false
+	phone_header("???", "via YARD-PUBLIC (no internet)")
+	phone_set_status("NO SIM · Wi-Fi: YARD-PUBLIC")
+
+func _build_alert(root: Control) -> void:
+	alert_panel = Control.new()
+	alert_panel.name = "PhoneAlert"
+	alert_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	alert_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	alert_panel.visible = false
+	root.add_child(alert_panel)
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	alert_panel.add_child(dim)
+	var box := PanelContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.offset_left = -360
+	box.offset_right = 360
+	box.offset_top = -120
+	box.offset_bottom = 120
+	box.add_theme_stylebox_override("panel", _style(Color("f4f7fb"), Color("e0362c"), 6))
+	alert_panel.add_child(box)
+	alert_label = _label(box, 26, Color("1a2230"))
+	alert_label.remove_theme_color_override("font_outline_color")
+	alert_label.add_theme_constant_override("outline_size", 0)
+	alert_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	alert_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	alert_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+func phone_header(sender: String, subline: String) -> void:
+	phone_sender = sender
+	phone_name.text = sender
+	phone_name.add_theme_color_override("font_color", LIME if sender != "???" else PAPER)
+	phone_sub.text = subline
+	phone_sub.visible = subline != ""
+	phone_avatar.text = "• •\n__" if sender != "???" else "?"
+	phone_avatar.add_theme_color_override("font_color", LIME if sender != "???" else Color("8a8890"))
+	phone_chip_label.text = "• " + sender + "  ·  PHONE"
+
+func phone_set_status(text: String) -> void:
+	phone_status.text = text
+
+## Shows the thread (reopens it after a collapse).
+func phone_open() -> void:
+	phone_panel.visible = true
+	phone_chip.visible = false
+	phone_idle = 0.0
+
+## A message in the thread. outgoing = Fony's (right, copper, lowercase). quiet = already there (no ping, no open).
+func say_text(sender: String, text: String, outgoing := false, quiet := false) -> void:
+	typing_left = 0.0
+	phone_typing.visible = false
+	var body := text.to_lower() if outgoing else text
+	phone_log.append({"from": sender, "text": body, "out": outgoing})
+	var bubble := PanelContainer.new()
+	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bubble.size_flags_horizontal = Control.SIZE_SHRINK_END if outgoing else Control.SIZE_SHRINK_BEGIN
+	var st := _style(COPPER if outgoing else PHONE_DARK, COPPER.darkened(0.2) if outgoing else LIME, 2)
+	st.set_content_margin_all(7)
+	bubble.add_theme_stylebox_override("panel", st)
+	var l := _label(bubble, 14, Color("1d140e") if outgoing else PAPER)
+	if outgoing:
+		l.add_theme_constant_override("outline_size", 0)
+	l.text = body
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(minf(262.0, 22.0 + 8.2 * float(body.length())), 0)
+	phone_thread.add_child(bubble)
+	while phone_thread.get_child_count() > MAX_BUBBLES:
+		var old := phone_thread.get_child(0)
+		phone_thread.remove_child(old)
+		old.queue_free()
+	if not quiet:
+		phone_open()
+
+func phone_typing_for(seconds: float) -> void:
+	typing_left = seconds
+	phone_typing.visible = true
+	phone_open()
+
+## Fony's unsent draft in the compose bar ("" clears it). "a|b|c" types a, deletes it, types b, ... and stays on the
+## last one (Beat 10: "ok but" -> "what label" -> "ok but what's th"). It is never sent.
+func phone_draft(text: String) -> void:
+	draft_parts = PackedStringArray(text.split("|")) if text != "" else PackedStringArray()
+	draft_text = draft_parts[0] if not draft_parts.is_empty() else ""
+	draft_t = 0.0
+	phone_compose.visible = text != ""
+	phone_compose.text = draft_text
+	if text != "":
+		phone_open()
+
+func phone_clear() -> void:
+	for c in phone_thread.get_children():
+		phone_thread.remove_child(c)
+		c.queue_free()
+	phone_draft("")
+	typing_left = 0.0
+	phone_typing.visible = false
+
+## The full-screen emergency alert (covers the thread and wipes the draft). "" hides it.
+func phone_alert(text: String) -> void:
+	# the default font has no warning sign: draw it as (!)
+	var t := text.replace("⚠", "(!)")
+	var cut := t.find(" · ")
+	if cut >= 0:
+		t = t.substr(0, cut) + "\n" + t.substr(cut + 3)
+	alert_label.text = t
+	alert_panel.visible = text != ""
+	if text != "":
+		phone_clear()
+
+func letterbox(on: bool) -> void:
+	letterbox_top.visible = on
+	letterbox_bottom.visible = on
+
+func skip_hint(text: String) -> void:
+	skip_label.text = text
+	skip_label.visible = text != ""
+
+func _phone_tick(delta: float) -> void:
+	if phone_panel == null:
+		return
+	if typing_left > 0.0:
+		typing_left -= delta
+		phone_typing.text = ["•", "• •", "• • •"][int(Time.get_ticks_msec() / 300) % 3]
+		if typing_left <= 0.0:
+			phone_typing.visible = false
+	if draft_text != "":
+		draft_t += delta
+		var k := mini(int(draft_t / 1.8), draft_parts.size() - 1)
+		draft_text = draft_parts[k]
+		# type it out letter by letter inside each 1.8 s slot (the last one stays)
+		var shown := draft_text.substr(0, mini(draft_text.length(), int((draft_t - 1.8 * k) * 14.0)))
+		phone_compose.text = shown + ("|" if int(draft_t * 2.0) % 2 == 0 else " ")
+	if phone_panel.visible and typing_left <= 0.0 and draft_text == "" and not alert_panel.visible:
+		phone_idle += delta
+		if phone_idle >= COLLAPSE_S:
+			phone_panel.visible = false
+			phone_chip.visible = phone_log.size() > 0

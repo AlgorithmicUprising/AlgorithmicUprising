@@ -8,6 +8,15 @@ extends RefCounted
 const LIME := Color("c8ff3a")
 const MARQUEE := Vector3(32.0, 8.0, -6.98)     # arcade_exterior.gd: marquee art centre (FACE + 0.72)
 const CRT := Vector3(58.0, 1.62, -7.45)        # inside the west ground-floor window (x 58)
+const BILLBOARD := Vector3(110.0, 26.0, -20.0)
+## The Glass Row tower billboard (Fahrenheit everywhere, Nov 19 2026). The morning cycle matches the intro video's
+## shots 3 and 4 (HIGH 108°F, the Sunburn Open ad, $500,000), so the game picks up the same morning.
+const BB_FORECAST := "GOOD MORNING, GLITCHPORT  ·  HEAT DOME · DAY 9  ·  HIGH 108°F\nComfort tiers available for subscribers.  COMFORT, DELIVERED."
+const BB_AD := "THE SUNBURN OPEN  ·  GLASS ROW  ·  QUALIFIERS SATURDAY\nGRAND PRIZE: $500,000  ·  FIVE DAYS."
+const BB_EMERGENCY := "LEVEL FOUR HEAT EMERGENCY  ·  108°F\nGrid Priority Schedule active. Cooling centers closed. Stay comfortable."
+const BB_POSTPONED := "NOTICE: The Sunburn Open qualifiers are postponed\nuntil the Heat Emergency ends. Dusk Dynamics thanks you for your patience."
+const BB_CYCLE_S := 7.0
+const SERA_BLUE := Color("9fd8ff")
 const DAWN := {
 	"sky_top": Color("e58fb0"), "sky_horizon": Color("ffd2a1"), "ground_horizon": Color("f0b48a"), "ground_bottom": Color("6a5348"),
 	"ambient": Color("9a8a9e"), "ambient_energy": 0.3, "sun_rot": Vector3(-26, 95, 0), "sun_color": Color("ffc29a"), "sun_energy": 1.15,
@@ -103,10 +112,23 @@ static func build(world: Node3D) -> Node3D:
 	face.position = CRT + Vector3(0, 0.03, 0.262)
 	face.visible = false
 	root.add_child(face)
+	# P.1 v2: every Zero text makes the window CRT flicker a 0.2 s lime dot, even before the reveal (a clue)
+	var dot := Label3D.new()
+	dot.name = "CrtDot"
+	dot.text = "•"
+	dot.font_size = 48
+	dot.pixel_size = 0.004
+	dot.modulate = LIME
+	dot.outline_size = 0
+	dot.shaded = false
+	dot.position = CRT + Vector3(0, 0.02, 0.263)
+	dot.visible = false
+	root.add_child(dot)
 	# the Glass Row billboard on the skyline (script: EXT. THE YARD - DAWN)
 	var bb := Label3D.new()
 	bb.name = "GlassRowBillboard"
-	bb.text = "Good morning, City!  Today's high: 46°\nStay comfortable.  Comfort, Delivered."
+	bb.text = BB_FORECAST
+	bb.set_meta("mode", "cycle")
 	bb.font_size = 220
 	bb.pixel_size = 0.02
 	bb.outline_size = 30
@@ -114,17 +136,21 @@ static func build(world: Node3D) -> Node3D:
 	bb.outline_modulate = Color(0.02, 0.05, 0.1, 1.0)
 	bb.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	bb.shaded = false
-	bb.position = Vector3(110.0, 26.0, -20.0)
+	bb.position = BILLBOARD
 	root.add_child(bb)
 	return root
 
-## Lights the CRT (talking) or dims it. face = the faint face is drawn (after the reveal).
-static func crt(root: Node3D, talking: bool, face: bool) -> void:
+## Lights the CRT (talking) or dims it. face = the faint face is drawn (after the reveal). blip = the short dot that
+## flickers with each Zero text.
+static func crt(root: Node3D, talking: bool, face: bool, blip := false) -> void:
 	if root == null:
 		return
 	var screen: MeshInstance3D = root.get_node_or_null("CrtScreen")
 	if screen != null:
-		(screen.material_override as StandardMaterial3D).emission_energy_multiplier = 1.0 if talking else (0.35 if face else 0.0)
+		(screen.material_override as StandardMaterial3D).emission_energy_multiplier = 1.0 if talking else (0.55 if blip else (0.35 if face else 0.0))
+	var dot: Label3D = root.get_node_or_null("CrtDot")
+	if dot != null:
+		dot.visible = blip and not face and not talking
 	var f: Label3D = root.get_node_or_null("CrtFace")
 	if f != null:
 		f.visible = face
@@ -136,6 +162,116 @@ static func marquee(root: Node3D, text: String) -> void:
 	var b: Label3D = root.get_node_or_null("ZeroScoreMarquee")
 	if b != null:
 		b.text = text.replace("\n", "  ")
+
+## The tower billboard. mode "cycle" alternates the forecast and the Sunburn Open ad (billboard_tick); a fixed text
+## (the heat emergency, the postponement) stops the cycle.
+static func billboard(root: Node3D, text: String, mode := "fixed", color := Color("9fe8ff")) -> void:
+	if root == null:
+		return
+	var bb: Label3D = root.get_node_or_null("GlassRowBillboard")
+	if bb == null:
+		return
+	bb.text = text
+	bb.modulate = color
+	bb.set_meta("mode", mode)
+
+static func billboard_text(root: Node3D) -> String:
+	var bb: Label3D = root.get_node_or_null("GlassRowBillboard") if root != null else null
+	return bb.text if bb != null else ""
+
+static func billboard_tick(root: Node3D, clock: float) -> void:
+	var bb: Label3D = root.get_node_or_null("GlassRowBillboard") if root != null else null
+	if bb == null or str(bb.get_meta("mode", "fixed")) != "cycle":
+		return
+	var ad := int(clock / BB_CYCLE_S) % 2 == 1
+	bb.text = BB_AD if ad else BB_FORECAST
+	bb.modulate = Color("ffb36b") if ad else Color("9fe8ff")
+
+## CINEMATIC P.3: the Warden welfare drone. Small, white, rounded, a friendly blue smiley on a round screen, a hatch
+## with a soft restraint net folded inside, and a blue scanning light. Built in code (no assets), visual only.
+static func welfare_drone(root: Node3D) -> Node3D:
+	var d := Node3D.new()
+	d.name = "WelfareDrone"
+	root.add_child(d)
+	var body := MeshInstance3D.new()
+	body.name = "Body"
+	var sm := SphereMesh.new()
+	sm.radius = 0.42
+	sm.height = 0.7
+	body.mesh = sm
+	var white := _mat(Color("f2f4f7"))
+	white.roughness = 0.35
+	body.material_override = white
+	d.add_child(body)
+	for side in [-1.0, 1.0]:
+		var rotor := MeshInstance3D.new()
+		var cm := CylinderMesh.new()
+		cm.top_radius = 0.22
+		cm.bottom_radius = 0.22
+		cm.height = 0.03
+		rotor.mesh = cm
+		rotor.material_override = _mat(Color("c9ced6"))
+		rotor.position = Vector3(side * 0.5, 0.22, 0)
+		d.add_child(rotor)
+	var face := Label3D.new()
+	face.name = "Smiley"
+	face.text = "•  •\n\\__/"
+	face.font_size = 64
+	face.pixel_size = 0.0045
+	face.modulate = Color("3aa8ff")
+	face.outline_size = 0
+	face.shaded = false
+	face.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	face.position = Vector3(0, 0.02, 0.0)
+	face.no_depth_test = true
+	d.add_child(face)
+	var net := MeshInstance3D.new()
+	net.name = "Net"
+	var nm := CylinderMesh.new()
+	nm.top_radius = 0.08
+	nm.bottom_radius = 0.95
+	nm.height = 1.0
+	net.mesh = nm
+	var netm := _mat(Color(1.0, 1.0, 1.0, 0.35))
+	netm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	netm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	net.material_override = netm
+	net.position = Vector3(0, -0.75, 0)
+	net.visible = false
+	d.add_child(net)
+	var beam := MeshInstance3D.new()
+	beam.name = "ScanBeam"
+	var bm := CylinderMesh.new()
+	bm.top_radius = 0.04
+	bm.bottom_radius = 0.9
+	bm.height = 3.0
+	beam.mesh = bm
+	var beamm := _mat(Color(0.35, 0.7, 1.0, 0.22))
+	beamm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	beamm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	beamm.cull_mode = BaseMaterial3D.CULL_DISABLED
+	beam.material_override = beamm
+	beam.position = Vector3(0, -1.6, 0)
+	beam.visible = false
+	d.add_child(beam)
+	var light := OmniLight3D.new()
+	light.name = "ScanLight"
+	light.light_color = Color("5ab8ff")
+	light.light_energy = 0.0
+	light.omni_range = 4.0
+	light.position = Vector3(0, -0.6, 0)
+	d.add_child(light)
+	return d
+
+static func drone_scan(d: Node3D, on: bool) -> void:
+	if d == null:
+		return
+	d.get_node("ScanBeam").visible = on
+	(d.get_node("ScanLight") as OmniLight3D).light_energy = 1.6 if on else 0.0
+
+static func drone_net(d: Node3D, on: bool) -> void:
+	if d != null:
+		d.get_node("Net").visible = on
 
 ## Swaps main's sky and sun to the dawn preset; returns what it replaced so restore() can put it back.
 static func dawn(main: Node) -> Dictionary:
