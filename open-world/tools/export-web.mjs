@@ -34,9 +34,11 @@ await copyFile(join(world, 'web', 'GODOT_COPYRIGHT.txt'), join(out, 'GODOT_COPYR
 await copyFile(join(world, 'web', 'zero_x_zero.webp'), join(out, 'zero_x_zero.webp'));
 // Front end: the Act I intro video plays as an HTML <video> overlay and lives NEXT TO the pack in
 // media/intro/, never inside it (data/intro_video.json lists the sources in order). The media guard
-// keeps video out of the repo, so the real cut comes in through AU_INTRO_MP4 at export time and a
-// labelled placeholder is generated here with ffmpeg. With neither, the game shows a short
-// "intro video in production" card and goes on to P.1.
+// keeps video out of the repo. By default the game streams the real cut from the site
+// (algorithmicuprising.com/media/uploads/..., see data/intro_video.json). AU_INTRO_MP4=<file> still
+// copies a local cut in here, and that copy is tried first. A labelled placeholder is generated here
+// with ffmpeg as the last fallback. With none of them, the game shows a short "intro video in
+// production" card and goes on to P.1.
 const media = join(out, 'media', 'intro');
 await rm(join(out, 'media'), { recursive: true, force: true });
 await mkdir(media, { recursive: true });

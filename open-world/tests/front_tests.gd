@@ -169,6 +169,21 @@ func _intro() -> void:
 	var cfg: Dictionary = ip.config
 	ok(cfg.get("id") == "pz_intro_v1" and (cfg.web.sources as Array).size() >= 1 and float(cfg.skip.hold_s) > 0.0 and float(cfg.skip.hold_s_after_seen) == 0.0, "intro: configurable sources, hold-to-skip, single press once seen")
 	ok(not ResourceLoader.exists("res://media/intro/project-zero-intro.ogv"), "intro: no video inside the pack")
+	# Act I wiring (Nov 19 2026): the hosted cut is the default; AU_INTRO_MP4's export copy still wins; placeholder last
+	var srcs: Array = cfg.web.sources
+	var hosted := "https://algorithmicuprising.com/media/uploads/1cd5a1cf-88d7-4fa3-a7b6-1832f0fae11f-pz-intro-web-720p.mp4"
+	ok(str(cfg.web.get("default_url", "")) == hosted and srcs.has(hosted), "intro: the hosted 720p cut on the site is the default URL")
+	ok(srcs.size() == 3 and srcs[0] == "media/intro/project-zero-intro-720p.mp4" and srcs[1] == hosted and srcs[2] == "media/intro/intro-placeholder.mp4", "intro: order is the AU_INTRO_MP4 export copy, then the hosted cut, then the placeholder")
+	ip.sources = srcs
+	var oc: Dictionary = ip.overlay_config()
+	ok(int(oc.load_ms) >= 5000 and int(oc.stall_ms) >= 3000 and int(oc.giveup_ms) > 0 and int(oc.extra_ms) > 0, "intro: load timeout, stall watchdog, give-up and hard cap are configured %s" % oc)
+	var js: String = ip._overlay_js()
+	ok("TAP TO PLAY" in js and "SKIP INTRO" in js and "showFallback('tap')" in js, "intro: blocked autoplay (even muted) shows TAP TO PLAY / SKIP INTRO")
+	ok("showFallback('stall')" in js and "done('stalled')" in js and "TRY AGAIN" in js, "intro: a stall shows TRY AGAIN / SKIP INTRO, then carries on by itself")
+	ok("'timeout: '" in js and "done('timeout')" in js and "missing()" in js, "intro: a source that never starts moves on; a hard cap and the missing card end it")
+	var ip_src := FileAccess.get_file_as_string("res://scripts/front/intro_player.gd")
+	ok("URLSearchParams" in ip_src and "get('intro')" in ip_src and "sources = [q]" in ip_src, "intro: ?intro=<url> still overrides the sources")
+	ok(js.contains(hosted.replace("/", "\\/")) or js.contains(hosted), "intro: the overlay script carries the hosted URL")
 	ip.queue_free()
 	await frames(1)
 

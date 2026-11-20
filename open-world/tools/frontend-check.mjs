@@ -109,8 +109,8 @@ async function run() {
   await waitFor(page, () => window.PZ_INTRO && window.PZ_INTRO.state === 'playing', 30000, 'intro video playing');
   await page.waitForTimeout(1800);
   const intro = await page.evaluate(() => ({ ...window.PZ_INTRO, src: document.querySelector('#pz-intro video')?.currentSrc || '', t: document.querySelector('#pz-intro video')?.currentTime || 0 }));
-  await shot(page, 'intro-placeholder-playing');
-  step('intro video plays as an HTML overlay (outside the pack)', /media\/intro\/.+\.mp4$/.test(intro.src) && intro.t > 0.5, intro);
+  await shot(page, 'intro-playing');
+  step('intro video plays as an HTML overlay (outside the pack)', /(media\/intro\/|algorithmicuprising\.com\/media\/uploads\/).+\.mp4$/.test(intro.src) && intro.t > 0.5, intro);
   // first run: hold to skip (1 s ring). Hold Space briefly and let go to show the ring, then let it end.
   await page.keyboard.down('Space');
   await page.waitForTimeout(450);

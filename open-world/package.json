@@ -9,7 +9,8 @@
     "browser-check": "node tools/browser-check.mjs",
     "district-check": "node tools/district-check.mjs",
     "pack-report": "node tools/pack-report.mjs build/web/index.pck build/web/districts/test_district.pck",
-    "story-check": "node tools/story-check.mjs"
+    "story-check": "node tools/story-check.mjs",
+    "intro-check": "node tools/intro-check.mjs"
   },
   "devDependencies": {
     "playwright": "^1.56.1"
