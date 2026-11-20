@@ -1,0 +1,269 @@
+{
+  "contract": "au.cinematic_def",
+  "contract_version": 1,
+  "source": "Game script (Drive, Fahrenheit edit Nov 19 2026): CINEMATIC P.2 The heat alert, CINEMATIC P.3 Flagged; P.1 Practice Run v2 Beat 12 and its P.2/P.3 notes (VOICE (O.S.) becomes CRT); Act I breakdown milestone M2.",
+  "rules": "Text plus synthesized SFX only (no voice audio, no music). Hold Enter / Space / pad A for 1 s to skip a cinematic; a skip still applies its end state (billboard text, flags). {name} is the chosen character name; the surname Sprock is fixed.",
+  "ops": {
+    "LOCK": "input off",
+    "UNLOCK": "input on",
+    "LETTERBOX": "bars on/off",
+    "SHOT": "camera: billboard / fony / drone / arcade / game",
+    "WAIT": "seconds",
+    "SAY": "speaker, line (holds by length)",
+    "NARRATE": "stage direction as a caption",
+    "CHIME": "SERA three-tone chime on every screen and the phone",
+    "ALERT": "phone emergency alert text (\"\" clears)",
+    "BILLBOARD": "forecast / ad / emergency / postponed",
+    "DRONE": "enter / scan_on / scan_off / net / leave",
+    "SFX": "cue",
+    "FLAG": "story flag",
+    "CARD": "full-screen card, seconds"
+  },
+  "cinematics": {
+    "p2_heat_alert": {
+      "title": "CINEMATIC P.2 · THE HEAT ALERT",
+      "flag": "p2_heat_alert_seen",
+      "end_state": {
+        "billboard": "postponed",
+        "alert": "",
+        "drone": ""
+      },
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "SHOT",
+          "fony"
+        ],
+        [
+          "NARRATE",
+          "Fony rolls to a stop in the middle of the Yard, breathing hard, drenched in sweat. Twenty minutes, and the sun is already brutal. He drinks the last inch of water from a dented bottle."
+        ],
+        [
+          "CHIME"
+        ],
+        [
+          "BILLBOARD",
+          "emergency"
+        ],
+        [
+          "SHOT",
+          "billboard"
+        ],
+        [
+          "SAY",
+          "SERA (V.O.)",
+          "(warm, soothing, everywhere) Good morning. This is SERA, on behalf of the City of Glitchport and Dusk Dynamics. A Level Four Heat Emergency is now in effect."
+        ],
+        [
+          "SAY",
+          "SERA (V.O.)",
+          "To protect critical infrastructure, the Grid Priority Schedule is active. Residential power in lower-priority districts will be balanced throughout the day."
+        ],
+        [
+          "SAY",
+          "SERA (V.O.)",
+          "Public cooling centers are temporarily closed. Please stay indoors and stay comfortable."
+        ],
+        [
+          "ALERT",
+          ""
+        ],
+        [
+          "BILLBOARD",
+          "postponed"
+        ],
+        [
+          "SFX",
+          "sting"
+        ],
+        [
+          "SAY",
+          "BILLBOARD",
+          "NOTICE: The Sunburn Open qualifiers are postponed until the Heat Emergency ends. Dusk Dynamics thanks you for your patience."
+        ],
+        [
+          "SHOT",
+          "fony"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(quietly) No. No, no, no."
+        ],
+        [
+          "NARRATE",
+          "He crumples the flyer, then smooths it out again and puts it back in his pocket. He sits down on the edge of the bowl."
+        ],
+        [
+          "SHOT",
+          "arcade"
+        ],
+        [
+          "SAY",
+          "CRT",
+          "Cooling centers closed to protect \"critical infrastructure.\" Do you know what the critical infrastructure is?"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(not looking up) Hospitals?"
+        ],
+        [
+          "SAY",
+          "CRT",
+          "The hospitals are fourth on the list. First are the computers that decide who gets power. They're very important to themselves."
+        ],
+        [
+          "NARRATE",
+          "Fony laughs despite himself, a short, bitter sound."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "You're a weird TV."
+        ],
+        [
+          "SAY",
+          "CRT",
+          "I'm mostly a weird power supply. The TV is the part with the face."
+        ],
+        [
+          "FLAG",
+          "p2_heat_alert_seen"
+        ]
+      ]
+    },
+    "p3_flagged": {
+      "title": "CINEMATIC P.3 · FLAGGED",
+      "flag": "p3_flagged_seen",
+      "end_state": {
+        "billboard": "postponed",
+        "alert": "",
+        "drone": "net"
+      },
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "SFX",
+          "drone_chime"
+        ],
+        [
+          "NARRATE",
+          "A soft chime from above. Fony looks up."
+        ],
+        [
+          "DRONE",
+          "enter"
+        ],
+        [
+          "SHOT",
+          "drone"
+        ],
+        [
+          "WAIT",
+          1.6
+        ],
+        [
+          "NARRATE",
+          "A Warden welfare drone floats over the fence: small, white, rounded, a friendly blue smiley on a round screen. It's almost cute."
+        ],
+        [
+          "DRONE",
+          "scan_on"
+        ],
+        [
+          "SAY",
+          "WELFARE DRONE",
+          "(chirpy) Hello! You look like you could use some support. Please hold still for a quick wellness check."
+        ],
+        [
+          "SHOT",
+          "fony"
+        ],
+        [
+          "NARRATE",
+          "Fony is already standing. His hand is on his board."
+        ],
+        [
+          "SHOT",
+          "drone"
+        ],
+        [
+          "SAY",
+          "WELFARE DRONE",
+          "Identity confirmed: Sprock, {name}. Status: unsupported dependent. Collection order active. Don't worry! A Dusk Dynamics care van is on its way. Please stay where you are."
+        ],
+        [
+          "DRONE",
+          "net"
+        ],
+        [
+          "SFX",
+          "net"
+        ],
+        [
+          "NARRATE",
+          "The smiley doesn't change. Below it, a hatch opens and a soft restraint net folds out like a flower."
+        ],
+        [
+          "SAY",
+          "WELFARE DRONE",
+          "Please stay where you are."
+        ],
+        [
+          "SHOT",
+          "fony"
+        ],
+        [
+          "NARRATE",
+          "Fony drops the board."
+        ],
+        [
+          "SHOT",
+          "arcade"
+        ],
+        [
+          "SAY",
+          "CRT",
+          "(fast, low) Gate is south. Don't use it. The fence on the east side has a gap behind the dumpster. Glass Row stairs, then back here through the drain. I'll open the arcade."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Why would you—"
+        ],
+        [
+          "SAY",
+          "CRT",
+          "Push."
+        ],
+        [
+          "FLAG",
+          "p3_flagged_seen"
+        ]
+      ]
+    }
+  },
+  "slice_end": {
+    "card": "END OF THE PLAYABLE PROLOGUE (LOCAL BUILD)\n\nNext: MISSION P.2 RUN, the escape through the east fence into Glass Row (milestone M3, not built yet).\n\nThe Yard stays open: run the line as often as you like.",
+    "card_s": 7.0,
+    "system": [
+      [
+        "SYSTEM",
+        "Prologue slice complete. P.2 Run (the escape) is milestone M3. T puts you back at the bowl."
+      ]
+    ]
+  }
+}
