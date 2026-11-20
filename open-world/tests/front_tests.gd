@@ -215,6 +215,8 @@ func _start_screen() -> void:
 	var boot = load("res://scenes/boot.tscn").instantiate()
 	ok(boot.next_scene == "res://scenes/start_screen.tscn", "boot hands off to the start screen")
 	boot.free()
+	var SS = load("res://scripts/front/start_screen.gd")
+	ok(not SS.bypass_in("?story_demo=1") and SS.bypass_in("?story=p1&story_demo=1") and SS.bypass_in("?demo=ollie") and SS.bypass_in("?district=glass_row_edge") and not SS.bypass_in(""), "start screen: ?story_demo=1 alone keeps the title (New Game then arms the P.1 autopilot); dev links still skip it")
 	load("res://scripts/front/start_screen.gd").reset_statics(false, true)
 	var s = await _title()
 	ok(s.title_state and not s.menu_row.visible and s.layers.has("plate") and s.layers.plate.texture != null and s.layers.title.texture != null, "start screen: the puppeteer art and title, PRESS START first")

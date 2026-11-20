@@ -113,9 +113,17 @@ func _dev_bypass() -> bool:
 	var args := " ".join(OS.get_cmdline_user_args())
 	if OS.has_feature("web"):
 		args += " " + str(JavaScriptBridge.eval("window.location.search", true))
+	if bypass_in(args):
+		_go(PARK)
+		return true
+	return false
+
+## Dev links that skip the title. story_demo=1 on its own is not one: it only arms the P.1 review autopilot, so
+## ?story_demo=1 still goes title -> New Game -> intro -> P.1 (with ?story=p1 it skips as before).
+static func bypass_in(args: String) -> bool:
+	var a := args.replace("story_demo=1", "")
 	for b in BYPASS:
-		if b in args:
-			_go(PARK)
+		if b in a:
 			return true
 	return false
 
