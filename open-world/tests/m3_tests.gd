@@ -204,13 +204,21 @@ func _run_full() -> void:
 	ok(run.state == "done" and main.flow.save.flag("p2_run_done"), "P.2 Run: escaped (%s)" % run.state)
 	var rec: Dictionary = main.flow.save.mission("p2_run")
 	ok(rec.state == "done" and int(rec.completions) == 1 and int(rec.best_score) > 0 and int(rec.zero_score) > 0 and int(rec.zero_score) < int(rec.best_score), "Zero time: set just under the first escape (best %d ms, Zero %d ms)" % [int(rec.best_score), int(rec.zero_score)])
+	for _i in 60:
+		await t.get_tree().process_frame
+		if story.phase == "p3_power":
+			break
+	ok(story.phase == "p3_power" and story.power.active() and main.player.global_position.x > 210.0, "the side door hands off to P.3 Power On inside the arcade (M4)")
+	# P.3 itself is m4_tests.gd; finish it here so the slice ends
+	story.power.fuses = {"coin_box": true, "toolbox": true, "fixture": true}
+	story.power._finish()
 	for _i in 600:
 		story.talk_left = 0.001
 		story.card_left = 0.0
 		await t.get_tree().process_frame
 		if story.phase == "slice_end" and story.queue.is_empty():
 			break
-	ok(story.phase == "slice_end" and story.spoken.any(func(l): return str(l).begins_with("CARD|") and "POWER ON" in str(l)), "end card: P.3 Power On is next (M4)")
+	ok(story.phase == "slice_end" and story.spoken.any(func(l): return str(l).begins_with("CARD|") and "P.4" in str(l)), "end card: CINEMATIC P.4 Zero is next")
 	var disk = SaveScript.new()
 	disk.load_user(SAVE)
 	ok(disk.flag("p2_run_done") and int(disk.mission("p2_run").zero_score) == int(rec.zero_score), "save: the escape and Zero's time are on disk")
@@ -231,6 +239,8 @@ func _run_full() -> void:
 	print("m3 pilot ramp ", run.pilot.log, " log=", run.log, " pos=", pl.global_position, " state=", run.state)
 	ok(run.routes.has("ramp") and run.log.has("camera"), "ramp route: up the parking ramp, seen by the drone camera")
 	ok(run.state == "done" and int(main.flow.save.mission("p2_run").completions) == 2, "ramp route: escaped again")
+	await frames(2)
+	ok(story.phase == "p3_power" and story.power.fuses.is_empty(), "a replay after the slice goes back into the arcade with the fuses back in place")
 	story.stop()
 	await frames(2)
 	ok(wall.collision_layer != 0 and wall.visible, "fence gap: the east wall closes again when the story stops")
