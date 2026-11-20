@@ -26,6 +26,7 @@ func run(host: Node) -> void:
 	await _free_roam()
 	await _practice_run()
 	await _reload()
+	await _act1()
 	await _combo_speed()
 	await autopilot_run()
 
@@ -200,6 +201,9 @@ func _barks() -> void:
 	var second: Array = b.pick("bail")
 	ok(not second.is_empty() and second != first, "barks: no repeat of the previous entry")
 	ok(b.pick("nope").is_empty(), "barks: an unknown pool is silent")
+	var g = Barks.new()
+	g.setup({"free": {"cooldown": 0.0, "entries": [{"requires_flag": "p1_crt_face", "lines": [["CRT", "face"]]}]}}, 3)
+	ok(g.pick("free", {}).is_empty() and g.pick("free", {"p1_crt_face": true}) == [["CRT", "face"]], "barks: requires_flag entries wait for their flag")
 
 func _save_v2() -> void:
 	var s = SaveScript.new()
@@ -365,12 +369,12 @@ func _practice_run() -> void:
 	var first := await _rail_ride(main, pl, 0.0, 0.7)
 	ok(first == "bail", "rail: a 40 deg approach bails (%s)" % first)
 	await frames(5)
-	ok(story.voice_heard and story.queue.size() + 1 >= 1, "rail: the bail wakes the VOICE")
+	ok(story.rail_bailed and not story.voice_heard, "rail: the first bail gets Zero's text (6A); the CRT has not spoken yet")
 	var heard := false
 	for l in story.spoken + story.queue.map(func(q): return q[0] + "|" + q[1]):
-		if str(l).begins_with("VOICE (O.S.)|(dry, staticky) Your approach angle is") and "degrees" in str(l):
+		if str(l).begins_with("TEXT ???|Approach angle:") and "degrees" in str(l):
 			heard = true
-	ok(heard, "rail: VOICE (O.S.) names the approach angle")
+	ok(heard, "rail: Zero texts the approach angle (P.1 v2)")
 	await frames(50)
 	var second := await _rail_ride(main, pl, 0.2, 0.0)
 	ok(second == "grind" and story.runner.current_id() == "line", "rail: a clean 50-50 opens the line (%s, %s)" % [second, pl.grind_last])
@@ -420,8 +424,11 @@ func _practice_run() -> void:
 		story.card_left = 0.0
 		await t.get_tree().process_frame
 	ok(story.queue.is_empty() and story.spoken.size() >= 20, "talk: every queued line was shown (%d)" % story.spoken.size())
-	var voice_lines: Array = story.spoken.filter(func(l): return str(l).begins_with("VOICE (O.S.)|"))
-	ok(voice_lines.size() >= 7, "talk: the VOICE (O.S.) speaks as on-screen text (%d lines)" % voice_lines.size())
+	var texts: Array = story.spoken.filter(func(l): return str(l).begins_with("TEXT ???|"))
+	var crt_lines: Array = story.spoken.filter(func(l): return str(l).begins_with("CRT|"))
+	ok(texts.size() >= 7 and crt_lines.size() >= 2, "talk: Zero texts (%d) and speaks through the CRT a few times (%d)" % [texts.size(), crt_lines.size()])
+	ok(story.spoken.filter(func(l): return str(l).begins_with("VOICE")).is_empty(), "talk: no VOICE (O.S.) lines left in P.1 v2")
+	ok(story.hud.phone_name.text == "???" and story.hud.phone_log.size() >= 1, "phone: the thread header is ??? (Zero is unnamed until P.4)")
 	# SFX only: the story cues played, nothing else
 	ok(story.sfx.played.has("crt") and story.sfx.played.has("objective") and story.sfx.played.has("bank"), "sfx: CRT crackle, objective and score cues played %s" % [story.sfx.played.slice(0, 8)])
 	ok(AudioServer.bus_count == 1, "sfx: still one audio bus, no music bus")
@@ -452,6 +459,144 @@ func _reload() -> void:
 	ok(story.runner.state == "done" and story.best_line == best and story.zero_score > 0, "reload: P.1 comes back as a replay, best %d, Zero Score %d" % [story.best_line, story.zero_score])
 	ok(main.world_sim.get_node("DerelictDressing/ZeroScoreMarquee").text.contains("ZERO SCORE"), "reload: the marquee shows the Zero Score")
 	ok(main.player.global_position.distance_to(Vector3(-48.0, 0.8, 20.5)) < 1.5, "reload: the replay starts at the bowl")
+	story.stop()
+	main.queue_free()
+	await frames(2)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE))
+
+## Act I (P.1 v2 + M2): Beat 0 on the phone, hesitation texts once, the deal, the P.2 trigger, the two cinematics.
+func _act1() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE))
+	var def := _def()
+	ok(def.has("p2_trigger") and int(def.p2_trigger.timeout_s) == 90 and int(def.p2_trigger.idle_s) == 15, "act1 data: P.2 trigger is first beat / 90 s / 15 s idle")
+	var spk := def.duplicate(true)
+	spk.erase("speakers")
+	ok(not JSON.stringify(spk).contains("\"VOICE"), "act1 data: P.1 v2 has no VOICE (O.S.) lines")
+	var main = await _main()
+	var story = main.get_node("Story")
+	var pl = main.player
+	story.start()
+	await frames(2)
+	ok(story.hud.phone_name.text == "???" and story.hud.phone_log.size() >= 1 and "back foot" in str(story.hud.phone_log[0].text), "Beat 0: the intro's first text is already in the ??? thread")
+	ok(story.contact and main.flow.save.flag("p1_contact"), "Beat 0: contact made (barks may fire)")
+	ok(story.World.billboard_text(main.world_sim.get_node("DerelictDressing")).contains("108°F"), "billboard: the forecast reads HIGH 108°F (Fahrenheit)")
+	for _i in 240:
+		story.talk_left = 0.001
+		await t.get_tree().process_frame
+		if story.queue.is_empty() and story.talking == "":
+			break
+	var who_is_this := false
+	var concerned := false
+	for e in story.hud.phone_log:
+		if str(e.text) == "who is this" and e.out:
+			who_is_this = true
+		if "concerned observer" in str(e.text):
+			concerned = true
+	ok(who_is_this and concerned, "Beat 0: \"who is this\" goes out and Zero answers (%d texts)" % story.hud.phone_log.size())
+	# hesitation: the push text fires once, not again
+	story.runner.time_on = 6.2
+	await frames(3)
+	var said_hes := func(): return (story.spoken + story.queue.map(func(q): return q[0] + "|" + q[1])).filter(func(l): return "bold strategy" in str(l)).size()
+	ok(story.hesitated.has("push") and said_hes.call() == 1, "hesitation: Zero's push text on the first prompt")
+	story.prompt_shown = ""
+	await frames(3)
+	ok(said_hes.call() == 1, "hesitation: once per objective")
+	# skip to the end of the tutorial and set the Zero Score: the deal comes once
+	story.queue.clear()
+	story.talk_left = 0.001
+	story._line_scored(2500)
+	ok(story.deal_state == "queued" and main.flow.save.flag("p1_deal_offered"), "deal: Beat 10 queued after the Zero Score")
+	var deal_lines: Array = story.queue.filter(func(q): return q.size() > 3 and q[3] == "deal")
+	ok(deal_lines.any(func(q): return "thirty amps" in str(q[1]).to_lower() or "breaker" in str(q[1]).to_lower()), "deal: one breaker, thirty amps")
+	ok(deal_lines.any(func(q): return q[0] == "CRT"), "deal: ends on the CRT speaking aloud")
+	for _i in 600:
+		story.talk_left = 0.001
+		await t.get_tree().process_frame
+		if story.deal_state == "offered":
+			break
+	ok(story.deal_state == "offered" and story.p2_state == "armed", "deal: offered, then the heat alert is armed")
+	var count_before: int = story.spoken.filter(func(l): return "thirty amps" in str(l).to_lower()).size()
+	story._line_scored(1000)
+	await frames(2)
+	ok(story.queue.filter(func(q): return q.size() > 3 and q[3] == "deal").is_empty(), "deal: fires only once (%d)" % count_before)
+	# idle 15 s fires the alert handoff, then CINEMATIC P.2 and P.3
+	story.p2_clock = 0.0
+	story.idle_clock = 14.9
+	for _i in 120:
+		pl.velocity = Vector3.ZERO
+		await t.get_tree().process_frame
+		if story.p2_state != "armed":
+			break
+	ok(story.p2_state == "handoff" or story.p2_state == "cinematic", "P.2 trigger: 15 s idle fires the handoff (%s, %s)" % [story.p2_state, story.p2_reason])
+	ok(story.p2_reason == "idle", "P.2 trigger: reason idle")
+	story.cinematic.time_scale = 40.0
+	for _i in 120:
+		story.talk_left = 0.001
+		await t.get_tree().process_frame
+		if story.in_cinematic():
+			break
+	ok(story.in_cinematic() and story.cinematic.id == "p2_heat_alert" and not pl.input_enabled, "CINEMATIC P.2: the heat alert plays, input locked")
+	ok(story.hud.alert_panel.visible and "(!)" in story.hud.alert_label.text, "CINEMATIC P.2: the emergency alert takes over the phone")
+	for _i in 2400:
+		await t.get_tree().process_frame
+		if story.cinematic.id == "p3_flagged" and story.cinematic.drone != null:
+			break
+	ok(main.flow.save.flag("p2_heat_alert_seen") and story.cinematic.billboard_key == "postponed", "CINEMATIC P.2: flag set, the billboard says the Open is postponed")
+	ok(story.World.billboard_text(main.world_sim.get_node("DerelictDressing")).to_lower().contains("postponed"), "billboard: Sunburn Open postponed (heat emergency)")
+	ok(story.cinematic.id == "p3_flagged" and story.cinematic.drone != null, "CINEMATIC P.3: the welfare drone comes in")
+	for _i in 2400:
+		await t.get_tree().process_frame
+		if not story.in_cinematic():
+			break
+	var pname: String = story.Protagonist.current(t.get_tree())
+	var id_line: Array = story.spoken.filter(func(l): return "Identity confirmed" in str(l))
+	ok(id_line.size() == 1 and pname in str(id_line[0]), "CINEMATIC P.3: the drone's ID line uses the character name (%s)" % [id_line])
+	ok(main.flow.save.flag("p3_flagged_seen") and story.phase == "slice_end" and pl.input_enabled, "slice end: P.3 seen, the Yard is open again")
+	ok(story.cinematic.ran.has("p2_heat_alert:CHIME") and story.cinematic.ran.has("p3_flagged:DRONE"), "cinematics: every step ran")
+	for _i in 120:
+		story.talk_left = 0.001
+		story.card_left = 0.0
+		await t.get_tree().process_frame
+	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|") and "PLAYABLE PROLOGUE" in str(l)), "slice end: the end-of-slice card")
+	# reload after the slice: no replays of the cinematics
+	story.stop()
+	await frames(2)
+	story.start()
+	await frames(3)
+	ok(story.phase == "slice_end" and not story.in_cinematic() and story.cinematic.billboard_key == "postponed", "reload: after P.3 the slice stays ended, billboard postponed")
+	# skip: hold Enter skips a cinematic and still lands its end state
+	ok(story.cinematic.play("p3_flagged"), "skip: a cinematic can be replayed for the test")
+	story.cinematic.skip()
+	ok(not story.in_cinematic() and story.cinematic.last_skipped and story.phase == "slice_end" and pl.input_enabled and not story.hud.letterbox_top.visible, "skip: skipping unlocks input and drops the letterbox")
+	story.stop()
+	main.queue_free()
+	await frames(2)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE))
+	# the timeout path: 90 s after the deal
+	main = await _main()
+	story = main.get_node("Story")
+	story.start()
+	await frames(2)
+	story.deal_state = "offered"
+	story._arm_p2()
+	story.idle_clock = 0.0
+	story.p2_clock = 89.99
+	main.player.velocity = Vector3(5, 0, 0)
+	await frames(2)
+	ok(story.p2_reason == "timeout" or story.p2_reason == "idle", "P.2 trigger: 90 s after the deal (%s)" % story.p2_reason)
+	story.stop()
+	main.queue_free()
+	await frames(2)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE))
+	# the beat path
+	main = await _main()
+	story = main.get_node("Story")
+	story.start()
+	await frames(2)
+	story.deal_state = "offered"
+	story._arm_p2()
+	story._fire_p2("beat")
+	ok(story.p2_state == "handoff" and story.p2_reason == "beat" and story.queue.any(func(q): return q[0] == "ALERT"), "P.2 trigger: the first beat hands off to the alert")
 	story.stop()
 	main.queue_free()
 	await frames(2)
