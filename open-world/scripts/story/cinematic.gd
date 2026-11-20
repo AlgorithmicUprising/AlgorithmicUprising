@@ -151,6 +151,7 @@ func _run(op: Array) -> void:
 			host.flow.save.set_flag(str(op[1]))
 			host.flow.persist()
 		"CARD":
+			host.spoken.append("CARD|" + str(op[1]))
 			host.hud.card(str(op[1]))
 			wait_left = float(op[2]) if op.size() > 2 else 5.0
 		"CAM":

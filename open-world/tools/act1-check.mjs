@@ -2,7 +2,7 @@
 //   title -> PRESS START -> New Game (default name) -> the hosted intro video (plays, then hold to skip) -> P.1 played by
 //   the review autopilot (story_demo=1) -> the deal -> the heat alert -> CINEMATIC P.2 and P.3 -> MISSION P.2 Run
 //   (autopilot: caught once at the fork to show the restart, then the dock route) -> the culvert -> the arcade's side
-//   door -> MISSION P.3 Power On in the dark arcade (three fuses, the breaker) -> the end card (CINEMATIC P.4 Zero is next).
+//   door -> MISSION P.3 Power On in the dark arcade (three fuses, the breaker) -> CINEMATIC P.4 Zero (power cascade, the cutout puppet, ??? -> ZERO, the title card) -> the end card.
 // Writes screenshots, act1-full-run.webm and act1-check.json to AU_ACT1_OUT. Run after export-web + stage-composite.
 // Deploys nothing.
 import { spawn } from 'node:child_process';
@@ -96,9 +96,14 @@ async function run() {
     'p3-fuse-toolbox': (s, r, q) => q && q.fuses >= 2,
     'p3-fuse-fixture': (s, r, q) => q && q.fuses >= 3,
     'p3-breaker': (s, r, q) => q && (q.state === 'power' || q.state === 'done'),
+    'p4-power-on': (s, r, q) => s.cine === 'p4_zero' && q && q.lit,
+    'p4-zero-awake': (s, r, q) => q && q.zero === 'awake' && q.header === 'ZERO',
+    'p4-plate': (s, r, q) => q && /reads the plate/.test(q.last),
+    'p4-heat-wont-wait': (s, r, q) => q && /The heat won/.test(q.last),
+    'p4-title-card': (s, r, q) => q && /^CARD\|PROJECT ZERO/.test(q.last),
     'end-card': (s, r) => s.phase === 'slice_end',
   };
-  const delays = { 'p3-arcade-dark': 2500, 'p3-fuse-fixture': 600, 'p3-breaker': 1500, 'heat-alert': 3500, 'drone-flagged': 9000, 'run-caught': 500, 'run-culvert': 900, 'run-door': 600, 'end-card': 1200, 'run-plaza': 1800, 'run-dock': 300, 'run-enforcers': 1500 };
+  const delays = { 'p4-power-on': 5000, 'p4-zero-awake': 1500, 'p4-plate': 800, 'p4-title-card': 800, 'p3-arcade-dark': 2500, 'p3-fuse-fixture': 600, 'p3-breaker': 1500, 'heat-alert': 3500, 'drone-flagged': 9000, 'run-caught': 500, 'run-culvert': 900, 'run-door': 600, 'end-card': 1200, 'run-plaza': 1800, 'run-dock': 300, 'run-enforcers': 1500 };
   const end = Date.now() + 22 * 60 * 1000;
   let last = '';
   while (Date.now() < end) {
@@ -122,6 +127,7 @@ async function run() {
   step('the run ended at the arcade door with a time', fin.run && fin.run.state === 'done' && fin.run.time > 10, fin);
   const p3 = await page.evaluate(() => (window.AU_P3 ? { ...window.AU_P3 } : null));
   step('P.3 Power On: three fuses and the breaker', p3 && p3.state === 'done' && p3.fuses === 3, p3);
+  step('P.4: Zero awake, the thread header reads ZERO', p3 && p3.zero === 'awake' && p3.header === 'ZERO' && p3.lit, p3);
   await page.waitForTimeout(4000);
   await shot('zz-after-end-card');
 }

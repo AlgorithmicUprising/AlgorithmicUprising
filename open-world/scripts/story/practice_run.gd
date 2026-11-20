@@ -947,7 +947,8 @@ func _publish() -> void:
 		(str(autopilot.legs[mini(autopilot.leg, autopilot.legs.size() - 1)].name) + ("/done" if autopilot.finished else "")) if autopilot != null else ""]
 	JavaScriptBridge.eval(js, true)
 	if power != null:
-		JavaScriptBridge.eval("window.AU_P3={state:'%s',fuses:%d,sweep:%.2f,fails:%d,reach:'%s',log:%d};" % [power.state, power.fuses.size(), power.sweep, power.fails, power.in_reach() if power.active() else "", power.log.size()], true)
+		var last_line: String = str(spoken[-1]).left(48).replace("'", "").replace("\\", "") if not spoken.is_empty() else ""
+		JavaScriptBridge.eval("window.AU_P3={state:'%s',fuses:%d,sweep:%.2f,fails:%d,reach:'%s',log:%d,lit:%s,zero:'%s',header:'%s',last:'%s'};" % [power.state, power.fuses.size(), power.sweep, power.fails, power.in_reach() if power.active() else "", power.log.size(), "true" if power.lit != null else "false", power.zero.current if power.zero != null else "off", hud.phone_sender.replace("'", "") if hud != null else "", last_line.replace("\n", " ")], true)
 	if run != null:
 		var r := "window.AU_RUN={state:'%s',checkpoint:'%s',time:%.2f,fails:%d,routes:'%s',drones:%d,near:%.1f,log:%d,pilot:'%s'};" % [
 			run.state, run.checkpoint, run.clock, run.fails, ",".join(run.routes.keys()),
