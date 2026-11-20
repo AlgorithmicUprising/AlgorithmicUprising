@@ -1,7 +1,8 @@
 // M1 (Nov 19 2026): P.1 Practice Run in the web export, for review. Serves the staged composite, then
 //   part A: real keyboard input from ?story=p1 (P.1 opening line, push, kick up, drop on, ollie, the hesitation prompt,
 //           T back to the quarter-pipe checkpoint and riding it, the rail),
-//   part B: ?story=p1&story_demo=1, the review autopilot playing the whole of P.1, recorded as video.
+//   part B: ?story=p1&story_demo=1, the review autopilot playing the whole of P.1, recorded as video; then (Act I, M2)
+//           the heat alert, CINEMATIC P.2, CINEMATIC P.3 and the slice-end card.
 // Writes screenshots, a video and story-check.json to AU_STORY_OUT. Does not deploy anything.
 import { spawn } from 'node:child_process';
 import { mkdir, rename, writeFile } from 'node:fs/promises';
@@ -154,6 +155,28 @@ async function partB() {
     if (String(s.pilot).endsWith('/done')) break;
     await page.waitForTimeout(250);
   }
+  // Act I (M2): beating the Zero Score brings the heat alert, CINEMATIC P.2, CINEMATIC P.3 and the slice-end card
+  const act1 = { phases: [], ok: false };
+  const phaseEnd = Date.now() + 6 * 60 * 1000;
+  let lastPhase = '';
+  let alertShot = false;
+  let droneShot = false;
+  while (Date.now() < phaseEnd) {
+    const s = await story(page);
+    const key = s.phase + '|' + s.p2 + '|' + s.cine;
+    if (key !== lastPhase) {
+      lastPhase = key;
+      act1.phases.push({ t: (Date.now() - t0) / 1000, phase: s.phase, p2: s.p2, cine: s.cine, talk: s.talk, texts: s.texts });
+      await page.waitForTimeout(600);
+      await shot(page, 'c-' + String(act1.phases.length).padStart(2, '0') + '-' + s.phase + (s.cine ? '-' + s.cine : '') + (s.p2 ? '-' + s.p2 : ''), log);
+    }
+    if (s.cine === 'p2_heat_alert' && !alertShot) { alertShot = true; await page.waitForTimeout(3500); await shot(page, 'c-heat-alert', log); }
+    if (s.cine === 'p3_flagged' && !droneShot) { droneShot = true; await page.waitForTimeout(9000); await shot(page, 'c-drone-flagged', log); }
+    if (s.phase === 'slice_end') { act1.ok = true; await page.waitForTimeout(1500); await shot(page, 'c-slice-end-card', log); break; }
+    await page.waitForTimeout(250);
+  }
+  report.act1 = act1;
+  if (!act1.ok) throw new Error('Act I: the slice did not reach slice_end ' + JSON.stringify(act1.phases));
   await page.waitForTimeout(2000);
   await shot(page, 'b-zz-end', log);
   const video = page.video();
