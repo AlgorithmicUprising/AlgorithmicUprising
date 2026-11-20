@@ -39,13 +39,14 @@ func _shell() -> void:
 	Blocks.solid(self, "WallEast", Vector3(248.0, 3.0, -26.0), Vector3(0.5, 6.0, 34.0), WALL)
 	Blocks.solid(self, "WallNorth", Vector3(230.0, 3.0, -42.0), Vector3(36.5, 6.0, 0.5), WALL)
 	Blocks.solid(self, "WallSouth", Vector3(230.0, 3.0, -10.0), Vector3(36.5, 6.0, 0.5), WALL)
-	# the roof: solar panels, a few broken (light shafts come through those)
+	# the roof: solar panels, closed (no sky gets in); the two broken ones only let a thin haze of dust-light through
 	for i in 6:
 		var x := 215.0 + i * 6.0
+		Blocks.visual(self, "RoofPanel%d" % i, Vector3(x, 6.1, -26.0), Vector3(6.0, 0.2, 34.0), Color("14181e"))
 		if i == 2 or i == 4:
-			Blocks.visual(self, "LightShaft%d" % i, Vector3(x, 3.0, -26.0), Vector3(1.6, 6.0, 1.2), Color(1.0, 0.86, 0.6, 0.18))
-			continue
-		Blocks.visual(self, "RoofPanel%d" % i, Vector3(x, 6.1, -26.0), Vector3(6.0, 0.2, 34.0), Color("1d2733"))
+			var shaft := Blocks.visual(self, "LightShaft%d" % i, Vector3(x, 3.0, -26.0), Vector3(1.4, 6.0, 1.0), Color(1.0, 0.86, 0.6))
+			shaft.material_override = _haze(Color(1.0, 0.82, 0.55, 0.07))
+			shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# the side door (west end of the south wall) and the dirty south windows the sweep light passes along
 	Blocks.visual(self, "SideDoor", Vector3(214.6, 1.2, -10.3), Vector3(1.8, 2.4, 0.1), Color("3a2f2a"))
 	for i in 5:
@@ -94,9 +95,13 @@ func _breaker() -> void:
 	Blocks.visual(self, "BreakerBox", BREAKER, Vector3(0.3, 1.2, 0.9), Color("6e5a3a"))
 	var lever := Blocks.visual(self, "BreakerLever", BREAKER + Vector3(0.22, -0.25, 0.0), Vector3(0.12, 0.5, 0.12), Color("a33"))
 	lever.name = "BreakerLever"
-	var l := Blocks.label(self, "DO NOT RECONNECT – IT TALKS.", BREAKER + Vector3(0.25, 0.85, 0.0), Color("d8d0b0"), 22)
+	# the hand-lettered warning, fixed flat on the box (not a billboard) and small enough to read whole on screen
+	var l := Blocks.label(self, "DO NOT RECONNECT\n- IT TALKS.", BREAKER + Vector3(0.17, 0.0, 0.0), Color("d8d0b0"), 32)
 	l.name = "BreakerLabel"
-	l.rotation.y = -PI * 0.5
+	l.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	l.rotation.y = PI * 0.5
+	l.pixel_size = 0.0055
+	l.outline_size = 6
 	for i in 3:
 		var slot := Blocks.visual(self, "FuseSlot%d" % i, BREAKER + Vector3(0.18, 0.25, -0.25 + i * 0.25), Vector3(0.06, 0.18, 0.12), Color("151515"))
 		slot.set_meta("slot", i)
@@ -107,10 +112,35 @@ func _fuses() -> void:
 		f.name = str(spec[0])
 
 func _dark_light() -> void:
+	# moody practicals: no fill from the sky, only what is in the room
+	_lamp("DimFill", Vector3(230.0, 5.0, -26.0), Color("ff9a5a"), 0.08, 30.0)
+	_lamp("ExitGlow", Vector3(214.6, 2.8, -11.0), Color("ff2a1a"), 0.9, 6.0)
+	var exit := Blocks.label(self, "EXIT", Vector3(214.6, 2.75, -10.4), Color("ff3a2a"), 40)
+	exit.name = "ExitSign"
+	exit.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	exit.rotation.y = PI
+	exit.pixel_size = 0.008
+	_lamp("CrtGlow", Vector3(245.0, 2.2, -26.6), Color("c6ff3d"), 1.1, 7.0)
+	_lamp("BenchLamp", Vector3(244.6, 2.8, -24.2), Color("ffb36b"), 0.7, 5.0)
+	_lamp("BreakerGlow", BREAKER + Vector3(1.4, 0.9, 0.0), Color("ffcf8a"), 0.45, 4.5)
+	_lamp("ShaftPool2", Vector3(227.0, 0.6, -26.0), Color("ffcf8a"), 0.35, 4.0)
+	_lamp("ShaftPool4", Vector3(239.0, 0.6, -26.0), Color("ffcf8a"), 0.35, 4.0)
+	_lamp("CounterGlow", Vector3(218.0, 1.6, -16.4), Color("6a8cff"), 0.25, 4.0)
+
+func _lamp(n: String, at: Vector3, c: Color, energy: float, r: float) -> OmniLight3D:
 	var l := OmniLight3D.new()
-	l.name = "DimFill"
-	l.position = Vector3(230.0, 5.0, -26.0)
-	l.light_color = Color("ffcf8a")
-	l.light_energy = 0.35
-	l.omni_range = 30.0
+	l.name = n
+	l.position = at
+	l.light_color = c
+	l.light_energy = energy
+	l.omni_range = r
 	add_child(l)
+	return l
+
+static func _haze(c: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = c
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return m
