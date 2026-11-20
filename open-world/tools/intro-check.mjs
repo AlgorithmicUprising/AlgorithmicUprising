@@ -168,15 +168,19 @@ async function scenarioStall() {
 async function scenarioBlocked(name, action) {
   const r = report.scenarios[name] = { steps: [] };
   const init = () => {
-    window.__pzBlockPlays = 2;   // the first play() (with sound) and the muted retry are both refused
+    // a browser that refuses autoplay outright (sound or muted) until the player taps the overlay's own button
+    window.__pzTapped = false;
+    window.__pzRefused = 0;
+    window.addEventListener('pointerdown', (e) => { if (e.target && e.target.id === 'pz-intro-play') window.__pzTapped = true; }, true);
     const real = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () {
-      if (this.closest && this.closest('#pz-intro') && window.__pzBlockPlays > 0) { window.__pzBlockPlays--; return Promise.reject(new DOMException('autoplay blocked (test)', 'NotAllowedError')); }
+      if (this.closest && this.closest('#pz-intro') && !window.__pzTapped) { window.__pzRefused++; return Promise.reject(new DOMException('autoplay blocked (test)', 'NotAllowedError')); }
       return real.call(this);
     };
   };
   const { context, page } = await open('', init);
-  await waitFor(page, () => window.PZ_INTRO && window.PZ_INTRO.fallback === 'tap', 30000, 'TAP TO PLAY');
+  await waitFor(page, () => window.PZ_INTRO && window.PZ_INTRO.fallback === 'tap' && window.PZ_INTRO.src.startsWith('https://'), 30000, 'TAP TO PLAY');
+  await page.waitForTimeout(500);
   const s = await video(page);
   r.steps.push(s);
   check(r, 'blocked autoplay shows TAP TO PLAY with SKIP INTRO', (await page.locator('#pz-intro-play').textContent()).includes('TAP TO PLAY') && await page.locator('#pz-intro-skip').isVisible(), s);
