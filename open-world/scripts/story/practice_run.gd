@@ -794,6 +794,9 @@ func _start_run(from: String) -> void:
 	queue = queue.filter(func(q): return q.size() < 4 or str(q[3]) != "bark")
 	hud.prompt("")
 	prompt_shown = ""
+	if power != null and power.state != "":
+		# a replay after the slice: out of the dark arcade, the Yard's dawn back on
+		power.teardown()
 	run.start(from)
 	P3Power.prefetch(main)
 	if autopilot != null:
