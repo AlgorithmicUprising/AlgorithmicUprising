@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://districts/glass_row_edge/glass_row_edge.gd" id="1_gre"]
+
+[node name="GlassRowEdge" type="Node3D"]
+script = ExtResource("1_gre")
