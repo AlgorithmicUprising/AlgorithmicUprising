@@ -15,6 +15,9 @@ signal finished
 const JsonFile = preload("res://scripts/json_file.gd")
 const Protagonist = preload("res://scripts/front/protagonist.gd")
 const World = preload("res://scripts/story/story_world.gd")
+const ZeroPuppet = preload("res://scripts/story/zero_puppet.gd")
+const ZERO_AT := Vector3(245.6, 1.0, -26.0)     # sitting on the workbench, facing the room (-X)
+const PLACEHOLDER_ZERO := ["ZeroTorso", "ZeroArm", "Jacket", "BenchCRT", "CrtFace"]
 const DEF_PATH := "res://data/missions/p3_power_on.json"
 const ID := "p3_power_on"
 const DISTRICT := "solar_arcade_dark"
@@ -32,6 +35,8 @@ var fired := {}
 var sweep_light: Node3D
 var pilot: Dictionary = {}          # review / test autopilot
 var log: Array = []
+var zero: Node3D                    # CINEMATIC P.4: the cutout puppet (zero_puppet.gd)
+var lit: Node3D                     # CINEMATIC P.4: the power-on lights
 
 func setup(h: Node) -> void:
 	host = h
@@ -87,6 +92,12 @@ func start() -> void:
 
 func teardown() -> void:
 	World.apply(host.main, World.DAWN)
+	for n in [zero, lit]:
+		if n != null and is_instance_valid(n):
+			n.queue_free()
+	zero = null
+	lit = null
+	_placeholders(true)
 	if host.run != null:
 		host.run._hud_zero()
 	if sweep_light != null and is_instance_valid(sweep_light):
@@ -381,3 +392,80 @@ func _pilot_tick(_delta: float) -> void:
 		var d := to.normalized()
 		var axes: Array = pl._camera_flat_axes()
 		pl.external_move = Vector2(d.dot(axes[1]), d.dot(axes[0]))
+
+# ------------------------------------------------------------------ CINEMATIC P.4 hooks (first pass)
+
+## After a reload past the breaker: back in the arcade by the breaker, the room still dark, P.3 done.
+func enter_done() -> void:
+	prefetch(host.main)
+	World.apply(host.main, World.INTERIOR_DARK)
+	last_fuse = ""
+	fuses = {"coin_box": true, "toolbox": true, "fixture": true}
+	var pl = host.player
+	pl.spawn_position = Vector3(214.6, 0.5, -31.5)
+	pl.spawn_yaw = deg_to_rad(180.0)
+	pl.respawn()
+	pl.skating = false
+	pl.update_board()
+	state = "done"
+	_hide_found()
+	_hud()
+
+## The cascade: tubes, the token sign, the cabinets glowing through their sheets, a little cooler light.
+func light_up() -> void:
+	if lit != null and is_instance_valid(lit):
+		return
+	lit = Node3D.new()
+	lit.name = "P4PowerOn"
+	host.main.world_sim.add_child(lit)
+	for i in 4:
+		var l := OmniLight3D.new()
+		l.name = "Tube%d" % i
+		l.position = Vector3(218.0 + i * 9.0, 5.2, -26.0)
+		l.light_color = Color("dff3ff")
+		l.light_energy = 0.9
+		l.omni_range = 13.0
+		lit.add_child(l)
+	var room := _district_room()
+	if room != null:
+		for c in room.get_children():
+			if c.has_meta("glow"):
+				var m := StandardMaterial3D.new()
+				m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				m.albedo_color = Color("7fe0ff") if c.name.hash() % 2 == 0 else Color("c6ff3d")
+				(c as MeshInstance3D).material_override = m
+		var sign := room.get_node_or_null("TokenSign") as Label3D
+		if sign != null:
+			sign.modulate = Color("ffcf4a")
+	if sweep_light != null and is_instance_valid(sweep_light):
+		sweep_light.visible = false
+	var lit_preset := World.INTERIOR_DARK.duplicate()
+	lit_preset.ambient = Color("8a8f9a")
+	lit_preset.ambient_energy = 0.3
+	World.apply(host.main, lit_preset)
+	log.append("power_on")
+
+func zero_stage(s: String) -> void:
+	if zero == null or not is_instance_valid(zero):
+		zero = ZeroPuppet.new()
+		host.main.world_sim.add_child(zero)
+		zero.global_position = ZERO_AT
+		zero.rotation.y = -PI * 0.5
+	zero.stage(s)
+	_placeholders(s == "off")
+	log.append("zero:" + s)
+
+func _placeholders(show: bool) -> void:
+	var room := _district_room()
+	if room == null:
+		return
+	for n in PLACEHOLDER_ZERO:
+		var c := room.get_node_or_null(n) as Node3D
+		if c != null:
+			c.visible = show
+
+func _district_room() -> Node:
+	for c in host.main.world_sim.get_children():
+		if c.has_meta("district_id") and c.get_meta("district_id") == DISTRICT:
+			return c
+	return null

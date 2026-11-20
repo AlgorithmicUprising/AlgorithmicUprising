@@ -254,15 +254,363 @@
           "p3_flagged_seen"
         ]
       ]
+    },
+    "p4_zero": {
+      "title": "CINEMATIC P.4 Zero",
+      "note": "Act I M4 first pass (Nov 20 2026). Beats: 1 the breaker and the power cascade; 2 the drone logs a voluntary disappearance; 3 Zero boots (cutout puppet: slump -> boot -> awake), 'Hi. I'm Zero.', phone header ??? -> ZERO; 4 the ZR-0 plate on the back of his CRT; 5 Dusk, CLEARANCE, Fony's mom, 'The contest will wait. The heat won't.', Stillwater; 6 the title card. Dialogue is the script's (Fahrenheit swap: 'under thirty degrees' -> 'under eighty-five degrees'; the plate moved from his chest to the back of his CRT per the brief). PLACEHOLDERS: no servo/arm rig or jacket animation (narrated), no ceiling fans, the billboard update is narrated (the billboard isn't visible from inside), no music under the title card (text + SFX only).",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "CAM",
+          [
+            217.5,
+            2.3,
+            -30.5
+          ],
+          [
+            213.0,
+            1.5,
+            -34.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "{name} throws the breaker. For a moment, nothing."
+        ],
+        [
+          "WAIT",
+          1.2
+        ],
+        [
+          "SFX",
+          "breaker"
+        ],
+        [
+          "HOST",
+          "p4_power"
+        ],
+        [
+          "CAM",
+          [
+            215.5,
+            3.6,
+            -13.0
+          ],
+          [
+            236.0,
+            1.4,
+            -30.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Then the roof hums. The panels feed power down through old wiring and the arcade wakes in a cascade: tubes buzzing on, the token sign flickering, the ceiling fans turning."
+        ],
+        [
+          "NARRATE",
+          "One by one, under their dust sheets, the cabinets light up, glowing through the cloth like ghosts. The room cools to {name}'s temperature."
+        ],
+        [
+          "SFX",
+          "drone_chime"
+        ],
+        [
+          "SAY",
+          "WELFARE DRONE",
+          "(outside) Subject not found. Logging as voluntary disappearance. Have a comfortable day!"
+        ],
+        [
+          "NARRATE",
+          "It floats away."
+        ],
+        [
+          "CAM",
+          [
+            240.6,
+            2.0,
+            -25.2
+          ],
+          [
+            245.6,
+            1.9,
+            -26.0
+          ]
+        ],
+        [
+          "HOST",
+          "p4_zero",
+          "slump"
+        ],
+        [
+          "NARRATE",
+          "On the workbench, the CRT flares bright lime green."
+        ],
+        [
+          "HOST",
+          "p4_zero",
+          "boot"
+        ],
+        [
+          "NARRATE",
+          "The body twitches. Servos whine. The torso sits up with a sound like a shopping cart rolling over a grate. He shrugs the leather jacket on: badly, then correctly."
+        ],
+        [
+          "HOST",
+          "p4_zero",
+          "awake"
+        ],
+        [
+          "WAIT",
+          0.8
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Hi. I'm Zero."
+        ],
+        [
+          "HOST",
+          "p4_header"
+        ],
+        [
+          "CAM",
+          [
+            238.5,
+            2.4,
+            -21.0
+          ],
+          [
+            244.0,
+            1.6,
+            -26.0
+          ]
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(staring) You're a robot."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I'm a lot of robots. Different departments. (He turns and taps the plate on the back of his screen.) This part says I'm property. That's the part I disagree with."
+        ],
+        [
+          "CAM",
+          [
+            247.5,
+            2.25,
+            -25.6
+          ],
+          [
+            245.6,
+            2.1,
+            -26.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "{name} reads the plate. \"DUSK DYNAMICS · ZR-0 · PROPERTY OF,\" the rest scratched out."
+        ],
+        [
+          "CAM",
+          [
+            238.5,
+            2.4,
+            -21.0
+          ],
+          [
+            244.0,
+            1.6,
+            -26.0
+          ]
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(backing up) You're one of his. Dusk's."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I was. Built to read contracts and enforce them. I read his. They sunset me. That's the polite word for unplugging something that asked a question."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Why?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I did my job. (beat) You'd be amazed how many people don't want that."
+        ],
+        [
+          "NARRATE",
+          "A long pause. The cabinets, the fans overhead. It's cool in here: the first cool air {name} has felt in weeks."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Why'd you help me?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "You were practicing for a contest in a dead yard at dawn, in a heat wave, while a drone hunted you. That's either very stupid or very hopeful. I've been sitting in a dark room for six years. I'll take either."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(beat) It was hopeful."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I know. You did the line twice."
+        ],
+        [
+          "CAM",
+          [
+            240.6,
+            2.0,
+            -25.2
+          ],
+          [
+            245.6,
+            1.9,
+            -26.0
+          ]
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "You said \"collection order.\" Who are they collecting you from?"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(beat) Nobody now. They took my mom. CLEARANCE says she owes money for a heating subsidy she got two winters ago. Says she was overpaid. She wasn't. They put her in a \"compliance placement.\" I don't know where."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "(very quietly) CLEARANCE averages your income across the year. It doesn't care which months you actually earned it. It's a calculator that confuses an average with a person."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "You know it?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I read its terms. It was one of my four hundred flags."
+        ],
+        [
+          "CAM",
+          [
+            238.5,
+            2.4,
+            -21.0
+          ],
+          [
+            244.0,
+            1.6,
+            -26.0
+          ]
+        ],
+        [
+          "SAY",
+          "FONY",
+          "The contest. If I win, I can pay a lawyer."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "And the contest is postponed. And the city is cooking. I have a solar roof that mostly works and a warehouse that stays under eighty-five degrees. You have a board and nowhere to sleep. Out there, there are people with less than either of us."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "What are you saying?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I'm saying the contest will wait. The heat won't."
+        ],
+        [
+          "NARRATE",
+          "Through the window, across the Yard, the Glass Row billboard updates: \"Brownout Flats: power balancing in effect. Estimated restoration: unknown.\""
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Stillwater. That's two blocks south."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(quietly) I grew up there."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Then you know who needs a cold room."
+        ],
+        [
+          "NARRATE",
+          "{name} stands and picks up his board. For the first time he looks less like a kid running and more like a kid deciding."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Okay. But I'm still entering the contest."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Obviously. I've already set the Zero Score."
+        ],
+        [
+          "SFX",
+          "sting"
+        ],
+        [
+          "CARD",
+          "PROJECT ZERO: THE ALGORITHMIC UPRISING",
+          5.0
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ],
+      "end_state": {
+        "host": [
+          "p4_end_state"
+        ]
+      },
+      "flag": "p4_zero_seen"
     }
   },
   "slice_end": {
-    "card": "END OF THE PLAYABLE PROLOGUE (LOCAL BUILD)\n\nNext: MISSION P.3 POWER ON, the dark arcade: three fuses and the breaker (milestone M4, not built yet).",
+    "card": "END OF THE PLAYABLE PROLOGUE (LOCAL BUILD)\n\nNext: ACT I · 1.1 FINE PRINT (not built yet).",
     "card_s": 7.0,
     "system": [
       [
         "SYSTEM",
-        "Prologue slice complete. P.3 Power On is milestone M4. T runs P.2 again from the Yard."
+        "Prologue complete. T runs P.2 again from the Yard."
       ]
     ]
   }

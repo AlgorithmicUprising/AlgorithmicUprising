@@ -3,38 +3,170 @@
   "version": 1,
   "id": "p3_power_on",
   "title": "P.3 POWER ON",
-  "note": "Act I M4 (Nov 20 2026). Script: INT. SOLAR ARCADE – CONTINUOUS, then MISSION P.3 Power On. On foot (walk mode), interact (E), pick up three fuses, climb the toppled cabinet, throw the breaker before the thermal sweep reaches him. Temperatures in Fahrenheit (the script's 37/46 are Celsius: 98.6°F body, 115°F room). Zero Score: none. Fail rule (breakdown, proposed): the sweep reaching him resets the room to the last fuse found. Ends at the breaker; CINEMATIC P.4 Zero is next (not built yet: an end card says so).",
+  "note": "Act I M4 (Nov 20 2026). Script: INT. SOLAR ARCADE – CONTINUOUS, then MISSION P.3 Power On. On foot (walk mode), interact (E), pick up three fuses, climb the toppled cabinet, throw the breaker before the thermal sweep reaches him. Temperatures in Fahrenheit (the script's 37/46 are Celsius: 98.6°F body, 115°F room). Zero Score: none. Fail rule (breakdown, proposed): the sweep reaching him resets the room to the last fuse found. Ends at the breaker; CINEMATIC P.4 Zero plays straight after (prologue_cinematics.json p4_zero).",
   "district": "solar_arcade_dark",
-  "spawn": {"pos": [215.5, 0.5, -12.6], "yaw_deg": 180.0},
+  "spawn": {
+    "pos": [
+      215.5,
+      0.5,
+      -12.6
+    ],
+    "yaw_deg": 180.0
+  },
   "sweep_s": 100.0,
-  "sweep_x": [213.0, 247.0],
+  "sweep_x": [
+    213.0,
+    247.0
+  ],
   "fade_s": 0.6,
   "reach_r": 1.5,
   "fuses": {
-    "coin_box": {"at": [230.0, -38.6], "min_y": -9.0, "node": "FuseCoinBox", "reset": [230.0, 0.5, -37.0], "line": [["CRT", "That cabinet's coin box. Someone kept a fuse in there. Humans hide important things in the strangest places."]]},
-    "toolbox": {"at": [243.4, -24.0], "min_y": -9.0, "node": "FuseToolbox", "reset": [241.5, 0.5, -24.0], "line": [["CRT", "The toolbox. Don't touch the red wire. Actually, don't touch any wire. Just the fuse."]]},
-    "fixture": {"at": [236.0, -12.9], "min_y": 1.0, "node": "FuseFixture", "reset": [236.0, 0.5, -20.0], "line": [["CRT", "Climb carefully. That cabinet held up a lot of people's bad decisions. It can hold you."]]}
+    "coin_box": {
+      "at": [
+        230.0,
+        -38.6
+      ],
+      "min_y": -9.0,
+      "node": "FuseCoinBox",
+      "reset": [
+        230.0,
+        0.5,
+        -37.0
+      ],
+      "line": [
+        [
+          "CRT",
+          "That cabinet's coin box. Someone kept a fuse in there. Humans hide important things in the strangest places."
+        ]
+      ]
+    },
+    "toolbox": {
+      "at": [
+        243.4,
+        -24.0
+      ],
+      "min_y": -9.0,
+      "node": "FuseToolbox",
+      "reset": [
+        241.5,
+        0.5,
+        -24.0
+      ],
+      "line": [
+        [
+          "CRT",
+          "The toolbox. Don't touch the red wire. Actually, don't touch any wire. Just the fuse."
+        ]
+      ]
+    },
+    "fixture": {
+      "at": [
+        236.0,
+        -12.9
+      ],
+      "min_y": 1.0,
+      "node": "FuseFixture",
+      "reset": [
+        236.0,
+        0.5,
+        -20.0
+      ],
+      "line": [
+        [
+          "CRT",
+          "Climb carefully. That cabinet held up a lot of people's bad decisions. It can hold you."
+        ]
+      ]
+    }
   },
-  "breaker": {"at": [213.6, -34.0]},
+  "breaker": {
+    "at": [
+      213.6,
+      -34.0
+    ]
+  },
   "lines": {
     "intro": [
-      ["NARRATE", "Dark, hot and dusty. Dead cabinets under sheets. A token counter. Light through broken solar panels in the roof."],
-      ["NARRATE", "On a workbench at the back: an arm, a torso with a riveted plate, a leather jacket. Wired into it, the CRT from the window. Its faint green face looks at {name}."],
-      ["NARRATE", "Outside, a drone chimes. Its scanning light slides along the windows. {name} crouches behind the token counter."],
-      ["CRT", "(barely a whisper) They'll do a thermal sweep. You're ninety-eight point six. Everything else in here is a hundred and fifteen degrees. You're the coolest thing in the building, which is a problem."],
-      ["FONY", "(whispering) What do I do?"],
-      ["CRT", "The panels on the roof still work, mostly. The breaker is behind you. Someone disconnected the main line years ago so I'd stop talking. Reconnect it and the arcade comes back on. The cabinets, the lights, the cooling fans, and me. The fans put the building at your temperature. The sweep can't find you."],
-      ["FONY", "And you?"],
-      ["CRT", "I get to finish my sentences."],
-      ["NARRATE", "The breaker box is rusted, labeled in fading marker: \"DO NOT RECONNECT – IT TALKS.\" Three fuse slots, all empty."],
-      ["FONY", "(beat) That's comforting."]
+      [
+        "NARRATE",
+        "Dark, hot and dusty. Dead cabinets under sheets. A token counter. Light through broken solar panels in the roof."
+      ],
+      [
+        "NARRATE",
+        "On a workbench at the back: an arm, a torso with a riveted plate, a leather jacket. Wired into it, the CRT from the window. Its faint green face looks at {name}."
+      ],
+      [
+        "NARRATE",
+        "Outside, a drone chimes. Its scanning light slides along the windows. {name} crouches behind the token counter."
+      ],
+      [
+        "CRT",
+        "(barely a whisper) They'll do a thermal sweep. You're ninety-eight point six. Everything else in here is a hundred and fifteen degrees. You're the coolest thing in the building, which is a problem."
+      ],
+      [
+        "FONY",
+        "(whispering) What do I do?"
+      ],
+      [
+        "CRT",
+        "The panels on the roof still work, mostly. The breaker is behind you. Someone disconnected the main line years ago so I'd stop talking. Reconnect it and the arcade comes back on. The cabinets, the lights, the cooling fans, and me. The fans put the building at your temperature. The sweep can't find you."
+      ],
+      [
+        "FONY",
+        "And you?"
+      ],
+      [
+        "CRT",
+        "I get to finish my sentences."
+      ],
+      [
+        "NARRATE",
+        "The breaker box is rusted, labeled in fading marker: \"DO NOT RECONNECT – IT TALKS.\" Three fuse slots, all empty."
+      ],
+      [
+        "FONY",
+        "(beat) That's comforting."
+      ]
     ],
-    "need_fuses": [["CRT", "Three slots. Three fuses. I'm counting for you."]],
-    "all_fuses": [["CRT", "That's all three. The breaker. Before the light gets here."]],
-    "sweep_close": [["NARRATE", "The scanning light crawls along the windows. It's almost on him."]],
-    "found": [["NARRATE", "The light finds a warm spot. The drone chimes. {name} drops, rolls and waits it out in the dark."], ["CRT", "Again. Quieter."]],
-    "throw": [["NARRATE", "{name} seats the third fuse and throws the breaker. CLUNK."], ["NARRATE", "For a moment, nothing. Then the roof hums."]]
+    "need_fuses": [
+      [
+        "CRT",
+        "Three slots. Three fuses. I'm counting for you."
+      ]
+    ],
+    "all_fuses": [
+      [
+        "CRT",
+        "That's all three. The breaker. Before the light gets here."
+      ]
+    ],
+    "sweep_close": [
+      [
+        "NARRATE",
+        "The scanning light crawls along the windows. It's almost on him."
+      ]
+    ],
+    "found": [
+      [
+        "NARRATE",
+        "The light finds a warm spot. The drone chimes. {name} drops, rolls and waits it out in the dark."
+      ],
+      [
+        "CRT",
+        "Again. Quieter."
+      ]
+    ],
+    "throw": [
+      [
+        "NARRATE",
+        "{name} seats the third fuse and throws the breaker. CLUNK."
+      ],
+      [
+        "NARRATE",
+        "For a moment, nothing. Then the roof hums."
+      ]
+    ]
   },
-  "end_card": "END OF THE PLAYABLE PROLOGUE (FOR NOW)\nNext: CINEMATIC P.4 ZERO — the arcade wakes, \"Hi. I'm Zero.\" (milestone M4, not built yet)",
+  "end_card": "(unused since P.4 plays after the breaker; kept for a P.4-off build)",
   "line_notes": "Fuse lines and the INT. lines are the script's (Fahrenheit swap on the sweep line). need_fuses, all_fuses, sweep_close and found are PLACEHOLDER lines, not in the script."
 }

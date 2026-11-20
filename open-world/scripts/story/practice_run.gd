@@ -193,9 +193,16 @@ func start(resume := false) -> bool:
 		_teleport("line")
 		contact = true
 		hud.set_objective(runner.title, "Run the line: bowl, quarter, rail. Beat the Zero Score.")
-		if flow.save.flag("p3_power_done"):
-			# the playable slice ends at the breaker (CINEMATIC P.4 Zero is next, not built yet)
+		if flow.save.flag("p4_zero_seen"):
+			# the playable slice ends after CINEMATIC P.4: in the lit arcade with Zero
+			power.enter_done()
+			p4_end_state()
 			_slice_end(false)
+		elif flow.save.flag("p3_power_done"):
+			# saved between the breaker and P.4: P.4 plays
+			power.enter_done()
+			phase = "p3_power"
+			_play_cinematic("p4_zero")
 		elif flow.save.flag("p2_run_done"):
 			# P.3 Power On was under way (or next): back into the dark arcade, fuses found stay found
 			_say_all([["SYSTEM", "Loaded. Inside the arcade."]])
@@ -772,7 +779,7 @@ func _play_cinematic(cid: String) -> bool:
 	prompt_shown = ""
 	var ok: bool = cinematic.play(cid)
 	if ok:
-		phase = "p2_alert" if cid == "p2_heat_alert" else "p3_flagged"
+		phase = {"p2_heat_alert": "p2_alert", "p3_flagged": "p3_flagged", "p4_zero": "p4_zero"}.get(cid, cid)
 		p2_state = "cinematic"
 	return ok
 
@@ -783,6 +790,10 @@ func _on_cinematic_done(cid: String, _skipped: bool) -> void:
 		p2_state = "done"
 		# "Push.": MISSION P.2 Run starts straight from the net
 		_start_run("")
+	elif cid == "p4_zero":
+		p2_state = "done"
+		# the title card has played: the end of the playable prologue (Act I 1.1 Fine Print is next)
+		_slice_end(true)
 
 ## MISSION P.2 Run (Act I M3).
 func _start_run(from: String) -> void:
@@ -826,8 +837,28 @@ func _start_power() -> void:
 		power.start_pilot(OS.get_environment("AU_P3_FOUND") != "")
 
 func _on_power_finished() -> void:
-	_say_all([["CARD", str(power.def.get("end_card", "END OF THE PLAYABLE PROLOGUE"))]])
-	_slice_end(false)
+	# the breaker is thrown: CINEMATIC P.4 Zero
+	_play_cinematic("p4_zero")
+
+# ---- CINEMATIC P.4 hooks (cinematic.gd "HOST" ops and end_state)
+func p4_power() -> void:
+	if power != null:
+		power.light_up()
+
+func p4_zero(stage: String) -> void:
+	if power != null:
+		power.zero_stage(stage)
+
+func p4_header() -> void:
+	if hud != null:
+		hud.phone_header("ZERO", "")
+		flow.save.set_flag("zero_named")
+
+## A skipped (or reloaded) P.4 still lands here: power on, Zero awake on the bench, the thread header reads ZERO.
+func p4_end_state() -> void:
+	p4_power()
+	p4_zero("awake")
+	p4_header()
 
 func hides_prompts() -> bool:
 	return active and (in_cinematic() or (run != null and run.hides_prompts()) or (power != null and power.active() and power.hides_prompts()))
@@ -849,7 +880,7 @@ func _slice_end(show_card: bool) -> void:
 		card_left = 0.0
 	_say_all(se.get("system", []))
 	if hud != null:
-		hud.set_objective(runner.title, "Prologue slice complete. Next: CINEMATIC P.4 Zero (M4). T runs P.2 again; the line is open too.")
+		hud.set_objective(runner.title, "Prologue complete. Next: Act I 1.1 Fine Print (not built yet). T runs P.2 again.")
 	flow.save.story["prologue"] = "slice_end"
 	flow.persist()
 
