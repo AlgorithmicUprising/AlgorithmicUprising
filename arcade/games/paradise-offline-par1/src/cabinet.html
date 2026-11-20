@@ -1,0 +1,72 @@
+<div class="cabinet">
+  <div class="screen">
+    <canvas role="img" aria-label="Paradise Offline one-day homestead scene"></canvas>
+    <div class="hud" aria-label="Household status">
+      <span>HOME <b data-meter="home">54</b></span>
+      <span>COOP <b data-meter="coop">38</b></span>
+      <span>ENERGY <b data-meter="energy">76</b></span>
+      <span>BOUNDARIES <b data-meter="boundaries">100</b></span>
+      <span>RESOURCES <b><span data-meter="cash">$8</span> · <span data-meter="boards">1</span> boards · <span data-meter="feed">1</span> feed</b></span>
+      <span>SLOTS <b data-meter="slots">3</b></span>
+    </div>
+    <p class="notice" data-notice aria-live="polite">Choose a schedule. Camera-off work stays available.</p>
+    <div class="top">
+      <button part="sound" aria-label="Toggle sound">SOUND OFF</button>
+      <button part="pause" aria-label="Pause day">Ⅱ</button>
+    </div>
+    <div class="overlay" data-phase="title">
+      <h2>PARADISE OFFLINE // PAR-1</h2>
+      <p data-detail>One day. Three work slots. Your home, your call.</p>
+      <p class="summary" data-summary hidden></p>
+      <button part="start">START DAY</button>
+      <button part="resume" hidden>RESUME</button>
+      <button part="again" hidden>PLAY ANOTHER DAY</button>
+      <button part="share" hidden>SHARE REPORT</button>
+    </div>
+    <div class="controls" aria-label="Day actions">
+      <div class="action-group" data-step="schedule" hidden>
+        <span class="prompt">Choose your schedule</span>
+        <button data-key="live">GO LIVE · 1</button>
+        <button data-key="offline">OFFLINE DAY · 2</button>
+      </div>
+      <div class="action-group" data-step="camera-setup" hidden>
+        <span class="prompt">Select public yard cameras · private room stays off-camera</span>
+        <button data-key="camera-coop" data-zone="coop" aria-pressed="false">COOP CAM</button>
+        <button data-key="camera-garden" data-zone="garden" aria-pressed="false">GARDEN CAM</button>
+        <button data-key="camera-porch" data-zone="porch" aria-pressed="false">PORCH CAM</button>
+        <button class="primary" data-key="begin-day">START LIVE DAY</button>
+      </div>
+      <div class="action-group" data-step="offline-ready" hidden>
+        <span class="prompt">No cameras, no chat. The household work is unchanged.</span>
+        <button class="primary" data-key="begin-day">START OFFLINE DAY</button>
+      </div>
+      <div class="action-group" data-step="tasks" hidden>
+        <span class="prompt">Choose a job · F feed · R repair · T rest</span>
+        <button data-key="feed">FEED HENS · F</button>
+        <button data-key="repair">REPAIR COOP · R</button>
+        <button data-key="rest">REST · T</button>
+        <button data-key="stream" data-stream data-live-only hidden>STOP LIVE</button>
+        <button class="quiet" data-key="finish-day">END DAY · E</button>
+      </div>
+      <div class="action-group" data-step="message" hidden>
+        <span class="prompt">A fictional viewer offers a useful repair tip. No live chat.</span>
+        <button data-key="use-tip">SAVE TIP · Y</button>
+        <button class="quiet" data-key="hide-message">HIDE MESSAGE · N</button>
+      </div>
+      <div class="action-group sponsor-group" data-step="sponsor" hidden>
+        <span class="prompt">OPTIONAL SPONSOR · TERMS BEFORE ACCEPTANCE</span>
+        <span class="terms">+$12 cash · +1 roof board · −8 energy · uses 1 work slot · one brief private-room cutaway · boundaries −25</span>
+        <button class="primary" data-key="accept-sponsor">ACCEPT TERMS · A</button>
+        <button class="quiet" data-key="decline-sponsor">DECLINE · D</button>
+      </div>
+      <div class="action-group" data-step="animating" hidden>
+        <span class="prompt">The day is in motion. Your chosen action will finish shortly.</span>
+      </div>
+      <div class="action-group" data-step="report" hidden>
+        <span class="prompt">Review the homestead, energy, boundaries, and supplies in the day report.</span>
+        <button class="primary" data-key="complete-report">FINISH LOCAL REPORT</button>
+      </div>
+    </div>
+  </div>
+  <span class="live" aria-live="polite" aria-atomic="true"></span>
+</div>

@@ -1,6 +1,6 @@
 # PUNK ARCADE · CH 05
 
-Four dependency-free Canvas web component games, designed to embed in ZERO TV or stand alone. **Engineering scaffold / early playable greybox**; Bars per Watt awaits reviewed song charts and a cleared playback copy.
+Four established Canvas web component games plus the provisional PAR-1 Paradise Offline slice, designed to embed in ZERO TV or stand alone. **Engineering scaffold / early playable greybox**; Bars per Watt awaits reviewed song charts and a cleared playback copy.
 
 ## Getting started
 
@@ -12,7 +12,7 @@ npm run check
 npm test
 ```
 
-Open `demo/index.html` through an HTTP server (for example `python3 -m http.server 8080` from `arcade/`), then visit `http://localhost:8080/demo/`. The games have procedural graphics while artwork is pending.
+Open `demo/index.html` through an HTTP server (for example `python3 -m http.server 8080` from `arcade/`), then visit `http://localhost:8080/demo/`. The games use procedural graphics while artwork is pending. PAR-1 is a one-day local prototype; it has no permanent cabinet slot or leaderboard submission.
 
 ## Embed
 
@@ -27,7 +27,7 @@ Open `demo/index.html` through an HTTP server (for example `python3 -m http.serv
 <bars-per-watt></bars-per-watt>
 ```
 
-All four components emit bubbling `game:ready`, `game:start`, `game:pause`, `game:resume`, `game:over`, `game:share` and `game:error` events. The host owns analytics and share links. Games store only a best score locally. Press space to jump in Grind; use arrows/WASD and space to spray in Tag. Mobile: tap Grind; use the on-screen buttons in Tag. Game art is intentionally replaceable by a per-game `skins/<id>/skin.json`; the first playable greybox uses built-in shapes.
+All cartridges emit bubbling `game:ready`, `game:start`, `game:pause`, `game:resume`, `game:over`, `game:share` and `game:error` events. The host owns analytics and share links. Games store only a best score locally. Press space to jump in Grind; use arrows/WASD and space to spray in Tag. Mobile: tap Grind; use the on-screen buttons in Tag. Game art is intentionally replaceable by a per-game `skins/<id>/skin.json`; the first playable greybox uses built-in shapes.
 
 [Cookie Wall](games/cookie-wall/README.md) uses one square court in both layouts. Move with arrows or A/D and launch with Space/U. On a phone, drag below the court and tap Launch.
 
