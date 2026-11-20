@@ -565,7 +565,16 @@ func _act1() -> void:
 	await frames(3)
 	ok(story.phase == "p2_run" and not story.in_cinematic() and story.cinematic.billboard_key == "postponed", "reload: after P.3 the run resumes (no cinematic replay), billboard postponed")
 	# skip: hold Enter skips a cinematic and still lands its end state
+	story.cinematic.time_scale = 1.0
+	Input.action_press("ui_accept")
 	ok(story.cinematic.play("p3_flagged"), "skip: a cinematic can be replayed for the test")
+	for _i in 120:
+		await t.get_tree().process_frame
+	ok(story.in_cinematic() and not story.cinematic.skip_armed, "skip: Enter already held when a cinematic starts does not skip it (needs a fresh hold)")
+	Input.action_release("ui_accept")
+	await t.get_tree().process_frame
+	ok(story.cinematic.skip_armed, "skip: once Enter is let go, holding it skips again")
+	story.cinematic.time_scale = 40.0
 	story.cinematic.skip()
 	ok(not story.in_cinematic() and story.cinematic.last_skipped and story.phase == "p2_run" and not story.hud.letterbox_top.visible, "skip: skipping drops the letterbox and goes on to the run")
 	story.stop()

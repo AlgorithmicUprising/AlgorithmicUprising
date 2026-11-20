@@ -180,6 +180,7 @@ func _intro() -> void:
 	var js: String = ip._overlay_js()
 	ok("TAP TO PLAY" in js and "SKIP INTRO" in js and "showFallback('tap')" in js, "intro: blocked autoplay (even muted) shows TAP TO PLAY / SKIP INTRO")
 	ok("showFallback('stall')" in js and "done('stalled')" in js and "TRY AGAIN" in js, "intro: a stall shows TRY AGAIN / SKIP INTRO, then carries on by itself")
+	ok("if (!downKeys[e.code]) return;" in js, "intro: only keys pressed during the intro are swallowed; an Enter held from the name panel still releases in the game")
 	ok("'timeout: '" in js and "done('timeout')" in js and "missing()" in js, "intro: a source that never starts moves on; a hard cap and the missing card end it")
 	var ip_src := FileAccess.get_file_as_string("res://scripts/front/intro_player.gd")
 	ok("URLSearchParams" in ip_src and "get('intro')" in ip_src and "sources = [q]" in ip_src, "intro: ?intro=<url> still overrides the sources")

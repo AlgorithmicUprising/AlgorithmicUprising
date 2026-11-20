@@ -29,6 +29,7 @@ var at := 0
 var wait_left := 0.0
 var playing := false
 var held := 0.0
+var skip_armed := false           # a skip needs a fresh hold: a key already down when the cinematic starts does not count
 var time_scale := 1.0               # tests: > 1 plays the holds faster
 var camera: Camera3D
 var shot := "game"
@@ -62,6 +63,7 @@ func play(cid: String) -> bool:
 	at = 0
 	wait_left = 0.0
 	held = 0.0
+	skip_armed = not Input.is_action_pressed("ui_accept")
 	playing = true
 	last_skipped = false
 	host.hud.skip_hint("HOLD ENTER TO SKIP")
@@ -76,6 +78,9 @@ func _process(delta: float) -> void:
 	if not playing:
 		return
 	var holding := Input.is_action_pressed("ui_accept")
+	if not skip_armed:
+		skip_armed = not holding
+		holding = false
 	held = held + delta if holding else maxf(0.0, held - delta * 2.0)
 	host.hud.skip_hint("HOLD ENTER TO SKIP  " + "|".repeat(int(clampf(held / SKIP_HOLD_S, 0.0, 1.0) * 10.0)))
 	if held >= SKIP_HOLD_S:

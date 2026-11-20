@@ -245,7 +245,7 @@ func _overlay_js() -> String:
   function release() { holding = Math.max(0, holding - 1); }
   var downKeys = {};
   function kd(e) { e.preventDefault(); e.stopImmediatePropagation(); if (e.repeat || downKeys[e.code]) return; downKeys[e.code] = 1; if (st.fallback && (e.code === 'Escape' || e.code === 'Enter' || e.code === 'Space')) { if (e.code === 'Escape') done('skipped'); else fbPlay.click(); return; } press(); }
-  function ku(e) { e.preventDefault(); e.stopImmediatePropagation(); if (downKeys[e.code]) { delete downKeys[e.code]; release(); } }
+  function ku(e) { if (!downKeys[e.code]) return; e.preventDefault(); e.stopImmediatePropagation(); delete downKeys[e.code]; release(); } // a key held from before the intro (Enter on the name panel) lets its release reach the game
   window.addEventListener('keydown', kd, true); window.addEventListener('keyup', ku, true);
   o.addEventListener('pointerdown', function (e) { if (e.target === sound) return; e.preventDefault(); press(); });
   o.addEventListener('pointerup', release); o.addEventListener('pointercancel', release); o.addEventListener('pointerleave', function () { holding = 0; });
