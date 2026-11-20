@@ -24,13 +24,14 @@ Polish (M3 round): no "Click to look" or other input prompt over a cutscene or a
    - **Fail rule (breakdown proposal):** caught by a net -> short fade -> restart at the last checkpoint (Yard, fence gap, plaza, culvert). No lives; the clock keeps running; T also restarts at the checkpoint.
    - The loose **drain grate** beside the stairs -> the culvert (a fade and a narration line) -> up in the Yard's NE corner -> across to the **arcade's side door** -> "The chain falls away. Something inside has unlocked it."
    - **Zero Score is time-based:** the first escape sets Zero's time (the next whole 5 s below it, never under 30 s); best and Zero times are saved in the mission record in ms. Beating it gets a text.
-6. **End card:** P.3 Power On (the dark arcade, fuses, the breaker) is milestone M4, not built yet. The Yard stays open; **T runs P.2 again**. Flags `p2_run_started`, `p2_run_done`, `p2_zero_beaten`; a reload mid-run resumes at the saved checkpoint, a reload after the door goes straight to the slice end.
+6. **MISSION P.3 Power On** (Act I M4, Nov 20 2026; `scripts/story/p3_power_on.gd`, `data/missions/p3_power_on.json`): the side door fades into the dark Solar Arcade, its own district pack **solar_arcade_dark** (`districts/solar_arcade_dark/`, off-map east at x 212 .. 248, z -42 .. -10; armed and requested when P.2 Run starts, a few KB against the 8 MiB cap). The script's INT. lines play (narration, Fony, the CRT on the workbench whispering: "You're ninety-eight point six. Everything else in here is a hundred and fifteen degrees."; the script's 37/46 were Celsius). Then on foot: **E** takes the fuse in reach: the cabinet coin box (north row), the toolbox under the workbench, the light fixture over the tall cabinet (walk up the toppled cabinet leaning on it). Each fuse gets the script's whispered line. **E** at the breaker ("DO NOT RECONNECT – IT TALKS.") with all three throws it (CLUNK, the roof hums). The thermal sweep is a light crossing the south windows plus a HUD bar (`sweep_s` 100); if it gets to the end the drone "finds a warm spot": fade, back to the last fuse found, fuses kept, sweep restarts (the breakdown's proposed rule). Save: mission `p3_power_on` (`done` = fuses found, `checkpoint` = last fuse), flags `p3_power_started`, `p3_fuse_<id>`, `p3_power_done`; reload mid-P.3 resumes with the fuses kept and skips the INT. lines. SFX: synthesized `pickup` and `breaker` cues.
+7. **End card:** CINEMATIC P.4 Zero (the cascade, "Hi. I'm Zero.", ??? → ZERO) is next, not built yet. The Yard stays open; **T runs P.2 again** (and P.3 after it, fuses back in place).
 
 Text plus synthesized SFX only (`story/sfx.gd`: text in/out, typing, three-tone alert, drone chime/hum, net, sting). No voice, no music, no audio files.
 
 ## Not built yet
 
-- **P.3 Power On** (the arcade interior; the script has it at 115°F inside), **P.4** (the Zero 2D cutout puppet, ??? → ZERO thread header).
+- **CINEMATIC P.4 Zero** (power cascade, the drone logs a "voluntary disappearance", Zero boots, "Hi. I'm Zero.", the ??? → ZERO thread header, title card); the Zero 2D cutout puppet.
 - **1.1–1.4B**, Zero Vision, Pirate Weather (placement A at 1.3).
 - Account bridge pz:hello / pz:account / pz:save is wired with the local-save fallback; FR-039 (site side) is still pending.
 
@@ -40,6 +41,8 @@ Text plus synthesized SFX only (`story/sfx.gd`: text in/out, typing, three-tone 
 - A "MISSION P.2 · RUN" title card between P.3 and the run: `toggles.title_card` in `data/missions/p2_run.json` (default false).
 
 ## Open calls
+
+- **P.3:** sweep length (100 s) and the reset-to-last-fuse fail rule are proposals; the placeholder lines (`need_fuses`, `all_fuses`, `sweep_close`, `found`) are not in the script; the interior is a blockout (no sheets cloth sim, no fans yet); Fony climbs a toppled cabinet (a ramp) rather than a climb animation.
 
 - The heat-alert trigger rule is accepted for now (Nov 19 2026). Still open: the P.1 fail rules, 6C "Clean.", the P.2 title card.
 - P.2 Run: the caught -> checkpoint rule and Zero's time rule are proposals; drone speeds are first-pass balance. A few lines are new placeholders, not in the script (listed in `p2_run.json` `line_notes`).

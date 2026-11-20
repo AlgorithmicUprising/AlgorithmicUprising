@@ -2,7 +2,7 @@
 //   title -> PRESS START -> New Game (default name) -> the hosted intro video (plays, then hold to skip) -> P.1 played by
 //   the review autopilot (story_demo=1) -> the deal -> the heat alert -> CINEMATIC P.2 and P.3 -> MISSION P.2 Run
 //   (autopilot: caught once at the fork to show the restart, then the dock route) -> the culvert -> the arcade's side
-//   door -> the end card (P.3 Power On is M4).
+//   door -> MISSION P.3 Power On in the dark arcade (three fuses, the breaker) -> the end card (CINEMATIC P.4 Zero is next).
 // Writes screenshots, act1-full-run.webm and act1-check.json to AU_ACT1_OUT. Run after export-web + stage-composite.
 // Deploys nothing.
 import { spawn } from 'node:child_process';
@@ -90,18 +90,25 @@ async function run() {
     'run-culvert': (s, r) => r && r.state === 'culvert',
     'run-yard-to-door': (s, r) => r && r.state === 'yard',
     'run-door': (s, r) => r && r.state === 'door',
+    'p3-arcade-dark': (s, r, q) => q && q.state === 'intro' && s.phase === 'p3_power',
+    'p3-play': (s, r, q) => q && q.state === 'play' && q.fuses === 0,
+    'p3-fuse-coin-box': (s, r, q) => q && q.fuses >= 1,
+    'p3-fuse-toolbox': (s, r, q) => q && q.fuses >= 2,
+    'p3-fuse-fixture': (s, r, q) => q && q.fuses >= 3,
+    'p3-breaker': (s, r, q) => q && (q.state === 'power' || q.state === 'done'),
     'end-card': (s, r) => s.phase === 'slice_end',
   };
-  const delays = { 'heat-alert': 3500, 'drone-flagged': 9000, 'run-caught': 500, 'run-culvert': 900, 'run-door': 600, 'end-card': 1200, 'run-plaza': 1800, 'run-dock': 300, 'run-enforcers': 1500 };
+  const delays = { 'p3-arcade-dark': 2500, 'p3-fuse-fixture': 600, 'p3-breaker': 1500, 'heat-alert': 3500, 'drone-flagged': 9000, 'run-caught': 500, 'run-culvert': 900, 'run-door': 600, 'end-card': 1200, 'run-plaza': 1800, 'run-dock': 300, 'run-enforcers': 1500 };
   const end = Date.now() + 22 * 60 * 1000;
   let last = '';
   while (Date.now() < end) {
     const s = await story();
     const r = await page.evaluate(() => (window.AU_RUN ? { ...window.AU_RUN } : null));
-    const key = [s.phase, s.objective, s.cine, r && r.state, r && r.checkpoint].join('|');
-    if (key !== last) { last = key; report.timeline.push({ t: Math.round((Date.now() - t0) / 1000), phase: s.phase, obj: s.objective, cine: s.cine, deal: s.deal, run: r }); }
+    const q = await page.evaluate(() => (window.AU_P3 ? { ...window.AU_P3 } : null));
+    const key = [s.phase, s.objective, s.cine, r && r.state, r && r.checkpoint, q && q.state, q && q.fuses].join('|');
+    if (key !== last) { last = key; report.timeline.push({ t: Math.round((Date.now() - t0) / 1000), phase: s.phase, obj: s.objective, cine: s.cine, deal: s.deal, run: r, p3: q }); }
     for (const [name, pred] of Object.entries(want)) {
-      if (!seen.has(name) && pred(s, r)) {
+      if (!seen.has(name) && pred(s, r, q)) {
         seen.add(name);
         if (delays[name]) await page.waitForTimeout(delays[name]);
         await shot(name);
@@ -113,6 +120,8 @@ async function run() {
   for (const name of Object.keys(want)) step('reached: ' + name, seen.has(name), {});
   const fin = await page.evaluate(() => ({ story: { ...window.AU_STORY }, run: window.AU_RUN ? { ...window.AU_RUN } : null }));
   step('the run ended at the arcade door with a time', fin.run && fin.run.state === 'done' && fin.run.time > 10, fin);
+  const p3 = await page.evaluate(() => (window.AU_P3 ? { ...window.AU_P3 } : null));
+  step('P.3 Power On: three fuses and the breaker', p3 && p3.state === 'done' && p3.fuses === 3, p3);
   await page.waitForTimeout(4000);
   await shot('zz-after-end-card');
 }
