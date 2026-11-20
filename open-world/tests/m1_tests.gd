@@ -593,10 +593,14 @@ func _act1() -> void:
 	story = main.get_node("Story")
 	story.start()
 	await frames(2)
-	story.deal_state = "offered"
-	story._arm_p2()
+	story.deal_state = "queued"
 	story._fire_p2("beat")
-	ok(story.p2_state == "handoff" and story.p2_reason == "beat" and story.queue.any(func(q): return q[0] == "ALERT"), "P.2 trigger: the first beat hands off to the alert")
+	ok(story.p2_state != "handoff" and story.p2_pending_beat, "P.2 trigger: a beat during the deal waits for the deal to finish")
+	story.queue.clear()
+	story.talking = ""
+	story.talk_left = 0.0
+	await frames(3)
+	ok((story.p2_state == "handoff" or story.p2_state == "cinematic") and story.p2_reason == "beat" and story.deal_state == "offered", "P.2 trigger: after the deal, the first beat hands off to the alert (%s)" % story.p2_state)
 	story.stop()
 	main.queue_free()
 	await frames(2)

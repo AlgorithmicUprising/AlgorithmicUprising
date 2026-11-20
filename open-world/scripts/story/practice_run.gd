@@ -79,6 +79,7 @@ var bb_clock := 0.0
 var phase := "p1"                   # p1 / p2_alert / p3_flagged / slice_end
 var cinematic: Node = null
 var p2_reason := ""                 # tests / probes: beat / timeout / idle
+var p2_pending_beat := false        # beat the Zero Score while the deal was still being offered: alert right after it
 
 func bind(host: Node) -> void:
 	main = host
@@ -141,6 +142,7 @@ func start(resume := false) -> bool:
 	bb_clock = 0.0
 	phase = "p1"
 	p2_reason = ""
+	p2_pending_beat = false
 	# the world
 	dressing = World.build(main.world_sim)
 	lighting = World.dawn(main)
@@ -662,6 +664,8 @@ func _p2_trigger(delta: float) -> void:
 		if left == 0 and talking == "":
 			deal_state = "offered"
 			_arm_p2()
+			if p2_pending_beat:
+				_fire_p2("beat")
 		return
 	if p2_state != "armed":
 		return
@@ -679,6 +683,10 @@ func _p2_trigger(delta: float) -> void:
 
 func _fire_p2(reason: String) -> void:
 	if p2_state == "handoff" or p2_state == "cinematic" or p2_state == "done" or flow.save.flag("p2_heat_alert_seen"):
+		return
+	if deal_state == "queued":
+		# the deal is the hook for P.2-P.4: let him hear all of it, then the alert
+		p2_pending_beat = true
 		return
 	p2_state = "handoff"
 	p2_reason = reason
