@@ -19,6 +19,7 @@ func run(host: Node) -> void:
 	_data()
 	await _power_full()
 	await _reload_mid()
+	await _p4_skip_and_reload()
 
 func ok(cond: bool, name: String) -> void:
 	t.expect(cond, "m4: " + name)
@@ -75,6 +76,18 @@ func _data() -> void:
 	ok(not e.is_empty() and int(e.budget_bytes) <= 8 * 1024 * 1024 and str(e.pack) == "districts/solar_arcade_dark.pck" and ResourceLoader.exists(str(e.scene)), "registry: the dark arcade is its own pack inside the 8 MiB cap")
 	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
 	ok("District solar_arcade_dark" in presets and "build/web/districts/solar_arcade_dark.pck" in presets, "export: a District solar_arcade_dark preset")
+	var cd = JsonFile.read("res://data/missions/prologue_cinematics.json")
+	var p4: Dictionary = cd.get("cinematics", {}).get("p4_zero", {})
+	var steps := JSON.stringify(p4.get("steps", []))
+	ok(not p4.is_empty() and "Hi. I'm Zero." in steps and "PROJECT ZERO: THE ALGORITHMIC UPRISING" in steps and "p4_header" in steps and str(p4.get("flag", "")) == "p4_zero_seen" and p4.get("end_state", {}).get("host", []).has("p4_end_state"), "data: CINEMATIC P.4 Zero (beats, the header hook, the title card; a skip lands the end state)")
+	ok("eighty-five degrees" in steps and not "thirty degrees" in steps, "data: P.4 in Fahrenheit (the warehouse stays under eighty-five)")
+	var Puppet = load("res://scripts/story/zero_puppet.gd")
+	var z = Puppet.new()
+	t.add_child(z)
+	ok(z.body.texture != null and z.head_card.texture != null and z.face.texture != null and not z.body.double_sided and "ZR-0" in z.back_plate.text and z.back_plate.get_parent() == z.head, "Zero puppet: the sheet's layers as single-sided cards; the ZR-0 plate on the back of the CRT")
+	z.stage("awake")
+	ok(z.visible and z.face.visible, "Zero puppet: stages")
+	z.queue_free()
 	ok(Sfx.CUES.has("pickup") and Sfx.CUES.has("breaker") and Sfx.make("breaker").data.size() > 0, "sfx: synthesized pickup and breaker cues (no audio files)")
 	ok(P3._bar(0.0) == "[----------]" and P3._bar(0.55) == "[#####-----]" and P3._bar(0.55).to_ascii_buffer().get_string_from_ascii() == P3._bar(0.55), "the sweep bar is plain ASCII (no tofu glyphs)")
 	var room = load(str(e.scene)).instantiate()
@@ -134,6 +147,7 @@ func _power_full() -> void:
 			break
 	ok(p.state == "play" and p.fuses.has("coin_box") and p.sweep < 0.1 and Vector2(pl.global_position.x - 230.0, pl.global_position.z + 37.0).length() < 1.0 and p.log.has("reset:coin_box"), "reset to the last fuse found; the fuse stays found (%s)" % pl.global_position)
 	p.def["sweep_s"] = 100.0
+	story.cinematic.time_scale = 40.0
 	for _i in 60 * 90:
 		story.talk_left = minf(story.talk_left, 0.001)
 		story.card_left = 0.0
@@ -150,12 +164,52 @@ func _power_full() -> void:
 		await t.get_tree().physics_frame
 		if story.phase == "slice_end" and story.queue.is_empty():
 			break
-	ok(p.state == "done" and main.flow.save.flag("p3_power_done") and story.phase == "slice_end", "P.3 done; the slice ends at the breaker")
-	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|") and "P.4" in str(l)), "end card: CINEMATIC P.4 Zero is next")
+	ok(p.state == "done" and main.flow.save.flag("p3_power_done") and main.flow.save.flag("p4_zero_seen") and story.phase == "slice_end", "P.3 done at the breaker; CINEMATIC P.4 plays; the slice ends after it (%s)" % story.phase)
+	var ran: Array = story.cinematic.ran
+	ok(ran.has("p4_zero:CAM") and ran.has("p4_zero:HOST") and ran.has("p4_zero:CARD"), "P.4: fixed cameras in the arcade, the story hooks, the title card")
+	ok(story.spoken.any(func(l): return "Hi. I'm Zero." in str(l)) and story.spoken.any(func(l): return "The heat won't." in str(l)), "P.4: \"Hi. I'm Zero.\" ... \"The contest will wait. The heat won't.\"")
+	ok(p.lit != null and p.log.has("power_on") and World.sun_energy(main) == 0.0, "P.4: the power cascade lights the room (still no sun inside)")
+	ok(p.zero != null and p.zero.visible and p.zero.current == "awake" and p.zero.face.visible, "P.4: Zero, the cutout puppet, is awake on the workbench")
+	var placeholder = room.get_node_or_null("BenchCRT") if room != null else null
+	ok(placeholder != null and not placeholder.visible, "P.4: the blockout torso and CRT give way to the puppet")
+	ok(story.hud.phone_sender == "ZERO" and story.hud.phone_name.text == "ZERO", "P.4: the phone thread header changes from ??? to ZERO")
+	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|") and "1.1" in str(l)), "end card: Act I 1.1 Fine Print is next")
 	ok(story.sfx.played.has("pickup") and story.sfx.played.has("breaker"), "sfx: pickup and breaker played")
 	story.retry()
 	await frames(2)
 	ok(story.phase == "p2_run" and World.sun_energy(main) > 0.5 and "ZERO TIME" in story.hud.zero_label.text, "T after the slice: back out to the Yard's dawn, ZERO TIME back on the HUD")
+	await _done(main)
+
+func _p4_skip_and_reload() -> void:
+	# saved between the breaker and P.4: P.4 plays; skipping it still lands power, Zero and the ZERO header
+	var s = SaveScript.new()
+	for f in ["story_started", "p1_contact", "p1_deal_offered", "p2_heat_alert_seen", "p3_flagged_seen", "p2_run_started", "p2_run_done", "p3_power_started", "p3_power_done"]:
+		s.set_flag(f)
+	var m: Dictionary = s.mission("p1_practice_run")
+	m["state"] = "done"
+	m["completions"] = 1
+	var f := FileAccess.open(SAVE, FileAccess.WRITE)
+	f.store_string(JSON.stringify(s.to_dict()))
+	f.close()
+	var main = await _main()
+	var story = main.get_node("Story")
+	story.start()
+	await frames(3)
+	ok(story.in_cinematic() and story.cinematic.id == "p4_zero" and main.player.global_position.x > 210.0, "reload after the breaker: P.4 plays in the arcade")
+	story.cinematic.skip()
+	await frames(3)
+	ok(story.phase == "slice_end" and main.flow.save.flag("p4_zero_seen") and story.power.zero != null and story.power.zero.current == "awake" and story.hud.phone_sender == "ZERO" and story.power.lit != null, "skip P.4: power on, Zero awake, the ZERO header, then the slice end")
+	await _done(main)
+	# after P.4: straight to the slice end, in the lit arcade with Zero
+	s.set_flag("p4_zero_seen")
+	f = FileAccess.open(SAVE, FileAccess.WRITE)
+	f.store_string(JSON.stringify(s.to_dict()))
+	f.close()
+	main = await _main()
+	story = main.get_node("Story")
+	story.start()
+	await frames(3)
+	ok(story.phase == "slice_end" and not story.in_cinematic() and story.power.zero != null and story.power.zero.visible and story.hud.phone_sender == "ZERO", "reload after P.4: the slice end, Zero on the bench, ZERO in the thread")
 	await _done(main)
 
 func _reload_mid() -> void:
