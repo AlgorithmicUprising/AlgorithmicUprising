@@ -20,7 +20,7 @@ Text plus synthesized SFX only (`story/sfx.gd`: text in/out, typing, three-tone 
 ## Not built yet
 
 - **P.2 Run** (M3): the chase out of the Yard through the A1 glass_row_edge district pack, drones, fail/retry rules.
-- **P.3 Power On**, **P.4** (the arcade interior at 115°F, the Zero 2D cutout puppet, ??? → ZERO thread header).
+- **P.3 Power On** (the arcade interior; the script has it at 115°F inside), **P.4** (the Zero 2D cutout puppet, ??? → ZERO thread header).
 - **1.1–1.4B**, Zero Vision, Pirate Weather (placement A at 1.3).
 - Account bridge pz:hello / pz:account / pz:save is wired with the local-save fallback; FR-039 (site side) is still pending.
 
