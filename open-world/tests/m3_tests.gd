@@ -21,6 +21,7 @@ func run(host: Node) -> void:
 	await _prompts_hidden()
 	await _run_full()
 	await _reload_mid_run()
+	await _dock_after_restart()
 
 func ok(cond: bool, name: String) -> void:
 	t.expect(cond, "m3: " + name)
@@ -256,3 +257,28 @@ func _reload_mid_run() -> void:
 	ok(story.run.state == "yard" and story.run.chase.active_count() == 0 and main.player.global_position.distance_to(Vector3(77.5, 0.5, -70)) < 1.5, "reload: from the culvert, no drones, straight to the door")
 	await _done(main)
 
+
+## The browser review path: caught at the fork, restarted at the fence gap, then the dock. Standing on the deck puts
+## his origin at ~0.9 m (the ground reads -0.3), so the route check has to sit under that.
+func _dock_after_restart() -> void:
+	_seed_after_p3()
+	var main = await _main()
+	var story = main.get_node("Story")
+	var pl = main.player
+	story.start()
+	var run = story.run
+	for _i in 300:
+		await t.get_tree().physics_frame
+		if run.state == "run":
+			break
+	run.start_pilot("dock", true)
+	var top := -9.0
+	for _i in 60 * 40:
+		await t.get_tree().physics_frame
+		if pl.global_position.x > 104.0 and pl.global_position.x < 119.0:
+			top = maxf(top, pl.global_position.y)
+		if run.checkpoint == "plaza" or run.state == "done":
+			break
+	ok(run.log.has("restart:fence_gap") and run.checkpoint == "plaza", "dock after a restart: caught at the fork, back at the fence gap, on into the plaza %s" % [run.log])
+	ok(run.routes.has("dock") and top > float(run.def.routes.dock.min_y), "dock after a restart: the deck counts as the dock route (top %.2f m)" % top)
+	await _done(main)
