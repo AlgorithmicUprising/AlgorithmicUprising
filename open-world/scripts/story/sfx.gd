@@ -5,7 +5,7 @@ extends Node
 const RATE := 22050
 ## P.1 v2 / Act I prologue (Nov 19 2026): the phone (text_in, text_out, typing), SERA's three-tone emergency chime
 ## (alert), the welfare drone's soft chime (drone_chime), its hum and the net hatch, and a crowd-free stinger (sting).
-const CUES := ["crt", "fony", "objective", "bank", "bail", "marquee", "prompt", "card", "text_in", "text_out", "typing", "alert", "drone_chime", "drone_hum", "net", "sting"]
+const CUES := ["crt", "fony", "objective", "bank", "bail", "marquee", "prompt", "card", "text_in", "text_out", "typing", "alert", "drone_chime", "drone_hum", "net", "sting", "pickup", "breaker"]
 
 var players := {}
 var played: Array = []              # tests / probes: cue names in order (last 64)
@@ -97,6 +97,18 @@ static func make(cue: String) -> AudioStreamWAV:
 		"sting":
 			_square(samples, 220.0, 0.12, 0.3)
 			_square(samples, 207.6, 0.4, 0.3)
+		"pickup":
+			# P.3: a fuse in the hand, a small bright tick
+			_tone(samples, 1568.0, 0.06, 0.16)
+			_tone(samples, 2093.0, 0.08, 0.12)
+		"breaker":
+			# P.3: the breaker's clunk, then the roof starting to hum
+			for i in int(RATE * 0.25):
+				var t := float(i) / RATE
+				samples.append(exp(-t * 18.0) * 0.5 * (rng.randf() * 2.0 - 1.0))
+			for i in int(RATE * 0.9):
+				var t := float(i) / RATE
+				samples.append(minf(1.0, t / 0.5) * 0.14 * sin(TAU * 120.0 * t))
 	var data := PackedByteArray()
 	data.resize(samples.size() * 2)
 	for i in samples.size():

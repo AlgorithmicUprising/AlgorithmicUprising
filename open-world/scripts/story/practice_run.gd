@@ -23,6 +23,7 @@ const Autopilot = preload("res://scripts/story/story_autopilot.gd")
 const Protagonist = preload("res://scripts/front/protagonist.gd")
 const Cinematic = preload("res://scripts/story/cinematic.gd")
 const P2Run = preload("res://scripts/story/p2_run.gd")
+const P3Power = preload("res://scripts/story/p3_power_on.gd")
 const TEXT_SPEAKERS := ["TEXT ???", "TEXT FONY", "TYPING ???", "TYPING FONY", "DRAFT FONY", "PHONE", "ALERT", "WAIT"]
 const BLIP_S := 0.2
 const IDLE_SPEED := 0.6
@@ -80,6 +81,7 @@ var bb_clock := 0.0
 var phase := "p1"                   # p1 / p2_alert / p3_flagged / slice_end
 var cinematic: Node = null
 var run: Node = null                # MISSION P.2 Run (p2_run.gd), Act I M3
+var power: Node = null              # MISSION P.3 Power On (p3_power_on.gd), Act I M4
 var p2_reason := ""                 # tests / probes: beat / timeout / idle
 var p2_pending_beat := false        # beat the Zero Score while the deal was still being offered: alert right after it
 
@@ -167,6 +169,11 @@ func start(resume := false) -> bool:
 	run.setup(self)
 	run.finished.connect(_on_run_finished)
 	add_child(run)
+	power = P3Power.new()
+	power.name = "P3Power"
+	power.setup(self)
+	power.finished.connect(_on_power_finished)
+	add_child(power)
 	var phone: Dictionary = def.get("phone", {})
 	hud.phone_set_status(str(phone.get("status", "NO SIM · Wi-Fi: YARD-PUBLIC")))
 	hud.phone_header(str(phone.get("sender", "???")), str(phone.get("subline", "")))
@@ -186,9 +193,13 @@ func start(resume := false) -> bool:
 		_teleport("line")
 		contact = true
 		hud.set_objective(runner.title, "Run the line: bowl, quarter, rail. Beat the Zero Score.")
-		if flow.save.flag("p2_run_done"):
-			# the playable slice ends at the arcade's side door (P.3 Power On is milestone M4)
+		if flow.save.flag("p3_power_done"):
+			# the playable slice ends at the breaker (CINEMATIC P.4 Zero is next, not built yet)
 			_slice_end(false)
+		elif flow.save.flag("p2_run_done"):
+			# P.3 Power On was under way (or next): back into the dark arcade, fuses found stay found
+			_say_all([["SYSTEM", "Loaded. Inside the arcade."]])
+			_start_power()
 		elif flow.save.flag("p3_flagged_seen"):
 			# P.2 Run was under way: back to its last checkpoint
 			_say_all([["SYSTEM", "Loaded. Still running."]])
@@ -258,6 +269,11 @@ func stop() -> void:
 		run.teardown()
 		run.queue_free()
 		run = null
+	if power != null:
+		power.pilot = {}
+		power.teardown()
+		power.queue_free()
+		power = null
 	player.input_enabled = true
 	World.restore(lighting)
 	lighting = {}
@@ -282,6 +298,9 @@ func stop() -> void:
 ## T (provisional key): back to the current objective's spawn, or to the bowl for the line.
 func retry() -> void:
 	if not active:
+		return
+	if power != null and power.active():
+		# P.3: on foot in the arcade; T does nothing here (the sweep is the clock)
 		return
 	if run != null and run.active():
 		# P.2 Run: back to the last checkpoint (the drones reset behind you)
@@ -310,6 +329,10 @@ func _process(delta: float) -> void:
 		run.tick(delta)
 		_settle(delta)
 		_refresh_run_hud()
+		_publish()
+		return
+	if power != null and power.active():
+		power.tick(delta)
 		_publish()
 		return
 	if card_left <= 0.0:
@@ -582,6 +605,9 @@ func _tick_talk(delta: float) -> void:
 	if TEXT_SPEAKERS.has(who):
 		_phone_line(who, text)
 		return
+	if power != null and power.active() and power.handles(who):
+		talk_left = power.show_line(who, text)
+		return
 	if run != null and run.handles(who):
 		talk_left = run.show_line(who, text)
 		return
@@ -769,16 +795,39 @@ func _start_run(from: String) -> void:
 	hud.prompt("")
 	prompt_shown = ""
 	run.start(from)
+	P3Power.prefetch(main)
 	if autopilot != null:
 		# review aid: the demo keeps going through the chase (caught once at the fork, then the dock route)
 		run.start_pilot(OS.get_environment("AU_RUN_ROUTE") if OS.get_environment("AU_RUN_ROUTE") != "" else "dock", true)
 
 func _on_run_finished(_ms: int) -> void:
-	_say_all([["CARD", str(run.def.get("end_card", "END OF THE PLAYABLE PROLOGUE"))]])
+	_start_power()
+
+## MISSION P.3 Power On (Act I M4): through the side door into the dark arcade.
+func _start_power() -> void:
+	phase = "p3_power"
+	p2_state = "done"
+	if run != null:
+		run.teardown()
+	if cinematic != null:
+		cinematic.clear_drone()
+	hud.prompt("")
+	prompt_shown = ""
+	if flow.save.flag("p3_power_done"):
+		# a replay after the slice: the fuses go back where they were
+		var pr: Dictionary = flow.save.mission(P3Power.ID)
+		pr["done"] = []
+		pr["checkpoint"] = ""
+	power.start()
+	if autopilot != null:
+		power.start_pilot(OS.get_environment("AU_P3_FOUND") != "")
+
+func _on_power_finished() -> void:
+	_say_all([["CARD", str(power.def.get("end_card", "END OF THE PLAYABLE PROLOGUE"))]])
 	_slice_end(false)
 
 func hides_prompts() -> bool:
-	return active and (in_cinematic() or (run != null and run.hides_prompts()))
+	return active and (in_cinematic() or (run != null and run.hides_prompts()) or (power != null and power.active() and power.hides_prompts()))
 
 func _refresh_run_hud() -> void:
 	pass
@@ -797,7 +846,7 @@ func _slice_end(show_card: bool) -> void:
 		card_left = 0.0
 	_say_all(se.get("system", []))
 	if hud != null:
-		hud.set_objective(runner.title, "Prologue slice complete. Next: P.3 Power On (M4). T runs P.2 again; the line is open too.")
+		hud.set_objective(runner.title, "Prologue slice complete. Next: CINEMATIC P.4 Zero (M4). T runs P.2 again; the line is open too.")
 	flow.save.story["prologue"] = "slice_end"
 	flow.persist()
 
@@ -863,6 +912,8 @@ func _publish() -> void:
 		phase, p2_state, (cinematic.id if cinematic != null and cinematic.playing else ""), deal_state, hud.phone_log.size() if hud != null else 0,
 		(str(autopilot.legs[mini(autopilot.leg, autopilot.legs.size() - 1)].name) + ("/done" if autopilot.finished else "")) if autopilot != null else ""]
 	JavaScriptBridge.eval(js, true)
+	if power != null:
+		JavaScriptBridge.eval("window.AU_P3={state:'%s',fuses:%d,sweep:%.2f,fails:%d,reach:'%s',log:%d};" % [power.state, power.fuses.size(), power.sweep, power.fails, power.in_reach() if power.active() else "", power.log.size()], true)
 	if run != null:
 		var r := "window.AU_RUN={state:'%s',checkpoint:'%s',time:%.2f,fails:%d,routes:'%s',drones:%d,near:%.1f,log:%d,pilot:'%s'};" % [
 			run.state, run.checkpoint, run.clock, run.fails, ",".join(run.routes.keys()),
