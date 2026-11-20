@@ -587,5 +587,9 @@
     "status": "proposed",
     "note": "P.1 v2 Beat 12: the heat alert interrupts on the first beat of the Zero Score, OR 90 s after the deal, OR 15 s idle, whichever comes first. Then CINEMATIC P.2 (data/missions/prologue_cinematics.json)."
   },
-  "line_text_cooldown_s": 30.0
+  "line_text_cooldown_s": 30.0,
+  "toggles": {
+    "first_try_clean": true,
+    "note": "Open call: 6C \"Clean.\" on a first-try rail. true = Zero's CRT says it (default); false = the first-try landing skips that line and goes straight to the reveal."
+  }
 }

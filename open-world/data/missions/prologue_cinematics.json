@@ -257,12 +257,12 @@
     }
   },
   "slice_end": {
-    "card": "END OF THE PLAYABLE PROLOGUE (LOCAL BUILD)\n\nNext: MISSION P.2 RUN, the escape through the east fence into Glass Row (milestone M3, not built yet).\n\nThe Yard stays open: run the line as often as you like.",
+    "card": "END OF THE PLAYABLE PROLOGUE (LOCAL BUILD)\n\nNext: MISSION P.3 POWER ON, the dark arcade: three fuses and the breaker (milestone M4, not built yet).",
     "card_s": 7.0,
     "system": [
       [
         "SYSTEM",
-        "Prologue slice complete. P.2 Run (the escape) is milestone M3. T puts you back at the bowl."
+        "Prologue slice complete. P.3 Power On is milestone M4. T runs P.2 again from the Yard."
       ]
     ]
   }

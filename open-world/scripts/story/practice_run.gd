@@ -22,6 +22,7 @@ const JsonFile = preload("res://scripts/json_file.gd")
 const Autopilot = preload("res://scripts/story/story_autopilot.gd")
 const Protagonist = preload("res://scripts/front/protagonist.gd")
 const Cinematic = preload("res://scripts/story/cinematic.gd")
+const P2Run = preload("res://scripts/story/p2_run.gd")
 const TEXT_SPEAKERS := ["TEXT ???", "TEXT FONY", "TYPING ???", "TYPING FONY", "DRAFT FONY", "PHONE", "ALERT", "WAIT"]
 const BLIP_S := 0.2
 const IDLE_SPEED := 0.6
@@ -78,6 +79,7 @@ var blip_left := 0.0
 var bb_clock := 0.0
 var phase := "p1"                   # p1 / p2_alert / p3_flagged / slice_end
 var cinematic: Node = null
+var run: Node = null                # MISSION P.2 Run (p2_run.gd), Act I M3
 var p2_reason := ""                 # tests / probes: beat / timeout / idle
 var p2_pending_beat := false        # beat the Zero Score while the deal was still being offered: alert right after it
 
@@ -160,6 +162,11 @@ func start(resume := false) -> bool:
 	cinematic.setup(self)
 	cinematic.finished.connect(_on_cinematic_done)
 	add_child(cinematic)
+	run = P2Run.new()
+	run.name = "P2Run"
+	run.setup(self)
+	run.finished.connect(_on_run_finished)
+	add_child(run)
 	var phone: Dictionary = def.get("phone", {})
 	hud.phone_set_status(str(phone.get("status", "NO SIM · Wi-Fi: YARD-PUBLIC")))
 	hud.phone_header(str(phone.get("sender", "???")), str(phone.get("subline", "")))
@@ -179,9 +186,13 @@ func start(resume := false) -> bool:
 		_teleport("line")
 		contact = true
 		hud.set_objective(runner.title, "Run the line: bowl, quarter, rail. Beat the Zero Score.")
-		if flow.save.flag("p3_flagged_seen"):
-			# the playable slice ends after CINEMATIC P.3 (P.2 Run is milestone M3)
+		if flow.save.flag("p2_run_done"):
+			# the playable slice ends at the arcade's side door (P.3 Power On is milestone M4)
 			_slice_end(false)
+		elif flow.save.flag("p3_flagged_seen"):
+			# P.2 Run was under way: back to its last checkpoint
+			_say_all([["SYSTEM", "Loaded. Still running."]])
+			_start_run(str(flow.save.mission(P2Run.ID).get("checkpoint", "")))
 		elif flow.save.flag("p2_heat_alert_seen"):
 			# saved between the two cinematics: the drone is still coming
 			_say_all([["SYSTEM", "Loaded. The heat alert has gone out."]])
@@ -242,6 +253,11 @@ func stop() -> void:
 		cinematic.set_shot("game")
 		cinematic.queue_free()
 		cinematic = null
+	if run != null:
+		run.pilot = {}
+		run.teardown()
+		run.queue_free()
+		run = null
 	player.input_enabled = true
 	World.restore(lighting)
 	lighting = {}
@@ -267,6 +283,15 @@ func stop() -> void:
 func retry() -> void:
 	if not active:
 		return
+	if run != null and run.active():
+		# P.2 Run: back to the last checkpoint (the drones reset behind you)
+		if run.state == "run":
+			run._restart()
+		return
+	if phase == "slice_end" and flow.save.flag("p2_run_done"):
+		# after the slice: run P.2 again from the Yard
+		_start_run("yard")
+		return
 	combo.pending.clear()
 	line.reset()
 	runner.retry()
@@ -279,6 +304,12 @@ func _process(delta: float) -> void:
 	_tick_talk(delta)
 	_tick_world(delta)
 	if in_cinematic():
+		_publish()
+		return
+	if run != null and run.active():
+		run.tick(delta)
+		_settle(delta)
+		_refresh_run_hud()
 		_publish()
 		return
 	if card_left <= 0.0:
@@ -383,6 +414,12 @@ func _settle(delta: float) -> void:
 		_bank()
 
 func _bail() -> void:
+	if run != null and run.active():
+		# P.2 Run: a bail only costs time (the drones close in); no Practice Run barks
+		combo.bail()
+		if sfx != null:
+			sfx.play("bail")
+		return
 	combo.bail()
 	runner.fail("bail")
 	if line.bail():
@@ -486,7 +523,10 @@ func _on_objective_done(id: String) -> void:
 	_say_all(o.get("on_done", []))
 	if id == "rail":
 		# 6B after the 6A bail texts ("Better."), 6C on a first-try landing ("Clean."): the CRT speaks aloud
-		_say_all(def.beats.rail_land_after_voice if rail_bailed else def.beats.rail_land_first_try)
+		var first_try: Array = def.beats.rail_land_first_try
+		if not bool(def.get("toggles", {}).get("first_try_clean", true)):
+			first_try = first_try.filter(func(l): return not ("Clean." in str(l[1])))
+		_say_all(def.beats.rail_land_after_voice if rail_bailed else first_try)
 		voice_heard = true
 		face_on = true
 		flow.save.set_flag("p1_voice_heard")
@@ -541,6 +581,9 @@ func _tick_talk(delta: float) -> void:
 	talking = who
 	if TEXT_SPEAKERS.has(who):
 		_phone_line(who, text)
+		return
+	if run != null and run.handles(who):
+		talk_left = run.show_line(who, text)
 		return
 	talk_left = clampf(1.0 + 0.045 * text.length(), 1.8, 6.0)
 	hud.protagonist_tag = pname.to_upper()
@@ -712,7 +755,33 @@ func _on_cinematic_done(cid: String, _skipped: bool) -> void:
 		_play_cinematic("p3_flagged")
 	elif cid == "p3_flagged":
 		p2_state = "done"
-		_slice_end(true)
+		# "Push.": MISSION P.2 Run starts straight from the net
+		_start_run("")
+
+## MISSION P.2 Run (Act I M3).
+func _start_run(from: String) -> void:
+	phase = "p2_run"
+	p2_state = "done"
+	if cinematic != null:
+		cinematic.clear_drone()
+		cinematic.set_billboard("postponed")
+	queue = queue.filter(func(q): return q.size() < 4 or str(q[3]) != "bark")
+	hud.prompt("")
+	prompt_shown = ""
+	run.start(from)
+	if autopilot != null:
+		# review aid: the demo keeps going through the chase (caught once at the fork, then the dock route)
+		run.start_pilot(OS.get_environment("AU_RUN_ROUTE") if OS.get_environment("AU_RUN_ROUTE") != "" else "dock", true)
+
+func _on_run_finished(_ms: int) -> void:
+	_say_all([["CARD", str(run.def.get("end_card", "END OF THE PLAYABLE PROLOGUE"))]])
+	_slice_end(false)
+
+func hides_prompts() -> bool:
+	return active and (in_cinematic() or (run != null and run.hides_prompts()))
+
+func _refresh_run_hud() -> void:
+	pass
 
 ## The end of the playable slice (for now): P.2 Run is milestone M3. The card says so, the drone goes, and the Yard
 ## stays open for the line.
@@ -728,7 +797,7 @@ func _slice_end(show_card: bool) -> void:
 		card_left = 0.0
 	_say_all(se.get("system", []))
 	if hud != null:
-		hud.set_objective(runner.title, "Prologue slice complete. Next: P.2 Run (M3). Run the line as often as you like.")
+		hud.set_objective(runner.title, "Prologue slice complete. Next: P.3 Power On (M4). T runs P.2 again; the line is open too.")
 	flow.save.story["prologue"] = "slice_end"
 	flow.persist()
 
@@ -794,3 +863,9 @@ func _publish() -> void:
 		phase, p2_state, (cinematic.id if cinematic != null and cinematic.playing else ""), deal_state, hud.phone_log.size() if hud != null else 0,
 		(str(autopilot.legs[mini(autopilot.leg, autopilot.legs.size() - 1)].name) + ("/done" if autopilot.finished else "")) if autopilot != null else ""]
 	JavaScriptBridge.eval(js, true)
+	if run != null:
+		var r := "window.AU_RUN={state:'%s',checkpoint:'%s',time:%.2f,fails:%d,routes:'%s',drones:%d,near:%.1f,log:%d,pilot:'%s'};" % [
+			run.state, run.checkpoint, run.clock, run.fails, ",".join(run.routes.keys()),
+			run.chase.active_count() if run.chase != null else 0, minf(999.0, run.chase.nearest_distance()) if run.chase != null else 999.0,
+			run.log.size(), ("%d%s" % [run.pilot.leg, "/done" if run.pilot.finished else ""]) if not run.pilot.is_empty() else ""]
+		JavaScriptBridge.eval(r, true)
