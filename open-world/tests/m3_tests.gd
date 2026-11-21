@@ -210,6 +210,7 @@ func _run_full() -> void:
 			break
 	ok(story.phase == "p3_power" and story.power.active() and main.player.global_position.x > 210.0, "the side door hands off to P.3 Power On inside the arcade (M4)")
 	# P.3 itself is m4_tests.gd; finish it here so the slice ends
+	story.act1.def["built"] = []   # the Act I scenes are m5_tests.gd: here the slice ends after P.4
 	story.power.fuses = {"coin_box": true, "toolbox": true, "fixture": true}
 	story.power._finish()
 	await frames(2)

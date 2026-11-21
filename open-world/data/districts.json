@@ -85,6 +85,62 @@
       "prefetch_m": 30.0,
       "free_roam": false,
       "note": "Act I M4: the arcade interior, dark, for MISSION P.3 Power On (fuses, the breaker, the sweep). Off-map east of Glass Row; reached only by the story's fade at the side door. Armed and requested when P.2 Run starts so it is in before the door. Own budget inside the 8 MiB per-district cap."
+    },
+    "stillwater_flats": {
+      "title": "STILLWATER FLATS",
+      "zone": "STILLWATER FLATS",
+      "pack": "districts/stillwater_flats.pck",
+      "scene": "res://districts/stillwater_flats/stillwater_flats.tscn",
+      "budget_bytes": 1048576,
+      "cards": "res://data/loading_cards/stillwater_flats.json",
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bounds": [
+        266.0,
+        -94.0,
+        354.0,
+        -6.0
+      ],
+      "apron": [
+        266.0,
+        -94.0,
+        354.0,
+        -6.0
+      ],
+      "prefetch_m": 30.0,
+      "free_roam": false,
+      "note": "Act I 1.2 Water Run and 1.3 Cool Roofs (Nov 20 2026): the Flats street, the community center, the QuickDrop ice locker, the north row of housing blocks with tar roofs at y 6 joined by plank bridges, the Dusk billboard. Off-map east; reached only by the story's fade. PLACEHOLDER blockout. Own budget inside the 8 MiB per-district cap."
+    },
+    "cold_row": {
+      "title": "COLD ROW",
+      "zone": "COLD ROW",
+      "pack": "districts/cold_row.pck",
+      "scene": "res://districts/cold_row/cold_row.tscn",
+      "budget_bytes": 1048576,
+      "cards": "res://data/loading_cards/cold_row.json",
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bounds": [
+        366.0,
+        -98.0,
+        454.0,
+        -6.0
+      ],
+      "apron": [
+        366.0,
+        -98.0,
+        454.0,
+        -6.0
+      ],
+      "prefetch_m": 30.0,
+      "free_roam": false,
+      "note": "Act I 1.4 Cold Row and 1.4B The Benefactor (Nov 20 2026): outer Cold Row at night (cooling towers with mist, the substation, the water intake, the midnight lawn). Off-map east; reached only by the story's fade. PLACEHOLDER blockout. Own budget inside the 8 MiB per-district cap."
     }
   }
 }

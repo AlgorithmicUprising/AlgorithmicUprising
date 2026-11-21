@@ -1,0 +1,34 @@
+{
+  "contract": "au.loading_cards",
+  "version": 1,
+  "district": "cold_row",
+  "min_seconds": 2.5,
+  "note": "PLACEHOLDER copy (Act I, Nov 20 2026). Shown while the pack streams in.",
+  "tiers": [
+    {
+      "id": "intro",
+      "from_visit": 1,
+      "to_visit": 1,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "cold_row_intro",
+          "title": "COLD ROW",
+          "body": "Clean lawns, blue light, cool mist. A different world across the river."
+        }
+      ]
+    },
+    {
+      "id": "later",
+      "from_visit": 2,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "cold_row_back",
+          "title": "COLD ROW",
+          "body": "Clean lawns, blue light, cool mist. A different world across the river."
+        }
+      ]
+    }
+  ]
+}

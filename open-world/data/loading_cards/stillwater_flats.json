@@ -1,0 +1,34 @@
+{
+  "contract": "au.loading_cards",
+  "version": 1,
+  "district": "stillwater_flats",
+  "min_seconds": 2.5,
+  "note": "PLACEHOLDER copy (Act I, Nov 20 2026). Shown while the pack streams in.",
+  "tiers": [
+    {
+      "id": "intro",
+      "from_visit": 1,
+      "to_visit": 1,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "stillwater_flats_intro",
+          "title": "STILLWATER FLATS",
+          "body": "No AC hum, no fans, no music. Foil on the windows. Nine days of this."
+        }
+      ]
+    },
+    {
+      "id": "later",
+      "from_visit": 2,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "stillwater_flats_back",
+          "title": "STILLWATER FLATS",
+          "body": "No AC hum, no fans, no music. Foil on the windows. Nine days of this."
+        }
+      ]
+    }
+  ]
+}

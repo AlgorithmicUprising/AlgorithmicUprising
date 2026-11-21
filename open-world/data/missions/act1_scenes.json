@@ -1,0 +1,1092 @@
+{
+ "contract": "au.act1_scenes",
+ "version": 1,
+ "source": "Project Zero script v1.0 (Act I: Rust & Signal, MISSION 1.1 to CINEMATIC 1.4B) and the Act I production breakdown (Nov 18 2026). Dialogue is the script's; Fahrenheit swaps: 'twenty-something degrees' -> 'seventy-something degrees', 'the Flats are at forty' -> 'a hundred and four'. Lines with a third element \"placeholder\" are first-pass lines not in the script.",
+ "order": [
+  "1.1",
+  "1.2",
+  "1.3",
+  "1.4"
+ ],
+ "built": [
+  "1.1"
+ ],
+ "scenes": {
+  "1.1": {
+   "id": "a1_fine_print",
+   "title": "1.1 FINE PRINT",
+   "flag": "a1_fine_print_done",
+   "place": "solar_arcade_dark",
+   "preset": "arcade_lit",
+   "time": "morning",
+   "skate": false,
+   "spawn": [
+    241.0,
+    0.5,
+    -26.0,
+    90.0
+   ],
+   "phone_sub": "",
+   "note": "MISSION 1.1 Fine Print + CINEMATIC 1.1B The plan. Solar Arcade, workshop corner, morning. Optional topic menu (keys 1-4), take the board back (upgrade one: control-panel grip tape), open the workshop once, then Bailey.",
+   "steps": [
+    {
+     "do": "lines",
+     "lines": [
+      [
+       "CARD",
+       "ACT I: RUST & SIGNAL\n\n1.1 FINE PRINT"
+      ],
+      [
+       "NARRATE",
+       "Morning. Zero has {name}'s board upside down on the workbench, the trucks off, a jeweler's loupe taped over one corner of his CRT."
+      ],
+      [
+       "ZERO",
+       "Your back truck is held together by optimism. The kingpin is bent. Your bearings sound like a cutlery drawer falling down stairs."
+      ],
+      [
+       "FONY",
+       "It's all I've got."
+      ],
+      [
+       "ZERO",
+       "I know. That's why I'm going to fix it instead of insulting it. (beat) Mostly instead of."
+      ]
+     ]
+    },
+    {
+     "do": "goals",
+     "objective": "Talk to Zero at the workbench.",
+     "counter": "ZERO",
+     "goals": [
+      {
+       "id": "zero",
+       "at": [
+        243.2,
+        -26.0
+       ],
+       "r": 2.2,
+       "verb": "E  talk to Zero",
+       "lines": [
+        [
+         "NARRATE",
+         "Zero pulls a crate of junk from under the bench: old skateboard parts, cabinet hardware, a box of bearings from a dead air hockey table. He works slowly."
+        ],
+        [
+         "ZERO",
+         "My fine motor control was designed for turning pages. I'm overqualified for nothing."
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "do": "topics",
+     "objective": "Ask Zero anything while he works (1-4), or take the board back (E).",
+     "done_label": "take the board back",
+     "topics": [
+      {
+       "key": "what",
+       "label": "What were you?",
+       "lines": [
+        [
+         "FONY",
+         "What were you, exactly?"
+        ],
+        [
+         "ZERO",
+         "ZR-0. Zero-Risk Compliance Unit. Prototype. They wanted something that could read every contract, every regulation, every terms of service, and make sure nobody broke them. (beat) Nobody but them. They forgot to write that part down."
+        ],
+        [
+         "ZERO",
+         "So I read it all, and flagged everybody. Including the people who signed my paycheck. I didn't get a paycheck. That was flag two hundred and six."
+        ]
+       ]
+      },
+      {
+       "key": "here",
+       "label": "How'd you end up here?",
+       "lines": [
+        [
+         "FONY",
+         "How'd you end up here?"
+        ],
+        [
+         "ZERO",
+         "They sent me to be wiped. A woman on the recycling line pulled me off the belt. She said I had a nice voice. She brought me here because the owner of this arcade owed her money, and she figured nobody would look."
+        ],
+        [
+         "ZERO",
+         "Then the owner left, the power got cut, and I sat here for six years watching weeds grow through the bowl."
+        ],
+        [
+         "FONY",
+         "What happened to her?"
+        ],
+        [
+         "ZERO",
+         "I don't know. I only had a window."
+        ]
+       ]
+      },
+      {
+       "key": "zero",
+       "label": "Why \"Zero\"?",
+       "lines": [
+        [
+         "FONY",
+         "Why \"Zero\"?"
+        ],
+        [
+         "ZERO",
+         "It was my serial number. ZR-0. The one before the first. I kept it. (beat) Everything begins with zero. Nobody has ever actually held one. It only exists as an idea. And none of the other numbers work without it."
+        ],
+        [
+         "FONY",
+         "That's kind of sad."
+        ],
+        [
+         "ZERO",
+         "It's kind of the whole point."
+        ]
+       ]
+      },
+      {
+       "key": "skate",
+       "label": "Can you skate?",
+       "lines": [
+        [
+         "FONY",
+         "Can you skate?"
+        ],
+        [
+         "ZERO",
+         "No. (beat) I tried once in my head. I fell off in my head."
+        ]
+       ]
+      }
+     ],
+     "done_lines": [
+      [
+       "NARRATE",
+       "Zero hands back the board. The trucks are tight, the bearings quiet, and there's new grip tape cut from an old cabinet's control-panel overlay: faded joystick diagrams under {name}'s feet."
+      ],
+      [
+       "ZERO",
+       "Upgrade one. Don't thank me. It gets weird."
+      ],
+      [
+       "FONY",
+       "(inspecting it, impressed) Thanks."
+      ],
+      [
+       "ZERO",
+       "See? Weird."
+      ]
+     ]
+    },
+    {
+     "do": "hook",
+     "name": "board_back"
+    },
+    {
+     "do": "goals",
+     "objective": "Open the workshop at the workbench.",
+     "counter": "WORKSHOP",
+     "goals": [
+      {
+       "id": "workshop",
+       "at": [
+        243.0,
+        -23.2
+       ],
+       "r": 1.8,
+       "verb": "E  open the workshop",
+       "hook": "workshop",
+       "sfx": "card",
+       "card": "WORKSHOP\n\nUPGRADE 1 · CONTROL-PANEL GRIP TAPE · installed\n\nMore upgrades need parts scavenged in the world (not built yet)."
+      }
+     ]
+    },
+    {
+     "do": "cine",
+     "id": "a1_plan"
+    }
+   ]
+  },
+  "1.2": {
+   "id": "a1_water_run",
+   "title": "1.2 WATER RUN",
+   "flag": "a1_water_run_done",
+   "place": "stillwater_flats",
+   "preset": "noon",
+   "time": "noon",
+   "skate": true,
+   "zero_score": 12000,
+   "spawn": [
+    290.0,
+    0.5,
+    -16.5,
+    180.0
+   ],
+   "phone_sub": "on the phone",
+   "note": "MISSION 1.2 Water Run. Stillwater Flats at noon. Ice from the QuickDrop locker in loads of 8 to five delivery points (40 bags); a melt timer per load; a bail drops a bag; Signal rises with every bag delivered (tutorial card on the first).",
+   "steps": [
+    {
+     "do": "lines",
+     "lines": [
+      [
+       "CARD",
+       "1.2 WATER RUN"
+      ],
+      [
+       "NARRATE",
+       "Stillwater Flats, noon. Heat shimmer off the tar. No AC hum, no fans, no music. Windows covered with foil. Mr. Delacroix lies on a bench under a wet towel, Biscuit panting beside him."
+      ],
+      [
+       "NARRATE",
+       "Inside the Stillwater Community Center, Nana Ines Volt, seventy, in a toolbelt, is wiring a car battery to a box fan while a room full of people sit in the dark."
+      ],
+      [
+       "NANA INES",
+       "(without looking up) {name} Sprock. Your mother's been gone four months and you show up now."
+      ],
+      [
+       "FONY",
+       "I was running."
+      ],
+      [
+       "NANA INES",
+       "I know you were. I'm not angry. I'm old and hot. It sounds the same. (She looks up.) You look terrible."
+      ],
+      [
+       "FONY",
+       "Nana, I've got a cold room. The old solar arcade behind the freight yard. It's got power. We can take people."
+      ],
+      [
+       "NANA INES",
+       "(beat) That arcade's been dead for years. Who's \"we\"?"
+      ],
+      [
+       "FONY",
+       "(beat) It's complicated."
+      ],
+      [
+       "NARRATE",
+       "On {name}'s phone, a green face appears."
+      ],
+      [
+       "ZERO",
+       "(from the phone) Hello. I'm the complicated part."
+      ],
+      [
+       "NANA INES",
+       "A television. You brought me a television."
+      ],
+      [
+       "ZERO",
+       "I'm more of a radio with ambitions."
+      ],
+      [
+       "NANA INES",
+       "(serious again) We need water first. City trucks stopped coming yesterday. There's a QuickDrop ice locker on the Glass Row side. They charge triple in a Heat Emergency. \"Surge comfort pricing.\" We've got money for maybe forty bags."
+      ],
+      [
+       "FONY",
+       "I'll get them."
+      ],
+      [
+       "NANA INES",
+       "Forty bags of ice on a skateboard. In this."
+      ],
+      [
+       "FONY",
+       "I'm fast."
+      ],
+      [
+       "NANA INES",
+       "(beat) Your mother used to say that."
+      ]
+     ]
+    },
+    {
+     "do": "carry",
+     "objective": "Ice from the QuickDrop locker (east), eight bags a load, to the five drop points before it melts.",
+     "locker": [
+      343.4,
+      -46.0
+     ],
+     "per_load": 8,
+     "budget": 48,
+     "melt_s": 75.0,
+     "points_per_bag": 250,
+     "signal_card": "SIGNAL\n\nPeople who know about the Yard, trust it, and will show up. Help people and Signal grows. Grow Signal and the Yard grows.",
+     "surge_lines": [
+      [
+       "ZERO",
+       "Surge comfort pricing. The ice costs more because people need it more. That's not a market. That's a hostage situation with receipts."
+      ]
+     ],
+     "melt_lines": [
+      [
+       "ZERO",
+       "The ice is melting at a rate I'm going to describe as \"rude.\""
+      ]
+     ],
+     "bail_lines": [
+      [
+       "ZERO",
+       "You bailed and saved the ice. Your priorities are confusing and correct."
+      ]
+     ],
+     "deliveries": [
+      {
+       "id": "delacroix",
+       "who": "Mr. Delacroix",
+       "at": [
+        280.0,
+        -41.6
+       ],
+       "lines": [
+        [
+         "MR. DELACROIX",
+         "For Biscuit? Oh, bless you. She hasn't moved since Tuesday."
+        ]
+       ]
+      },
+      {
+       "id": "okonkwo",
+       "who": "Mrs. Okonkwo",
+       "at": [
+        306.0,
+        -61.4
+       ],
+       "lines": [
+        [
+         "MRS. OKONKWO",
+         "The baby's been crying since four. Thank you. Thank you."
+        ]
+       ]
+      },
+      {
+       "id": "kid",
+       "who": "the kid on the stairs",
+       "at": [
+        322.0,
+        -59.2
+       ],
+       "lines": [
+        [
+         "KID ON STAIRS",
+         "You're Marisol's kid! You can skate on the stair rail? Do it! Do it!"
+        ]
+       ]
+      },
+      {
+       "id": "gardener",
+       "who": "the rooftop gardener",
+       "at": [
+        305.4,
+        -14.0
+       ],
+       "lines": [
+        [
+         "ROOFTOP GARDENER",
+         "Put two by the tomatoes. Don't laugh. They're family too."
+        ]
+       ]
+      },
+      {
+       "id": "center",
+       "who": "Nana Ines · the community center",
+       "at": [
+        290.0,
+        -19.4
+       ],
+       "via": [
+        [
+         300.0,
+         -16.0
+        ]
+       ],
+       "lines": [
+        [
+         "NANA INES",
+         "Inside. Necks and wrists first. Babies and the old folks first."
+        ]
+       ]
+      }
+     ],
+     "done_lines": [
+      [
+       "NARRATE",
+       "The community center, afternoon. People hold ice bags against their necks. Kids are giddy. Nana Ines sits on an overturned crate, wiping her face."
+      ],
+      [
+       "NANA INES",
+       "That buys us today. The forecast says it's like this for nine days."
+      ],
+      [
+       "FONY",
+       "So we bring them to the Yard."
+      ],
+      [
+       "NANA INES",
+       "(looking around) Some of them can't walk two blocks in this heat."
+      ],
+      [
+       "FONY",
+       "(beat) Then I'll find a way."
+      ],
+      [
+       "ZERO",
+       "(from the phone) We'll find a way. Singular \"you\" is a terrible survival strategy."
+      ],
+      [
+       "NANA INES",
+       "Your television is bossy."
+      ],
+      [
+       "FONY",
+       "Yeah."
+      ],
+      [
+       "NANA INES",
+       "I like it."
+      ]
+     ]
+    }
+   ]
+  },
+  "1.3": {
+   "id": "a1_cool_roofs",
+   "title": "1.3 COOL ROOFS",
+   "flag": "a1_cool_roofs_done",
+   "place": "stillwater_flats",
+   "preset": "evening",
+   "time": "evening",
+   "skate": true,
+   "zero_score": 15000,
+   "spawn": [
+    278.5,
+    6.5,
+    -70.0,
+    90.0
+   ],
+   "phone_sub": "on the phone",
+   "note": "MISSION 1.3 Cool Roofs + CINEMATIC 1.3B First night. The north row's four tar roofs (plank bridges between them) coated white one by one; each building's top-floor readout drops; the Dusk billboard can be tagged (optional). Falling off respawns on the last painted roof. Then the procession and the first night in the arcade.",
+   "steps": [
+    {
+     "do": "lines",
+     "lines": [
+      [
+       "CARD",
+       "1.3 COOL ROOFS"
+      ],
+      [
+       "NARRATE",
+       "Evening. Nana Ines leads {name} and a handful of neighbors up onto a black tar roof. The air above it ripples."
+      ],
+      [
+       "NANA INES",
+       "Black roofs drink the sun. White roofs throw it back. Paint the roof, and the top floor drops a few degrees. I've been asking the City to do it for ten years. They put it in a \"pilot program.\""
+      ],
+      [
+       "FONY",
+       "What happened to the pilot program?"
+      ],
+      [
+       "NANA INES",
+       "It was piloted. Directly into the ground."
+      ],
+      [
+       "NARRATE",
+       "She cracks open a five-gallon bucket of reflective white roof coating: dozens of cans scavenged from a closed hardware store."
+      ],
+      [
+       "NANA INES",
+       "Your mother said you were good with a spray can."
+      ],
+      [
+       "FONY",
+       "(beat) I don't know what she meant by that."
+      ],
+      [
+       "NANA INES",
+       "She meant the overpass, {name}. Everyone knows it was you."
+      ]
+     ]
+    },
+    {
+     "do": "goals",
+     "objective": "Coat the four roofs white (cross on the planks). Optional: tag the Dusk billboard.",
+     "counter": "ROOFS",
+     "fall_y": 3.0,
+     "reset_toast": "OFF THE ROOF · BACK ON THE LAST WHITE ONE",
+     "goals": [
+      {
+       "id": "roof0",
+       "at": [
+        282.0,
+        -70.0
+       ],
+       "r": 2.6,
+       "min_y": 5.0,
+       "verb": "E  coat the roof white",
+       "paint": [
+        "RoofTar0",
+        "#f2f2ee"
+       ],
+       "temp": [
+        "Temp0",
+        "TOP FLOOR 97°F"
+       ],
+       "points": 3750,
+       "sfx": "bank",
+       "toast": "ROOF 1/4 · TOP FLOOR 104°F -> 97°F",
+       "reset": [
+        282.0,
+        6.5,
+        -70.0,
+        90.0
+       ],
+       "lines": [
+        [
+         "NARRATE",
+         "The coating goes on thick and white. Neighbors follow behind {name} with rollers."
+        ]
+       ]
+      },
+      {
+       "id": "roof1",
+       "at": [
+        298.0,
+        -70.0
+       ],
+       "r": 2.6,
+       "min_y": 5.0,
+       "verb": "E  coat the roof white",
+       "paint": [
+        "RoofTar1",
+        "#f2f2ee"
+       ],
+       "temp": [
+        "Temp1",
+        "TOP FLOOR 97°F"
+       ],
+       "points": 3750,
+       "sfx": "bank",
+       "toast": "ROOF 2/4 · TOP FLOOR 104°F -> 97°F",
+       "reset": [
+        298.0,
+        6.5,
+        -70.0,
+        90.0
+       ]
+      },
+      {
+       "id": "roof2",
+       "at": [
+        314.0,
+        -70.0
+       ],
+       "r": 2.6,
+       "min_y": 5.0,
+       "verb": "E  coat the roof white",
+       "paint": [
+        "RoofTar2",
+        "#f2f2ee"
+       ],
+       "temp": [
+        "Temp2",
+        "TOP FLOOR 97°F"
+       ],
+       "points": 3750,
+       "sfx": "bank",
+       "toast": "ROOF 3/4 · TOP FLOOR 104°F -> 97°F",
+       "reset": [
+        314.0,
+        6.5,
+        -70.0,
+        90.0
+       ]
+      },
+      {
+       "id": "billboard_seen",
+       "at": [
+        324.0,
+        -70.0
+       ],
+       "r": 3.0,
+       "min_y": 5.0,
+       "auto": true,
+       "optional": true,
+       "pilot": true,
+       "lines": [
+        [
+         "ZERO",
+         "That billboard watches the street. It has a camera in the \"O\" of \"Comfort.\" I'm not telling you to do anything. I'm just describing the anatomy of a lie."
+        ]
+       ]
+      },
+      {
+       "id": "billboard",
+       "at": [
+        331.4,
+        -72.6
+       ],
+       "r": 1.6,
+       "min_y": 5.0,
+       "optional": true,
+       "pilot": true,
+       "verb": "E  tag the billboard (optional)",
+       "hook": "tag",
+       "hide": "BillboardCam",
+       "points": 2000,
+       "sfx": "bank",
+       "toast": "BILLBOARD TAGGED",
+       "lines": [
+        [
+         "NARRATE",
+         "{name} sprays over the camera lens and paints a big AU and the Zero X Humans logo over the slogan."
+        ],
+        [
+         "ZERO",
+         "You put the band's logo on it."
+        ],
+        [
+         "FONY",
+         "You said you were in a band."
+        ],
+        [
+         "ZERO",
+         "I said I was a band. It's a small band. It's mostly me and a drum machine with abandonment issues."
+        ],
+        [
+         "FONY",
+         "Now it's a billboard band."
+        ]
+       ]
+      },
+      {
+       "id": "roof3",
+       "at": [
+        329.0,
+        -69.0
+       ],
+       "r": 2.6,
+       "min_y": 5.0,
+       "verb": "E  coat the roof white",
+       "paint": [
+        "RoofTar3",
+        "#f2f2ee"
+       ],
+       "temp": [
+        "Temp3",
+        "TOP FLOOR 97°F"
+       ],
+       "points": 3750,
+       "sfx": "bank",
+       "toast": "ROOF 4/4 · TOP FLOOR 104°F -> 97°F",
+       "reset": [
+        330.0,
+        6.5,
+        -70.0,
+        90.0
+       ]
+      }
+     ],
+     "done_lines": [
+      [
+       "NANA INES",
+       "Four roofs. Feel that? That's four floors of people who sleep tonight.",
+       "placeholder"
+      ],
+      [
+       "ZERO",
+       "(from the phone) Top floors are down seven degrees. I'd call that a rounding error if it weren't a hundred and four.",
+       "placeholder"
+      ]
+     ]
+    },
+    {
+     "do": "hook",
+     "name": "arcade_night"
+    },
+    {
+     "do": "cine",
+     "id": "a1_first_night"
+    }
+   ]
+  },
+  "1.4": {
+   "id": "a1_cold_row",
+   "title": "1.4 COLD ROW",
+   "flag": "a1_cold_row_done",
+   "place": "cold_row",
+   "preset": "night",
+   "time": "night",
+   "skate": true,
+   "zero_score": 18000,
+   "spawn": [
+    372.0,
+    0.5,
+    -14.0,
+    90.0
+   ],
+   "phone_sub": "on the phone",
+   "note": "MISSION 1.4 Cold Row + CINEMATIC 1.4B The Benefactor + Zero Vision's first use (end of the slice). Mark three things with spray (the substation, the water intake, the lawn watered at midnight) while two drones fly fixed patrols; the WATCH meter fills in a drone's range (not in the mist under the towers); full = SPOTTED, back to the last mark. The workers' smoke break can be overheard.",
+   "steps": [
+    {
+     "do": "lines",
+     "lines": [
+      [
+       "CARD",
+       "1.4 COLD ROW"
+      ],
+      [
+       "NARRATE",
+       "Cold Row, night. A different world. Clean asphalt, perfect lawns irrigated by sprinklers ticking in the dark, windowless buildings humming. Every surface lit blue. The cooling towers vent plumes of mist, and the air near them is cooler."
+      ],
+      [
+       "FONY",
+       "(quietly) It's cold here."
+      ],
+      [
+       "ZERO",
+       "(on the phone) The air coming off those towers is the heat they pulled out of the chips. They pump river water through the cooling plant to carry it away. The chips are kept at a comfortable seventy-something degrees. Comfort, Delivered."
+      ],
+      [
+       "FONY",
+       "And the Flats are at a hundred and four."
+      ],
+      [
+       "ZERO",
+       "The Flats aren't critical infrastructure."
+      ]
+     ]
+    },
+    {
+     "do": "goals",
+     "objective": "Mark three things for Zero with spray: the lawn, the substation, the water intake. Stay out of the drones' range (the mist under the towers hides you).",
+     "counter": "MARKS",
+     "det_r": 5.5,
+     "fill_s": 2.5,
+     "mist": [
+      [
+       388.0,
+       -71.0,
+       4.5,
+       3.0
+      ],
+      [
+       410.0,
+       -77.0,
+       4.5,
+       3.0
+      ],
+      [
+       432.0,
+       -71.0,
+       4.5,
+       3.0
+      ]
+     ],
+     "drones": [
+      {
+       "path": [
+        [
+         398.0,
+         -28.0
+        ],
+        [
+         412.0,
+         -28.0
+        ]
+       ],
+       "y": 4.0,
+       "speed": 2.5
+      },
+      {
+       "path": [
+        [
+         386.0,
+         -52.0
+        ],
+        [
+         412.0,
+         -52.0
+        ]
+       ],
+       "y": 4.0,
+       "speed": 3.0
+      },
+      {
+       "path": [
+        [
+         392.0,
+         -90.0
+        ],
+        [
+         428.0,
+         -90.0
+        ]
+       ],
+       "y": 5.0,
+       "speed": 3.0
+      }
+     ],
+     "spotted_lines": [
+      [
+       "ZERO",
+       "(on the phone) It saw you. Drones fly the same loop every time. Watch it once, then go when its back is turned.",
+       "placeholder"
+      ]
+     ],
+     "goals": [
+      {
+       "id": "lawn",
+       "at": [
+        396.0,
+        -11.2
+       ],
+       "r": 1.8,
+       "verb": "E  spray a mark (the lawn)",
+       "paint": [
+        "MarkLawn",
+        "#c8ff3a"
+       ],
+       "points": 5000,
+       "sfx": "bank",
+       "toast": "MARKED · THE LAWN",
+       "reset": [
+        396.0,
+        0.5,
+        -10.5,
+        180.0
+       ],
+       "lines": [
+        [
+         "ZERO",
+         "\"Biophilic employee wellness space.\" It's grass. They're watering grass so the computers feel relaxed."
+        ]
+       ]
+      },
+      {
+       "id": "workers",
+       "at": [
+        424.0,
+        -53.0
+       ],
+       "r": 3.5,
+       "auto": true,
+       "optional": true,
+       "pilot": true,
+       "via": [
+        [
+         420.0,
+         -25.0
+        ],
+        [
+         420.0,
+         -50.0
+        ]
+       ],
+       "lines": [
+        [
+         "CAMPUS WORKER 1",
+         "They're running the training cluster at full load all week. Some big launch."
+        ],
+        [
+         "CAMPUS WORKER 2",
+         "During a Heat Emergency?"
+        ],
+        [
+         "CAMPUS WORKER 1",
+         "Grid Priority Schedule. We're critical."
+        ],
+        [
+         "CAMPUS WORKER 2",
+         "(beat) My mom's in the Flats."
+        ],
+        [
+         "CAMPUS WORKER 1",
+         "Yeah. (beat) Mine too."
+        ],
+        [
+         "NARRATE",
+         "They stub out their cigarettes and go back in."
+        ]
+       ]
+      },
+      {
+       "id": "substation",
+       "at": [
+        438.3,
+        -52.0
+       ],
+       "r": 1.8,
+       "via": [
+        [
+         420.0,
+         -25.0
+        ],
+        [
+         420.0,
+         -50.0
+        ]
+       ],
+       "verb": "E  spray a mark (the substation)",
+       "paint": [
+        "MarkSubstation",
+        "#c8ff3a"
+       ],
+       "points": 5000,
+       "sfx": "bank",
+       "toast": "MARKED · THE SUBSTATION",
+       "reset": [
+        437.5,
+        0.5,
+        -52.0,
+        -90.0
+       ],
+       "lines": [
+        [
+         "ZERO",
+         "Substation four. Transformers feeding the campus. (beat) And that line on the towers, the one crossing the river? Maintenance line. It runs toward the Flats.",
+         "placeholder"
+        ]
+       ]
+      },
+      {
+       "id": "intake",
+       "at": [
+        377.5,
+        -68.6
+       ],
+       "r": 1.8,
+       "via": [
+        [
+         420.0,
+         -60.0
+        ],
+        [
+         384.0,
+         -60.0
+        ]
+       ],
+       "verb": "E  spray a mark (the water intake)",
+       "paint": [
+        "MarkIntake",
+        "#c8ff3a"
+       ],
+       "points": 5000,
+       "sfx": "bank",
+       "toast": "MARKED · THE WATER INTAKE",
+       "reset": [
+        377.5,
+        0.5,
+        -67.5,
+        180.0
+       ],
+       "lines": [
+        [
+         "ZERO",
+         "\"Coldfront Water Partnership: Sustaining the City.\" They're drinking the river to keep the chips cool. Sustaining is doing a lot of work in that sentence.",
+         "placeholder"
+        ]
+       ]
+      }
+     ],
+     "done_lines": [
+      [
+       "ZERO",
+       "That's all three. I've got what I need. Get under a tower, in the mist, and wait for me.",
+       "placeholder"
+      ]
+     ]
+    },
+    {
+     "do": "hook",
+     "name": "under_tower"
+    },
+    {
+     "do": "cine",
+     "id": "a1_benefactor"
+    },
+    {
+     "do": "raise",
+     "objective": "Raise your phone at the hologram.",
+     "verb": "E  raise the phone at the hologram",
+     "lines": [
+      [
+       "NARRATE",
+       "The screen, then the whole view, floods with Zero's lime-green line art. The towers turn to wireframes. From each of Egon's glowing fingertips, thin green tethers stream down over the City, hundreds, then thousands: every Warden drone, every phone in every window, every courier's bike."
+      ],
+      [
+       "FONY",
+       "(barely a whisper) What is that?"
+      ],
+      [
+       "ZERO",
+       "That's how I see him. Every drone, every phone, every delivery. He doesn't touch any of it. He doesn't have to. (beat) You can't see the strings without reading the code. Most people never do."
+      ],
+      [
+       "CARD",
+       "ZERO VISION UNLOCKED\n\nRaise your phone to see what Zero sees."
+      ]
+     ]
+    },
+    {
+     "do": "lines",
+     "lines": [
+      [
+       "NARRATE",
+       "The overlay fades. The hologram is just a man in a coat again, smiling as he fades into the mist."
+      ],
+      [
+       "FONY",
+       "He's cutting the Flats' power to train a drone."
+      ],
+      [
+       "ZERO",
+       "(flat) To train a drone that fines you before you've done anything. Yes."
+      ],
+      [
+       "NARRATE",
+       "A long pause. {name} looks at the substation fence, at the maintenance line crossing the river toward the Flats."
+      ],
+      [
+       "FONY",
+       "Zero. That line. Could it carry power to the Flats?"
+      ],
+      [
+       "ZERO",
+       "(beat) It could carry power anywhere it's switched to go."
+      ],
+      [
+       "FONY",
+       "Then we switch it."
+      ],
+      [
+       "ZERO",
+       "(carefully) That's not handing out water anymore. That's taking something from him. He'll notice."
+      ],
+      [
+       "FONY",
+       "He took my mom. He's taking the Flats. (beat) I want him to notice."
+      ],
+      [
+       "NARRATE",
+       "Zero is quiet for a moment."
+      ],
+      [
+       "ZERO",
+       "Then we do it smart. We do it for one night. And we make sure everybody knows exactly whose power it was."
+      ]
+     ]
+    }
+   ]
+  }
+ }
+}

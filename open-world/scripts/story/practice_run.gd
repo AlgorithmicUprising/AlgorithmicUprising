@@ -24,6 +24,7 @@ const Protagonist = preload("res://scripts/front/protagonist.gd")
 const Cinematic = preload("res://scripts/story/cinematic.gd")
 const P2Run = preload("res://scripts/story/p2_run.gd")
 const P3Power = preload("res://scripts/story/p3_power_on.gd")
+const Act1 = preload("res://scripts/story/act1.gd")
 const TEXT_SPEAKERS := ["TEXT ???", "TEXT FONY", "TYPING ???", "TYPING FONY", "DRAFT FONY", "PHONE", "ALERT", "WAIT"]
 const BLIP_S := 0.2
 const IDLE_SPEED := 0.6
@@ -82,6 +83,7 @@ var phase := "p1"                   # p1 / p2_alert / p3_flagged / slice_end
 var cinematic: Node = null
 var run: Node = null                # MISSION P.2 Run (p2_run.gd), Act I M3
 var power: Node = null              # MISSION P.3 Power On (p3_power_on.gd), Act I M4
+var act1: Node = null               # Act I scenes 1.1 to 1.4B (act1.gd)
 var p2_reason := ""                 # tests / probes: beat / timeout / idle
 var p2_pending_beat := false        # beat the Zero Score while the deal was still being offered: alert right after it
 
@@ -174,6 +176,21 @@ func start(resume := false) -> bool:
 	power.setup(self)
 	power.finished.connect(_on_power_finished)
 	add_child(power)
+	act1 = Act1.new()
+	act1.name = "Act1"
+	act1.setup(self)
+	act1.finished.connect(_on_act1_finished)
+	add_child(act1)
+	var jump := Act1.jump_requested()
+	if jump != "" and act1.sdef(jump).size() > 0:
+		# review / dev jump (?act1_from=1.2): the Prologue and the earlier Act I scenes count as done
+		rec["state"] = "done"
+		rec["completions"] = maxi(1, int(rec.get("completions", 0)))
+		for f in ["story_started", "p1_contact", "p1_deal_offered", "p2_heat_alert_seen", "p3_flagged_seen", "p2_run_started", "p2_run_done", "p3_power_started", "p3_power_done", "p4_zero_seen", "zero_named"]:
+			flow.save.set_flag(f)
+		for f in act1.order():
+			flow.save.set_flag(str(act1.sdef(str(f)).get("flag", "")), false)
+		act1.mark_before(jump)
 	var phone: Dictionary = def.get("phone", {})
 	hud.phone_set_status(str(phone.get("status", "NO SIM · Wi-Fi: YARD-PUBLIC")))
 	hud.phone_header(str(phone.get("sender", "???")), str(phone.get("subline", "")))
@@ -194,10 +211,10 @@ func start(resume := false) -> bool:
 		contact = true
 		hud.set_objective(runner.title, "Run the line: bowl, quarter, rail. Beat the Zero Score.")
 		if flow.save.flag("p4_zero_seen"):
-			# the playable slice ends after CINEMATIC P.4: in the lit arcade with Zero
+			# after CINEMATIC P.4: in the lit arcade with Zero, then the next Act I scene (or the slice end)
 			power.enter_done()
 			p4_end_state()
-			_slice_end(false)
+			_start_act1(false)
 		elif flow.save.flag("p3_power_done"):
 			# saved between the breaker and P.4: P.4 plays
 			power.enter_done()
@@ -286,6 +303,10 @@ func stop() -> void:
 		run.teardown()
 		run.queue_free()
 		run = null
+	if act1 != null:
+		act1.teardown()
+		act1.queue_free()
+		act1 = null
 	if power != null:
 		power.pilot = {}
 		power.teardown()
@@ -318,6 +339,9 @@ func retry() -> void:
 		return
 	if power != null and power.active():
 		# P.3: on foot in the arcade; T does nothing here (the sweep is the clock)
+		return
+	if act1 != null and act1.active():
+		# Act I scenes: T does nothing (falls and drones put you back at the last checkpoint)
 		return
 	if run != null and run.active():
 		# P.2 Run: back to the last checkpoint (the drones reset behind you)
@@ -353,6 +377,10 @@ func _process(delta: float) -> void:
 		return
 	if power != null and power.active():
 		power.tick(delta)
+		_publish()
+		return
+	if act1 != null and act1.active():
+		act1.tick(delta)
 		_publish()
 		return
 	if card_left <= 0.0:
@@ -457,6 +485,11 @@ func _settle(delta: float) -> void:
 		_bank()
 
 func _bail() -> void:
+	if act1 != null and act1.active():
+		act1.on_bail()
+		if sfx != null:
+			sfx.play("bail")
+		return
 	if run != null and run.active():
 		# P.2 Run: a bail only costs time (the drones close in); no Practice Run barks
 		combo.bail()
@@ -494,7 +527,7 @@ func _near_rail(radius: float) -> bool:
 # ------------------------------------------------------------------ the line and the Zero Score
 
 func _line_step(step: String) -> void:
-	var on_line: bool = runner.current_id() == "line" or runner.state == "done"
+	var on_line: bool = (runner.current_id() == "line" or runner.state == "done") and not (act1 != null and act1.active())
 	if not on_line:
 		return
 	var r: String = line.step(step, combo.score)
@@ -625,6 +658,9 @@ func _tick_talk(delta: float) -> void:
 	if TEXT_SPEAKERS.has(who):
 		_phone_line(who, text)
 		return
+	if act1 != null and act1.active() and act1.handles(who):
+		talk_left = act1.show_line(who, text)
+		return
 	if power != null and power.active() and power.handles(who):
 		talk_left = power.show_line(who, text)
 		return
@@ -713,7 +749,7 @@ func _refresh_hud() -> void:
 		return
 	hud.set_zero(zero_score, best_line)
 	hud.set_score(combo.score, combo.meter, combo.multiplier(), combo.top_speed_mult())
-	var on_line: bool = runner.current_id() == "line" or runner.state == "done"
+	var on_line: bool = (runner.current_id() == "line" or runner.state == "done") and not (act1 != null and act1.active())
 	if on_line:
 		var marks: Array = []
 		for i in line.steps.size():
@@ -805,8 +841,8 @@ func _on_cinematic_done(cid: String, _skipped: bool) -> void:
 		_start_run("")
 	elif cid == "p4_zero":
 		p2_state = "done"
-		# the title card has played: the end of the playable prologue (Act I 1.1 Fine Print is next)
-		_slice_end(true)
+		# the title card has played: Act I 1.1 Fine Print starts in the lit arcade
+		_start_act1(true)
 
 ## MISSION P.2 Run (Act I M3).
 func _start_run(from: String) -> void:
@@ -874,7 +910,37 @@ func p4_end_state() -> void:
 	p4_header()
 
 func hides_prompts() -> bool:
-	return active and (in_cinematic() or (run != null and run.hides_prompts()) or (power != null and power.active() and power.hides_prompts()))
+	return active and (in_cinematic() or (run != null and run.hides_prompts()) or (power != null and power.active() and power.hides_prompts()) or (act1 != null and act1.active() and act1.hides_prompts()))
+
+# ---- Act I scenes (act1.gd)
+## After P.4 (or a reload past it): the first unfinished Act I scene that is built, or the slice end.
+func _start_act1(fresh: bool) -> void:
+	p2_state = "done"
+	var nxt: String = act1.next_scene() if act1 != null else ""
+	if nxt != "" and act1.def.get("built", []).has(nxt):
+		if not fresh:
+			_say_all([["SYSTEM", "Loaded. Act I %s." % nxt]])
+		act1.start(nxt)
+		return
+	_slice_end(fresh)
+
+func _on_act1_finished() -> void:
+	_slice_end(true)
+
+func a1_hook(name: String) -> void:
+	if act1 != null:
+		act1.hook(name)
+
+## Cinematic end states (a skip still lands them).
+func a1_end_plan() -> void:
+	a1_hook("bailey")
+
+func a1_end_night() -> void:
+	pass
+
+func a1_end_benefactor() -> void:
+	a1_hook("broadcast")
+	a1_hook("halo")
 
 func _refresh_run_hud() -> void:
 	pass
@@ -888,12 +954,14 @@ func _slice_end(show_card: bool) -> void:
 	if cinematic != null:
 		cinematic.set_billboard("postponed")
 		cinematic.drone_do("leave")
+	var nxt: String = act1.next_scene() if act1 != null else ""
+	var nxt_title: String = str(act1.sdef(nxt).get("title", nxt)) if nxt != "" else str(se.get("next_after_slice", ""))
 	if show_card:
-		_say_all([["CARD", str(se.get("card", "END OF THE PLAYABLE PROLOGUE"))]])
+		_say_all([["CARD", str(se.get("card", "END OF THE PLAYABLE PROLOGUE")).replace("{next}", nxt_title)]])
 		card_left = 0.0
 	_say_all(se.get("system", []))
 	if hud != null:
-		hud.set_objective(runner.title, "Prologue complete. Next: Act I 1.1 Fine Print (not built yet). T runs P.2 again.")
+		hud.set_objective(runner.title, str(se.get("objective", "Prologue complete. T runs P.2 again.")).replace("{next}", nxt_title))
 	flow.save.story["prologue"] = "slice_end"
 	flow.persist()
 
@@ -962,6 +1030,11 @@ func _publish() -> void:
 	if power != null:
 		var last_line: String = str(spoken[-1]).left(48).replace("'", "").replace("\\", "") if not spoken.is_empty() else ""
 		JavaScriptBridge.eval("window.AU_P3={state:'%s',fuses:%d,sweep:%.2f,fails:%d,reach:'%s',log:%d,lit:%s,zero:'%s',header:'%s',last:'%s'};" % [power.state, power.fuses.size(), power.sweep, power.fails, power.in_reach() if power.active() else "", power.log.size(), "true" if power.lit != null else "false", power.zero.current if power.zero != null else "off", hud.phone_sender.replace("'", "") if hud != null else "", last_line.replace("\n", " ")], true)
+	if act1 != null:
+		var ll: String = str(spoken[-1]).left(48).replace("'", "").replace("\\", "").replace("\n", " ") if not spoken.is_empty() else ""
+		JavaScriptBridge.eval("window.AU_A1={scene:'%s',step:%d,do:'%s',state:'%s',goals:%d,left:%d,bags:%d,delivered:%d,signal:%d,watch:%.2f,spotted:%d,vision:%s,used:%s,score:%d,waiting:%s,log:%d,last:'%s'};" % [
+			act1.scene, act1.step_i, str(act1.step.get("do", "")), act1.state, act1.done_goals.size(), act1.required_left() if str(act1.step.get("do", "")) == "goals" else 0,
+			act1.bags, act1.delivered, int(flow.save.story.get("signal", 0)), act1.watch, act1.spotted, "true" if act1.vision else "false", "true" if act1.vision_used else "false", act1.score, "true" if act1.waiting else "false", act1.log.size(), ll], true)
 	if run != null:
 		var r := "window.AU_RUN={state:'%s',checkpoint:'%s',time:%.2f,fails:%d,routes:'%s',drones:%d,near:%.1f,log:%d,pilot:'%s'};" % [
 			run.state, run.checkpoint, run.clock, run.fails, ",".join(run.routes.keys()),
