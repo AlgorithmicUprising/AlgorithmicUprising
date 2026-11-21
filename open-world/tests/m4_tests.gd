@@ -217,6 +217,8 @@ func _p4_skip_and_reload() -> void:
 	await frames(3)
 	await frames(2)
 	ok(not story.hud.chrome_on(), "end card: no leftover P.3 HUD (objective, score, SWEEP)")
+	ok(not main.zone_label.visible and not main.mode_label.visible, "end card: the district / WALK label is hidden")
+	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|") and "ACT I · EARLY CUT" in str(l) and not "LOCAL BUILD" in str(l)), "end card: public wording (ACT I · EARLY CUT), no LOCAL BUILD")
 	ok(story.phase == "slice_end" and main.flow.save.flag("p4_zero_seen") and story.power.zero != null and story.power.zero.current == "awake" and story.hud.phone_sender == "ZERO" and story.power.lit != null, "skip P.4: power on, Zero awake, the ZERO header, then the slice end")
 	await _done(main)
 	# after P.4: straight to the slice end, in the lit arcade with Zero

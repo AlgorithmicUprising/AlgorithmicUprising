@@ -254,10 +254,20 @@ func start_autopilot() -> Node:
 	add_child(autopilot)
 	return autopilot
 
+## The top-left district / WALK label: hidden on the end card only (back on when the story stops).
+func _district_label(on: bool) -> void:
+	if main == null:
+		return
+	for n in ["zone_label", "mode_label"]:
+		var l = main.get(n)
+		if l is Label:
+			l.visible = on
+
 func stop() -> void:
 	if not active:
 		return
 	active = false
+	_district_label(true)
 	if player.skate_event.is_connected(_on_skate):
 		player.skate_event.disconnect(_on_skate)
 	player.combo_top_mult = 1.0
@@ -329,6 +339,7 @@ func _process(delta: float) -> void:
 		return
 	if hud != null:
 		hud.story_chrome(not (in_cinematic() or phase == "slice_end"))
+	_district_label(phase != "slice_end")
 	_tick_talk(delta)
 	_tick_world(delta)
 	if in_cinematic():
