@@ -246,6 +246,15 @@ func _scene_1_2() -> void:
 	await _until(story, func(): return str(a.step.get("do", "")) == "carry" and not a.waiting)
 	ok(a.scene == "1.2" and a._district("stillwater_flats") != null and main.player.global_position.x > 266.0 and preload("res://scripts/story/story_world.gd").sun_energy(main) > 1.0, "1.2: Stillwater Flats at noon (its own pack)")
 	ok(story.spoken.any(func(l): return "You brought me a television" in str(l)) and story.hud.phone_sender == "ZERO", "1.2: Nana Ines meets Zero on the phone")
+	var flats = a._district("stillwater_flats")
+	var nana = flats.get_node_or_null("NanaInes")
+	var tag = nana.get_node_or_null("Name") if nana != null else null
+	var center: Dictionary = {}
+	for dv in a.deliveries():
+		if str(dv.id) == "center":
+			center = dv
+	ok(nana != null and nana.position.z > -18.5 and not center.is_empty() and float(center.at[1]) > -18.0, "1.2: the community center drop and Nana Ines stand clear of the wall (camera room)")
+	ok(tag is Label3D and tag.visibility_range_begin >= 4.0, "name tags hide when the camera is right on them (close-ups)")
 	a.bags = 0
 	a.budget = int(a.step.budget)
 	ok(a.delivery_in_reach().is_empty() and not a.deliver("delacroix"), "1.2: nothing to hand over with no ice")

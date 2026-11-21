@@ -73,7 +73,7 @@ func _residents() -> void:
 	Kit.person(self, "KidOnStairs", "KID ON THE STAIRS", Vector3(322.0, 0.8, -61.5), Color("e0b03a"), 1.15)
 	Blocks.solid(self, "GardenPlot", Vector3(300.0, 0.2, -14.0), Vector3(5.0, 0.4, 2.5), Color("4d6b2f"))
 	Kit.person(self, "RooftopGardener", "ROOFTOP GARDENER", Vector3(303.5, 0.0, -14.0), Color("b04a6a"), 1.72, -PI * 0.5)
-	Kit.person(self, "NanaInes", "NANA INES", Vector3(292.5, 0.0, -19.8), Color("e6e0d0"), 1.62)
+	Kit.person(self, "NanaInes", "NANA INES", Vector3(292.5, 0.0, -17.8), Color("e6e0d0"), 1.62)
 
 func _billboard() -> void:
 	var x: float = ROOFS[3]

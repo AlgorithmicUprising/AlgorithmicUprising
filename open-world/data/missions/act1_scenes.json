@@ -231,9 +231,9 @@
    "skate": true,
    "zero_score": 12000,
    "spawn": [
-    290.0,
+    286.0,
     0.5,
-    -16.5,
+    -12.5,
     180.0
    ],
    "phone_sub": "on the phone",
@@ -408,7 +408,7 @@
        "who": "Nana Ines · the community center",
        "at": [
         290.0,
-        -19.4
+        -17.4
        ],
        "via": [
         [
@@ -1812,9 +1812,9 @@
    "skate": true,
    "zero_score": 0,
    "spawn": [
-    290.0,
+    286.0,
     0.5,
-    -16.5,
+    -12.5,
     180.0
    ],
    "phone_sub": "on the phone",
@@ -1848,7 +1848,7 @@
        "id": "paint",
        "at": [
         290.0,
-        -19.4
+        -17.4
        ],
        "r": 2.0,
        "verb": "E  help paint the community center roof white",
