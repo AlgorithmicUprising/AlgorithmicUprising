@@ -1,7 +1,7 @@
 {
   "id": "placeholder",
   "game": "paradise-offline-par1",
-  "name": "PAR-1 procedural placeholder",
+  "name": "PAR-2 procedural campaign prototype",
   "procedural": true,
   "render": { "pixelated": false },
   "palette": {
