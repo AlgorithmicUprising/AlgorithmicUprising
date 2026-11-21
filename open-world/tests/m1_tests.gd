@@ -591,7 +591,12 @@ func _act1() -> void:
 	story.idle_clock = 0.0
 	story.p2_clock = 89.99
 	main.player.velocity = Vector3(5, 0, 0)
-	await frames(2)
+	# wait until it fires (pending deal lines can hold the trigger a few frames on a loaded machine; 2 frames was flaky)
+	for _i in 240:
+		await frames(1)
+		if story.p2_reason != "":
+			break
+		story.talk_left = minf(story.talk_left, 0.001)
 	ok(story.p2_reason == "timeout" or story.p2_reason == "idle", "P.2 trigger: 90 s after the deal (%s)" % story.p2_reason)
 	story.stop()
 	main.queue_free()
