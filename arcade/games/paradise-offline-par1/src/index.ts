@@ -125,9 +125,10 @@ defineArcade('paradise-offline-par1', 'PARADISE OFFLINE · FIVE DAYS', (emit, ho
         moderate: 'MODERATE · ' + cost + ' ENERGY · −2 AUDIENCE / +6 BOUNDARIES',
         rest: 'REST · ' + cost + ' ENERGY · ENERGY +20'
       };
-      button.textContent = details[job] || job.toUpperCase();
-      button.title = button.textContent;
-      button.setAttribute('aria-label', button.textContent);
+      const description = details[job] || job.toUpperCase();
+      button.textContent = description;
+      button.title = description;
+      button.setAttribute('aria-label', description);
     }
 
     const notice = root.querySelector<HTMLElement>('[data-notice]');
