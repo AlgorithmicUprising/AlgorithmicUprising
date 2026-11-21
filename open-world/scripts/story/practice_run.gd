@@ -327,6 +327,8 @@ func retry() -> void:
 func _process(delta: float) -> void:
 	if not active:
 		return
+	if hud != null:
+		hud.story_chrome(not (in_cinematic() or phase == "slice_end"))
 	_tick_talk(delta)
 	_tick_world(delta)
 	if in_cinematic():

@@ -59,6 +59,7 @@ var phone_sender := "???"
 var fade_rect: ColorRect
 var fade_target := 0.0
 var fade_speed := 2.0
+var objective_panel: Control         # the objective box, top left (hidden over cutscenes and the end card)
 var right_column: VBoxContainer      # the Zero Score + score stack; the phone docks under it
 const PHONE_GAP := 10.0
 
@@ -70,6 +71,7 @@ func _ready() -> void:
 	add_child(root)
 	# objective, top left under the zone / mode labels
 	var obj := _panel(root, Vector2(16, 66), Vector2(430, 0))
+	objective_panel = obj
 	var col := VBoxContainer.new()
 	obj.add_child(col)
 	title_label = _label(col, 13, LIME)
@@ -209,8 +211,14 @@ func fade_alpha() -> float:
 func dock_phone() -> void:
 	if right_column == null or phone_panel == null:
 		return
+	# under the letterbox while it is up (it would clip the top of the stack otherwise)
+	var bar := letterbox_top.offset_bottom if letterbox_top != null and letterbox_top.visible else 0.0
+	right_column.offset_top = 12.0 + bar
 	var top := right_column.offset_top + right_column.get_combined_minimum_size().y + PHONE_GAP
-	top = maxf(top, right_column.position.y + right_column.size.y + PHONE_GAP)
+	if right_column.visible:
+		top = maxf(top, right_column.position.y + right_column.size.y + PHONE_GAP)
+	else:
+		top = 12.0 + bar
 	for c in [phone_panel, phone_chip]:
 		c.offset_top = top
 		c.offset_bottom = top
@@ -494,6 +502,17 @@ func phone_alert(text: String) -> void:
 	alert_panel.visible = text != ""
 	if text != "":
 		phone_clear()
+
+## Gameplay HUD (objective box, Zero Score / score stack) on or off: off over cutscenes and the end card, so no
+## leftover mission state (P.3's FUSES / SWEEP) sits over them. The phone stays (P.4 changes its header).
+func story_chrome(on: bool) -> void:
+	if objective_panel != null:
+		objective_panel.visible = on
+	if right_column != null:
+		right_column.visible = on
+
+func chrome_on() -> bool:
+	return right_column != null and right_column.visible and objective_panel.visible
 
 func letterbox(on: bool) -> void:
 	letterbox_top.visible = on
