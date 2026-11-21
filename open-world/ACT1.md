@@ -1,6 +1,8 @@
 # Act I: what is built (branch `pz-act1`, Nov 19 2026; M3 added the same night)
 
-Local only: not pushed, merged or deployed. Sources: the Act I breakdown (section 8, the P.2 Run row and A1), script v1.0 MISSION P.2 Run, P.1 Practice Run v2, shot list v2, Pirate Weather.
+> **Release note (Nov 20 2026):** Act I is an early cut; cinematic timing and pacing are still to be edited, and P.4 uses placeholder cutout art. The end card reads "ACT I · EARLY CUT".
+
+Released to main and the public site (`/open-world/`) as an early cut on Nov 20 2026 (owner-approved); earlier milestones were local only. Sources: the Act I breakdown (section 8, the P.2 Run row and A1), script v1.0 MISSION P.2 Run, P.1 Practice Run v2, shot list v2, Pirate Weather.
 
 Polish (M3 round): no "Click to look" or other input prompt over a cutscene or a fade; the phone docks under the score stack at whatever height it has, so it never overlaps it (1280x720, 1920x1080 and narrow windows all lay out in the same 1280-wide space).
 
