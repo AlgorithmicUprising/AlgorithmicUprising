@@ -313,6 +313,46 @@ const GODOT_CONFIG = $GODOT_CONFIG;
 const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
 
+// Phase 1: receive the site's pseudonymous player identity. Keep this host list
+// aligned with arcade/demo/embed-bridge.js; Project Zero never receives an email.
+(function () {
+	const allowedParents = new Set([
+		'https://algorithmicuprising.com',
+		'https://www.algorithmicuprising.com',
+		'https://algorithmic-uprising.free-grass-2381.chatgpt.site',
+	]);
+	const account = { ready: false, connected: false, player: null, capabilities: [] };
+	window.AU_PZ_ACCOUNT = account;
+	if (window.parent === window) {
+		account.ready = true;
+		return;
+	}
+
+	let parentOrigin = '';
+	try { parentOrigin = new URL(document.referrer).origin; } catch (_) {}
+	if (!allowedParents.has(parentOrigin)) {
+		account.ready = true;
+		return;
+	}
+	account.connected = true;
+	window.addEventListener('message', function (event) {
+		if (event.source !== window.parent || event.origin !== parentOrigin) return;
+		if (!event.data || typeof event.data !== 'object' || event.data.type !== 'pz:account') return;
+		const incoming = event.data.player;
+		const player = incoming && typeof incoming === 'object' && typeof incoming.id === 'string'
+			? { id: incoming.id.slice(0, 160), handle: typeof incoming.handle === 'string' ? incoming.handle.slice(0, 40) : null }
+			: null;
+		const capabilities = Array.isArray(event.data.capabilities)
+			? Array.from(new Set(event.data.capabilities.filter(value => typeof value === 'string').slice(0, 8)))
+			: [];
+		account.player = player;
+		account.capabilities = capabilities;
+		account.ready = true;
+		window.dispatchEvent(new CustomEvent('au:pz:account', { detail: { player, capabilities } }));
+	});
+	window.parent.postMessage({ type: 'pz:hello' }, parentOrigin);
+}());
+
 (function () {
 	const statusOverlay = document.getElementById('status');
 	const statusProgress = document.getElementById('status-progress');

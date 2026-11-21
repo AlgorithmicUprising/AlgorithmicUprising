@@ -347,3 +347,14 @@ Merging this visual branch would replace that HQ with the 160 m yard. Leave the 
 - No performance numbers. LlvmPipe and SwiftShader were used because that is what this machine offered. They are not a target device.
 - Web audio worklet files are in the export because the Godot template emits them. This project never starts a song.
 - Save data is a local JSON file in Godot's `user://` directory. It is not cloud sync.
+
+## 13. Site account identity bridge (Phase 1)
+
+The Project Zero web export runs in a GitHub Pages iframe and cannot read the website's HttpOnly player session. The site page handles the session lookup; the game shell only exchanges a short, pseudonymous identity.
+
+- `open-world/web/zero_x_shell.html` sends `{ type: "pz:hello" }` only when embedded by an allowlisted site origin from `arcade/demo/embed-bridge.js`.
+- It accepts `pz:account` only from the parent window and that same origin. The message contains `player: null` for a guest, or `player: { id, handle }` for a signed-in player, plus capabilities.
+- The shell exposes the current result at `window.AU_PZ_ACCOUNT` and emits `au:pz:account`. The website sends the player ID and username handle only; never an email address.
+- Sign-in remains on the site at `/account/?from=project-zero`. This phase adds identity only. Cloud save/load messages and cross-device saves remain deferred.
+
+Release check: on the embedded site page, confirm a signed-out session receives a null player and a signed-in session receives the selected handle. Opening GitHub Pages directly must not send a parent handshake. Ignore messages from non-parent windows and origins outside the shared allowlist.
