@@ -20,6 +20,10 @@ static func person(parent: Node, node_name: String, label: String, at: Vector3, 
 		var l := Blocks.label(p, label, Vector3(0, h + 0.35, 0), Color("f2e8d0"), 26)
 		l.name = "Name"
 		l.pixel_size *= 0.5  # small enough not to fill the frame in the cinematic close-ups
+		# and gone when the camera is right on top of them (they filled the boss and close-up shots); fades in from 5 m
+		l.visibility_range_begin = 5.0
+		l.visibility_range_begin_margin = 1.5
+		l.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	return p
 
 ## A flat sign (not billboarded): reads from the front (+Z of yaw).
