@@ -1,10 +1,6 @@
 # Bars per Watt · Power Rack
 
-Game 04 is a four-lane rhythm cartridge for the shared Punk Arcade engine. Its first catalog entry is Algorithmic Uprising's **The Human Zoo** (`AU-001`, explicit). The master in Drive's `Zero - Audio Masters` is 48 kHz stereo PCM, about 5:18.8, SHA-256 `54dcf056e2e5073b12a7fb38809a99ecba5c77ca72bd3111860e81ab806ee18c`. It remains outside this repository.
-
-The owner-only Power Rack playtest has ten songs with Easy, Medium and Hard draft charts, sleeves, silent desktop loops and downloadable StepMania files. The owner has confirmed the songs are original and rights-cleared. The public catalog now includes The Human Zoo's reviewed Easy, Medium and Hard charts and cleared playback copy in R2, all pinned to audioVersion `human-zoo-playback-v1-05f6a0c8`. Only songs with matching published audio and charts are eligible for the daily rotation, so the other nine songs remain out until those assets are ready.
-
-The published Human Zoo AAC playback copy is 160 kb/s, 5:18.8 and 6,613,040 bytes, SHA-256 `05f6a0c87d52404ff82eb63d54052d88d824d721f5624640384a59f57d9fdf58`. Its versioned R2 path is `bars-per-watt/AU-001/human-zoo-playback-v1-05f6a0c8/`.
+Game 04 is a four-lane rhythm cartridge for the shared Punk Arcade engine. The public catalog pins each playable track to a versioned playback copy and its reviewed Easy, Medium and Hard charts.
 
 ## Run and embed
 
@@ -38,27 +34,14 @@ All successful heads increase combo. Five consecutive perfect heads activate **O
 
 The new scoring rules use the `timing-v2` best-score namespace; previous two-grade scores do not compete with these scores. Settings and chart/audio versions are unchanged. Results include all three hit totals, misses, max combo and best precision.
 
-## Add the reviewed song media and charts
+## Publish cleared audio and charts
 
-1. Confirm recording/cover rights and identify a private immutable master version. Encode one web playback copy from the master outside Git, inspect duration and encoder padding, and verify HTTPS, CORS, MIME, range/seek and cache behavior on first-party storage. Do not put a master or compressed song in `arcade/` or a GitHub release.
-2. A person measures BPM and offset against that exact playback copy, authors Easy/Medium/Hard charts in a reviewed editor, and playtests each on keyboard, pad and touch. Record separate chart rights. The normalized JSON below describes one chart; the example has **no notes** and is a format example, not a playable chart.
-3. Publish immutable chart JSON beside the playback catalog on first-party storage. Set `rightsStatus` to `"cleared"`, `audioVersion`, `audio` and each difficulty path in the separate catalog only after the rights check. Each chart's `audioVersion` and `durationSec` must match the catalog and actual playback copy. Runtime validation rejects mismatches, missing charts, unsupported timing, duplicate/overlapping notes and cross-origin media paths.
-4. Point the component at that catalog with `<bars-per-watt catalog="https://algorithmicuprising.com/arcade-media/catalog.json"></bars-per-watt>`. The Pages demo and embed accept a percent-encoded `catalog` query value for the same first-party catalog; local HTTP is allowed only on localhost. Add another first-party storage origin to the explicit allowlist in `src/catalog.ts` if hosting moves. The catalog JSON remains first-party. Song media and chart JSON may use the explicitly approved R2 origin `https://media.algorithmicuprising.com`; CORS is limited to the production site, its known aliases, GitHub Pages, and local preview.
+The source of truth for public Bars Per Watt playback files and reviewed chart JSON is arcade/r2-assets/. Paths beneath that folder mirror the object keys in the bars-per-watt-media R2 bucket. The current Human Zoo Arcade Edit is versioned as human-zoo-arcade-edit-v1-827727bd.
 
-```json
-{
-  "format": "bars-per-watt-chart-v1",
-  "id": "human-zoo-easy-v1",
-  "songId": "AU-001",
-  "difficulty": "easy",
-  "audioVersion": "human-zoo-playback-v1-05f6a0c8",
-  "durationSec": 318.8,
-  "offsetSec": 0,
-  "bpms": [{ "beat": "0", "bpm": 120 }],
-  "notes": []
-}
-```
+For another track, add one approved playback copy and three reviewed chart files under bars-per-watt/<songId>/<audioVersion>/: audio.m4a, easy.json, medium.json and hard.json. Add matching URLs and audioVersion to the Bars Per Watt catalog. The workflow checks rightsStatus, object paths, chart song ID, difficulty, duration and audioVersion before upload.
 
-Beats are nonnegative decimal strings (at most six decimal places) or rational strings such as `"7/4"`; BPM segments start at beat zero and increase. A note uses `{ "beat": "7/4", "lane": 0 }`, with lanes 0–3 for left/down/up/right. A hold adds `"endBeat"`; two entries on the same beat in different lanes form a chord. The example BPM/offset above are placeholders and must be replaced by human-verified values. The full guide's restricted `.sm`/`.ssc` importer and video transport are later milestones; this first pass consumes normalized JSON only.
+A pull request runs the source/catalog check without Cloudflare credentials. After a pull request that changes this catalog or its R2 sources is merged into main, the main deployment confirms that the commit belongs to a merged PR targeting main, uploads and verifies the referenced R2 objects, then continues to the GitHub Pages publish. Direct pushes that change the catalog or R2 sources fail this deployment gate. Source media is not copied into the Pages artifact.
 
-Run `npm run check`, `npm test`, `npm run stage-pages` and `npm run e2e`. Browser tests use a synthetic four-second WAV and chart, never the song. Timing tests replay identical input at 30/60/120 Hz. Physical device audio latency, layout and memory/performance acceptance are still needed before live-site handoff.
+Before merging, configure the CLOUDFLARE_ACCOUNT_ID repository variable and the R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY GitHub secrets. Use an R2 S3 credential scoped to the bars-per-watt-media bucket. Keep private masters and unreleased exports out of arcade/r2-assets/.
+
+Each normalized chart uses format bars-per-watt-chart-v1 and includes songId, difficulty, audioVersion, durationSec, offsetSec, bpms and notes. Beats are decimal or rational strings; lane values are 0–3; holds include endBeat.

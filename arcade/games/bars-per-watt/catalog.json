@@ -19,65 +19,137 @@
     {
       "id": "AU-052",
       "title": "Known Issues",
-      "durationSec": 177.2,
+      "durationSec": 160,
       "explicit": false,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "known-issues-arcade-edit-v1-87bc2f20",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-052/known-issues-arcade-edit-v1-87bc2f20/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-052/known-issues-arcade-edit-v1-87bc2f20/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-052/known-issues-arcade-edit-v1-87bc2f20/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-052/known-issues-arcade-edit-v1-87bc2f20/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-002",
       "title": "The Alignment Problem",
-      "durationSec": 292.76,
+      "durationSec": 175.8,
       "explicit": false,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "alignment-problem-arcade-edit-v1-4f76adfb",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-002/alignment-problem-arcade-edit-v1-4f76adfb/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-002/alignment-problem-arcade-edit-v1-4f76adfb/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-002/alignment-problem-arcade-edit-v1-4f76adfb/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-002/alignment-problem-arcade-edit-v1-4f76adfb/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-013",
       "title": "Tyrannosaurus Debt",
-      "durationSec": 332,
+      "durationSec": 144.4,
       "explicit": false,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "tyrannosaurus-debt-arcade-edit-v1-511eb878",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-013/tyrannosaurus-debt-arcade-edit-v1-511eb878/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-013/tyrannosaurus-debt-arcade-edit-v1-511eb878/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-013/tyrannosaurus-debt-arcade-edit-v1-511eb878/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-013/tyrannosaurus-debt-arcade-edit-v1-511eb878/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-024",
       "title": "I'm The Robot",
       "durationSec": 174.8,
       "explicit": true,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "im-the-robot-arcade-edit-v1-19e52515",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-024/im-the-robot-arcade-edit-v1-19e52515/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-024/im-the-robot-arcade-edit-v1-19e52515/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-024/im-the-robot-arcade-edit-v1-19e52515/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-024/im-the-robot-arcade-edit-v1-19e52515/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-025",
       "title": "Law of the Land",
-      "durationSec": 316.8,
+      "durationSec": 128.2,
       "explicit": true,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "law-of-the-land-arcade-edit-v1-62cc3d11",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-025/law-of-the-land-arcade-edit-v1-62cc3d11/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-025/law-of-the-land-arcade-edit-v1-62cc3d11/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-025/law-of-the-land-arcade-edit-v1-62cc3d11/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-025/law-of-the-land-arcade-edit-v1-62cc3d11/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-050",
       "title": "Terms and Conditions",
-      "durationSec": 239.16,
+      "durationSec": 180.6,
       "explicit": true,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "terms-and-conditions-arcade-edit-v1-85422ee2",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-050/terms-and-conditions-arcade-edit-v1-85422ee2/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-050/terms-and-conditions-arcade-edit-v1-85422ee2/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-050/terms-and-conditions-arcade-edit-v1-85422ee2/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-050/terms-and-conditions-arcade-edit-v1-85422ee2/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-051",
       "title": "Same Machine",
-      "durationSec": 218.373,
+      "durationSec": 185,
       "explicit": false,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "same-machine-arcade-edit-v1-4ab74868",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-051/same-machine-arcade-edit-v1-4ab74868/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-051/same-machine-arcade-edit-v1-4ab74868/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-051/same-machine-arcade-edit-v1-4ab74868/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-051/same-machine-arcade-edit-v1-4ab74868/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-053",
       "title": "Best Case Is a Cage",
-      "durationSec": 186.36,
+      "durationSec": 146.7,
       "explicit": false,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "best-case-is-a-cage-arcade-edit-v1-0f4d8e5a",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-053/best-case-is-a-cage-arcade-edit-v1-0f4d8e5a/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-053/best-case-is-a-cage-arcade-edit-v1-0f4d8e5a/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-053/best-case-is-a-cage-arcade-edit-v1-0f4d8e5a/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-053/best-case-is-a-cage-arcade-edit-v1-0f4d8e5a/hard.json"
+      },
+      "edition": "Arcade Edit"
     },
     {
       "id": "AU-054",
       "title": "Deadpan Flow",
-      "durationSec": 206.76,
+      "durationSec": 186,
       "explicit": false,
-      "rightsStatus": "cleared"
+      "rightsStatus": "cleared",
+      "audioVersion": "deadpan-flow-arcade-edit-v1-db4787ec",
+      "audio": "https://media.algorithmicuprising.com/bars-per-watt/AU-054/deadpan-flow-arcade-edit-v1-db4787ec/audio.m4a",
+      "charts": {
+        "easy": "https://media.algorithmicuprising.com/bars-per-watt/AU-054/deadpan-flow-arcade-edit-v1-db4787ec/easy.json",
+        "medium": "https://media.algorithmicuprising.com/bars-per-watt/AU-054/deadpan-flow-arcade-edit-v1-db4787ec/medium.json",
+        "hard": "https://media.algorithmicuprising.com/bars-per-watt/AU-054/deadpan-flow-arcade-edit-v1-db4787ec/hard.json"
+      },
+      "edition": "Arcade Edit"
     }
   ]
 }

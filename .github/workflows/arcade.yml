@@ -38,6 +38,7 @@ jobs:
         run: node open-world/tools/check-pages-workflow.mjs
       - run: npm install --no-audit --no-fund
       - run: npm run check
+      - run: node tools/deploy-r2-assets.mjs --validate
       - run: npm test
       - name: Verify matching Playwright browsers
         run: npx playwright install --list
@@ -77,8 +78,56 @@ jobs:
       contents: read
       pages: write
       id-token: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Detect Bars Per Watt R2 changes
+        id: r2-changes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$BEFORE_SHA" || "$BEFORE_SHA" =~ ^0+$ ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
+          fi
+          set +e
+          git diff --quiet "$BEFORE_SHA" "$GITHUB_SHA" -- arcade/r2-assets arcade/games/bars-per-watt/catalog.json
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          elif [ "$status" -eq 1 ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            exit "$status"
+          fi
+      - name: Require a merged pull request for R2 publishing
+        id: r2-merged
+        if: steps.r2-changes.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const result = await github.request(
+              'GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls',
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: context.sha,
+                per_page: 100
+              }
+            );
+            const mergedToMain = result.data.some((pr) => pr.merged_at && pr.base?.ref === 'main');
+            core.setOutput('is-merged', String(mergedToMain));
+            if (!mergedToMain) {
+              core.setFailed('R2 assets and catalog changes must reach main through a merged pull request.');
+            }
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -106,6 +155,15 @@ jobs:
           node open-world/tools/export-web.mjs
       - name: Add /open-world/ without changing arcade files
         run: node open-world/tools/stage-composite.mjs --into-staged
+      - name: Publish Bars Per Watt media to R2
+        if: steps.r2-changes.outputs.changed == 'true'
+        working-directory: arcade
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_MERGED_PR: ${{ steps.r2-merged.outputs.is-merged }}
+        run: node tools/deploy-r2-assets.mjs --upload
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
