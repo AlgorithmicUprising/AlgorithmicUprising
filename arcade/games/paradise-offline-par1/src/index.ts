@@ -114,8 +114,19 @@ defineArcade('paradise-offline-par1', 'PARADISE OFFLINE · FIVE DAYS', (emit, ho
       if (!button) continue;
       button.hidden = (job === 'edit' && day.schedule !== 'edited') || (job === 'moderate' && day.schedule !== 'live');
       button.disabled = !day.canJob(job);
-      if (job === 'edit') button.textContent = 'EDIT UPDATE · ' + day.energyCost(job) + ' ENERGY · +5 AUDIENCE / +3 BOUNDARIES · DAY 3 TOMATO CHOICE EXTRA';
-      if (job === 'moderate') button.textContent = 'MODERATE · ' + day.energyCost(job) + ' ENERGY · −2 AUDIENCE / +6 BOUNDARIES';
+      const cost = day.energyCost(job);
+      const details: Partial<Record<Job, string>> = {
+        feed: 'FEED HENS · ' + cost + ' ENERGY · −1 FEED · COOP +10 / HOME +2',
+        repair: 'REPAIR COOP · ' + cost + ' ENERGY · −1 BOARD · COOP +22 / HOME +3',
+        'tend-garden': 'TEND GARDEN · ' + cost + ' ENERGY · −1 WATER · GARDEN +12 / FOOD +1',
+        'draw-water': 'DRAW WATER · ' + cost + ' ENERGY · WELL +18 / WATER +1',
+        cook: 'COOK · ' + cost + ' ENERGY · −1 FOOD · ENERGY +10 / HOME +4',
+        edit: 'EDIT UPDATE · ' + cost + ' ENERGY · +5 AUDIENCE / +3 BOUNDARIES · DAY 3 TOMATO CHOICE EXTRA',
+        moderate: 'MODERATE · ' + cost + ' ENERGY · −2 AUDIENCE / +6 BOUNDARIES',
+        rest: 'REST · ' + cost + ' ENERGY · ENERGY +20'
+      };
+      button.textContent = details[job] || job.toUpperCase();
+      button.title = button.textContent;
       button.setAttribute('aria-label', button.textContent);
     }
 
