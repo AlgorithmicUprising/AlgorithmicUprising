@@ -1,0 +1,34 @@
+{
+  "contract": "au.loading_cards",
+  "version": 1,
+  "district": "glass_row_edge",
+  "min_seconds": 2.5,
+  "note": "PLACEHOLDER copy for A1 glass_row_edge (Act I M3). Shown while the pack streams in; the edge apron keeps the wheels down.",
+  "tiers": [
+    {
+      "id": "intro",
+      "from_visit": 1,
+      "to_visit": 1,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "glass_row_intro",
+          "title": "GLASS ROW · EDGE",
+          "body": "Service alleys behind the boutiques. Comfort tiers start at Silver. Keep pushing."
+        }
+      ]
+    },
+    {
+      "id": "later",
+      "from_visit": 2,
+      "pick": "first",
+      "cards": [
+        {
+          "id": "glass_row_back",
+          "title": "GLASS ROW · EDGE",
+          "body": "The misters still switch off when you walk past."
+        }
+      ]
+    }
+  ]
+}

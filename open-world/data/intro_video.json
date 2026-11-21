@@ -1,0 +1,35 @@
+{
+  "contract": "au.intro_video",
+  "contract_version": 1,
+  "id": "pz_intro_v1",
+  "title": "Project Zero intro (Glitchport, Fony, first contact)",
+  "source_docs": [
+    "Intro Video Shot List v2 (Doc 1wDbja_wzInpd7j8h_WPqe7_Miw3nWHJLlDPxRN2INCU)",
+    "P.1 Practice Run v2 (Doc 1kWXSyqag-MJWUQFTmXbgLq4BGl6w9ZvWqrBn1AGRf9k)"
+  ],
+  "web": {
+    "sources": [
+      "media/intro/project-zero-intro-720p.mp4",
+      "https://algorithmicuprising.com/media/uploads/1cd5a1cf-88d7-4fa3-a7b6-1832f0fae11f-pz-intro-web-720p.mp4",
+      "media/intro/intro-placeholder.mp4"
+    ],
+    "default_url": "https://algorithmicuprising.com/media/uploads/1cd5a1cf-88d7-4fa3-a7b6-1832f0fae11f-pz-intro-web-720p.mp4",
+    "note": "Tried in order, relative to the game page (open-world/index.html) unless absolute. 1) the AU_INTRO_MP4 copy that tools/export-web.mjs drops next to the pack (absent on a normal export, so it 404s straight to the next one), 2) the hosted 720p cut on the site (Zero Admin upload; 307 to media-edge.algorithmicuprising.com, byte ranges fixed by FR-040), 3) the ffmpeg placeholder. Override per page with ?intro=<url>, or ?intro=skip.",
+    "load_timeout_s": 15.0,
+    "stall_s": 8.0,
+    "stall_giveup_s": 20.0,
+    "max_extra_s": 45.0
+  },
+  "native_ogv": [
+    "res://media/intro/project-zero-intro.ogv",
+    "user://intro/project-zero-intro.ogv"
+  ],
+  "skip": {
+    "hold_s": 1.0,
+    "hold_s_after_seen": 0.0
+  },
+  "missing_card_s": 4.0,
+  "first_run_only": true,
+  "status": "real cut hosted on the site (pz-intro-web-720p.mp4, 90 s, uploaded Nov 19 2026); the placeholder stays as the last fallback",
+  "fallback": "Any source that errors or does not start within load_timeout_s moves to the next. A stall of stall_s mid-play shows TRY AGAIN / SKIP INTRO and continues to the game after stall_giveup_s more. Blocked autoplay (even muted) shows TAP TO PLAY / SKIP INTRO. No source at all shows the in-production card for missing_card_s. The overlay never outlives the clip by more than max_extra_s."
+}

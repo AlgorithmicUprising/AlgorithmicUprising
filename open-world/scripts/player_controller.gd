@@ -110,6 +110,15 @@ const BSAIR_RISE_U := 0.15          # air fraction from the grab to the hand on 
 const BSAIR_RELEASE_U := 0.72       # the turn is done and the hand lets go here (frames 12-15 after it)
 const BSAIR_MIN_AIR_S := 0.3        # predicted lip air shorter than this cannot fit the trick: the grab stays a plain grab
 
+## M1 (Practice Run): every _event() and say() is also emitted here so the story layer (scripts/story/) can score
+## tricks, feed the combo meter and track mission objectives without reaching into the physics. Free roam has no listener.
+signal skate_event(what: String, info: Dictionary)
+## M1 combo speed system: multipliers on the flat skate top speed and push acceleration, set every frame by the story
+## layer from the combo meter (scripts/mission/combo_meter.gd). 1.0 = unchanged; free roam never changes them.
+var combo_top_mult := 1.0
+var combo_push_mult := 1.0
+## M1 move gating: grind tricks (GRIND_TRICKS keys) that cannot be switched into yet (story mode locks 5-0 and boardslide).
+var locked_grinds: Array = []
 var skating := true
 var input_enabled := true
 var qp_state := ""                  # "" / setup / ready / commit / roll / bail / kickturn (Phase 4)
@@ -432,8 +441,8 @@ func _simulate(delta: float) -> void:
 	_tricks(delta)
 	var wish := _wish()
 	wish_len = wish.length()
-	var speed := SKATE_SPEED if skating else WALK_SPEED
-	var accel := 22.0 if skating else 40.0
+	var speed := SKATE_SPEED * combo_top_mult if skating else WALK_SPEED
+	var accel := 22.0 * combo_push_mult if skating else 40.0
 	var friction := 7.0 if skating else 30.0
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	if pipe_air:
@@ -735,7 +744,7 @@ func grind_snap_left() -> Vector3:
 
 ## Switch grinds on the rail ("5050" / "5o" / "board"): the new clip plays its lock-in frames, the board's height on the bar follows.
 func set_grind_trick(kind: String) -> void:
-	if grind == null or not GRIND_TRICKS.has(kind) or kind == grind_trick:
+	if grind == null or not GRIND_TRICKS.has(kind) or kind == grind_trick or locked_grinds.has(kind):
 		return
 	var old_sink := float(GRIND_TRICKS[grind_trick].sink)
 	grind_trick = kind
@@ -758,6 +767,7 @@ func say(text: String, kind := "trick") -> void:
 	callout_log.append(text)
 	if callout_log.size() > 32:
 		callout_log.pop_front()
+	skate_event.emit("callout", {"text": text, "kind": kind})
 
 ## Off the rail: popped (Q / Space) or rolled off the end.
 func _leave_grind(jumped: bool, pop := JUMP_VELOCITY) -> void:
@@ -952,9 +962,11 @@ func _finish_trick() -> void:
 		velocity.z *= 0.35
 		ramp_v *= 0.35
 	else:
+		var landed_trick := trick
 		trick = "land"
 		trick_time = 0.0
 		board_caught = true
+		_event("trick_land", {"trick": landed_trick})
 	_push_trick()
 
 func _push_trick() -> void:
@@ -1015,6 +1027,7 @@ func _event(what: String, extra := {}) -> void:
 	ramp_events.append(e)
 	if ramp_events.size() > 64:
 		ramp_events.pop_front()
+	skate_event.emit(what, e)
 
 ## Sphere centre of the capsule's lower end in pipe space -> arc length, distance off the surface.
 func _pipe_contact(pipe: Node3D) -> Dictionary:
@@ -1242,6 +1255,7 @@ func skate_toggle_pressed() -> void:
 			return
 	skating = not skating
 	update_board()
+	_event("drop_on" if skating else "kick_up", {"speed": Vector2(velocity.x, velocity.z).length()})
 
 ## The drop-in spot under him, or {}: on a quarter pipe's deck within QP_SPOT_MAX of the coping, facing the ramp.
 func qp_spot() -> Dictionary:

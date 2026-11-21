@@ -1,0 +1,70 @@
+{
+  "contract": "au.start_screen",
+  "contract_version": 1,
+  "size": [
+    1920,
+    1080
+  ],
+  "layers": {
+    "plate": {
+      "file": "plate.jpg",
+      "pos": [
+        0,
+        0
+      ]
+    },
+    "strings_left": {
+      "file": "strings_left.png",
+      "pos": [
+        175,
+        226
+      ]
+    },
+    "strings_right": {
+      "file": "strings_right.png",
+      "pos": [
+        1393,
+        270
+      ]
+    },
+    "eyes_glow": {
+      "file": "eyes_glow.png",
+      "pos": [
+        718,
+        20
+      ]
+    },
+    "title": {
+      "file": "title.png",
+      "pos": [
+        28,
+        25
+      ]
+    },
+    "prompt": {
+      "file": "prompt.png",
+      "pos": [
+        771,
+        912
+      ]
+    }
+  },
+  "pivots": {
+    "strings_left": [
+      390,
+      248
+    ],
+    "strings_right": [
+      1545,
+      285
+    ]
+  },
+  "sway_deg": 0.9,
+  "sway_s": 4.0,
+  "eyes_pulse": [
+    0.25,
+    1.0,
+    2.0
+  ],
+  "source": "Project Zero start screen option C (puppeteer), approved Nov 15 2026; final layer set, 16:9 1920x1080"
+}

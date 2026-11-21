@@ -29,6 +29,62 @@
       ],
       "prefetch_m": 30.0,
       "free_roam": false
+    },
+    "glass_row_edge": {
+      "title": "GLASS ROW · EDGE",
+      "zone": "GLASS ROW",
+      "pack": "districts/glass_row_edge.pck",
+      "scene": "res://districts/glass_row_edge/glass_row_edge.tscn",
+      "budget_bytes": 2097152,
+      "cards": "res://data/loading_cards/glass_row_edge.json",
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bounds": [
+        82.0,
+        -80.0,
+        202.0,
+        102.0
+      ],
+      "apron": [
+        82.0,
+        -80.0,
+        202.0,
+        102.0
+      ],
+      "prefetch_m": 30.0,
+      "free_roam": false,
+      "note": "A1 (approved Nov 18 2026). Act I M3: holds all of MISSION P.2 Run (service alley, loading dock ledge, stair set, parking ramp, plaza with the mister kiosk, the storm drain). Built in world coordinates (origin 0). Armed by the story when P.2 Run starts, or ?district=glass_row_edge. budget_bytes is this pack's own budget, inside the 8 MiB per-district cap."
+    },
+    "solar_arcade_dark": {
+      "title": "SOLAR ARCADE",
+      "zone": "SOLAR ARCADE",
+      "pack": "districts/solar_arcade_dark.pck",
+      "scene": "res://districts/solar_arcade_dark/solar_arcade_dark.tscn",
+      "budget_bytes": 1048576,
+      "cards": "res://data/loading_cards/solar_arcade_dark.json",
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bounds": [
+        210.0,
+        -44.0,
+        250.0,
+        -8.0
+      ],
+      "apron": [
+        210.0,
+        -44.0,
+        250.0,
+        -8.0
+      ],
+      "prefetch_m": 30.0,
+      "free_roam": false,
+      "note": "Act I M4: the arcade interior, dark, for MISSION P.3 Power On (fuses, the breaker, the sweep). Off-map east of Glass Row; reached only by the story's fade at the side door. Armed and requested when P.2 Run starts so it is in before the door. Own budget inside the 8 MiB per-district cap."
     }
   }
 }

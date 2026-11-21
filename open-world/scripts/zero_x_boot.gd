@@ -9,7 +9,7 @@ extends Control
 ## No consent, no prompts: the screen just stays up while next_scene loads in the
 ## background (ResourceLoader.load_threaded_request) and moves on by itself once it is
 ## loaded and at least MIN_SHOW seconds have passed. Nothing the player does gates it.
-## When the in-game start screen (option C, the puppeteer) lands, point next_scene at it.
+## Front end (Nov 19 2026): next_scene is the puppeteer start screen (scenes/start_screen.tscn).
 
 signal finished(next_path: String)
 
@@ -26,7 +26,7 @@ const DIM := Color("aaa592")
 const LIME := Color("c6ff3d")
 const HOT := Color("ff4f8b")
 
-@export_file("*.tscn") var next_scene := "res://scenes/main.tscn"
+@export_file("*.tscn") var next_scene := "res://scenes/start_screen.tscn"
 ## Tests turn this off and listen for `finished` instead of changing scenes.
 @export var auto_change := true
 

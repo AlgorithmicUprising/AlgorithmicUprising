@@ -38,6 +38,10 @@ static func install() -> void:
 	_button("session_confirm", JOY_BUTTON_A)
 	_keys("session_cancel", [KEY_BACKSPACE])
 	_button("session_cancel", JOY_BUTTON_B)
+	# M1 (provisional, keyboard only; see CONTROLS.md): P starts / leaves story mode (P.1 Practice Run),
+	# T puts Fony back at the current objective's checkpoint (the bowl, once the line is open).
+	_keys("story_toggle", [KEY_P])
+	_keys("mission_retry", [KEY_T])
 
 static func _add(action: String) -> void:
 	if not InputMap.has_action(action):

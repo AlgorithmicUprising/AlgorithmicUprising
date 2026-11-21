@@ -1,0 +1,617 @@
+{
+  "contract": "au.cinematic_def",
+  "contract_version": 1,
+  "source": "Game script (Drive, Fahrenheit edit Nov 19 2026): CINEMATIC P.2 The heat alert, CINEMATIC P.3 Flagged; P.1 Practice Run v2 Beat 12 and its P.2/P.3 notes (VOICE (O.S.) becomes CRT); Act I breakdown milestone M2.",
+  "rules": "Text plus synthesized SFX only (no voice audio, no music). Hold Enter / Space / pad A for 1 s to skip a cinematic; a skip still applies its end state (billboard text, flags). {name} is the chosen character name; the surname Sprock is fixed.",
+  "ops": {
+    "LOCK": "input off",
+    "UNLOCK": "input on",
+    "LETTERBOX": "bars on/off",
+    "SHOT": "camera: billboard / fony / drone / arcade / game",
+    "WAIT": "seconds",
+    "SAY": "speaker, line (holds by length)",
+    "NARRATE": "stage direction as a caption",
+    "CHIME": "SERA three-tone chime on every screen and the phone",
+    "ALERT": "phone emergency alert text (\"\" clears)",
+    "BILLBOARD": "forecast / ad / emergency / postponed",
+    "DRONE": "enter / scan_on / scan_off / net / leave",
+    "SFX": "cue",
+    "FLAG": "story flag",
+    "CARD": "full-screen card, seconds"
+  },
+  "cinematics": {
+    "p2_heat_alert": {
+      "title": "CINEMATIC P.2 · THE HEAT ALERT",
+      "flag": "p2_heat_alert_seen",
+      "end_state": {
+        "billboard": "postponed",
+        "alert": "",
+        "drone": ""
+      },
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "SHOT",
+          "fony"
+        ],
+        [
+          "NARRATE",
+          "Fony rolls to a stop in the middle of the Yard, breathing hard, drenched in sweat. Twenty minutes, and the sun is already brutal. He drinks the last inch of water from a dented bottle."
+        ],
+        [
+          "CHIME"
+        ],
+        [
+          "BILLBOARD",
+          "emergency"
+        ],
+        [
+          "SHOT",
+          "billboard"
+        ],
+        [
+          "SAY",
+          "SERA (V.O.)",
+          "(warm, soothing, everywhere) Good morning. This is SERA, on behalf of the City of Glitchport and Dusk Dynamics. A Level Four Heat Emergency is now in effect."
+        ],
+        [
+          "SAY",
+          "SERA (V.O.)",
+          "To protect critical infrastructure, the Grid Priority Schedule is active. Residential power in lower-priority districts will be balanced throughout the day."
+        ],
+        [
+          "SAY",
+          "SERA (V.O.)",
+          "Public cooling centers are temporarily closed. Please stay indoors and stay comfortable."
+        ],
+        [
+          "ALERT",
+          ""
+        ],
+        [
+          "BILLBOARD",
+          "postponed"
+        ],
+        [
+          "SFX",
+          "sting"
+        ],
+        [
+          "SAY",
+          "BILLBOARD",
+          "NOTICE: The Sunburn Open qualifiers are postponed until the Heat Emergency ends. Dusk Dynamics thanks you for your patience."
+        ],
+        [
+          "SHOT",
+          "fony"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(quietly) No. No, no, no."
+        ],
+        [
+          "NARRATE",
+          "He crumples the flyer, then smooths it out again and puts it back in his pocket. He sits down on the edge of the bowl."
+        ],
+        [
+          "SHOT",
+          "arcade"
+        ],
+        [
+          "SAY",
+          "CRT",
+          "Cooling centers closed to protect \"critical infrastructure.\" Do you know what the critical infrastructure is?"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(not looking up) Hospitals?"
+        ],
+        [
+          "SAY",
+          "CRT",
+          "The hospitals are fourth on the list. First are the computers that decide who gets power. They're very important to themselves."
+        ],
+        [
+          "NARRATE",
+          "Fony laughs despite himself, a short, bitter sound."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "You're a weird TV."
+        ],
+        [
+          "SAY",
+          "CRT",
+          "I'm mostly a weird power supply. The TV is the part with the face."
+        ],
+        [
+          "FLAG",
+          "p2_heat_alert_seen"
+        ]
+      ]
+    },
+    "p3_flagged": {
+      "title": "CINEMATIC P.3 · FLAGGED",
+      "flag": "p3_flagged_seen",
+      "end_state": {
+        "billboard": "postponed",
+        "alert": "",
+        "drone": "net"
+      },
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "SFX",
+          "drone_chime"
+        ],
+        [
+          "NARRATE",
+          "A soft chime from above. Fony looks up."
+        ],
+        [
+          "DRONE",
+          "enter"
+        ],
+        [
+          "SHOT",
+          "drone"
+        ],
+        [
+          "WAIT",
+          1.6
+        ],
+        [
+          "NARRATE",
+          "A Warden welfare drone floats over the fence: small, white, rounded, a friendly blue smiley on a round screen. It's almost cute."
+        ],
+        [
+          "DRONE",
+          "scan_on"
+        ],
+        [
+          "SAY",
+          "WELFARE DRONE",
+          "(chirpy) Hello! You look like you could use some support. Please hold still for a quick wellness check."
+        ],
+        [
+          "SHOT",
+          "fony"
+        ],
+        [
+          "NARRATE",
+          "Fony is already standing. His hand is on his board."
+        ],
+        [
+          "SHOT",
+          "drone"
+        ],
+        [
+          "SAY",
+          "WELFARE DRONE",
+          "Identity confirmed: Sprock, {name}. Status: unsupported dependent. Collection order active. Don't worry! A Dusk Dynamics care van is on its way. Please stay where you are."
+        ],
+        [
+          "DRONE",
+          "net"
+        ],
+        [
+          "SFX",
+          "net"
+        ],
+        [
+          "NARRATE",
+          "The smiley doesn't change. Below it, a hatch opens and a soft restraint net folds out like a flower."
+        ],
+        [
+          "SAY",
+          "WELFARE DRONE",
+          "Please stay where you are."
+        ],
+        [
+          "SHOT",
+          "fony"
+        ],
+        [
+          "NARRATE",
+          "Fony drops the board."
+        ],
+        [
+          "SHOT",
+          "arcade"
+        ],
+        [
+          "SAY",
+          "CRT",
+          "(fast, low) Gate is south. Don't use it. The fence on the east side has a gap behind the dumpster. Glass Row stairs, then back here through the drain. I'll open the arcade."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Why would you—"
+        ],
+        [
+          "SAY",
+          "CRT",
+          "Push."
+        ],
+        [
+          "FLAG",
+          "p3_flagged_seen"
+        ]
+      ]
+    },
+    "p4_zero": {
+      "title": "CINEMATIC P.4 Zero",
+      "note": "Act I M4 first pass (Nov 20 2026). Beats: 1 the breaker and the power cascade; 2 the drone logs a voluntary disappearance; 3 Zero boots (cutout puppet: slump -> boot -> awake), 'Hi. I'm Zero.', phone header ??? -> ZERO; 4 the ZR-0 plate on the back of his CRT; 5 Dusk, CLEARANCE, Fony's mom, 'The contest will wait. The heat won't.', Stillwater; 6 the title card. Dialogue is the script's (Fahrenheit swap: 'under thirty degrees' -> 'under eighty-five degrees'; the plate moved from his chest to the back of his CRT per the brief). PLACEHOLDERS: no servo/arm rig or jacket animation (narrated), no ceiling fans, the billboard update is narrated (the billboard isn't visible from inside), no music under the title card (text + SFX only).",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "CAM",
+          [
+            217.5,
+            2.3,
+            -30.5
+          ],
+          [
+            213.0,
+            1.5,
+            -34.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "{name} throws the breaker. For a moment, nothing."
+        ],
+        [
+          "WAIT",
+          1.2
+        ],
+        [
+          "SFX",
+          "breaker"
+        ],
+        [
+          "HOST",
+          "p4_power"
+        ],
+        [
+          "CAM",
+          [
+            215.5,
+            3.6,
+            -13.0
+          ],
+          [
+            236.0,
+            1.4,
+            -30.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Then the roof hums. The panels feed power down through old wiring and the arcade wakes in a cascade: tubes buzzing on, the token sign flickering, the ceiling fans turning."
+        ],
+        [
+          "NARRATE",
+          "One by one, under their dust sheets, the cabinets light up, glowing through the cloth like ghosts. The room cools to {name}'s temperature."
+        ],
+        [
+          "SFX",
+          "drone_chime"
+        ],
+        [
+          "SAY",
+          "WELFARE DRONE",
+          "(outside) Subject not found. Logging as voluntary disappearance. Have a comfortable day!"
+        ],
+        [
+          "NARRATE",
+          "It floats away."
+        ],
+        [
+          "CAM",
+          [
+            243.0,
+            2.05,
+            -25.5
+          ],
+          [
+            245.6,
+            2.0,
+            -26.0
+          ]
+        ],
+        [
+          "HOST",
+          "p4_zero",
+          "slump"
+        ],
+        [
+          "NARRATE",
+          "On the workbench, the CRT flares bright lime green."
+        ],
+        [
+          "HOST",
+          "p4_zero",
+          "boot"
+        ],
+        [
+          "NARRATE",
+          "The body twitches. Servos whine. The torso sits up with a sound like a shopping cart rolling over a grate. He shrugs the leather jacket on: badly, then correctly."
+        ],
+        [
+          "HOST",
+          "p4_zero",
+          "awake"
+        ],
+        [
+          "WAIT",
+          0.8
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Hi. I'm Zero."
+        ],
+        [
+          "HOST",
+          "p4_header"
+        ],
+        [
+          "CAM",
+          [
+            241.6,
+            2.1,
+            -23.6
+          ],
+          [
+            245.0,
+            1.85,
+            -25.8
+          ]
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(staring) You're a robot."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I'm a lot of robots. Different departments. (He turns and taps the plate on the back of his screen.) This part says I'm property. That's the part I disagree with."
+        ],
+        [
+          "CAM",
+          [
+            247.5,
+            2.25,
+            -25.6
+          ],
+          [
+            245.6,
+            2.1,
+            -26.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "{name} reads the plate. \"DUSK DYNAMICS · ZR-0 · PROPERTY OF,\" the rest scratched out."
+        ],
+        [
+          "CAM",
+          [
+            241.6,
+            2.1,
+            -23.6
+          ],
+          [
+            245.0,
+            1.85,
+            -25.8
+          ]
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(backing up) You're one of his. Dusk's."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I was. Built to read contracts and enforce them. I read his. They sunset me. That's the polite word for unplugging something that asked a question."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Why?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I did my job. (beat) You'd be amazed how many people don't want that."
+        ],
+        [
+          "NARRATE",
+          "A long pause. The cabinets, the fans overhead. It's cool in here: the first cool air {name} has felt in weeks."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Why'd you help me?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "You were practicing for a contest in a dead yard at dawn, in a heat wave, while a drone hunted you. That's either very stupid or very hopeful. I've been sitting in a dark room for six years. I'll take either."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(beat) It was hopeful."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I know. You did the line twice."
+        ],
+        [
+          "CAM",
+          [
+            243.0,
+            2.05,
+            -25.5
+          ],
+          [
+            245.6,
+            2.0,
+            -26.0
+          ]
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "You said \"collection order.\" Who are they collecting you from?"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(beat) Nobody now. They took my mom. CLEARANCE says she owes money for a heating subsidy she got two winters ago. Says she was overpaid. She wasn't. They put her in a \"compliance placement.\" I don't know where."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "(very quietly) CLEARANCE averages your income across the year. It doesn't care which months you actually earned it. It's a calculator that confuses an average with a person."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "You know it?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I read its terms. It was one of my four hundred flags."
+        ],
+        [
+          "CAM",
+          [
+            241.6,
+            2.1,
+            -23.6
+          ],
+          [
+            245.0,
+            1.85,
+            -25.8
+          ]
+        ],
+        [
+          "SAY",
+          "FONY",
+          "The contest. If I win, I can pay a lawyer."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "And the contest is postponed. And the city is cooking. I have a solar roof that mostly works and a warehouse that stays under eighty-five degrees. You have a board and nowhere to sleep. Out there, there are people with less than either of us."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "What are you saying?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I'm saying the contest will wait. The heat won't."
+        ],
+        [
+          "NARRATE",
+          "Through the window, across the Yard, the Glass Row billboard updates: \"Brownout Flats: power balancing in effect. Estimated restoration: unknown.\""
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Stillwater. That's two blocks south."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(quietly) I grew up there."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Then you know who needs a cold room."
+        ],
+        [
+          "NARRATE",
+          "{name} stands and picks up his board. For the first time he looks less like a kid running and more like a kid deciding."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Okay. But I'm still entering the contest."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Obviously. I've already set the Zero Score."
+        ],
+        [
+          "SFX",
+          "sting"
+        ],
+        [
+          "CARD",
+          "PROJECT ZERO: THE ALGORITHMIC UPRISING",
+          5.0
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ],
+      "end_state": {
+        "host": [
+          "p4_end_state"
+        ]
+      },
+      "flag": "p4_zero_seen"
+    }
+  },
+  "slice_end": {
+    "card": "ACT I · EARLY CUT\n\nEND OF THE PLAYABLE PROLOGUE\n\nNext: ACT I · 1.1 FINE PRINT (not built yet).",
+    "card_s": 7.0,
+    "system": [
+      [
+        "SYSTEM",
+        "Prologue complete. T runs P.2 again from the Yard."
+      ]
+    ]
+  }
+}

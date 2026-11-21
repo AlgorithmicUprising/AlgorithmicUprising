@@ -99,7 +99,12 @@ func set_paused(value: bool) -> Dictionary:
 	return {"ok": true}
 
 func persist() -> void:
+	# front end (Nov 19 2026): main fills the v3 player / settings / meta blocks when a character is being played
+	if ui != null and ui.has_method("fill_save"):
+		ui.fill_save(save)
 	save.save_user(save_path)
+	if ui != null and ui.has_method("after_save"):
+		ui.after_save(save)
 
 func _close_session(completed: bool, input_mode: String) -> Dictionary:
 	if boundary.phase != "in_session":

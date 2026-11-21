@@ -1,0 +1,320 @@
+{
+  "contract": "au.mission",
+  "version": 1,
+  "id": "p2_run",
+  "title": "P.2 RUN",
+  "status": "Act I milestone M3 (Nov 19 2026). Script v1.0 MISSION P.2 Run, the Act I breakdown (P.2 Run row, A1 glass_row_edge) and P.1 v2 (the voice hops between Glass Row's screens; ??? header stays). Fail rule is the breakdown's proposal: caught by the net -> short fade -> restart at the last checkpoint, no lives.",
+  "district": "glass_row_edge",
+  "toggles": {
+    "title_card": false,
+    "title_card_text": "MISSION P.2 · RUN"
+  },
+  "zero_time": {
+    "note": "Time-based Zero Score (lower wins). Zero's time is set from the first escape: the next whole 5 s below it (never under min_s). Stored in the mission record as milliseconds (best_score / zero_score).",
+    "round_s": 5,
+    "min_s": 30
+  },
+  "start": {
+    "pos": [
+      62.0,
+      0.5,
+      29.0
+    ],
+    "yaw_deg": -90.0
+  },
+  "checkpoints": [
+    {
+      "id": "yard",
+      "text": "Out through the gap in the east fence",
+      "pos": [
+        62.0,
+        0.5,
+        29.0
+      ],
+      "yaw_deg": -90.0,
+      "drones_behind": [
+        [
+          44.0,
+          29.0
+        ],
+        [
+          36.0,
+          22.0
+        ],
+        [
+          36.0,
+          36.0
+        ]
+      ]
+    },
+    {
+      "id": "fence_gap",
+      "text": "The van blocks the alley: dock or ramp",
+      "at": [
+        82.0,
+        29.0
+      ],
+      "r": 6.0,
+      "pos": [
+        86.0,
+        0.5,
+        29.0
+      ],
+      "yaw_deg": -90.0,
+      "drones_behind": [
+        [
+          70.0,
+          29.0
+        ],
+        [
+          64.0,
+          25.0
+        ],
+        [
+          64.0,
+          33.0
+        ]
+      ]
+    },
+    {
+      "id": "plaza",
+      "text": "Across the plaza. The stairs at the far end",
+      "at": [
+        130.0,
+        29.0
+      ],
+      "r": 6.5,
+      "pos": [
+        132.0,
+        0.5,
+        29.0
+      ],
+      "yaw_deg": -90.0,
+      "drones_behind": [
+        [
+          118.0,
+          29.0
+        ],
+        [
+          112.0,
+          25.0
+        ],
+        [
+          112.0,
+          33.0
+        ]
+      ]
+    },
+    {
+      "id": "culvert",
+      "text": "Across the Yard to the arcade's side door",
+      "pos": [
+        77.5,
+        0.5,
+        -70.0
+      ],
+      "yaw_deg": 180.0,
+      "drones_behind": []
+    }
+  ],
+  "targets": {
+    "fence_gap": [
+      80.0,
+      29.0
+    ],
+    "fork": [
+      102.0,
+      29.0
+    ],
+    "plaza": [
+      130.0,
+      29.0
+    ],
+    "grate": [
+      165.0,
+      15.4
+    ],
+    "door": [
+      54.0,
+      -6.4
+    ]
+  },
+  "routes": {
+    "dock": {
+      "rect": [
+        100.5,
+        22.4,
+        121.0,
+        26.6
+      ],
+      "min_y": 0.5,
+      "label": "Loading dock ledge"
+    },
+    "ramp": {
+      "rect": [
+        104.0,
+        31.4,
+        124.0,
+        35.8
+      ],
+      "min_y": 1.6,
+      "label": "Parking ramp"
+    }
+  },
+  "camera": {
+    "pos": [
+      114.0,
+      35.6
+    ],
+    "rect": [
+      107.0,
+      31.4,
+      121.0,
+      35.8
+    ],
+    "boost_s": 5.0
+  },
+  "drones": {
+    "welfare": {
+      "speed": 6.6,
+      "catchup": 11.5,
+      "catch_r": 2.0
+    },
+    "enforcement": {
+      "speed": 7.2,
+      "catchup": 12.0,
+      "catch_r": 2.2,
+      "delay_s": 4.0
+    },
+    "catchup_beyond_m": 26.0,
+    "grace_s": 3.0,
+    "boost": 3.5,
+    "lost_after_s": 2.5,
+    "search_s": 4.0,
+    "search_speed": 2.5,
+    "altitude": 3.4,
+    "crumb_m": 1.2
+  },
+  "fade_s": 0.6,
+  "culvert_s": 3.2,
+  "door_r": 2.2,
+  "grate_r": 1.7,
+  "lines": {
+    "start": [
+      [
+        "TEXT ???",
+        "{name}. Nice name. Sounds like a typo. PUSH."
+      ],
+      [
+        "FONY",
+        "Nope! Nope. Nope."
+      ],
+      [
+        "TEXT ???",
+        "East fence. Behind the dumpster. There's a gap."
+      ]
+    ],
+    "enforcers": [
+      [
+        "ENFORCEMENT DRONE",
+        "Subject evading. Escalating support."
+      ]
+    ],
+    "fork": [
+      [
+        "SCREEN meter",
+        "I'm borrowing this. It has eleven cents of battery. Hurry."
+      ]
+    ],
+    "camera": [
+      [
+        "ENFORCEMENT DRONE",
+        "Visual confirmed. Parking level one."
+      ]
+    ],
+    "plaza": [
+      [
+        "SCREEN store",
+        "Drones scan faces, not backs. Stop turning around."
+      ]
+    ],
+    "kiosk": [
+      [
+        "MISTER KIOSK",
+        "Comfort mist is available to Silver tier and above."
+      ]
+    ],
+    "stairs": [
+      [
+        "SCREEN bus",
+        "Left. The drain grate under the stairs is loose."
+      ]
+    ],
+    "caught": [
+      [
+        "WELFARE DRONE",
+        "Gotcha! Let's get you somewhere comfortable."
+      ]
+    ],
+    "culvert": [
+      [
+        "NARRATE",
+        "He drops through the loose grate and pushes through the dry culvert that runs under the Yard's corner."
+      ]
+    ],
+    "lost": [
+      [
+        "ENFORCEMENT DRONE",
+        "Visual lost. Requesting area scan."
+      ]
+    ],
+    "door": [
+      [
+        "NARRATE",
+        "He reaches the arcade's side door. The chain falls away. Something inside has unlocked it."
+      ]
+    ],
+    "zero_time_set": [
+      [
+        "TEXT ???",
+        "{time}. Not bad for a typo. That's the number now."
+      ]
+    ],
+    "zero_time_beaten": [
+      [
+        "TEXT ???",
+        "{time}. Fine. Faster than me. Inside. Now."
+      ]
+    ]
+  },
+  "barks": {
+    "drones": [
+      [
+        "WELFARE DRONE",
+        "You're doing great! Please slow down so we can help you."
+      ],
+      [
+        "ENFORCEMENT DRONE",
+        "Subject evading. Escalating support."
+      ],
+      [
+        "WELFARE DRONE",
+        "Running is a sign of stress. We can help with stress!"
+      ]
+    ],
+    "fony_close": [
+      [
+        "FONY",
+        "Stop smiling at me!"
+      ]
+    ],
+    "fony_land": [
+      [
+        "FONY",
+        "(landing a big drop) Okay that was sick, okay, keep going."
+      ]
+    ]
+  },
+  "end_card": "END OF THE PLAYABLE PROLOGUE\n\nNext: MISSION P.3 POWER ON\n(the dark arcade, three fuses, the breaker)\nmilestone M4, not built yet",
+  "line_notes": "Script v1.0 lines are verbatim except: start[2] (the gap), camera, caught, zero_time_set and zero_time_beaten, which are new placeholder lines for the build (not in the script). start[0] is the optional P.1 v2 add."
+}

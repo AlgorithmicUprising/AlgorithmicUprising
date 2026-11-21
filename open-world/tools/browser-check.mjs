@@ -79,7 +79,8 @@ async function checkWorld() {
       failures.push('wasm MIME failed ' + wasm.status() + ' ' + type + ' ' + wasmUrl);
     }
   }
-  await page.goto(base + '/open-world/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  // ?play=free: straight past the start screen into free roam (the plain URL opens the title menu).
+  await page.goto(base + '/open-world/?play=free', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForFunction(() => window.AU_HQ && window.AU_HQ.session === 'world', { timeout: 45000 });
   const before = await page.evaluate(() => ({ ...window.AU_HQ }));
   await page.click('canvas');

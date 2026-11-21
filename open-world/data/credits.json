@@ -1,0 +1,17 @@
+{
+  "contract": "au.credits",
+  "contract_version": 1,
+  "note": "Front end, Nov 19 2026. Only credits with a source in this repo are filled in. People's names are not invented: '[credit TBD]' marks a role the band still has to fill. The Godot license text is not copied here; the credits screen reads it from the running engine (Engine.get_license_text()), the same as the boot screen.",
+  "sections": [
+    {"title": "PROJECT ZERO: THE ALGORITHMIC UPRISING", "lines": ["An Algorithmic Uprising game", "(c) 2026 Algorithmic Uprising"]},
+    {"title": "STORY, DESIGN AND DIRECTION", "lines": ["Algorithmic Uprising", "[credit TBD]"]},
+    {"title": "CHARACTERS", "lines": ["Zero, Fony and Egon Dusk are Algorithmic Uprising characters", "Fony is the default player name; you can play under any name"]},
+    {"title": "ART", "lines": ["Character art, the start screen (the puppeteer) and the arcade art: Algorithmic Uprising, all rights reserved", "Start screen background art is AI-generated with the band's OK", "[credit TBD]"]},
+    {"title": "MUSIC AND SOUND", "lines": ["No music ships in this build", "Sound effects are generated in code", "[credit TBD]"]},
+    {"title": "CODE", "lines": ["Project Zero game code: MIT license (see LICENSE)", "[credit TBD]"]},
+    {"title": "ZERO X GAME ENGINE", "lines": ["Zero X is our name for the engine Project Zero runs on.", "Built on Godot Engine. We renamed it. Godot's contributors built it.", "{godot_version}", "Godot Engine is (c) 2014-present Godot Engine contributors and (c) 2007-2014 Juan Linietsky, Ariel Manzur, under the MIT license (full text below).", "Godot's third-party notices: GODOT_COPYRIGHT.txt, next to the web build."], "license": "godot"},
+    {"title": "THIRD-PARTY ASSETS", "lines": ["Includes CC0 assets by Kenney (kenney.nl): City Kit (Industrial) 2.0, Nature Kit 2.1", "Includes CC0 textures from Poly Haven (polyhaven.com)", "Press Start 2P font (c) 2012 The Press Start 2P Project Authors, SIL Open Font License 1.1"]},
+    {"title": "PUNK ARCADE", "lines": ["Grind the Terms, Tag Before Training, Cookie Wall and Bars per Watt are the Punk Arcade games on the ZERO GAME THING 2000", "Punk Arcade code: MIT. AU branding reserved."]},
+    {"title": "THANK YOU", "lines": ["To everyone who reads the fine print."]}
+  ]
+}

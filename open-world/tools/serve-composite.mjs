@@ -15,6 +15,7 @@ const types = {
   '.png': 'image/png',
   '.wasm': 'application/wasm',
   '.pck': 'application/octet-stream',
+  '.mp4': 'video/mp4',
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json',
 };
