@@ -84,7 +84,7 @@ export class ParadiseDay {
   private dayBefore: Snapshot = emptySnapshot();
   private eventNote = '';
 
-  constructor(public seed = RANKED_SCENARIO.seed, reducedMotion = false, private emit: Signal = () => {}) {
+  constructor(public seed: number = RANKED_SCENARIO.seed, reducedMotion = false, private emit: Signal = () => {}) {
     this.reducedMotion = reducedMotion;
     this.reset(seed);
   }
