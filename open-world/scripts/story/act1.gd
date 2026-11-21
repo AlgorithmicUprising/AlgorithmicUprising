@@ -623,7 +623,9 @@ func _strings(on: bool) -> void:
 	if holo != null:
 		for c in holo.get_children():
 			if c is MeshInstance3D and not c.has_meta("eye"):
-				(c as MeshInstance3D).material_override = Kit.unshaded(LIME if on else Color("2a2c30"), 0.85 if on else 0.55)
+				var hm := Kit.unshaded(LIME if on else Color("2a2c30"), 0.85 if on else 0.55)
+				hm.disable_fog = on
+				(c as MeshInstance3D).material_override = hm
 	if not on or holo == null:
 		return
 	var mi := MeshInstance3D.new()
@@ -631,6 +633,7 @@ func _strings(on: bool) -> void:
 	var im := ImmediateMesh.new()
 	var mat := Kit.unshaded(LIME)
 	mat.no_depth_test = true
+	mat.disable_fog = true  # the night preset's fog swallowed them at 80 m in the first browser run
 	im.surface_begin(Mesh.PRIMITIVE_LINES, mat)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1405
@@ -643,6 +646,9 @@ func _strings(on: bool) -> void:
 		var b := Vector3(rng.randf_range(250.0, 470.0), rng.randf_range(0.5, 30.0), rng.randf_range(-100.0, 20.0))
 		if i < drones.size():
 			b = drones[i].node.global_position
+		elif i < 80 and host.player != null:
+			# some land around Fony, so the first look always has strings crossing the frame
+			b = host.player.global_position + Vector3(rng.randf_range(-25.0, 25.0), rng.randf_range(0.0, 6.0), rng.randf_range(-30.0, 10.0))
 		im.surface_add_vertex(a)
 		im.surface_add_vertex(b)
 	im.surface_end()

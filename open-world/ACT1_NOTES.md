@@ -49,3 +49,12 @@ Every guess below is a first pass, for you to change.
 - 1.5 The Breaker and 1.6 Heat Break (after the slice).
 - Real art for Nana Ines, residents, Egon, the Halo; Zero's face on the phone (the thread header only).
 - Workshop upgrades and parts; the Grind the Terms cabinet unlock in the arcade; Zero Vision in free roam.
+
+## Known rough spots (seen in the browser runs)
+- The lower SCORE box (the skate combo) reads 0 through the Act I scenes; the scene score is in the box above it (e.g. ROOFS 3/4 · SCORE 11,250).
+- At the community center drop in 1.2 the camera squeezes in against Fony's back for a moment.
+- The 1.1 camera starts very close to the dust-sheeted cabinet on the dev jump.
+- Name labels over the block people were halved in size after they filled the 1.3B close-ups.
+
+## Review runs
+`AU_ACT1_FROM=1.2 AU_ACT1_OUT=... node tools/act1-scenes-check.mjs` after `tools/export-web.mjs` + `tools/stage-composite.mjs`. Note: the full test suite's media guard scans `build/`, so run the suite before exporting (as CI does) or on a copy without `build/`.

@@ -19,6 +19,7 @@ static func person(parent: Node, node_name: String, label: String, at: Vector3, 
 	if label != "":
 		var l := Blocks.label(p, label, Vector3(0, h + 0.35, 0), Color("f2e8d0"), 26)
 		l.name = "Name"
+		l.pixel_size *= 0.5  # small enough not to fill the frame in the cinematic close-ups
 	return p
 
 ## A flat sign (not billboarded): reads from the front (+Z of yaw).

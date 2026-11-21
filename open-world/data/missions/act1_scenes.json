@@ -8,7 +8,7 @@
   "1.3",
   "1.4"
  ],
- "built": ["1.1", "1.2", "1.3"],
+ "built": ["1.1", "1.2", "1.3", "1.4"],
  "scenes": {
   "1.1": {
    "id": "a1_fine_print",
@@ -766,7 +766,7 @@
     },
     {
      "do": "goals",
-     "objective": "Mark three things for Zero with spray: the lawn, the substation, the water intake. Stay out of the drones' range (the mist under the towers hides you).",
+     "objective": "Spray three marks: the lawn, the substation, the water intake. Keep out of drone range (mist hides you).",
      "counter": "MARKS",
      "det_r": 5.5,
      "fill_s": 2.5,
