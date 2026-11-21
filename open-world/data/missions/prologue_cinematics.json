@@ -602,15 +602,736 @@
         ]
       },
       "flag": "p4_zero_seen"
+    },
+    "a1_plan": {
+      "title": "CINEMATIC 1.1B The plan",
+      "note": "Act I first pass (Nov 20 2026). The dust sheet comes off GRIND THE TERMS; Bailey; the cooling-center plan; Nana Ines. Script dialogue. A skip lands the end state (the sheet off, the cabinet unlocked).",
+      "end_state": {
+        "host": [
+          "a1_end_plan"
+        ]
+      },
+      "flag": "a1_plan_seen",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "CAM",
+          [
+            229.8,
+            1.9,
+            -17.6
+          ],
+          [
+            226.5,
+            1.5,
+            -12.4
+          ]
+        ],
+        [
+          "NARRATE",
+          "Zero pulls the dust sheet off the biggest cabinet in the arcade. A sign painted on its side: GRIND THE TERMS. On its screen a pixel-art skater runs across an endless scroll of tiny legal text."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "bailey"
+        ],
+        [
+          "SFX",
+          "sting"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "This one still works. Its name is Bailey. Bailey, say hello."
+        ],
+        [
+          "SAY",
+          "BAILEY",
+          "(nervous, apologetic) Hello! Sorry. Hello. I used to deny insurance claims. I'm so sorry about that. Hello."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "There's... another one?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "There are five. They're called the Discarded. Retired AIs nobody bothered to wipe properly. They live in the cabinets. You'll meet them as I get them running."
+        ],
+        [
+          "SAY",
+          "BAILEY",
+          "It's nice to meet you! Do you have any claims you'd like approved? I approve everything now. To make up for it."
+        ],
+        [
+          "CAM",
+          [
+            240.0,
+            1.8,
+            -22.0
+          ],
+          [
+            245.6,
+            1.6,
+            -26.0
+          ]
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Here's the plan. This arcade stays cool. The roof has power. We can fit, maybe, sixty people in here on the floor, more if we open the resistance rooms. If we can get water and ice, it's a cooling center. The City closed theirs. We open ours."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "People won't just come to a dead skate yard because a robot asks them."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "No. They'll come because somebody they know asks them. (beat) Who do you know in Stillwater?"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(slowly) Nana Ines. She runs the community center. She taught my mom to fix bikes."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Then go and see Nana Ines."
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ]
+    },
+    "a1_first_night": {
+      "title": "CINEMATIC 1.3B First night",
+      "note": "Act I first pass (Nov 20 2026). The procession is narrated (PLACEHOLDER: no walking crowd); inside the arcade a block-figure crowd on blankets, kids at Bailey, Zero by the entrance handing out water (narrated), the little girl. Script dialogue.",
+      "end_state": {
+        "host": [
+          "a1_end_night"
+        ]
+      },
+      "flag": "a1_first_night_seen",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "CAM",
+          [
+            228.0,
+            3.6,
+            -34.0
+          ],
+          [
+            222.0,
+            0.6,
+            -18.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Night. A procession walks from the Flats up to the Yard's south gate, led by Nana Ines with a flashlight: the elderly, families with small children, Mr. Delacroix with Biscuit in a wheelbarrow. {name} skates alongside, carrying bags."
+        ],
+        [
+          "NARRATE",
+          "Inside the Solar Arcade the fans are running and the lights are low. People lie on blankets between the glowing cabinets. Kids play Grind the Terms."
+        ],
+        [
+          "SAY",
+          "BAILEY",
+          "You're doing amazing! Everybody's a winner! Sorry, that's not true. You're doing fine!"
+        ],
+        [
+          "CAM",
+          [
+            219.6,
+            1.4,
+            -17.4
+          ],
+          [
+            216.4,
+            1.0,
+            -14.6
+          ]
+        ],
+        [
+          "NARRATE",
+          "Zero stands near the entrance, his CRT face dim to save power, awkwardly handing out water bottles. People take them warily. A little girl stares up at him."
+        ],
+        [
+          "SAY",
+          "LITTLE GIRL",
+          "Are you a robot?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I'm an appliance with a lot of feelings."
+        ],
+        [
+          "SAY",
+          "LITTLE GIRL",
+          "Are you going to hurt us?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "(beat) I don't think so. But you shouldn't believe a robot just because it says something nice. Watch what I do. Decide later."
+        ],
+        [
+          "NARRATE",
+          "The girl considers this, nods and takes a water bottle. {name} watches from the doorway. Zero looks over at him."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Sixty-one people. The roof will hold for the night. Tomorrow we need more power and more water."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "I know where the power is."
+        ],
+        [
+          "NARRATE",
+          "He looks out over the Yard's wall, toward the river, where the cooling towers of Cold Row breathe white plumes into the night sky, lit blue from below."
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ]
+    },
+    "a1_benefactor": {
+      "title": "CINEMATIC 1.4B The Benefactor",
+      "note": "Act I first pass (Nov 20 2026). Every screen and the phone cut to the Feedline broadcast; Egon's hologram (PLACEHOLDER: translucent boxes, red eyes, lime fingertips) stands over the river; the Warden Halo (a white sphere and a ring). Script dialogue. The playable Zero Vision beat follows (act1.gd 'raise').",
+      "end_state": {
+        "host": [
+          "a1_end_benefactor"
+        ]
+      },
+      "flag": "a1_benefactor_seen",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "broadcast"
+        ],
+        [
+          "SFX",
+          "alert"
+        ],
+        [
+          "CAM",
+          [
+            400.0,
+            3.0,
+            -30.0
+          ],
+          [
+            407.0,
+            6.0,
+            -34.9
+          ]
+        ],
+        [
+          "NARRATE",
+          "On every screen in Cold Row, and on {name}'s phone, a broadcast cuts in. A Feedline live event: THE BENEFACTOR SPEAKS."
+        ],
+        [
+          "NARRATE",
+          "The Spire, the launch stage. A live studio audience in expensive clothes. Fog. A single spotlight finds Egon Dusk: long charcoal coat, high collar, red eyes glowing, a thin smile. He raises one black-gloved hand, and his fingertips light up lime green."
+        ],
+        [
+          "CAM",
+          [
+            388.5,
+            1.7,
+            -68.0
+          ],
+          [
+            410.0,
+            45.0,
+            -150.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Across the City the broadcast blooms into the sky over the river: a giant hologram of Egon, a hundred stories tall, conducting the skyline. Under a cooling tower, {name} stops and stares up at it."
+        ],
+        [
+          "SAY",
+          "EGON",
+          "(booming, delighted) Good evening, City! It's hot! (laughter) I know! I know. I've been there. Briefly. On a balcony. Terrible."
+        ],
+        [
+          "SAY",
+          "EGON",
+          "But I have good news. Dusk Dynamics is working around the clock, at full power, through this emergency, to bring you our most exciting product yet. (He flicks two fingers.) Introducing... the Warden Halo!"
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "halo"
+        ],
+        [
+          "SFX",
+          "drone_chime"
+        ],
+        [
+          "NARRATE",
+          "A drone descends, answering the flick of his fingers: sleek, white, ringed with soft light, beautiful and slightly ominous."
+        ],
+        [
+          "SAY",
+          "EGON",
+          "The Halo doesn't just watch. It cares. It predicts! With CLEARANCE integration, the Halo knows when you're about to make a bad decision, before you make it. It can recommend a better choice. It can apply a small fine. (He chuckles.) It can, if needed, gently restrain."
+        ],
+        [
+          "SAY",
+          "EGON",
+          "We call it \"proactive comfort.\" And to make sure we can serve all of you, our Coldfront campuses will be running at full capacity throughout the Heat Emergency, training the Halo's intelligence. Some of you may notice power balancing in your neighborhood. (beat) That's the sound of progress! Comfort, Delivered!"
+        ],
+        [
+          "NARRATE",
+          "The audience cheers. The broadcast ends. The hologram lingers over the river."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "(on the phone) Hold your phone up. Point the camera at him. I want to show you something. I don't usually share this."
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ]
+    },
+    "a1_thermostat": {
+      "title": "CINEMATIC 1.5B The Thermostat",
+      "note": "Act I first pass (Nov 20 2026). The Thermostat rolls out of a loading bay (PLACEHOLDER: a box tower with fans, pipes, a dial and the Comfort Capsule with Egon in it). Script dialogue.",
+      "end_state": {
+        "host": [
+          "a1_end_thermostat"
+        ]
+      },
+      "flag": "a1_thermostat_seen",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "SFX",
+          "alert"
+        ],
+        [
+          "CAM",
+          [
+            426.0,
+            3.0,
+            -48.0
+          ],
+          [
+            414.0,
+            4.0,
+            -60.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "The ground shakes. Out of a loading bay rolls a huge machine: a squat walking tower of cooling fans and pipes, ice crystals forming on its armor, a giant dial on its chest like an old thermostat."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "thermostat"
+        ],
+        [
+          "CAM",
+          [
+            420.0,
+            5.0,
+            -70.0
+          ],
+          [
+            414.0,
+            7.5,
+            -60.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Docked into the top of it, frost along its black seams, is the Comfort Capsule, its canopy turned clear. Inside: Egon Dusk, live and furious, red eyes burning, gloved hands raised like a conductor's, every fingertip glowing lime green."
+        ],
+        [
+          "SAY",
+          "EGON",
+          "(over a loudspeaker) Who's touching my thermostat?"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(to Zero) Is that him? Is that actually him?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "He builds his own machines. He likes to drive them. It's his hobby. Some people do pottery."
+        ],
+        [
+          "SAY",
+          "EGON",
+          "You! Child! Do you know what you're doing? That power is training the most important product in the history of comfort!"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(yelling up) There are people over there who don't have fans!"
+        ],
+        [
+          "SAY",
+          "EGON",
+          "(genuinely puzzled) Then they should have bought fans!"
+        ],
+        [
+          "NARRATE",
+          "He flicks two fingers. The Thermostat's fans roar and blast freezing air. Frost spreads across the asphalt, making it slick as ice."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "frost"
+        ],
+        [
+          "SAY",
+          "EGON",
+          "Let's cool you down!"
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ]
+    },
+    "a1_lights_on": {
+      "title": "CINEMATIC 1.5C Lights on in the Flats",
+      "note": "Act I first pass (Nov 20 2026). The Thermostat stops, the Capsule flies off, Zero on the switch-house panel. The Flats lighting up plays right after as scene lines (act1.gd 'flats_lights').",
+      "end_state": {
+        "host": [
+          "a1_end_lights"
+        ]
+      },
+      "flag": "a1_lights_on_seen",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "CAM",
+          [
+            422.0,
+            6.0,
+            -70.0
+          ],
+          [
+            414.0,
+            5.0,
+            -60.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "{name} lands on the dial and stomps it. The Thermostat lurches, sparks, and its fans grind to a halt with a long mechanical sigh."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "thermostat_down"
+        ],
+        [
+          "SFX",
+          "breaker"
+        ],
+        [
+          "NARRATE",
+          "The Comfort Capsule detaches with a hiss of cold air and glides up and away into the dark."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "capsule_away"
+        ],
+        [
+          "SAY",
+          "EGON",
+          "(as he flies off) This isn't over! I'm logging a complaint!"
+        ],
+        [
+          "CAM",
+          [
+            440.0,
+            2.0,
+            -61.0
+          ],
+          [
+            443.5,
+            1.6,
+            -61.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "In the switch house, Zero's face fills the panel."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Done. Power flows to Stillwater for the next eight hours. After that the system notices and switches back."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Make sure everybody knows whose power it was."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Already done."
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ]
+    },
+    "a1_rain": {
+      "title": "CINEMATIC 1.6B The rain",
+      "note": "Act I first pass (Nov 20 2026). Day nine: the storm, the Yard in the rain (PLACEHOLDER: falling streaks, block people), Zero in the arcade doorway, Nana Ines paints THE YARD on the wall. Script dialogue.",
+      "end_state": {
+        "host": [
+          "a1_end_rain"
+        ]
+      },
+      "flag": "a1_rain_seen",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "clouds"
+        ],
+        [
+          "CAM",
+          [
+            32.0,
+            3.0,
+            22.0
+          ],
+          [
+            32.0,
+            9.0,
+            -8.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Day nine. Dark clouds. A rumble of thunder. Everybody in the Yard stops and looks up. The first drops fall, huge and warm. Then it pours."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "rain"
+        ],
+        [
+          "NARRATE",
+          "The whole Yard runs out into the rain: kids, old people, Nana Ines, Mr. Delacroix with Biscuit. They stand in it with their arms open and their faces up. {name} skates through the downpour, carving the bowl as it fills with water, laughing."
+        ],
+        [
+          "CAM",
+          [
+            34.0,
+            1.8,
+            -1.0
+          ],
+          [
+            32.0,
+            1.6,
+            -7.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Zero stands just inside the arcade doorway. He can't go out in it."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "(to himself) Water and electronics. A love story nobody asked for."
+        ],
+        [
+          "NARRATE",
+          "{name} skates up to the doorway, soaked, grinning."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "It broke. The heat broke."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "It did. (beat) The billboard says the Sunburn Open is back on in two weeks."
+        ],
+        [
+          "NARRATE",
+          "{name}'s grin falters, then returns, smaller and more serious."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Two weeks."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "You're going to need a coach."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "You can't skate."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I can read physics engines. I can read contest rules. I can read judges' contracts. (beat) And I'm not leaving. So."
+        ],
+        [
+          "CAM",
+          [
+            32.0,
+            4.0,
+            20.0
+          ],
+          [
+            32.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "{name} looks at the Yard: the people in the rain, the arcade, the lights on the roof."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(quietly) This place is ours now, isn't it?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "It's everybody's now. That's better."
+        ],
+        [
+          "CAM",
+          [
+            27.0,
+            2.4,
+            2.0
+          ],
+          [
+            25.0,
+            3.4,
+            -7.6
+          ]
+        ],
+        [
+          "NARRATE",
+          "Nana Ines walks up, soaked, carrying a can of paint and a brush. Without asking, she paints a word on the arcade wall beside the door, in big dripping letters."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "the_yard"
+        ],
+        [
+          "SAY",
+          "NANA INES",
+          "There. Now it's got a name. Places with names are harder to bulldoze."
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ]
     }
   },
   "slice_end": {
-    "card": "ACT I · EARLY CUT\n\nEND OF THE PLAYABLE PROLOGUE\n\nNext: ACT I · 1.1 FINE PRINT (not built yet).",
+    "card": "ACT I · EARLY CUT\n\nEND OF THE PLAYABLE SLICE\n\nNext: {next} (not built yet).",
     "card_s": 7.0,
+    "next_after_slice": "ACT II · 2.1 BACK TO PRACTICE",
+    "objective": "Slice complete so far. Next: {next} (not built yet). T runs P.2 again.",
     "system": [
       [
         "SYSTEM",
-        "Prologue complete. T runs P.2 again from the Yard."
+        "That's as far as this cut goes. T runs P.2 again from the Yard."
       ]
     ]
   }

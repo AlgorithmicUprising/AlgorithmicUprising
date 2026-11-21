@@ -55,6 +55,13 @@ func _ready() -> void:
 			print("FAIL ", item)
 		get_tree().quit(1 if fails.size() else 0)
 		return
+	if OS.get_environment("AU_TEST_ONLY") == "m5":
+		await preload("res://tests/m5_tests.gd").new().run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	if OS.get_environment("AU_TEST_ONLY") == "m4":
 		await preload("res://tests/m4_tests.gd").new().run(self)
 		print("SUMMARY failed=", fails.size())
@@ -111,6 +118,7 @@ func _ready() -> void:
 	await preload("res://tests/front_tests.gd").new().run(self)
 	await preload("res://tests/m3_tests.gd").new().run(self)
 	await preload("res://tests/m4_tests.gd").new().run(self)
+	await preload("res://tests/m5_tests.gd").new().run(self)
 	print("SUMMARY failed=", fails.size())
 	for item in fails:
 		print("FAIL ", item)

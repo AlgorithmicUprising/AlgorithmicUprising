@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://districts/stillwater_flats/stillwater_flats.gd" id="1_swf"]
+
+[node name="StillwaterFlats" type="Node3D"]
+script = ExtResource("1_swf")

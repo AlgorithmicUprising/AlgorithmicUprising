@@ -15,6 +15,7 @@ var zero_panel: PanelContainer
 var zero_label: Label
 var best_label: Label
 var score_label: Label
+var score_box: Control               # the skate-combo SCORE box (hidden in the Act I scenes, which score in the box above)
 var mult_label: Label
 var meter_back: ColorRect
 var meter_fill: ColorRect
@@ -94,6 +95,7 @@ func _ready() -> void:
 	zero_label = _label(zcol, 26, LIME, true)
 	best_label = _label(zcol, 14, LIME)
 	var score_panel := _boxed(right, true)
+	score_box = score_panel
 	var scol := VBoxContainer.new()
 	score_panel.add_child(scol)
 	score_label = _label(scol, 22, PAPER)
@@ -244,6 +246,12 @@ func set_line(text: String) -> void:
 func set_zero(zero: int, best: int) -> void:
 	zero_label.text = "ZERO SCORE\n" + (fmt(zero) if zero > 0 else "- - -")
 	best_label.text = "BEST LINE  " + fmt(best)
+
+## Act I scenes 1.1+: the combo SCORE box only shows while there is a skate combo to show.
+func show_combo(on: bool) -> void:
+	if score_box != null and score_box.visible != on:
+		score_box.visible = on
+		call_deferred("dock_phone")
 
 func set_score(score: int, meter: float, mult: int, speed_mult: float) -> void:
 	score_label.text = "SCORE  " + fmt(score)

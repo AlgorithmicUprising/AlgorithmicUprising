@@ -101,6 +101,7 @@ func _power_full() -> void:
 	var story = main.get_node("Story")
 	var pl = main.player
 	story.start()
+	story.act1.def["built"] = []   # the Act I scenes are m5_tests.gd: here the slice ends after P.4
 	await frames(3)
 	var p = story.power
 	ok(story.phase == "p3_power" and p.active() and p.state == "intro", "a save after the escape starts P.3 in the arcade (%s, %s)" % [story.phase, p.state])
@@ -196,6 +197,7 @@ func _p4_skip_and_reload() -> void:
 	var main = await _main()
 	var story = main.get_node("Story")
 	story.start()
+	story.act1.def["built"] = []   # the Act I scenes are m5_tests.gd: here the slice ends after P.4
 	await frames(3)
 	ok(story.in_cinematic() and story.cinematic.id == "p4_zero" and main.player.global_position.x > 210.0, "reload after the breaker: P.4 plays in the arcade")
 	await frames(2)
@@ -230,7 +232,7 @@ func _p4_skip_and_reload() -> void:
 	story = main.get_node("Story")
 	story.start()
 	await frames(3)
-	ok(story.phase == "slice_end" and not story.in_cinematic() and story.power.zero != null and story.power.zero.visible and story.hud.phone_sender == "ZERO", "reload after P.4: the slice end, Zero on the bench, ZERO in the thread")
+	ok(story.phase == "act1" and story.act1.scene == "1.1" and not story.in_cinematic() and story.power.zero != null and story.power.zero.visible and story.hud.phone_sender == "ZERO", "reload after P.4: Act I 1.1 Fine Print in the lit arcade, Zero on the bench, ZERO in the thread (%s)" % story.phase)
 	await _done(main)
 
 func _reload_mid() -> void:
