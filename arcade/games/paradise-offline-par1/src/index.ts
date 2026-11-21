@@ -13,7 +13,7 @@ const profile: CartridgeProfile = {
   portrait: [390, 740],
   primary: 'ui-confirm',
   keys: {
-    '1': 'ranked', '2': 'practice', '4': 'cadence-recovery', '5': 'edit', '6': 'tomato-private',
+    '1': 'ranked', '2': 'practice', '4': 'cadence-recovery', '5': 'edit',
     l: 'live', e: 'edited', o: 'offline',
     c: 'camera-coop', g: 'camera-garden', w: 'camera-well',
     p: 'camera-porch', b: 'camera-workbench', i: 'camera-private',
@@ -167,7 +167,7 @@ defineArcade('paradise-offline-par1', 'PARADISE OFFLINE · FIVE DAYS', (emit, ho
     update(dt: number) { day.update(dt); syncControls(); },
     draw,
     keyForCode(code: string) {
-      if (day.stage === 'tomato' && day.schedule === 'live' && !day.cameras.garden) {
+      if (uiStep() === 'tomato-private') {
         if (code === 'Digit1' || code === 'Numpad1') return 'tomato-private';
         if (code === 'Digit2' || code === 'Numpad2') return 'tomato-plan';
       }
