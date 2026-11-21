@@ -1,0 +1,127 @@
+<div class="cabinet">
+  <div class="screen" part="viewport">
+    <canvas role="img" aria-label="Paradise Offline five-day homestead scene with six camera zones and a storm day"></canvas>
+    <div class="hud" aria-label="Week and household status">
+      <span>DAY <b data-meter="day">1 / 5</b></span>
+      <span>MODE <b data-meter="mode">NOT STARTED</b></span>
+      <span>HOME <b data-meter="home">46</b></span>
+      <span>COOP <b data-meter="coop">38</b></span>
+      <span>GARDEN <b data-meter="garden">42</b></span>
+      <span>WELL <b data-meter="well">50</b></span>
+      <span>ENERGY <b data-meter="energy">76</b></span>
+      <span>BOUNDARIES <b data-meter="boundaries">100</b></span>
+      <span>RESOURCES <b>$<span data-meter="cash">8</span> · <span data-meter="boards">1</span> boards · <span data-meter="feed">2</span> feed · <span data-meter="water">2</span> water · <span data-meter="food">2</span> food</b></span>
+      <span>AUDIENCE <b data-meter="audience">0</b></span>
+      <span>SLOTS <b data-meter="slots">3</b></span>
+    </div>
+    <p class="notice" data-notice aria-live="polite">Choose Ranked Scenario or Practice. No network connection is needed.</p>
+    <pre class="day-report" data-report hidden aria-label="Five-day report"></pre>
+    <div class="top">
+      <button part="sound" aria-label="Toggle sound" hidden>SOUND OFF</button>
+      <button part="pause" aria-label="Pause day">Ⅱ</button>
+    </div>
+    <div class="overlay" data-phase="title">
+      <h2>PARADISE OFFLINE · FIVE DAYS</h2>
+      <p data-detail>Run the homestead. Choose what life stays in frame.</p>
+      <p class="summary" data-summary hidden></p>
+      <button part="start">START</button>
+      <button part="resume" hidden>RESUME</button>
+      <button part="again" hidden>START ANOTHER WEEK</button>
+      <button part="share" hidden>SHARE REPORT</button>
+    </div>
+    <div class="controls" aria-label="Campaign choices">
+      <div class="action-group" data-step="mode" hidden>
+        <span class="prompt">Choose the same authored five-day scenario in either mode. The report stays on this device.</span>
+        <button class="primary" data-key="ranked">RANKED SCENARIO · 1 · LOCAL ONLY</button>
+        <button data-key="practice">PRACTICE · 2 · UNRANKED</button>
+      </div>
+      <div class="action-group" data-step="schedule" hidden>
+        <span class="prompt">DAY <b data-meter="day">1 / 5</b> · choose the channel rhythm</span>
+        <button data-key="live">LIVE · L</button>
+        <button data-key="edited">EDITED UPDATE · E</button>
+        <button data-key="offline">OFFLINE · O</button>
+      </div>
+      <div class="action-group" data-step="camera-setup" hidden>
+        <span class="prompt">Choose up to three of six views. PRIVATE ROOM is visibly labeled and off unless you turn it on.</span>
+        <button data-key="camera-coop" data-zone="coop" aria-pressed="false">COOP CAM</button>
+        <button data-key="camera-garden" data-zone="garden" aria-pressed="false">GARDEN CAM</button>
+        <button data-key="camera-well" data-zone="well" aria-pressed="false">WELL CAM</button>
+        <button data-key="camera-porch" data-zone="porch" aria-pressed="false">PORCH CAM</button>
+        <button data-key="camera-workbench" data-zone="workbench" aria-pressed="false">WORKBENCH CAM</button>
+        <button data-key="camera-private" data-zone="private-room" aria-pressed="false">PRIVATE ROOM</button>
+        <strong class="private-warning" data-private-warning hidden>PRIVATE ROOM WILL BE ON AIR. This explicitly changes your boundary score by −12 at day end.</strong>
+        <button class="primary" data-key="begin-day">START LIVE DAY</button>
+      </div>
+      <div class="action-group" data-step="schedule-ready" hidden>
+        <span class="prompt"><b data-schedule-name>OFFLINE</b> · no camera setup required; the full job list stays available.</span>
+        <button class="primary" data-key="begin-day">START DAY</button>
+      </div>
+      <div class="action-group" data-step="message" hidden>
+        <span class="prompt" data-message-copy>A fictional viewer offers a practical tip. This is a fixed message, not live chat.</span>
+        <button data-key="use-tip">SAVE TIP · Y</button>
+        <button class="quiet" data-key="hide-message">HIDE MESSAGE · N</button>
+      </div>
+      <div class="action-group" data-step="tomato-live" hidden>
+        <span class="prompt">DAY 3 · Tomato trouble is in the garden feed. Choose the frame; the household still needs care.</span>
+        <button data-tomato-keep data-key="tomato-keep">KEEP LIVE · +8 AUDIENCE / −8 BOUNDARIES · J</button>
+        <button data-key="tomato-reframe">REFRAME · +4 AUDIENCE / NO BOUNDARY CHANGE · V</button>
+        <button class="quiet" data-key="tomato-hide">HIDE CHAT · −2 AUDIENCE · H</button>
+        <button class="quiet" data-key="tomato-stop">STOP CAMERA · −3 AUDIENCE · Q</button>
+      </div>
+      <div class="action-group" data-step="tomato-edited" hidden>
+        <span class="prompt">DAY 3 · Queue one choice. It takes effect only if you later spend a work slot on Edit; the visible deltas are tomato-only.</span>
+        <button data-tomato-keep data-key="tomato-keep">INCLUDE · +5 AUDIENCE / −2 BOUNDARIES · J</button>
+        <button data-key="tomato-reframe">REFRAME · +3 AUDIENCE · V</button>
+        <button class="quiet" data-key="tomato-hide">OMIT · NO EXTRA CHANGE · H</button>
+        <button class="quiet" data-key="tomato-stop">SKIP POST · NO EXTRA CHANGE · Q</button>
+      </div>
+      <div class="action-group" data-step="tomato-private" hidden>
+        <span class="prompt">DAY 3 · No garden footage is public. Choose a private note or a repair plan.</span>
+        <button data-key="tomato-private">KEEP IT PRIVATE · 1</button>
+        <button class="quiet" data-key="tomato-plan">PLAN GARDEN REPAIR · 2</button>
+      </div>
+      <div class="action-group sponsor-group" data-step="storm-choice" hidden>
+        <span class="prompt">DAY 4 STORM · Review the offer before choosing. Repairing privately remains available.</span>
+        <span class="terms">SPONSOR TERMS: +$16, +2 boards, +6 audience, −6 energy, −18 boundaries, one work slot, and a brief explicitly authorized PRIVATE ROOM cutaway.</span>
+        <button class="primary" data-key="storm-sponsor">ACCEPT TERMS · A</button>
+        <span class="terms">COMMUNITY TERMS: one slot; +1 board, +1 feed, +1 water, +3 audience, +1 boundary; no address or home footage.</span>
+        <button data-key="storm-community">ASK COMMUNITY · 7</button>
+        <button class="quiet" data-key="storm-decline">DECLINE · D</button>
+      </div>
+      <div class="action-group jobs" data-step="tasks" hidden>
+        <span class="prompt">DAY <b data-meter="day">1 / 5</b> · <b data-schedule-name>OFFLINE</b> · choose a job · <span data-slots-copy>slots</span></span>
+        <button data-job="feed" data-key="feed">FEED HENS · F</button>
+        <button data-job="repair" data-key="repair">REPAIR COOP · R</button>
+        <button data-job="tend-garden" data-key="tend-garden">TEND GARDEN · T</button>
+        <button data-job="draw-water" data-key="draw-water">DRAW WATER · U</button>
+        <button data-job="cook" data-key="cook">COOK · K</button>
+        <button data-job="edit" data-key="edit">EDIT UPDATE · 5</button>
+        <button data-job="moderate" data-key="moderate">MODERATE · M</button>
+        <button data-job="rest" data-key="rest">REST · Z</button>
+        <button data-key="stream" data-stream data-live-only>STOP LIVE · S</button>
+        <button class="quiet" data-key="finish-day">END DAY · X</button>
+      </div>
+      <div class="action-group" data-step="animating" hidden>
+        <span class="prompt">The household is moving. The action will finish shortly.</span>
+      </div>
+      <div class="action-group report-group" data-step="report" hidden>
+        <span class="prompt">Day report · changes carry into the next day.</span>
+        <button class="primary" data-key="continue-day">CONTINUE</button>
+      </div>
+      <div class="action-group" data-step="cadence" hidden>
+        <span class="prompt">DAY 5 · Choose what the household’s channel looks like next.</span>
+        <button data-key="cadence-always">ALWAYS ON · 8</button>
+        <button data-key="cadence-offline">OFFLINE MORNING · 9</button>
+        <button data-key="cadence-shared">SHARED YARD · 0</button>
+        <button class="quiet" data-key="cadence-recovery">RECOVERY PLAN · 4</button>
+      </div>
+      <div class="action-group ending-group" data-step="ending" hidden>
+        <strong class="ending" data-ending></strong>
+        <p class="zero-reaction">ZERO: <span data-zero-reaction></span></p>
+        <p>WEEK SCORE <b data-week-score></b> · ZERO SCORE TARGET 72 · local only</p><p>Daily before → after changes, seed, score version, mode, audience and ending appear in the report.</p>
+        <button class="primary" data-key="complete-ending">VIEW FINAL RESULT</button>
+      </div>
+    </div>
+  </div>
+  <span class="live" aria-live="polite" aria-atomic="true"></span>
+</div>
