@@ -218,6 +218,8 @@ func _next_step() -> void:
 		return
 	step = steps[step_i]
 	state = "step"
+	if str(step.get("do", "")) in ["goals", "defend", "carry", "topics", "raise"]:
+		host.player.input_enabled = true  # a hook that moved him (the Yard, the arcade at night) locks input until here
 	log.append("step:%s:%d:%s" % [scene, step_i, str(step.get("do", ""))])
 	if step.has("objective"):
 		host.hud.set_objective(str(sdef().title), str(step.objective))
@@ -856,6 +858,10 @@ func hook(name: String) -> void:
 		"cameras":
 			_cameras()
 			_switch_house()
+			for w in ["Worker1", "Worker2"]:
+				var wn := _node(w) as Node3D
+				if wn != null:
+					wn.visible = false  # their smoke break was 1.4; their name tags filled the boss camera
 		"over_fence":
 			_spawn([442.0, 0.5, -60.5, 90.0])
 		"switch_house":

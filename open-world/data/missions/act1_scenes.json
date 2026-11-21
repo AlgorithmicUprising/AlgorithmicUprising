@@ -7,14 +7,16 @@
   "1.2",
   "1.3",
   "1.4",
-  "1.5"
+  "1.5",
+  "1.6"
  ],
  "built": [
   "1.1",
   "1.2",
   "1.3",
   "1.4",
-  "1.5"
+  "1.5",
+  "1.6"
  ],
  "scenes": {
   "1.1": {
@@ -1797,6 +1799,227 @@
        "TONIGHT'S POWER COURTESY OF COLDFRONT, WHO DIDN'T KNOW THEY WERE DONATING. STAY COOL. THE YARD IS OPEN. – Z"
       ]
      ]
+    }
+   ]
+  },
+  "1.6": {
+   "id": "a1_heat_break",
+   "title": "1.6 HEAT BREAK",
+   "flag": "a1_heat_break_done",
+   "place": "stillwater_flats",
+   "preset": "noon",
+   "time": "day",
+   "skate": true,
+   "zero_score": 0,
+   "spawn": [
+    290.0,
+    0.5,
+    -16.5,
+    180.0
+   ],
+   "phone_sub": "on the phone",
+   "note": "MISSION 1.6 Heat Break + CINEMATIC 1.6B The rain (END OF ACT I). The script's free-roam montage is a short day-by-day checklist in the Flats (aid run, roof painting, solar-panel salvage, a cabinet to restore; Signal +5 each), then the grown Yard (new people to meet), then the rain. PLACEHOLDER: no real free roam or side-activity systems yet; each activity is one E.",
+   "steps": [
+    {
+     "do": "lines",
+     "lines": [
+      [
+       "CARD",
+       "1.6 HEAT BREAK"
+      ],
+      [
+       "NARRATE",
+       "The rest of the heat wave. Days run together: aid runs, rooftop painting, salvaging solar panels from abandoned buildings for the arcade roof, finding more cabinets to restore."
+      ],
+      [
+       "ZERO",
+       "(on the phone) Eight hours of power bought us a week of goodwill. Let's spend it.",
+       "placeholder"
+      ]
+     ]
+    },
+    {
+     "do": "goals",
+     "hook": "heat_break",
+     "objective": "Heat break: help around the Flats (paint, aid, salvage, a cabinet). Each one grows the Signal.",
+     "counter": "DAYS",
+     "goals": [
+      {
+       "id": "paint",
+       "at": [
+        290.0,
+        -19.4
+       ],
+       "r": 2.0,
+       "verb": "E  help paint the community center roof white",
+       "paint": [
+        "CommunityCenter",
+        "#f2f2ee"
+       ],
+       "hook": "signal",
+       "card": "DAY 4 · ROOFTOP PAINTING",
+       "sfx": "pickup",
+       "lines": [
+        [
+         "NANA INES",
+         "Two more coats and it'll bounce the sun right back where it came from.",
+         "placeholder"
+        ]
+       ]
+      },
+      {
+       "id": "aid",
+       "at": [
+        306.0,
+        -61.4
+       ],
+       "r": 2.0,
+       "verb": "E  hand over water and a fan",
+       "hook": "signal",
+       "card": "DAY 5 · AID RUN",
+       "sfx": "pickup",
+       "via": [
+        [
+         300.0,
+         -16.0
+        ],
+        [
+         304.0,
+         -40.0
+        ]
+       ],
+       "lines": [
+        [
+         "MRS. OKONKWO",
+         "The baby slept through the night. First time in a week.",
+         "placeholder"
+        ]
+       ]
+      },
+      {
+       "id": "salvage",
+       "at": [
+        336.6,
+        -24.0
+       ],
+       "r": 2.0,
+       "verb": "E  salvage two solar panels for the arcade roof",
+       "hide": "SalvagePanels",
+       "hook": "signal",
+       "card": "DAY 6 · SALVAGE\n\nTwo solar panels for the arcade roof.",
+       "sfx": "pickup",
+       "lines": [
+        [
+         "ZERO",
+         "(on the phone) Two more panels. The arcade will run its own fans now. And mine.",
+         "placeholder"
+        ]
+       ]
+      },
+      {
+       "id": "cabinet",
+       "at": [
+        344.6,
+        -34.0
+       ],
+       "r": 2.0,
+       "verb": "E  dig out the dusty cabinet",
+       "flag": "a1_cabinet_found",
+       "hook": "signal",
+       "card": "DAY 7 · A CABINET TO RESTORE",
+       "sfx": "marquee",
+       "via": [
+        [
+         336.5,
+         -30.0
+        ]
+       ],
+       "lines": [
+        [
+         "ZERO",
+         "(on the phone) Oh. Oh, I know that one. Bring it home.",
+         "placeholder"
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "do": "hook",
+     "name": "yard",
+     "lines": [
+      [
+       "NARRATE",
+       "The Yard, a few days later. Shade cloth over the bowl. A water station by the gate. People sleeping on cots in the resistance rooms. Kids skating the quarter pipe."
+      ],
+      [
+       "NARRATE",
+       "New people have moved in: neighbors from the Flats who help run things, a pair of teenage skaters who look up to {name}, a woman who has set up a free clinic."
+      ]
+     ]
+    },
+    {
+     "do": "goals",
+     "objective": "Say hi to the new people in the Yard.",
+     "counter": "MET",
+     "goals": [
+      {
+       "id": "neighbors",
+       "at": [
+        26.0,
+        5.0
+       ],
+       "r": 2.4,
+       "auto": true,
+       "lines": [
+        [
+         "NEIGHBOR",
+         "We'll take the night shift on the water station. You skate.",
+         "placeholder"
+        ]
+       ]
+      },
+      {
+       "id": "teens",
+       "at": [
+        37.0,
+        5.0
+       ],
+       "r": 2.4,
+       "auto": true,
+       "lines": [
+        [
+         "TEEN SKATER",
+         "Is it true you grinded the Coldfront fence? Show us. Tomorrow. Please.",
+         "placeholder"
+        ]
+       ]
+      },
+      {
+       "id": "clinic",
+       "at": [
+        32.0,
+        9.6
+       ],
+       "r": 2.4,
+       "auto": true,
+       "lines": [
+        [
+         "FREE CLINIC",
+         "Heat cramps, burns, one dog bite. Busy week. Good week.",
+         "placeholder"
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "do": "cine",
+     "id": "a1_rain"
+    },
+    {
+     "do": "card",
+     "text": "END OF ACT I.\n\nRUST & SIGNAL"
     }
    ]
   }

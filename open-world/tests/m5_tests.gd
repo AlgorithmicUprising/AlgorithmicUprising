@@ -426,6 +426,7 @@ func _scene_1_6() -> void:
 	await _drive_step(story, main)
 	await _until(story, func(): return str(a.step.get("counter", "")) == "MET" and not a.waiting, 900)
 	ok(int(main.flow.save.story.get("signal", 0)) >= sig0 + 20 and main.flow.save.flag("a1_cabinet_found") and story.spoken.any(func(l): return str(l).begins_with("CARD|DAY 6 · SALVAGE")), "1.6: four days, Signal +20, a cabinet found")
+	ok(main.player.input_enabled, "1.6: free to move again in the Yard (the browser pilot stalled here)")
 	ok(main.flow.save.flag("a1_yard_grown") and a.root.get_node_or_null("ShadeCloth") != null and a.root.get_node_or_null("ClinicWoman") != null and main.player.global_position.z > 5.0 and absf(main.player.global_position.x - 32.0) < 6.0, "1.6: the Yard has grown (shade cloth, water, cots, the new people)")
 	await _drive_step(story, main)
 	await _until(story, func(): return story.in_cinematic(), 900)

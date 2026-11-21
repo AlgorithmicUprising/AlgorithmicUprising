@@ -1150,6 +1150,177 @@
           false
         ]
       ]
+    },
+    "a1_rain": {
+      "title": "CINEMATIC 1.6B The rain",
+      "note": "Act I first pass (Nov 20 2026). Day nine: the storm, the Yard in the rain (PLACEHOLDER: falling streaks, block people), Zero in the arcade doorway, Nana Ines paints THE YARD on the wall. Script dialogue.",
+      "end_state": {
+        "host": [
+          "a1_end_rain"
+        ]
+      },
+      "flag": "a1_rain_seen",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "clouds"
+        ],
+        [
+          "CAM",
+          [
+            32.0,
+            3.0,
+            22.0
+          ],
+          [
+            32.0,
+            9.0,
+            -8.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Day nine. Dark clouds. A rumble of thunder. Everybody in the Yard stops and looks up. The first drops fall, huge and warm. Then it pours."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "rain"
+        ],
+        [
+          "NARRATE",
+          "The whole Yard runs out into the rain: kids, old people, Nana Ines, Mr. Delacroix with Biscuit. They stand in it with their arms open and their faces up. {name} skates through the downpour, carving the bowl as it fills with water, laughing."
+        ],
+        [
+          "CAM",
+          [
+            34.0,
+            1.8,
+            -1.0
+          ],
+          [
+            32.0,
+            1.6,
+            -7.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Zero stands just inside the arcade doorway. He can't go out in it."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "(to himself) Water and electronics. A love story nobody asked for."
+        ],
+        [
+          "NARRATE",
+          "{name} skates up to the doorway, soaked, grinning."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "It broke. The heat broke."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "It did. (beat) The billboard says the Sunburn Open is back on in two weeks."
+        ],
+        [
+          "NARRATE",
+          "{name}'s grin falters, then returns, smaller and more serious."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Two weeks."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "You're going to need a coach."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "You can't skate."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "I can read physics engines. I can read contest rules. I can read judges' contracts. (beat) And I'm not leaving. So."
+        ],
+        [
+          "CAM",
+          [
+            32.0,
+            4.0,
+            20.0
+          ],
+          [
+            32.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "{name} looks at the Yard: the people in the rain, the arcade, the lights on the roof."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(quietly) This place is ours now, isn't it?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "It's everybody's now. That's better."
+        ],
+        [
+          "CAM",
+          [
+            27.0,
+            2.4,
+            2.0
+          ],
+          [
+            25.0,
+            3.4,
+            -7.6
+          ]
+        ],
+        [
+          "NARRATE",
+          "Nana Ines walks up, soaked, carrying a can of paint and a brush. Without asking, she paints a word on the arcade wall beside the door, in big dripping letters."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "the_yard"
+        ],
+        [
+          "SAY",
+          "NANA INES",
+          "There. Now it's got a name. Places with names are harder to bulldoze."
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ]
     }
   },
   "slice_end": {
