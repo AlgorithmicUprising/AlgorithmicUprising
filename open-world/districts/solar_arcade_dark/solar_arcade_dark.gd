@@ -93,7 +93,8 @@ func _climb() -> void:
 
 func _breaker() -> void:
 	Blocks.visual(self, "BreakerBox", BREAKER, Vector3(0.3, 1.2, 0.9), Color("6e5a3a"))
-	var lever := Blocks.visual(self, "BreakerLever", BREAKER + Vector3(0.22, -0.25, 0.0), Vector3(0.12, 0.5, 0.12), Color("a33"))
+	# the lever sits low on the box, under the hand-lettered warning (it used to cover "IT TALKS")
+	var lever := Blocks.visual(self, "BreakerLever", BREAKER + Vector3(0.22, -0.48, 0.0), Vector3(0.12, 0.34, 0.12), Color("a33"))
 	lever.name = "BreakerLever"
 	# the hand-lettered warning, fixed flat on the box (not a billboard) and small enough to read whole on screen
 	var l := Blocks.label(self, "DO NOT RECONNECT\n- IT TALKS.", BREAKER + Vector3(0.17, 0.0, 0.0), Color("d8d0b0"), 32)
@@ -103,7 +104,7 @@ func _breaker() -> void:
 	l.pixel_size = 0.0055
 	l.outline_size = 6
 	for i in 3:
-		var slot := Blocks.visual(self, "FuseSlot%d" % i, BREAKER + Vector3(0.18, 0.25, -0.25 + i * 0.25), Vector3(0.06, 0.18, 0.12), Color("151515"))
+		var slot := Blocks.visual(self, "FuseSlot%d" % i, BREAKER + Vector3(0.18, 0.44, -0.25 + i * 0.25), Vector3(0.06, 0.14, 0.12), Color("151515"))
 		slot.set_meta("slot", i)
 
 func _fuses() -> void:
