@@ -6,9 +6,16 @@
   "1.1",
   "1.2",
   "1.3",
-  "1.4"
+  "1.4",
+  "1.5"
  ],
- "built": ["1.1", "1.2", "1.3", "1.4"],
+ "built": [
+  "1.1",
+  "1.2",
+  "1.3",
+  "1.4",
+  "1.5"
+ ],
  "scenes": {
   "1.1": {
    "id": "a1_fine_print",
@@ -1081,6 +1088,713 @@
       [
        "ZERO",
        "Then we do it smart. We do it for one night. And we make sure everybody knows exactly whose power it was."
+      ]
+     ]
+    }
+   ]
+  },
+  "1.5": {
+   "id": "a1_the_breaker",
+   "title": "1.5 THE BREAKER",
+   "flag": "a1_the_breaker_done",
+   "place": "cold_row",
+   "preset": "night",
+   "time": "night",
+   "skate": true,
+   "zero_score": 22000,
+   "spawn": [
+    372.0,
+    0.5,
+    -14.0,
+    90.0
+   ],
+   "phone_sub": "on the phone",
+   "note": "MISSION 1.5 The Breaker + CINEMATIC 1.5B The Thermostat + BOSS The Thermostat + CINEMATIC 1.5C Lights on in the Flats. Blind six cameras (drones patrol), grind the fence-top rail to the switch house (PLACEHOLDER: E at the rail end, no real grind), Zero takes the panel, hold the line while drones swarm (touch a drone to knock it down; the tower mist drops them), then the boss in three phases (vents, sensor eyes under cycling steam, the dial from the loading-bay launch), then the Flats light up.",
+   "steps": [
+    {
+     "do": "lines",
+     "lines": [
+      [
+       "CARD",
+       "1.5 THE BREAKER"
+      ],
+      [
+       "NARRATE",
+       "Cold Row, the same night. The maintenance line hums over the river toward the Flats.",
+       "placeholder"
+      ],
+      [
+       "ZERO",
+       "(on the phone) Six cameras watch the substation. Paint them. Then get me to the switch house. Don't get seen.",
+       "placeholder"
+      ]
+     ]
+    },
+    {
+     "do": "goals",
+     "hook": "cameras",
+     "objective": "Blind the six security cameras around the substation with spray. Keep out of drone range.",
+     "counter": "CAMERAS",
+     "det_r": 4.5,
+     "fill_s": 2.5,
+     "mist": [
+      [
+       388.0,
+       -71.0,
+       4.5,
+       3.0
+      ],
+      [
+       410.0,
+       -77.0,
+       4.5,
+       3.0
+      ],
+      [
+       432.0,
+       -71.0,
+       4.5,
+       3.0
+      ]
+     ],
+     "drones": [
+      {
+       "path": [
+        [
+         392.0,
+         -55.0
+        ],
+        [
+         392.0,
+         -25.0
+        ]
+       ],
+       "y": 4.0,
+       "speed": 2.5
+      },
+      {
+       "path": [
+        [
+         414.0,
+         -76.0
+        ],
+        [
+         438.0,
+         -76.0
+        ]
+       ],
+       "y": 5.0,
+       "speed": 2.5
+      }
+     ],
+     "spotted_lines": [
+      [
+       "ZERO",
+       "(on the phone) Seen. Back to the last camera. They fly the same loop every time.",
+       "placeholder"
+      ]
+     ],
+     "goals": [
+      {
+       "id": "cam0",
+       "at": [
+        428.0,
+        -26.8
+       ],
+       "r": 1.8,
+       "verb": "E  spray over the camera",
+       "paint": [
+        "Cam0/Lens",
+        "#111111"
+       ],
+       "points": 1500,
+       "sfx": "pickup",
+       "reset": [
+        428.0,
+        0.5,
+        -26.8,
+        0.0
+       ],
+       "via": [
+        [
+         420.0,
+         -25.0
+        ]
+       ],
+       "lines": [
+        [
+         "ZERO",
+         "(on the phone) One blind. Five to go. They're old cameras. They think paint is weather.",
+         "placeholder"
+        ]
+       ]
+      },
+      {
+       "id": "cam1",
+       "at": [
+        444.0,
+        -28.8
+       ],
+       "r": 1.8,
+       "verb": "E  spray over the camera",
+       "paint": [
+        "Cam1/Lens",
+        "#111111"
+       ],
+       "points": 1500,
+       "sfx": "pickup",
+       "reset": [
+        444.0,
+        0.5,
+        -28.8,
+        0.0
+       ]
+      },
+      {
+       "id": "cam2",
+       "at": [
+        448.8,
+        -38.0
+       ],
+       "r": 1.8,
+       "verb": "E  spray over the camera",
+       "paint": [
+        "Cam2/Lens",
+        "#111111"
+       ],
+       "points": 1500,
+       "sfx": "pickup",
+       "reset": [
+        448.8,
+        0.5,
+        -38.0,
+        0.0
+       ]
+      },
+      {
+       "id": "cam3",
+       "at": [
+        449.2,
+        -64.0
+       ],
+       "r": 1.8,
+       "verb": "E  spray over the camera",
+       "paint": [
+        "Cam3/Lens",
+        "#111111"
+       ],
+       "points": 1500,
+       "sfx": "pickup",
+       "reset": [
+        449.2,
+        0.5,
+        -64.0,
+        0.0
+       ]
+      },
+      {
+       "id": "cam4",
+       "at": [
+        436.0,
+        -61.2
+       ],
+       "r": 1.8,
+       "verb": "E  spray over the camera",
+       "paint": [
+        "Cam4/Lens",
+        "#111111"
+       ],
+       "points": 1500,
+       "sfx": "pickup",
+       "reset": [
+        436.0,
+        0.5,
+        -61.2,
+        0.0
+       ],
+       "via": [
+        [
+         440.0,
+         -66.0
+        ]
+       ]
+      },
+      {
+       "id": "cam5",
+       "at": [
+        422.0,
+        -46.8
+       ],
+       "r": 1.8,
+       "verb": "E  spray over the camera",
+       "paint": [
+        "Cam5/Lens",
+        "#111111"
+       ],
+       "points": 1500,
+       "sfx": "pickup",
+       "reset": [
+        422.0,
+        0.5,
+        -46.8,
+        0.0
+       ],
+       "lines": [
+        [
+         "ZERO",
+         "(on the phone) That's all six. The substation can't see you. Now the gate.",
+         "placeholder"
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "do": "goals",
+     "objective": "Open the gate: grind the fence-top rail to the maintenance switch house.",
+     "counter": "GATE",
+     "goals": [
+      {
+       "id": "gate",
+       "at": [
+        439.4,
+        -57.6
+       ],
+       "r": 1.8,
+       "verb": "E  grind the fence-top rail",
+       "hook": "over_fence",
+       "sfx": "bank",
+       "points": 2000
+      }
+     ]
+    },
+    {
+     "do": "goals",
+     "objective": "Plug your phone into the switch house panel.",
+     "counter": "PANEL",
+     "goals": [
+      {
+       "id": "panel",
+       "at": [
+        442.6,
+        -61.0
+       ],
+       "r": 2.0,
+       "verb": "E  plug the phone into the panel",
+       "hook": "switch_house",
+       "sfx": "crt"
+      }
+     ],
+     "done_lines": [
+      [
+       "NARRATE",
+       "{name} plugs the phone into the switch house panel. Zero takes over, appearing on the panel's screen."
+      ],
+      [
+       "ZERO",
+       "Okay. I'm going to talk to the switching system. It's very polite, it's very old, and it believes everything it's told. I'm going to tell it the Flats are a hospital."
+      ],
+      [
+       "FONY",
+       "Is that a lie?"
+      ],
+      [
+       "ZERO",
+       "(beat) Tonight there are a lot of people over there whose lives depend on a fan. I'm comfortable with the paperwork."
+      ]
+     ]
+    },
+    {
+     "do": "defend",
+     "objective": "Hold the line while Zero reroutes: knock the drones down before they reach the switch house (the tower mist drops them too).",
+     "at": [
+      443.0,
+      -61.0
+     ],
+     "guard": [
+      441.6,
+      -61.0
+     ],
+     "secs": 30.0,
+     "every": 3.5,
+     "max": 4,
+     "speed": 2.0,
+     "knock_r": 1.8,
+     "hit_back": 0.05,
+     "points": 500,
+     "mist": [
+      [
+       388.0,
+       -71.0,
+       4.5,
+       3.0
+      ],
+      [
+       410.0,
+       -77.0,
+       4.5,
+       3.0
+      ],
+      [
+       432.0,
+       -71.0,
+       4.5,
+       3.0
+      ]
+     ],
+     "from": [
+      [
+       430.0,
+       -30.0
+      ],
+      [
+       452.0,
+       -90.0
+      ],
+      [
+       420.0,
+       -60.0
+      ],
+      [
+       450.0,
+       -30.0
+      ],
+      [
+       400.0,
+       -50.0
+      ]
+     ],
+     "barks": [
+      [
+       0.3,
+       "ZERO",
+       "Rerouting at thirty percent. They've noticed.",
+       "placeholder"
+      ],
+      [
+       0.6,
+       "ZERO",
+       "Rerouting at sixty percent. Keep him busy. You're very good at being annoying."
+      ],
+      [
+       0.9,
+       "ZERO",
+       "Almost. Something big just woke up in the loading bay.",
+       "placeholder"
+      ]
+     ]
+    },
+    {
+     "do": "cine",
+     "id": "a1_thermostat"
+    },
+    {
+     "do": "goals",
+     "objective": "BOSS · The Thermostat, phase 1: grind the coolant pipes and stomp the three exposed vents. Frost is slick.",
+     "counter": "VENTS",
+     "goals": [
+      {
+       "id": "vent0",
+       "at": [
+        408.6,
+        -60.0
+       ],
+       "r": 2.0,
+       "verb": "E  stomp the vent",
+       "paint": [
+        "Thermostat/Vent0",
+        "#30343a"
+       ],
+       "points": 2000,
+       "sfx": "bail",
+       "reset": [
+        404.0,
+        0.5,
+        -66.0,
+        0.0
+       ],
+       "via": [
+        [
+         436.0,
+         -66.0
+        ],
+        [
+         404.0,
+         -66.0
+        ]
+       ],
+       "lines": [
+        [
+         "EGON",
+         "Ha! Slippery! Comfort is a privilege, child!"
+        ]
+       ]
+      },
+      {
+       "id": "vent1",
+       "at": [
+        419.4,
+        -60.0
+       ],
+       "r": 2.0,
+       "verb": "E  stomp the vent",
+       "paint": [
+        "Thermostat/Vent1",
+        "#30343a"
+       ],
+       "points": 2000,
+       "sfx": "bail",
+       "reset": [
+        424.0,
+        0.5,
+        -66.0,
+        0.0
+       ],
+       "via": [
+        [
+         404.0,
+         -66.0
+        ],
+        [
+         424.0,
+         -66.0
+        ]
+       ],
+       "lines": [
+        [
+         "EGON",
+         "Do you know what this machine costs? Neither do I! I stopped counting!"
+        ]
+       ]
+      },
+      {
+       "id": "vent2",
+       "at": [
+        414.0,
+        -54.6
+       ],
+       "r": 2.0,
+       "verb": "E  stomp the vent",
+       "paint": [
+        "Thermostat/Vent2",
+        "#30343a"
+       ],
+       "points": 2000,
+       "sfx": "bail",
+       "reset": [
+        420.0,
+        0.5,
+        -54.0,
+        0.0
+       ],
+       "via": [
+        [
+         424.0,
+         -54.0
+        ]
+       ]
+      }
+     ],
+     "done_lines": [
+      [
+       "NARRATE",
+       "Egon twirls one finger and the dial spins to HEAT. The machine vents scalding steam."
+      ],
+      [
+       "EGON",
+       "Stop that! That's proprietary steam!"
+      ]
+     ]
+    },
+    {
+     "do": "goals",
+     "hook": "dial_heat",
+     "objective": "Phase 2: the steam blows on and off. Wait in the tower mist, then spray over the two sensor eyes.",
+     "counter": "EYES",
+     "fill_s": 4.0,
+     "hazards": [
+      [
+       414.0,
+       -60.0,
+       6.0,
+       2.0,
+       2.5
+      ]
+     ],
+     "mist": [
+      [
+       388.0,
+       -71.0,
+       4.5,
+       3.0
+      ],
+      [
+       410.0,
+       -77.0,
+       4.5,
+       3.0
+      ],
+      [
+       432.0,
+       -71.0,
+       4.5,
+       3.0
+      ]
+     ],
+     "spotted_lines": [
+      [
+       "ZERO",
+       "(on the panel) Scalded. Back to the mist. Count the steam: it blows, it stops, it blows.",
+       "placeholder"
+      ]
+     ],
+     "goals": [
+      {
+       "id": "eye0",
+       "at": [
+        414.0,
+        -64.4
+       ],
+       "r": 1.8,
+       "verb": "E  spray the sensor eye",
+       "paint": [
+        "Thermostat/Eye0",
+        "#111111"
+       ],
+       "points": 2000,
+       "sfx": "pickup",
+       "reset": [
+        410.0,
+        0.5,
+        -75.5,
+        0.0
+       ],
+       "via": [
+        [
+         407.0,
+         -55.0
+        ],
+        [
+         407.0,
+         -66.5
+        ]
+       ],
+       "lines": [
+        [
+         "EGON",
+         "I'll have you scored so low you'll need a permit to breathe!"
+        ]
+       ]
+      },
+      {
+       "id": "eye1",
+       "at": [
+        409.6,
+        -58.4
+       ],
+       "r": 1.8,
+       "verb": "E  spray the sensor eye",
+       "paint": [
+        "Thermostat/Eye1",
+        "#111111"
+       ],
+       "points": 2000,
+       "sfx": "pickup",
+       "reset": [
+        410.0,
+        0.5,
+        -75.5,
+        0.0
+       ],
+       "via": [
+        [
+         409.0,
+         -65.0
+        ]
+       ]
+      }
+     ],
+     "done_lines": [
+      [
+       "NARRATE",
+       "The dial spins wildly between hot and cold."
+      ],
+      [
+       "ZERO",
+       "He's cycling hot-cold-hot. It's a pattern. He thinks it's a personality."
+      ]
+     ]
+    },
+    {
+     "do": "goals",
+     "hook": "dial_wild",
+     "objective": "Phase 3: launch off the loading bay quarter pipe onto the machine's top.",
+     "counter": "DIAL",
+     "goals": [
+      {
+       "id": "ramp",
+       "at": [
+        401.0,
+        -64.6
+       ],
+       "r": 2.2,
+       "verb": "E  launch off the loading bay",
+       "hook": "launch",
+       "sfx": "bank",
+       "points": 1000,
+       "via": [
+        [
+         404.0,
+         -66.0
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "do": "goals",
+     "objective": "Stomp the dial.",
+     "counter": "DIAL",
+     "goals": [
+      {
+       "id": "dial",
+       "at": [
+        414.0,
+        -61.6
+       ],
+       "r": 2.4,
+       "min_y": 5.0,
+       "verb": "E  stomp the dial",
+       "points": 3000,
+       "sfx": "breaker",
+       "lines": [
+        [
+         "ZERO",
+         "The dial! Hit the dial! He loves that dial. He's going to be so upset."
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "do": "cine",
+     "id": "a1_lights_on"
+    },
+    {
+     "do": "hook",
+     "name": "flats_lights",
+     "lines": [
+      [
+       "NARRATE",
+       "Stillwater Flats, night, continuous. The dark housing blocks light up, window by window. Fans start up. Somebody's radio starts playing. People spill out onto balconies, cheering."
+      ],
+      [
+       "NARRATE",
+       "On the Dusk Dynamics billboard facing the Flats, the one {name} tagged, the screen flickers and shows a new message in Zero's shaky green handwriting."
+      ],
+      [
+       "BILLBOARD",
+       "TONIGHT'S POWER COURTESY OF COLDFRONT, WHO DIDN'T KNOW THEY WERE DONATING. STAY COOL. THE YARD IS OPEN. – Z"
       ]
      ]
     }

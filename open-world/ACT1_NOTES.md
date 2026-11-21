@@ -1,4 +1,4 @@
-# Act I scenes 1.1 to 1.4B: first-pass notes (Nov 20 2026)
+# Act I scenes 1.1 to 1.6B: first-pass notes (Nov 20 2026)
 
 Branch `pz-act1-s1`, local only. Runner `scripts/story/act1.gd`, data `data/missions/act1_scenes.json`, cinematics `a1_plan`, `a1_first_night`, `a1_benefactor` in `data/missions/prologue_cinematics.json`. New district packs `stillwater_flats` and `cold_row`; the arcade pack gains the GRIND THE TERMS cabinet and ceiling fans. Tests `tests/m5_tests.gd` (AU_TEST_ONLY=m5); browser run `tools/act1-scenes-check.mjs` (`AU_ACT1_FROM=1.1`, uses the dev jump `?story=p1&story_demo=1&act1_from=<scene>`). Intro and Prologue cinematic timing untouched.
 
@@ -45,8 +45,30 @@ Every guess below is a first pass, for you to change.
 ## P.4 placeholders
 - Ceiling fans added to the arcade (they turn once the power is on). Arm rig, jacket-on and title music still not built.
 
+## 1.5 The Breaker (+ 1.5B The Thermostat, BOSS The Thermostat, 1.5C Lights on in the Flats)
+- Six cameras on poles around the substation; E sprays a lens black (1,500 each). Two drones patrol (WATCH as in 1.4, range 4.5 m).
+- Open the gate: E at the end of the substation fence = "grind the fence-top rail" (PLACEHOLDER: a hop to the switch house, no real fence grind).
+- Zero's part: E at the switch-house panel; the panel reads ZERO; script lines.
+- Hold the line: 30 s reroute. Drones fly in from the edges every 3.5 s (max 4) toward the switch house; touching one knocks it down (+500); one that flies into tower mist drops; one that reaches the house costs 5%. Zero's barks at 30/60/90% (60% is the script's, the others placeholder).
+- Boss, three phases as goal steps:
+  - Phase 1: stomp three vents (E at each, 2,000). Frost patches are visual only (no slip physics yet).
+  - Phase 2: the dial reads HEAT; steam blows 2 s on / 2.5 s off within 6 m of the machine; inside it while it blows fills WATCH (full in 4 s) unless you're in the tower mist. Spray two sensor eyes (2,000 each).
+  - Phase 3: the dial reads HOT · COLD · HOT; E at the loading bay = launch onto the machine's top (PLACEHOLDER: a teleport, not a real quarter-pipe launch); E stomps the dial (3,000).
+- Zero Score 22,000 (the script's); a full run scores about 25,000.
+- Egon's four boss barks are spread over the vents and eyes; Zero's three over the reroute and phases.
+- 1.5C: the machine stops, the Capsule flies off, Zero on the panel; then the Flats at night: lit windows, people on the roofs, the billboard shows Zero's message.
+
+## 1.6 Heat Break (+ 1.6B The rain) — END OF ACT I
+- The free-roam montage is a short checklist in the Flats, one E each with a DAY card and Signal +5: paint the community center roof (day 4), an aid run to Mrs. Okonkwo (day 5), salvage two solar panels from a condemned block (day 6), dig out a dusty cabinet (day 7). No real side-activity systems yet.
+- The Yard, days later: shade cloth over the bowl, a water station by the gate, cots in the resistance rooms, kids on the quarter pipe; meet the neighbors, two teen skaters and the free-clinic woman (placeholder lines).
+- 1.6B: storm sky, falling rain streaks, the Yard in the rain, Zero in the arcade doorway (a block figure), Nana Ines paints THE YARD on the wall. Script dialogue. Then the card "END OF ACT I. / RUST & SIGNAL", then the end card: "Next: ACT II · 2.1 BACK TO PRACTICE (not built yet)."
+
+## Fixes this round
+- Zero Vision strings now render on the web build: thin unshaded boxes in one MultiMesh (ImmediateMesh GL lines drew nothing on the Compatibility renderer), no depth test, no fog; raising the phone tilts the camera up at the hologram. The camera pitch resets on every scene spawn.
+- The skate-combo SCORE box is hidden during the Act I scenes (they score in the box above).
+
 ## Not built / next
-- 1.5 The Breaker and 1.6 Heat Break (after the slice).
+- Act II onward (2.1 Back to Practice is next).
 - Real art for Nana Ines, residents, Egon, the Halo; Zero's face on the phone (the thread header only).
 - Workshop upgrades and parts; the Grind the Terms cabinet unlock in the arcade; Zero Vision in free roam.
 

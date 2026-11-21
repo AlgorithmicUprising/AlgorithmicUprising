@@ -20,6 +20,8 @@ func run(host: Node) -> void:
 	await _scene_1_2()
 	await _scene_1_3()
 	await _scene_1_4()
+	await _scene_1_5()
+	await _scene_1_6()
 
 func ok(cond: bool, name: String) -> void:
 	t.expect(cond, "m5: " + name)
@@ -105,6 +107,16 @@ func _drive_step(story, main) -> void:
 		"raise":
 			await frames(2)
 			a.raise_phone()
+		"defend":
+			var guard := 0
+			while a.state == "step" and str(a.step.get("do", "")) == "defend" and not a.waiting and guard < 3000:
+				guard += 1
+				for dr in a.drones:
+					if is_instance_valid(dr.node) and dr.node.global_position.y < 3.0:
+						_put(main, [dr.node.global_position.x, dr.node.global_position.z], 0.5)
+						break
+				a.reroute = minf(1.0, a.reroute + 0.01)
+				await t.get_tree().physics_frame
 
 func _put(main, at: Array, y: float) -> void:
 	var pl = main.player
@@ -117,13 +129,16 @@ func _play_scene(story, main, id: String) -> void:
 	var guard := 0
 	while a.scene == id and a.active() and guard < 40:
 		guard += 1
-		await _until(story, func(): return a.scene != id or not a.active() or (a.state == "step" and not a.waiting and str(a.step.get("do", "")) in ["goals", "topics", "carry", "raise"]), 1200)
+		await _until(story, func(): return a.scene != id or not a.active() or (a.state == "step" and not a.waiting and str(a.step.get("do", "")) in ["goals", "topics", "carry", "raise", "defend"]), 1200)
 		if a.scene == id and a.active() and a.state == "step" and not a.waiting:
 			await _drive_step(story, main)
 
 func _data() -> void:
 	var d = JsonFile.read(Act1.DEF_PATH)
-	ok(typeof(d) == TYPE_DICTIONARY and d.order == ["1.1", "1.2", "1.3", "1.4"] and d.scenes.size() == 4, "data: Act I scenes 1.1 to 1.4 in order")
+	var want := ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6"]
+	ok(typeof(d) == TYPE_DICTIONARY and d.order.size() >= 5 and d.order == want.slice(0, d.order.size()) and d.scenes.size() == d.order.size(), "data: Act I scenes in script order (%s)" % ", ".join(d.order))
+	for id in d.built:
+		ok(d.order.has(id) and d.scenes.has(id), "data: built scene %s is in the order and defined" % id)
 	var all := JSON.stringify(d)
 	ok("held together by optimism" in all and "flag two hundred and six" in all and "Then go and see Nana Ines" not in all, "data: 1.1 Fine Print is the script's (1.1B's lines live in the cinematic)")
 	var lines := JSON.stringify(d.scenes)
@@ -296,6 +311,7 @@ func _scene_1_4() -> void:
 	var main = r[0]
 	var story = r[1]
 	var a = r[2]
+	a.def["built"] = ["1.1", "1.2", "1.3", "1.4"]  # this test ends on the slice card; 1.5 has its own
 	await _until(story, func(): return str(a.step.get("do", "")) == "goals" and not a.waiting)
 	ok(a.scene == "1.4" and a._district("cold_row") != null and a.drones.size() == 3 and story.spoken.any(func(l): return "seventy-something degrees" in str(l)), "1.4: Cold Row at night, three drones on patrol")
 	var d0: Node3D = a.drones[0].node
@@ -318,10 +334,106 @@ func _scene_1_4() -> void:
 	await _until(story, func(): return str(a.step.get("do", "")) == "raise" and not a.waiting, 600)
 	ok(str(a.step.get("do", "")) == "raise" and not main.flow.save.flag("zero_vision_unlocked"), "1.4B: waits until the phone is raised")
 	ok(a.raise_phone() and a.vision and a.overlay.visible and a.root.get_node_or_null("Strings") != null and main.flow.save.flag("zero_vision_unlocked"), "Zero Vision: lime strings from his fingertips; unlocked")
+	var strings = a.root.get_node_or_null("Strings")
+	ok(strings is MultiMeshInstance3D and strings.multimesh.instance_count == 600 and (strings.multimesh.mesh.material as StandardMaterial3D).no_depth_test, "Zero Vision: 600 lime strands as boxes (they render on the web renderer), drawn over everything")
+	ok(story.player.camera_pitch > 0.3, "Zero Vision: the camera tilts up at the hologram")
+	ok(not story.hud.score_box.visible, "Act I scenes: the skate-combo SCORE box is hidden (scenes score in the box above)")
 	await _until(story, func(): return not a.vision, 900)
 	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|ZERO VISION UNLOCKED")) and not a.overlay.visible, "Zero Vision: the unlock card, then the overlay fades")
 	await _until(story, func(): return not a.active() or story.phase == "slice_end", 900)
 	ok(story.spoken.any(func(l): return "Then we switch it." in str(l)) and story.spoken.any(func(l): return "whose power it was" in str(l)) and main.flow.save.flag("a1_cold_row_done"), "1.4B: Then we switch it. The slice is done.")
 	await _until(story, func(): return story.phase == "slice_end" and story.queue.is_empty(), 600)
 	ok(story.phase == "slice_end" and story.spoken.any(func(l): return str(l).begins_with("CARD|") and "1.5 THE BREAKER" in str(l) and "EARLY CUT" in str(l)), "end card after 1.4B: 1.5 The Breaker is next")
+	await _done(main)
+
+func _scene_1_5() -> void:
+	var d = JsonFile.read(Act1.DEF_PATH)
+	if not d.scenes.has("1.5"):
+		return
+	var r = await _start_scene("1.5")
+	var main = r[0]
+	var story = r[1]
+	var a = r[2]
+	a.def["built"] = ["1.1", "1.2", "1.3", "1.4", "1.5"]  # this test ends on the slice card; 1.6 has its own
+	await _until(story, func(): return str(a.step.get("do", "")) == "goals" and not a.waiting)
+	ok(a.scene == "1.5" and a._district("cold_row") != null and a.goals().size() == 6 and a.root.get_node_or_null("Cam0/Lens") != null and a.root.get_node_or_null("SwitchHouse") != null and a.drones.size() == 2, "1.5: six cameras around the substation, the switch house, two patrols")
+	await _drive_step(story, main)
+	await _until(story, func(): return str(a.step.get("counter", "")) == "GATE" and not a.waiting)
+	ok(a.log.has("goal:cam5") and a.score >= 9000, "1.5: six cameras blinded (score %d)" % a.score)
+	await _drive_step(story, main)
+	await _until(story, func(): return str(a.step.get("counter", "")) == "PANEL" and not a.waiting)
+	ok(main.player.global_position.x > 440.5, "1.5: over the fence (the fence-top rail) to the switch house")
+	await _drive_step(story, main)
+	await _until(story, func(): return str(a.step.get("do", "")) == "defend" and not a.waiting, 900)
+	ok(main.flow.save.flag("a1_switch_house_plugged") and story.spoken.any(func(l): return "I'm going to tell it the Flats are a hospital." in str(l)) and story.spoken.any(func(l): return "comfortable with the paperwork" in str(l)), "1.5: Zero on the panel (the hospital line)")
+	await _until(story, func(): return a.drones.size() >= 1, 600)
+	ok(a.drones.size() >= 1 and a.reroute > 0.0, "1.5: hold the line: drones fly in, the reroute climbs")
+	var dr: Node3D = a.drones[0].node
+	dr.global_position = Vector3(441.0, 1.4, -61.0)
+	_put(main, [441.0, -61.0], 0.5)
+	await frames(2)
+	ok(a.knocked >= 1, "1.5: touching a drone knocks it down")
+	await _drive_step(story, main)
+	await _until(story, func(): return story.in_cinematic(), 900)
+	ok(a.reroute >= 1.0 and story.spoken.any(func(l): return "Rerouting at sixty percent" in str(l)), "1.5: the reroute completes (Zero's sixty percent bark)")
+	ok(story.cinematic.id == "a1_thermostat", "1.5B: the Thermostat cinematic")
+	await _until(story, func(): return not story.in_cinematic(), 2400)
+	ok(a.root.get_node_or_null("Thermostat/Capsule/EgonInCapsule") != null and story.spoken.any(func(l): return "Then they should have bought fans!" in str(l)) and a._frost_nodes().size() > 0, "1.5B: Egon in the Comfort Capsule; frost on the asphalt")
+	await _until(story, func(): return str(a.step.get("counter", "")) == "VENTS" and not a.waiting)
+	await _drive_step(story, main)
+	await _until(story, func(): return str(a.step.get("counter", "")) == "EYES" and not a.waiting)
+	ok(story.spoken.any(func(l): return "proprietary steam" in str(l)) and str((a.root.get_node("Thermostat/Dial") as Label3D).text) == "HEAT", "boss phase 1 done: three vents; the dial spins to HEAT")
+	a.hz_t = 0.1
+	_put(main, [414.0, -64.4], 0.5)
+	await frames(2)
+	ok(a.seen_by_drone(), "boss phase 2: the steam burns while it blows")
+	a.hz_t = 2.2
+	await frames(1)
+	ok(not a.in_hazard(main.player.global_position), "boss phase 2: and stops")
+	_put(main, [410.0, -77.0], 0.5)
+	a.hz_t = 0.1
+	await frames(1)
+	ok(not a.seen_by_drone(), "boss phase 2: the tower mist hides him")
+	await _drive_step(story, main)
+	await _until(story, func(): return str(a.step.get("counter", "")) == "DIAL" and not a.waiting)
+	ok(story.spoken.any(func(l): return "He thinks it's a personality." in str(l)), "boss phase 3: Zero calls the pattern")
+	await _drive_step(story, main)
+	await _until(story, func(): return a.goals().size() > 0 and str(a.goals()[0].id) == "dial" and not a.waiting)
+	ok(main.player.global_position.y > 5.0, "boss phase 3: the loading-bay launch puts him on the machine's top")
+	await _drive_step(story, main)
+	await _until(story, func(): return story.in_cinematic(), 900)
+	ok(story.cinematic.id == "a1_lights_on", "1.5C: Lights on in the Flats")
+	await _until(story, func(): return not story.in_cinematic(), 2400)
+	ok(story.spoken.any(func(l): return "I'm logging a complaint!" in str(l)) and story.spoken.any(func(l): return "Already done." in str(l)) and main.flow.save.flag("a1_thermostat_beaten"), "1.5C: Egon flies off; Zero: Already done.")
+	await _until(story, func(): return not a.active() or story.phase == "slice_end", 900)
+	ok(main.flow.save.flag("a1_flats_lit") and story.spoken.any(func(l): return "THE YARD IS OPEN" in str(l)) and main.flow.save.flag("a1_the_breaker_done") and int(main.flow.save.mission("a1_the_breaker").best_score) >= 22000, "1.5: the Flats light up, Zero's billboard; done, saved (score %d)" % int(main.flow.save.mission("a1_the_breaker").get("best_score", 0)))
+	await _until(story, func(): return story.phase == "slice_end" and story.queue.is_empty(), 600)
+	var nxt := "1.6 HEAT BREAK" if d.order.has("1.6") else "ACT II"
+	ok(story.phase == "slice_end" and story.spoken.any(func(l): return str(l).begins_with("CARD|") and nxt in str(l) and "EARLY CUT" in str(l)), "end card after 1.5C names %s" % nxt)
+	await _done(main)
+
+func _scene_1_6() -> void:
+	var d = JsonFile.read(Act1.DEF_PATH)
+	if not d.scenes.has("1.6"):
+		return
+	var r = await _start_scene("1.6")
+	var main = r[0]
+	var story = r[1]
+	var a = r[2]
+	var sig0 := int(main.flow.save.story.get("signal", 0))
+	await _until(story, func(): return str(a.step.get("do", "")) == "goals" and not a.waiting)
+	ok(a.scene == "1.6" and a._district("stillwater_flats") != null and a.root.get_node_or_null("Derelict") != null and a.root.get_node_or_null("DustyCabinet") != null and a.goals().size() == 4, "1.6: the heat-break days in the Flats (paint, aid, salvage, a cabinet)")
+	await _drive_step(story, main)
+	await _until(story, func(): return str(a.step.get("counter", "")) == "MET" and not a.waiting, 900)
+	ok(int(main.flow.save.story.get("signal", 0)) >= sig0 + 20 and main.flow.save.flag("a1_cabinet_found") and story.spoken.any(func(l): return str(l).begins_with("CARD|DAY 6 · SALVAGE")), "1.6: four days, Signal +20, a cabinet found")
+	ok(main.flow.save.flag("a1_yard_grown") and a.root.get_node_or_null("ShadeCloth") != null and a.root.get_node_or_null("ClinicWoman") != null and main.player.global_position.z > 5.0 and absf(main.player.global_position.x - 32.0) < 6.0, "1.6: the Yard has grown (shade cloth, water, cots, the new people)")
+	await _drive_step(story, main)
+	await _until(story, func(): return story.in_cinematic(), 900)
+	ok(story.cinematic.id == "a1_rain", "1.6B: The rain")
+	await _until(story, func(): return not story.in_cinematic(), 2400)
+	ok(a.root.get_node_or_null("Rain") != null and a.root.get_node_or_null("TheYardSign") != null and main.flow.save.flag("a1_the_yard_named") and story.spoken.any(func(l): return "harder to bulldoze" in str(l)) and story.spoken.any(func(l): return "You're going to need a coach." in str(l)), "1.6B: rain, the coach line, THE YARD on the wall")
+	await _until(story, func(): return not a.active() or story.phase == "slice_end", 900)
+	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|END OF ACT I.")) and main.flow.save.flag("a1_heat_break_done"), "END OF ACT I.")
+	await _until(story, func(): return story.phase == "slice_end" and story.queue.is_empty(), 600)
+	ok(story.phase == "slice_end" and story.spoken.any(func(l): return str(l).begins_with("CARD|") and "ACT II · 2.1 BACK TO PRACTICE" in str(l)), "the end card points at Act II 2.1 Back to Practice")
 	await _done(main)

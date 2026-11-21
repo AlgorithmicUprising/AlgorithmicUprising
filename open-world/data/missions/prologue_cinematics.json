@@ -939,13 +939,224 @@
           false
         ]
       ]
+    },
+    "a1_thermostat": {
+      "title": "CINEMATIC 1.5B The Thermostat",
+      "note": "Act I first pass (Nov 20 2026). The Thermostat rolls out of a loading bay (PLACEHOLDER: a box tower with fans, pipes, a dial and the Comfort Capsule with Egon in it). Script dialogue.",
+      "end_state": {
+        "host": [
+          "a1_end_thermostat"
+        ]
+      },
+      "flag": "a1_thermostat_seen",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "SFX",
+          "alert"
+        ],
+        [
+          "CAM",
+          [
+            426.0,
+            3.0,
+            -48.0
+          ],
+          [
+            414.0,
+            4.0,
+            -60.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "The ground shakes. Out of a loading bay rolls a huge machine: a squat walking tower of cooling fans and pipes, ice crystals forming on its armor, a giant dial on its chest like an old thermostat."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "thermostat"
+        ],
+        [
+          "CAM",
+          [
+            420.0,
+            5.0,
+            -70.0
+          ],
+          [
+            414.0,
+            7.5,
+            -60.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "Docked into the top of it, frost along its black seams, is the Comfort Capsule, its canopy turned clear. Inside: Egon Dusk, live and furious, red eyes burning, gloved hands raised like a conductor's, every fingertip glowing lime green."
+        ],
+        [
+          "SAY",
+          "EGON",
+          "(over a loudspeaker) Who's touching my thermostat?"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(to Zero) Is that him? Is that actually him?"
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "He builds his own machines. He likes to drive them. It's his hobby. Some people do pottery."
+        ],
+        [
+          "SAY",
+          "EGON",
+          "You! Child! Do you know what you're doing? That power is training the most important product in the history of comfort!"
+        ],
+        [
+          "SAY",
+          "FONY",
+          "(yelling up) There are people over there who don't have fans!"
+        ],
+        [
+          "SAY",
+          "EGON",
+          "(genuinely puzzled) Then they should have bought fans!"
+        ],
+        [
+          "NARRATE",
+          "He flicks two fingers. The Thermostat's fans roar and blast freezing air. Frost spreads across the asphalt, making it slick as ice."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "frost"
+        ],
+        [
+          "SAY",
+          "EGON",
+          "Let's cool you down!"
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ]
+    },
+    "a1_lights_on": {
+      "title": "CINEMATIC 1.5C Lights on in the Flats",
+      "note": "Act I first pass (Nov 20 2026). The Thermostat stops, the Capsule flies off, Zero on the switch-house panel. The Flats lighting up plays right after as scene lines (act1.gd 'flats_lights').",
+      "end_state": {
+        "host": [
+          "a1_end_lights"
+        ]
+      },
+      "flag": "a1_lights_on_seen",
+      "steps": [
+        [
+          "LOCK"
+        ],
+        [
+          "LETTERBOX",
+          true
+        ],
+        [
+          "CAM",
+          [
+            422.0,
+            6.0,
+            -70.0
+          ],
+          [
+            414.0,
+            5.0,
+            -60.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "{name} lands on the dial and stomps it. The Thermostat lurches, sparks, and its fans grind to a halt with a long mechanical sigh."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "thermostat_down"
+        ],
+        [
+          "SFX",
+          "breaker"
+        ],
+        [
+          "NARRATE",
+          "The Comfort Capsule detaches with a hiss of cold air and glides up and away into the dark."
+        ],
+        [
+          "HOST",
+          "a1_hook",
+          "capsule_away"
+        ],
+        [
+          "SAY",
+          "EGON",
+          "(as he flies off) This isn't over! I'm logging a complaint!"
+        ],
+        [
+          "CAM",
+          [
+            440.0,
+            2.0,
+            -61.0
+          ],
+          [
+            443.5,
+            1.6,
+            -61.0
+          ]
+        ],
+        [
+          "NARRATE",
+          "In the switch house, Zero's face fills the panel."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Done. Power flows to Stillwater for the next eight hours. After that the system notices and switches back."
+        ],
+        [
+          "SAY",
+          "FONY",
+          "Make sure everybody knows whose power it was."
+        ],
+        [
+          "SAY",
+          "ZERO",
+          "Already done."
+        ],
+        [
+          "UNLOCK"
+        ],
+        [
+          "LETTERBOX",
+          false
+        ]
+      ]
     }
   },
   "slice_end": {
-    "card": "ACT I · EARLY CUT\n\nEND OF THE PLAYABLE SLICE\n\nNext: ACT I · {next} (not built yet).",
+    "card": "ACT I · EARLY CUT\n\nEND OF THE PLAYABLE SLICE\n\nNext: {next} (not built yet).",
     "card_s": 7.0,
-    "next_after_slice": "1.5 THE BREAKER",
-    "objective": "Slice complete so far. Next: Act I {next} (not built yet). T runs P.2 again.",
+    "next_after_slice": "ACT II · 2.1 BACK TO PRACTICE",
+    "objective": "Slice complete so far. Next: {next} (not built yet). T runs P.2 again.",
     "system": [
       [
         "SYSTEM",

@@ -381,6 +381,7 @@ func _process(delta: float) -> void:
 		return
 	if act1 != null and act1.active():
 		act1.tick(delta)
+		hud.show_combo(false)  # Act I scenes score in the box above; the skate-combo box would sit at 0
 		_publish()
 		return
 	if card_left <= 0.0:
@@ -749,6 +750,7 @@ func _refresh_hud() -> void:
 		return
 	hud.set_zero(zero_score, best_line)
 	hud.set_score(combo.score, combo.meter, combo.multiplier(), combo.top_speed_mult())
+	hud.show_combo(true)
 	var on_line: bool = (runner.current_id() == "line" or runner.state == "done") and not (act1 != null and act1.active())
 	if on_line:
 		var marks: Array = []
@@ -942,6 +944,17 @@ func a1_end_benefactor() -> void:
 	a1_hook("broadcast")
 	a1_hook("halo")
 
+func a1_end_thermostat() -> void:
+	a1_hook("thermostat")
+
+func a1_end_lights() -> void:
+	a1_hook("thermostat_down")
+	a1_hook("capsule_away")
+
+func a1_end_rain() -> void:
+	a1_hook("rain")
+	a1_hook("the_yard")
+
 func _refresh_run_hud() -> void:
 	pass
 
@@ -955,7 +968,7 @@ func _slice_end(show_card: bool) -> void:
 		cinematic.set_billboard("postponed")
 		cinematic.drone_do("leave")
 	var nxt: String = act1.next_scene() if act1 != null else ""
-	var nxt_title: String = str(act1.sdef(nxt).get("title", nxt)) if nxt != "" else str(se.get("next_after_slice", ""))
+	var nxt_title: String = ("ACT I · " + str(act1.sdef(nxt).get("title", nxt))) if nxt != "" else str(se.get("next_after_slice", ""))
 	if show_card:
 		_say_all([["CARD", str(se.get("card", "END OF THE PLAYABLE PROLOGUE")).replace("{next}", nxt_title)]])
 		card_left = 0.0
