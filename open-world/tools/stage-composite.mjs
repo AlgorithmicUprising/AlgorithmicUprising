@@ -90,6 +90,11 @@ for (const [id, entry] of Object.entries(registry.districts || {})) {
 for (const path of districtPcks) {
   if (!districtReports.some((r) => join('open-world', registry.districts[r.id].pack) === path)) throw new Error('Unlisted district pack: ' + path);
 }
+const introRel = join('open-world', 'media', 'intro', 'intro-placeholder.mp4');
+const introStat = await stat(join(root, introRel)).catch(() => null);
+if (!introStat?.isFile() || introStat.size < 10000) {
+  throw new Error('Composite is missing a usable ' + introRel + ' (export-web.mjs should write it with ffmpeg). size=' + (introStat?.size ?? 0));
+}
 const rootIndex = await readFile(join(root, 'index.html'), 'utf8');
 if (!rootIndex.includes('./demo/')) throw new Error('Arcade landing no longer points at ./demo/');
 console.log(JSON.stringify({
@@ -99,6 +104,8 @@ console.log(JSON.stringify({
   wasmBytes: wasmStat.size,
   pckBytes: pckStat.size,
   wasm: wasm[0],
+  introPlaceholder: introRel,
+  introPlaceholderBytes: introStat.size,
   budget: {
     mainPackMaxBytes: MAIN_PACK_MAX,
     mainPackBytes: pckStat.size,
