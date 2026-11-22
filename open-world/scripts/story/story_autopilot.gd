@@ -48,10 +48,10 @@ func _plan() -> Array:
 	# the line, twice: bowl, quarter, rail (the second lap adds kickflips on the flat to beat the Zero Score)
 	for lap in 2:
 		var flip := "flip" if lap == 1 else ""
-		# the bowl's north bank tops out 0.45 m above the yard slab at z 19: hop the lip (Space) to drop in
+		# The pool is a roll-in off the north deck (coping near z 43). A jump at the old lip wedges on the deck seam.
 		p.append({"name": "line%d_to_bowl" % lap, "do": "goto", "to": Vector2(-48, 15.5), "r": 1.5, "t": 10.0})
-		p.append({"name": "line%d_bowl" % lap, "do": "goto", "to": Vector2(-48, 46), "r": 2.5, "jump_after": 0.0, "until": "line_at:1", "t": 8.0})
-		p.append({"name": "line%d_out" % lap, "do": "goto", "to": Vector2(-44, 17), "r": 2.0, "t": 10.0})
+		p.append({"name": "line%d_bowl" % lap, "do": "goto", "to": Vector2(-48, 50), "r": 3.0, "until": "line_at:1", "t": 12.0})
+		p.append({"name": "line%d_out" % lap, "do": "goto", "to": Vector2(-44, 17), "r": 2.0, "t": 12.0})
 		p.append({"name": "line%d_north" % lap, "do": "goto", "to": Vector2(-38, -5), "r": 2.0, "trick_after": 1.4, "trick": flip, "t": 10.0})
 		p.append({"name": "line%d_lane" % lap, "do": "goto", "to": Vector2(-45, -12), "r": 1.5, "t": 6.0})
 		p.append({"name": "line%d_quarter" % lap, "do": "lane", "axis": "z", "at": -12.0, "dir": -1.0, "until": "line_at:2", "t": 10.0})

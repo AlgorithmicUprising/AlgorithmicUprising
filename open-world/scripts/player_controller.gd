@@ -190,6 +190,13 @@ var look_invert_chosen := false
 var _mouse_pending := Vector2.ZERO
 var spawn_position := Vector3.ZERO
 var spawn_yaw := 0.0
+## Last grounded spot inside the playable volumes. A kill-plane fall or a step off the map returns here.
+var last_safe_position := Vector3.ZERO
+var last_safe_yaw := 0.0
+var last_safe_valid := false
+var bounds_enabled := true
+var bowl_xz := Vector3.ZERO         # surface point the bowl rider integrates (the body origin sits off it)
+var bowl_theta := 0.0
 var rig: Node3D
 var painted_sprite: Node3D
 var use_painted_sprite := true
@@ -197,7 +204,7 @@ var wish_len := 0.0
 var sprite_frame := ""
 # Phase 2 transition state
 var ramp: Node3D = null
-var ramp_mode := ""                 # "" = flat physics, "ride" = on the curve
+var ramp_mode := ""                 # "" = flat physics, "ride" = quarter pipe, "bowl" = the yard pool (same curve step)
 var ramp_s := 0.0
 var ramp_v := 0.0
 var ramp_z := 0.0
@@ -226,6 +233,9 @@ func _ready() -> void:
 	_load_look()
 	spawn_position = global_position
 	spawn_yaw = rotation.y
+	last_safe_position = spawn_position
+	last_safe_yaw = spawn_yaw
+	last_safe_valid = true
 	_style_body()
 	_update_camera(0.0)
 
@@ -348,6 +358,10 @@ func respawn() -> void:
 	global_position = spawn_position
 	rotation.y = spawn_yaw
 	camera_yaw = spawn_yaw
+	last_safe_position = spawn_position
+	last_safe_yaw = spawn_yaw
+	last_safe_valid = true
+	bowl_xz = spawn_position
 
 ## Lock onto `rail` at `along` (0..1, older callers) with the current velocity; grind_check() is the normal way in.
 func begin_grind(rail, along: float) -> void:
@@ -357,8 +371,7 @@ func _physics_process(delta: float) -> void:
 	if qp_state == "commit" or qp_state == "roll":
 		qp_elapsed += delta
 	_simulate(delta)
-	if global_position.y < -8.0:
-		respawn()
+	_keep_in_bounds()
 	_pose(delta)
 
 func start_visual_demo(kind: String) -> void:
@@ -432,6 +445,9 @@ func _simulate(delta: float) -> void:
 	if ramp_mode == "ride":
 		_ramp_step(delta)
 		return
+	if ramp_mode == "bowl":
+		_bowl_step(delta)
+		return
 	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
 	external_jump = false
 	if is_on_floor() and jumping:
@@ -477,6 +493,7 @@ func _simulate(delta: float) -> void:
 	if is_on_floor():
 		if was_air:
 			_pipe_air_landed()
+		_try_bowl_entry()
 		if grind_land_pending:
 			grind_land_pending = false
 			if trick == "":
@@ -937,6 +954,8 @@ func _start_air(kind: String) -> void:
 	trick_time = 0.0
 	if ramp_mode == "ride":
 		_ramp_leave(OLLIE_POP_VELOCITY, "pop")
+	elif ramp_mode == "bowl":
+		_bowl_leave(OLLIE_POP_VELOCITY, "pop")
 	else:
 		velocity.y = OLLIE_POP_VELOCITY
 	if kind == "flip":
@@ -992,7 +1011,7 @@ func _pose(delta: float) -> void:
 
 ## True while the board is on something: flat ground or the curve.
 func on_ground() -> bool:
-	return grind != null or qp_state != "" or ramp_mode == "ride" or is_on_floor()
+	return grind != null or qp_state != "" or ramp_mode == "ride" or ramp_mode == "bowl" or is_on_floor()
 
 ## Rolling backwards relative to where he faces (fakie). Facing comes from the stick on the flat only.
 func is_fakie() -> bool:
@@ -1010,6 +1029,9 @@ func sprite_anchor_offset() -> Vector3:
 		return qp_ref_world() - (global_position + Vector3.UP * 0.325)
 	if pipe_air:
 		return air_anchor
+	if ramp_mode == "bowl" and ramp != null and ramp.has_method("sample"):
+		var surfaced: Dictionary = ramp.sample(bowl_xz)
+		return surfaced.point - (global_position + Vector3.UP * 0.325)
 	if ramp_mode != "ride" or ramp == null:
 		return Vector3.ZERO
 	var contact: Vector3 = ramp.to_global(ramp.profile_point(ramp_s, ramp_z))
@@ -1017,6 +1039,8 @@ func sprite_anchor_offset() -> Vector3:
 
 ## Wall angle under him in degrees (0 on the flat).
 func ramp_angle_deg() -> float:
+	if ramp_mode == "bowl":
+		return rad_to_deg(bowl_theta)
 	if ramp_mode != "ride" or ramp == null:
 		return 0.0
 	return rad_to_deg(ramp_s / ramp.radius)
@@ -1206,6 +1230,9 @@ func _pipe_air_landed() -> void:
 	air_kind = ""
 	var pipe: Node3D = pipe_air_pipe
 	pipe_air_pipe = null
+	if pipe != null and is_instance_valid(pipe) and pipe.is_in_group("skate_bowl"):
+		_bowl_air_landed(pipe)
+		return
 	if pipe == null or not is_instance_valid(pipe):
 		last_landing = "flat"
 		return
@@ -1229,6 +1256,243 @@ func _pipe_air_landed() -> void:
 	else:
 		last_landing = "flat"
 		_event("landed_flat")
+
+# ---------------------------------------------------------------- Bowl: the yard pool, same curve step as the quarter pipe
+
+const Bounds = preload("res://scripts/world_bounds.gd")
+
+## Remember a grounded in-bounds spot. Dropping through the kill plane, or ending up clear of every
+## playable volume, puts him back there instead of letting him fall out of Glitchport.
+func _keep_in_bounds() -> void:
+	if not bounds_enabled:
+		return
+	if Bounds.is_safe(self):
+		last_safe_position = global_position
+		last_safe_yaw = rotation.y
+		last_safe_valid = true
+		return
+	if global_position.y < Bounds.KILL_Y or Bounds.outside(global_position):
+		_recover_safe()
+
+func _recover_safe() -> void:
+	var back := last_safe_position if last_safe_valid else spawn_position
+	var yaw := last_safe_yaw if last_safe_valid else spawn_yaw
+	velocity = Vector3.ZERO
+	grind = null
+	grind_pop_side = Vector3.ZERO
+	ramp_mode = ""
+	ramp = null
+	pipe_air = false
+	pipe_air_pipe = null
+	qp_state = ""
+	qp_pending = 0.0
+	pumping = false
+	global_position = back
+	rotation.y = yaw
+
+## Roll onto the pool wall. From the deck, keep the approach speed (a steep projection would eat it).
+## From the flat, the slope is still shallow, so the tangent projection is the whole speed.
+func _try_bowl_entry() -> void:
+	if ramp_mode != "" or not skating or grind != null or pipe_air or not is_on_floor():
+		return
+	for bowl in get_tree().get_nodes_in_group("skate_bowl"):
+		if not bowl.has_method("sample"):
+			continue
+		var s: Dictionary = bowl.sample(global_position)
+		var out: Vector3 = s.out
+		if out.length() < 0.5:
+			continue
+		var speed := Vector2(velocity.x, velocity.z).length()
+		var inward := -Vector3(velocity.x, 0.0, velocity.z).dot(out)
+		if str(s.kind) == "flat" and float(s.u) > -0.75 and Vector3(velocity.x, 0.0, velocity.z).dot(out) > 1.2:
+			var up: Dictionary = bowl.sample_toward(global_position, 0.2)
+			_bowl_enter(bowl, up, false, speed)
+			return
+		if str(s.kind) == "wall" and float(s.u) > 0.15 and float(s.u) < float(s.lip_u) - 0.02:
+			if absf(global_position.y + 0.325 - float(s.y)) < 0.5:
+				_bowl_enter(bowl, s, inward > 0.3, speed)
+				return
+		elif str(s.kind) == "deck" and float(s.u) < float(s.lip_u) + 0.6 and inward > 1.2:
+			var lip: Dictionary = bowl.sample_toward(global_position, float(s.lip_u) - 0.15)
+			_bowl_enter(bowl, lip, true, speed)
+			return
+
+func _bowl_enter(bowl: Node3D, s: Dictionary, descending: bool, speed: float) -> void:
+	ramp = bowl
+	ramp_mode = "bowl"
+	bowl_xz = s.point
+	bowl_theta = float(s.theta)
+	var tangent: Vector3 = s.tangent
+	if descending:
+		ramp_v = -maxf(speed, 1.2)
+	else:
+		ramp_v = velocity.dot(tangent)
+	ramp_vz = velocity.dot(s.around)
+	ramp_entry_speed = speed
+	ramp_peak_y = float(s.y)
+	pipe_air = false
+	pipe_air_pipe = null
+	_event("bowl_enter", {"speed": speed, "pipe": str(bowl.name)})
+	_bowl_place(s)
+
+func _bowl_step(delta: float) -> void:
+	var bowl: Node3D = ramp
+	if bowl == null or not is_instance_valid(bowl):
+		ramp_mode = ""
+		ramp = null
+		return
+	# A mission retry or a test teleports the body. Drop the curve instead of dragging him back onto it.
+	if global_position.distance_to(bowl_xz) > 4.0:
+		ramp_mode = ""
+		ramp = null
+		pumping = false
+		return
+	var s: Dictionary = bowl.sample(bowl_xz)
+	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
+	external_jump = false
+	_tricks(delta)
+	if ramp_mode != "bowl":
+		return
+	if jumping and bail_time <= 0.0:
+		_bowl_leave(JUMP_VELOCITY, "jump")
+		return
+	var theta: float = float(s.theta)
+	var a := -GRAVITY * sin(theta)
+	if absf(ramp_v) > 0.05:
+		a -= signf(ramp_v) * RAMP_ROLL_DECEL
+	var wish: Vector3 = _wish()
+	wish_len = wish.length()
+	# The pool is deeper than a quarter pipe. A held stick pumps higher up the wall, so a push
+	# from the flat still rides out to the deck (the P.1 line leaves this way).
+	pumping = qp_state != "roll" and wish_len > 0.2 and theta < deg_to_rad(62.0) and absf(ramp_v) > PUMP_MIN_SPEED and (trick == "" or trick == "land") and bail_time <= 0.0
+	if pumping:
+		a += signf(ramp_v) * 4.5
+	ramp_v += a * delta
+	var around: Vector3 = s.around
+	var lateral: float = wish.dot(around)
+	if absf(lateral) > 0.1 and bail_time <= 0.0:
+		ramp_vz = move_toward(ramp_vz, lateral * RAMP_STEER_MAX, RAMP_STEER_ACCEL * delta)
+	else:
+		ramp_vz = move_toward(ramp_vz, 0.0, RAMP_ROLL_DECEL * delta)
+	var out: Vector3 = s.out
+	var horiz := out * (ramp_v * cos(theta) * delta) + around * (ramp_vz * delta)
+	var nxt: Dictionary = bowl.sample(bowl_xz + horiz)
+	if ramp_v > 0.15 and (str(nxt.kind) == "deck" or float(nxt.u) >= float(nxt.lip_u) - 0.001):
+		if ramp_v < 3.2:
+			_bowl_roll_out(s)
+		else:
+			_bowl_launch(s)
+		return
+	if ramp_v < 0.0 and float(nxt.u) <= 0.05:
+		_bowl_exit_flat(nxt)
+		return
+	bowl_xz = nxt.point
+	ramp_peak_y = maxf(ramp_peak_y, float(nxt.y))
+	_bowl_place(nxt)
+	update_board()
+
+func _bowl_place(s: Dictionary) -> void:
+	var n: Vector3 = s.normal
+	bowl_theta = float(s.theta)
+	bowl_xz = s.point
+	global_position = s.point + n * CAPSULE_R - Vector3.UP * CAPSULE_LOW
+	var tangent: Vector3 = s.tangent
+	velocity = tangent * ramp_v + s.around * ramp_vz
+	ramp_lean_up = n
+
+func _bowl_exit_flat(s: Dictionary) -> void:
+	var out: Vector3 = s.out
+	var around: Vector3 = s.around
+	velocity = out * ramp_v + around * ramp_vz
+	velocity.y = 0.0
+	var floor_y: float = float(s.floor_y)
+	# Land on the flat just inside the curve. The re-entry gap (u > 0.15) keeps this from grabbing him again.
+	global_position = Vector3(s.point.x, floor_y - 0.325, s.point.z) - out * 0.08
+	ramp_mode = ""
+	ramp = null
+	pumping = false
+	ramp_lean_up = Vector3.UP
+	_event("bowl_exit", {"peak": ramp_peak_y})
+
+## A modest crest rolls out onto the deck. A fast one takes the quarter-pipe vertical launch.
+func _bowl_roll_out(s: Dictionary) -> void:
+	var bowl: Node3D = ramp
+	var out: Vector3 = s.out
+	var deck: Dictionary = bowl.sample_toward(bowl_xz, float(s.lip_u) + 0.45)
+	velocity = out * maxf(ramp_v, 1.4) + s.around * ramp_vz
+	velocity.y = 0.0
+	var p: Vector3 = deck.point
+	global_position = Vector3(p.x, -0.325, p.z)
+	ramp_mode = ""
+	ramp = null
+	pumping = false
+	ramp_lean_up = Vector3.UP
+	_event("bowl_exit", {"peak": ramp_peak_y})
+
+## Off the coping going up: straight up, with a small drift back into the pool (the quarter-pipe lip launch).
+func _bowl_launch(s: Dictionary) -> void:
+	var bowl: Node3D = ramp
+	var lip: Dictionary = bowl.sample_toward(bowl_xz, float(s.lip_u) - 0.04)
+	ramp_v = maxf(ramp_v, 0.0)
+	_bowl_place(lip)
+	var out: Vector3 = lip.out
+	var around: Vector3 = lip.around
+	var v_lip := ramp_v
+	lip_launch_speed = v_lip
+	air_peak_above_lip = 0.0
+	air_from_y = global_position.y
+	air_anchor = sprite_anchor_offset()
+	velocity = -out * LIP_DRIFT + Vector3.UP * v_lip + around * ramp_vz
+	air_kind = "lip"
+	air_time = 0.0
+	air_total = 2.0 * v_lip / GRAVITY
+	_event("bowl_lip", {"speed": v_lip})
+	ramp_mode = ""
+	pipe_air = true
+	pipe_air_pipe = bowl
+	ramp = null
+	pumping = false
+	move_and_slide()
+
+func _bowl_leave(pop: float, why: String) -> void:
+	var bowl: Node3D = ramp
+	var s: Dictionary = bowl.sample(bowl_xz)
+	velocity = s.tangent * ramp_v + s.around * ramp_vz + s.normal * pop
+	air_kind = "pop"
+	air_time = 0.0
+	air_total = 0.0
+	air_from_y = global_position.y
+	air_anchor = sprite_anchor_offset()
+	_event(why)
+	ramp_mode = ""
+	pipe_air = true
+	pipe_air_pipe = bowl
+	ramp = null
+	pumping = false
+	move_and_slide()
+
+func _bowl_air_landed(bowl: Node3D) -> void:
+	var s: Dictionary = bowl.sample(global_position)
+	if str(s.kind) == "deck":
+		last_landing = "deck"
+		_event("landed_deck")
+		if trick != "bail":
+			last_bail_reason = "deck_landing"
+			trick = "bail"
+			bail_time = 0.6
+			skating = false
+			velocity.x *= 0.35
+			velocity.z *= 0.35
+		return
+	if str(s.kind) == "wall" and float(s.u) > 0.12:
+		last_landing = "transition"
+		_reentry = true
+		_event("bowl_reentry", {"u": s.u})
+		var speed := Vector2(velocity.x, velocity.z).length()
+		_bowl_enter(bowl, s, velocity.dot(s.tangent) < 0.0, maxf(speed, absf(velocity.y)))
+		return
+	last_landing = "flat"
+	_event("landed_flat")
 
 # ---------------------------------------------------------------- Phase 3: quarter-pipe drop-in (LOCAL puppet test)
 

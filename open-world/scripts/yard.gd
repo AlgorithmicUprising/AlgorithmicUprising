@@ -58,10 +58,6 @@ static func _ground(parent: Node) -> void:
 	_slab(parent, "GroundSouth", 0.0, 79.0, 158.0, 2.0, Palette.CONCRETE)
 	_slab(parent, "GroundWest", -76.5, 50.0, 5.0, 56.0, Palette.CONCRETE)
 	_slab(parent, "GroundEast", 29.5, 50.0, 99.0, 56.0, Palette.CONCRETE_DARK)
-	_slab(parent, "BowlCornerNW", -64.0, 29.0, 24.0, 18.0, Palette.CONCRETE)
-	_slab(parent, "BowlCornerNE", -30.0, 29.0, 24.0, 18.0, Palette.CONCRETE_DARK)
-	_slab(parent, "BowlCornerSW", -64.0, 71.0, 24.0, 18.0, Palette.CONCRETE)
-	_slab(parent, "BowlCornerSE", -30.0, 71.0, 24.0, 18.0, Palette.CONCRETE_DARK)
 	Blocks.visual(parent, "ConcretePatchA", Vector3(-8, 0.03, 24), Vector3(14, 0.04, 9), Color("b5927c"))
 	Blocks.visual(parent, "ConcretePatchB", Vector3(22, 0.03, 40), Vector3(10, 0.04, 16), Color("d0b09a"))
 	Blocks.visual(parent, "ConcretePatchC", Vector3(-24, 0.03, -8), Vector3(12, 0.04, 8), Color("9a7468"))
@@ -70,12 +66,12 @@ static func _slab(parent: Node, node_name: String, x: float, z: float, sx: float
 	Blocks.solid(parent, node_name, Vector3(x, -0.5, z), Vector3(sx, 1.0, sz), color, Vector3.ZERO, 0.04)
 
 static func _bowl(parent: Node) -> void:
-	Blocks.solid(parent, "BowlFloor", Vector3(-48, -3.2, 50), Vector3(16, 0.4, 24), Palette.BOWL)
-	Blocks.add_slope(parent, "BowlWest", Vector3(-56, -3.0, 50), Vector3(-77, 0.45, 50), 28.0, Palette.BOWL)
-	Blocks.add_slope(parent, "BowlEast", Vector3(-40, -3.0, 50), Vector3(-19, 0.45, 50), 28.0, Palette.BOWL)
-	Blocks.add_slope(parent, "BowlNorth", Vector3(-48, -3.0, 38), Vector3(-48, 0.45, 19), 20.0, Palette.BOWL)
-	Blocks.add_slope(parent, "BowlSouth", Vector3(-48, -3.0, 62), Vector3(-48, 0.45, 81), 20.0, Palette.BOWL)
-	Blocks.label(parent, "BOWL", Vector3(-48, 1.6, 50), Palette.LABEL_COOL, 48)
+	# Round pool: flat bottom at y = -3, 70° quarter-pipe walls, coping, deck. See scripts/skate_bowl.gd.
+	var bowl := preload("res://scripts/skate_bowl.gd").new()
+	bowl.name = "SkateBowl"
+	bowl.position = Vector3(-48.0, 0.0, 50.0)
+	parent.add_child(bowl)
+	Blocks.label(parent, "BOWL", Vector3(-48, 3.4, 50), Palette.LABEL_COOL, 48)
 
 static func _walls(parent: Node) -> void:
 	var y := WALL_H * 0.5

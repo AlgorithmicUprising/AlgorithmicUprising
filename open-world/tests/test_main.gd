@@ -62,6 +62,13 @@ func _ready() -> void:
 			print("FAIL ", item)
 		get_tree().quit(1 if fails.size() else 0)
 		return
+	if OS.get_environment("AU_TEST_ONLY") == "bowl":
+		await preload("res://tests/bowl_bounds_tests.gd").new().run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	if OS.get_environment("AU_TEST_ONLY") == "m4":
 		await preload("res://tests/m4_tests.gd").new().run(self)
 		print("SUMMARY failed=", fails.size())
@@ -113,6 +120,7 @@ func _ready() -> void:
 	await _tricks()
 	await _fony_sprite()
 	await _district()
+	await preload("res://tests/bowl_bounds_tests.gd").new().run(self)
 	await _m0_packs()
 	await preload("res://tests/m1_tests.gd").new().run(self)
 	await preload("res://tests/front_tests.gd").new().run(self)
@@ -1214,7 +1222,7 @@ func _district() -> void:
 	var main = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await frames(25)
-	for node_name in ["YardWallNorth", "YardWallEast", "YardWallWest", "YardWallSouthWest", "YardWallSouthEast", "MainGate", "Workshop", "ResistanceRooms", "WarehouseArcade", "SolarRoof", "SkateQuarter", "Funbox", "HalfPipeWest", "GrindRail", "BowlFloor", "Cabinet", "NPCZero", "RustAvenue", "FutureSkyline0"]:
+	for node_name in ["YardWallNorth", "YardWallEast", "YardWallWest", "YardWallSouthWest", "YardWallSouthEast", "MainGate", "Workshop", "ResistanceRooms", "WarehouseArcade", "SolarRoof", "SkateQuarter", "Funbox", "HalfPipeWest", "GrindRail", "SkateBowl", "Cabinet", "NPCZero", "RustAvenue", "FutureSkyline0"]:
 		expect(main.world_sim.get_node_or_null(node_name) != null, "yard has " + node_name)
 	var player = main.player
 	expect(player.input_enabled and main.zone_at(player.global_position) == "SKATE YARD", "spawn is in the skate yard")
@@ -1251,9 +1259,12 @@ func _district() -> void:
 	await frames(40)
 	expect(player.rig.pose_name == "land" or player.rig.pose_name == "idle" or player.rig.pose_name == "skate", "landing returns to a grounded pose")
 	var home: Vector3 = player.spawn_position
+	player.last_safe_position = home
+	player.last_safe_yaw = player.spawn_yaw
+	player.last_safe_valid = true
 	player.global_position = home + Vector3(0, -20, 0)
 	await frames(2)
-	expect(player.global_position.distance_to(home) < 2.0, "falling out of the yard respawns at the start")
+	expect(player.global_position.distance_to(home) < 2.0 and player.global_position.y > -2.0, "falling out of the yard recovers to the last safe position")
 	# Phase 2: blockout steps up the quarter pipe's north cheek onto its deck
 	expect(main.world_sim.get_node_or_null("QuarterDeckSteps") != null, "yard has QuarterDeckSteps")
 	var was_skating: bool = player.skating

@@ -44,6 +44,7 @@ func _ready() -> void:
 	world_sim.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(world_sim)
 	Yard.build(world_sim)
+	preload("res://scripts/world_bounds.gd").build(world_sim)
 	player = load("res://scenes/player.tscn").instantiate()
 	player.name = "Player"
 	player.position = Vector3(-42.0, 0.5, 2.0)
