@@ -133,14 +133,15 @@ func _build() -> void:
 	var concrete: Texture2D = load("res://assets/library/quarter_pipe/concrete_albedo.png")
 	var wall_mat := _face(Color("d5ebe4"), 0.34, 0.42, concrete)
 	var band_mat := _face(Color("e7e4dc"), 0.12, 0.55)
-	var deck_mat := Blocks.cel(Color("c4a48c"), 3.0, 0.18)
-	deck_mat.set_shader_parameter("fill_light", 0.12)
+	# Cooler than the yard slabs so the pool deck reads as its own pad.
+	var deck_mat := Blocks.park_concrete(Color("b7aea4"))
 	var flat_mat := _face(Color("3c5962"), 0.16, 0.28)
 	_mesh("Flat", flat_v, flat_n, flat_uv, flat_mat)
 	_mesh("Transition", wall_v, wall_n, wall_uv, wall_mat)
 	_mesh("LipBand", band_v, band_n, band_uv, band_mat)
 	_mesh("Deck", deck_v, deck_n, deck_uv, deck_mat)
 	_coping(lip)
+	_coping_grinds()
 	_approach()
 	var body := StaticBody3D.new()
 	body.name = "BowlFloor"
@@ -333,6 +334,32 @@ func _coping(lip: Array) -> void:
 	var mat := Blocks.cel(Color("d5dbe2"), 3.0, 0.06)
 	mat.set_shader_parameter("fill_light", 0.7)
 	_mesh("Coping", verts, norms, uvs, mat)
+
+## Straight coping only. The trucks lock to the tube top; each segment stops where the corner radius starts.
+## kind "ledge" so this does not draw a second tube over the coping mesh. catch_r stays inside the tube,
+## tighter than a pad ledge, so a lip air that is not on the coping is not stolen.
+func _coping_grinds() -> void:
+	var lip := lip_u()
+	var y := 0.105
+	var out_x := HX + lip + 0.02
+	var out_z := HZ + lip + 0.02
+	var along_z := (HZ - CORNER_R) * 2.0
+	var along_x := (HX - CORNER_R) * 2.0
+	_grind("CopingEast", Vector3(out_x, y, 0.0), -PI * 0.5, along_z)
+	_grind("CopingWest", Vector3(-out_x, y, 0.0), PI * 0.5, along_z)
+	_grind("CopingNorth", Vector3(0.0, y, out_z), 0.0, along_x)
+	_grind("CopingSouth", Vector3(0.0, y, -out_z), PI, along_x)
+
+func _grind(node_name: String, pos: Vector3, yaw: float, length: float) -> void:
+	var rail = load("res://scenes/grind_rail.tscn").instantiate()
+	rail.name = node_name
+	rail.kind = "ledge"
+	rail.length = length
+	rail.catch_r = 0.26
+	rail.friction = 0.55
+	rail.position = pos
+	rail.rotation.y = yaw
+	add_child(rail)
 
 func _loop() -> Array:
 	var pts: Array = []

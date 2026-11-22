@@ -10,6 +10,7 @@ func run(host: Node) -> void:
 	t = host
 	_normals()
 	await _ride()
+	await _grinds()
 	await _bounds()
 
 func ok(cond: bool, name: String) -> void:
@@ -187,6 +188,88 @@ func _bounds() -> void:
 	await frames(8)
 	ok(player.global_position.distance_to(inside) < 4.0 and player.global_position.y > -2.0, "bounds: leaving the dark arcade toward Glitchport returns inside (%s)" % player.global_position)
 	main.queue_free()
+	await frames(2)
+
+## Coping grinds: four straight ledges, lock from the deck and from the transition, roll off at the
+## corner (the arc is not a grind), and a roll-in beside a segment still drops into the pool.
+func _grinds() -> void:
+	var host := Node3D.new()
+	t.add_child(host)
+	const SHIFT := Vector3(0.0, 0.0, 320.0)
+	var bowl: Node3D = Bowl.new()
+	bowl.position = SHIFT
+	host.add_child(bowl)
+	await frames(2)
+	var east = bowl.get_node("CopingEast")
+	var west = bowl.get_node("CopingWest")
+	var north = bowl.get_node("CopingNorth")
+	var south = bowl.get_node("CopingSouth")
+	var rails: Array = [east, west, north, south]
+	ok(rails.size() == 4, "coping: four straight grind segments")
+	ok(absf(float(east.length) - (Bowl.HZ - Bowl.CORNER_R) * 2.0) < 0.02 and absf(float(north.length) - (Bowl.HX - Bowl.CORNER_R) * 2.0) < 0.02, "coping: straights stop where the corner radius starts (%.2f m, %.2f m)" % [east.length, north.length])
+	ok(str(east.kind) == "ledge" and absf(float(east.catch_r) - 0.26) < 0.001 and float(east.friction) < 0.7, "coping: ledge lock, tight catch, metal friction")
+	var corner: Vector3 = bowl.to_global(Vector3(Bowl.HX - Bowl.CORNER_R, 0.2, Bowl.HZ - Bowl.CORNER_R) + Vector3(1, 0, 1).normalized() * (Bowl.CORNER_R + bowl.lip_u()))
+	var corner_open := true
+	for rail in rails:
+		var at: Dictionary = rail.locate(corner)
+		corner_open = corner_open and (float(at.along) < 0.0 or float(at.along) > float(rail.length) or absf(float(at.lateral)) > float(rail.catch_r) + 0.2)
+	ok(corner_open, "coping: a rounded corner is not on a grind segment")
+	var player = load("res://scenes/player.tscn").instantiate()
+	player.bounds_enabled = false
+	player.skating = true
+	host.add_child(player)
+	await frames(2)
+	# Deck side of the east coping (outside, +X), coming down, travelling along the tube.
+	player.global_position = east.global_position + Vector3(0.12, -0.325 + 0.04, 0.0)
+	player.velocity = Vector3(0.0, -0.8, 6.0)
+	ok(str(player.grind_check(east)) == "lock" and player.grind == east, "coping: ollie from the deck locks a 50-50")
+	player.grind = null
+	player.grind_snap = Vector3.ZERO
+	# Inside the pool, still in the air, descending onto the same tube.
+	player.global_position = east.global_position + Vector3(-0.10, -0.325 + 0.03, -0.5)
+	player.velocity = Vector3(0.3, -1.1, 6.2)
+	ok(str(player.grind_check(east)) == "lock" and player.grind == east and float(player.grind_side) > 0.0, "coping: air off the transition locks the coping")
+	player.grind_along = float(east.length) - 0.2
+	player.grind_v = 6.0
+	player._step_grind(0.08)
+	ok(player.grind == null and str(player.grind_last.get("exit", "")) == "end", "coping: the grind ends at the corner instead of following the arc")
+	player.grind_lockout = 0.0
+	player.global_position = east.global_position + Vector3(-0.10, -0.325 + 0.03, 0.2)
+	player.velocity = Vector3(0.2, -1.0, 5.5)
+	ok(str(player.grind_check(east)) == "lock", "coping: second lock from inside the bowl")
+	var locked_x: float = east.global_position.x
+	player.grind_v = 0.2
+	player._step_grind(0.05)
+	ok(player.grind == null and str(player.grind_last.get("reason", "")) == "stalled" and player.global_position.x < locked_x - 0.2, "coping: bailing off the inside drops into the bowl (%s)" % player.global_position)
+	var fell_from: float = player.global_position.y
+	await frames(20)
+	ok(player.global_position.y < fell_from - 0.15 and player.global_position.x < locked_x, "coping: the inside bail keeps falling into the pool")
+	# Roll in from the deck beside the east segment. On the floor the coping does not catch.
+	player.skating = true
+	player.trick = ""
+	player.bail_time = 0.0
+	player.grind = null
+	player.grind_lockout = 0.0
+	player.ramp_mode = ""
+	player.ramp = null
+	player.global_position = east.global_position + Vector3(0.4, 0.45, 0.3)
+	player.velocity = Vector3.ZERO
+	player.camera_yaw = PI * 0.5
+	player.external_move_active = true
+	player.external_move = Vector2.ZERO
+	await frames(25)
+	var saw_grind := false
+	player.external_move = Vector2(0.0, 1.0)
+	player.velocity = Vector3(-4.0, 0.0, 0.2)
+	for _i in 90:
+		await t.get_tree().physics_frame
+		if player.grind != null:
+			saw_grind = true
+			break
+		if str(player.ramp_mode) == "bowl" and player.global_position.y < -1.2:
+			break
+	ok(not saw_grind and str(player.ramp_mode) == "bowl" and player.global_position.y < -1.0, "coping: a drop-in beside a grind segment still rides into the bowl (y %.2f)" % player.global_position.y)
+	host.queue_free()
 	await frames(2)
 
 func _settle(player, spot: Vector3) -> void:

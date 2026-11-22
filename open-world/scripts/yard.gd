@@ -58,12 +58,17 @@ static func _ground(parent: Node) -> void:
 	_slab(parent, "GroundSouth", 0.0, 79.0, 158.0, 2.0, Palette.CONCRETE)
 	_slab(parent, "GroundWest", -76.5, 50.0, 5.0, 56.0, Palette.CONCRETE)
 	_slab(parent, "GroundEast", 29.5, 50.0, 99.0, 56.0, Palette.CONCRETE_DARK)
-	Blocks.visual(parent, "ConcretePatchA", Vector3(-8, 0.03, 24), Vector3(14, 0.04, 9), Color("b5927c"))
-	Blocks.visual(parent, "ConcretePatchB", Vector3(22, 0.03, 40), Vector3(10, 0.04, 16), Color("d0b09a"))
-	Blocks.visual(parent, "ConcretePatchC", Vector3(-24, 0.03, -8), Vector3(12, 0.04, 8), Color("9a7468"))
+	for spec in [["ConcretePatchA", Vector3(-8, 0.03, 24), Vector3(14, 0.04, 9), Color(0.90, 0.86, 0.82)], ["ConcretePatchB", Vector3(22, 0.03, 40), Vector3(10, 0.04, 16), Color(0.96, 0.93, 0.90)], ["ConcretePatchC", Vector3(-24, 0.03, -8), Vector3(12, 0.04, 8), Color(0.78, 0.74, 0.70)]]:
+		var patch := Blocks.visual(parent, spec[0], spec[1], spec[2], spec[3])
+		patch.material_override = Blocks.park_concrete(spec[3])
 
 static func _slab(parent: Node, node_name: String, x: float, z: float, sx: float, sz: float, color: Color) -> void:
-	Blocks.solid(parent, node_name, Vector3(x, -0.5, z), Vector3(sx, 1.0, sz), color, Vector3.ZERO, 0.04)
+	var body := Blocks.solid(parent, node_name, Vector3(x, -0.5, z), Vector3(sx, 1.0, sz), color, Vector3.ZERO, 0.04)
+	# The texture already carries the concrete colour. A near-white tint keeps it; the dark east slab stays a shade down.
+	var tint := Color(1.0, 0.98, 0.95) if color.get_luminance() > 0.45 else Color(0.84, 0.80, 0.76)
+	for child in body.get_children():
+		if child is MeshInstance3D:
+			(child as MeshInstance3D).material_override = Blocks.park_concrete(tint)
 
 static func _bowl(parent: Node) -> void:
 	# Round pool: flat bottom at y = -3, 70° quarter-pipe walls, coping, deck. See scripts/skate_bowl.gd.
@@ -171,7 +176,7 @@ static func _skate(parent: Node) -> void:
 	pipe.closed_back = true
 	parent.add_child(pipe)
 	_quarter_steps(parent, pipe)
-	Blocks.solid(parent, "Funbox", Vector3(-48, 0.45, -2), Vector3(4.2, 0.9, 4.2), Palette.FUNBOX)
+	Pieces.dress_box(Blocks.solid(parent, "Funbox", Vector3(-48, 0.45, -2), Vector3(4.2, 0.9, 4.2), Palette.FUNBOX), true)
 	_park_expansion(parent)
 	for i in 4:
 		Blocks.visual(parent, "SkateLane%d" % i, Vector3(-46, 0.03, -18.0 + float(i) * 8.0), Vector3(22, 0.02, 0.7), Color("8d5a48"))
@@ -260,12 +265,57 @@ static func _quarter_steps(parent: Node, pipe: Node3D, prefix := "QuarterDeck") 
 	var high := Vector3(mid.x, top, mid.z) - out * 0.02
 	var low := high + out * run
 	low.y = 0.08
-	Blocks.add_slope(parent, prefix + "Steps" if prefix == "QuarterDeck" else prefix, low, high, pipe.deck_length - 0.1, Palette.RAMP)
+	var slope_name := prefix + "Steps" if prefix == "QuarterDeck" else prefix
+	var stair_w := float(pipe.deck_length) - 0.1
+	Blocks.add_slope(parent, slope_name, low, high, stair_w, Palette.RAMP)
+	var slope := parent.get_node(slope_name) as StaticBody3D
+	for child in slope.get_children():
+		if child is MeshInstance3D:
+			var mat := Blocks.cel(Color("5f4f74"), 3.0, 0.28)
+			mat.set_shader_parameter("fill_light", 0.08)
+			(child as MeshInstance3D).material_override = mat
+	_stair_trim(slope, low, high, stair_w)
 	for i in count:
 		var f := (float(i) + 0.5) / float(count)
 		var c := low.lerp(high, f)
 		var y_top: float = c.y
-		Blocks.visual(parent, ("QuarterStep%d" if prefix == "QuarterDeck" else prefix + "Tread%d") % i, Vector3(c.x, y_top * 0.5, c.z), Vector3(pipe.deck_length - 0.1, y_top, run / float(count)), Color("b9a090"))
+		Blocks.visual(parent, ("QuarterStep%d" if prefix == "QuarterDeck" else prefix + "Tread%d") % i, Vector3(c.x, y_top * 0.5, c.z), Vector3(stair_w, y_top, run / float(count)), Color("3a3540"))
+
+## Steel coping and a caution band on an access slope. The slope's collision is left as add_slope built it.
+static func _stair_trim(slope: StaticBody3D, low: Vector3, high: Vector3, width: float) -> void:
+	var fwd := Vector3(high.x - low.x, 0.0, high.z - low.z)
+	if fwd.length() < 0.01:
+		fwd = Vector3.FORWARD
+	fwd = fwd.normalized()
+	var edge := Vector3(-fwd.z, 0.0, fwd.x)
+	var bar := MeshInstance3D.new()
+	bar.name = "Coping"
+	var tube := CylinderMesh.new()
+	tube.top_radius = 0.03
+	tube.bottom_radius = 0.03
+	tube.height = width
+	tube.radial_segments = 10
+	bar.mesh = tube
+	bar.position = (high - slope.global_position) + Vector3.UP * 0.03
+	var x_axis := Vector3.UP.cross(edge).normalized()
+	bar.basis = Basis(x_axis, edge, x_axis.cross(edge).normalized())
+	bar.material_override = Blocks.cel(Color("e7eef2"), 3.0, 0.08)
+	slope.add_child(bar)
+	var seg := 0.32
+	var t := -width * 0.5
+	var i := 0
+	while t < width * 0.5 - 0.02:
+		var w := minf(seg, width * 0.5 - t)
+		var mark := MeshInstance3D.new()
+		mark.name = "Caution%d" % i
+		var box := BoxMesh.new()
+		box.size = Vector3(w * 0.9, 0.03, 0.05) if absf(edge.x) > absf(edge.z) else Vector3(0.05, 0.03, w * 0.9)
+		mark.mesh = box
+		mark.position = bar.position - fwd * 0.06 - Vector3.UP * 0.02 + edge * (t + w * 0.5)
+		mark.material_override = Blocks.cel(Color("f0c14a") if i % 2 == 0 else Color("1a1a1a"), 2.0, 0.0)
+		slope.add_child(mark)
+		t += seg
+		i += 1
 
 static func _plaza(parent: Node) -> void:
 	Blocks.solid(parent, "MuralWall", Vector3(6, 1.3, 20), Vector3(0.4, 2.6, 8), Palette.PARK_WALL)

@@ -14,14 +14,15 @@ Pack budgets stay where they are: main pack 50 MiB, each district pack at its ca
 
 ## Done, so later phases can assume it
 
-- The yard bowl is a pool, not four banks. Riding it uses the quarter-pipe curve step.
+- The yard bowl is a pool, not four banks. Riding it uses the quarter-pipe curve step. The four straight sides of the coping are grindable ledges; the rounded corners are not.
 - World bounds: curbs on the Glass Row plaza and the yard/alley seam, a closed shell around the dark arcade, and a kill plane that restores the last safe position.
+- The yard ground and the bowl deck use one tiling concrete texture (world-space, so the big slabs do not stretch). The deck tint is cooler than the yard. That texture is the exception to "phases 1–4 add no textures"; it was measured in the pack.
 
 ## Phase 1 — The rest of the skate park
 
 **Size.** Small. `scripts/yard.gd`, the park pieces, and the quarter-pipe scene. No new district.
 
-The bowl is rideable. Around it, the funbox and its kickers, the bank, the down-rail run-up and the manual pad are still wedges and boxes. The mini ramp is two library quarters facing each other with a flat gap. Lanes are strips. The practice line (bowl, quarter, rail) depends on the bowl floor staying below y = −2 and on the north lip staying south of the line spawn at z = 20.5.
+The bowl is rideable, and the funbox, its kickers, the bank, the down-rail run-up, the manual pad, and the quarter-deck stairs now wear the quarter-pipe face: dark ply, a caution band, steel coping, steel cheeks. Their collision is still the wedge, the box, or the access slope. The mini ramp is still two library quarters facing each other with a flat gap. Lanes are still strips. The practice line (bowl, quarter, rail) depends on the bowl floor staying below y = −2 and on the north lip staying south of the line spawn at z = 20.5.
 
 **Review.** Free skate from the yard spawn: drop the bowl both ways, carve a corner, ride the mini ramp, the quarter, the funbox, the flat bar and the down rail. No snag on a transition, and each obstacle readable from the deck of the one before it. Then one P.1 line, start to the Zero Score.
 
@@ -80,6 +81,31 @@ Two acceptable shapes, pick one at the review and do not do both:
 
 **Review.** One daylight free-skate lap and one dawn P.1 lap, looking at the ground, the gate sign, the workshop face and the bowl deck. Then `node tools/pack-report.mjs` on the web export: main pack under 50 MiB, district packs under their caps. If a texture blows the budget, it waits.
 
+## Act I completion checklist
+
+The early cut already plays from New Game through 1.6B (`ACT1.md`, `ACT1_NOTES.md`, `data/missions/act1_scenes.json`). This is what is still missing for that cut to be the finished Act I, in story order. It is a review list. Nothing here is started.
+
+1. **Intro.** The hosted cut plays when the site file is there. A finished build should not depend on the generated placeholder or the "intro video in production" card (`FRONT_END.md`).
+2. **P.1 Practice Run.** Bowl, coping grinds, ground, and the dressed obstacles are in. Still open: the mini ramp is two quarters with a gap, lanes are flat strips, yard buildings still read as crates (phase 2), the billboard is a label cycle, cinematic timing is unedited, and the P.1 fail-rule call is still open (`M1_PRACTICE_RUN.md`).
+3. **Cinematics P.2 The heat alert and P.3 Flagged.** They play. Timing and pacing are still the early-cut edit.
+4. **P.2 Run, Glass Row.** The chase plays on a box street (phase 3): capsule shoppers, a slab van, two routes. The culvert is a fade, not a tunnel. A few lines are placeholders (`p2_run.json` `line_notes`). The caught-to-checkpoint rule and Zero's time rule are still proposals. Drone speeds are a first pass.
+5. **P.3 Power On, Solar Arcade.** The dark room is a blockout (phase 4). The climb is a ramp, there is no cloth on the sheets, and the sweep length plus the reset-to-last-fuse rule are still proposals. The `need_fuses` / `all_fuses` / `sweep_close` / `found` lines are not in the script.
+6. **P.4 Zero.** The cutout puppet, the serial plate, and the power-on play. Still missing: servo arms, the jacket-on animation, a real back on the body, and the title song under the card. Ceiling fans already turn once the power is on. No audio from the songs or masters goes into a model; the song stays a band decision.
+7. **1.1 Fine Print.** The topic keys, the bench, and the grip-tape flag play. The workshop does not change handling. The upgrade is a card, not a part you skate out and bring back.
+8. **1.1B The plan.** The dust sheet comes off a block that stands in for GRIND THE TERMS. The cabinet game is not wired to that unlock.
+9. **1.2 Water Run, Stillwater.** Five drops, melt, and Signal play on one slab with block people (phase 5). There is no street from Glass Row. Nana Ines's community-center line is a placeholder. The camera squeezes against Fony at that drop.
+10. **1.3 Cool Roofs and 1.3B First night.** Four roofs, bridges, and the billboard tag play. Spray is an E prompt, not a can. The procession is narrated. Nana's and Zero's closing lines are placeholders. The night crowd in the arcade is block figures.
+11. **1.4 Cold Row and 1.4B The Benefactor.** The three marks and the drone loops play on the night blockout (phase 6). WATCH has no vision cone. The stealth bonus is not built. Mark lines are placeholders. The hologram is boxes, not Halo. Zero Vision here is the first-use phone raise only.
+12. **Zero Vision in free roam.** The meter and the recharge are not built. After 1.4B it does not come back.
+13. **1.5 The Breaker, 1.5B The Thermostat, 1.5C Lights on.** Cameras, the reroute, and the three boss phases play. The fence-top grind is a teleport. The launch onto the machine is a teleport. Frost does not slip. The machine is not a ramp. 1.5C is the same Flats slab with lit windows.
+14. **1.6 Heat Break.** Four E prompts stand in for the day montage. Shade cloth, the water station, the cots, and the neighbors are placeholders, not activities.
+15. **1.6B The rain.** The storm, the doorway, and the end card play. Nana's THE YARD mural is not a painted wall. Real art is still missing for Nana Ines, the residents, Egon, Halo, and Zero's face on the phone (the thread header only).
+16. **One Glitchport.** The yard, Glass Row, the Flats, and Cold Row are separate slabs joined by fades (phase 7). A finished Act I shows the same skyline on both sides of a fade, or replaces a fade with a bounded street. No new hole at the join.
+17. **Surfaces, signs, plants.** Phase 8, after the streets exist: signs that are not Label3D, plants that are not cubes, murals one approved piece at a time. Measure the pack before it merges.
+18. **Saves.** Reloading an Act I scene restarts that scene. Mid-scene progress does not resume. The local save works; the site account bridge (FR-039) is still pending.
+
+Act II starts after 1.6B and is not part of this list.
+
 ## Not in this roadmap
 
-Act II, workshop upgrades that change handling, Zero Vision in free roam, the real Grind the Terms cabinet, and any music. Those are tracked in `ACT1.md` and `ACT1_NOTES.md`.
+Act II is out of scope here. Workshop handling, free-roam Zero Vision, the real Grind the Terms cabinet, and the title song are items 6, 7, 8, and 12 of the checklist above, not extra phases.
