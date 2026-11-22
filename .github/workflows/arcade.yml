@@ -114,3 +114,81 @@ jobs:
           path: arcade/.pages
       - id: deployment
         uses: actions/deploy-pages@v4
+  deploy-paradise-preview:
+    name: Publish unlisted Paradise Offline preview
+    needs: build-and-browser-test
+    if: github.ref == 'refs/heads/feat/paradise-offline-par3-preview' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch current main for the existing public Pages tree
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin main
+          git worktree add --detach "$GITHUB_WORKSPACE/main-site" FETCH_HEAD
+      - name: Build and stage the current main Arcade
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm run stage-pages
+        working-directory: main-site/arcade
+      - name: Install pinned Godot 4.7.2
+        id: godot
+        run: echo "bin=$(bash open-world/tools/install-godot.sh)" >> "$GITHUB_OUTPUT"
+        working-directory: main-site
+      - name: Install ffmpeg for the Act I intro placeholder
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Export the current main HQ web build
+        env:
+          GODOT_BIN: ${{ steps.godot.outputs.bin }}
+        run: |
+          set -euo pipefail
+          mkdir -p open-world/node_modules open-world/build
+          : > open-world/node_modules/.gdignore
+          : > open-world/build/.gdignore
+          rm -rf open-world/.godot
+          "$GODOT_BIN" --headless --path open-world --import
+          "$GODOT_BIN" --headless --path open-world res://tests/test_main.tscn
+          node open-world/tools/export-web.mjs
+        working-directory: main-site
+      - name: Add the current main HQ build
+        run: node open-world/tools/stage-composite.mjs --into-staged
+        working-directory: main-site
+      - name: Build the Paradise preview bundle
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+        working-directory: arcade
+      - name: Add Paradise at its direct preview path
+        run: |
+          set -euo pipefail
+          destination="main-site/arcade/.pages/previews/paradise-offline"
+          mkdir -p "$destination"
+          cp -R arcade/games/paradise-offline-par1/dist "$destination/dist"
+          cp -R arcade/games/paradise-offline-par1/demo "$destination/demo"
+          mkdir -p "$destination/skins/au/assets"
+          cp arcade/games/paradise-offline-par1/skins/au/skin.json "$destination/skins/au/skin.json"
+          cp -R arcade/games/paradise-offline-par1/skins/au/assets/. "$destination/skins/au/assets/"
+          test -s "$destination/demo/index.html"
+          test -s "$destination/dist/paradise-offline-par1.js"
+          test -s "$destination/skins/au/skin.json"
+          test -s "$destination/skins/au/assets/yard-landscape.webp"
+          test -s "$destination/skins/au/assets/yard-portrait.webp"
+          test -s "$destination/skins/au/assets/hosts.webp"
+          test -s "$destination/skins/au/assets/props.webp"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: main-site/arcade/.pages
+      - id: deployment
+        uses: actions/deploy-pages@v4

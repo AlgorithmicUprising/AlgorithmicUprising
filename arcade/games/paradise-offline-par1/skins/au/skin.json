@@ -1,0 +1,19 @@
+{
+  "schema": "paradise-offline-skin/v1",
+  "game": "paradise-offline-par1",
+  "id": "au",
+  "files": {
+    "landscape": "assets/yard-landscape.webp",
+    "portrait": "assets/yard-portrait.webp",
+    "actors": "assets/hosts.webp",
+    "props": "assets/props.webp"
+  },
+  "palette": {
+    "accent": "#d7ff00",
+    "ink": "#211a25",
+    "paper": "#f6eddf",
+    "sky": "#e8b187",
+    "grass": "#718b56",
+    "warning": "#ff4382"
+  }
+}
