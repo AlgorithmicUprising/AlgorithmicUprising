@@ -1825,7 +1825,7 @@
     180.0
    ],
    "phone_sub": "on the phone",
-   "note": "MISSION 1.6 Heat Break + CINEMATIC 1.6B The rain (END OF ACT I). The script's free-roam montage is a short day-by-day checklist in the Flats (aid run, roof painting, solar-panel salvage, a cabinet to restore; Signal +5 each), then the grown Yard (new people to meet), then the rain. PLACEHOLDER: no real free roam or side-activity systems yet; each activity is one E.",
+   "note": "MISSION 1.6 Heat Break + CINEMATIC 1.6B The rain (END OF ACT I). The script's free-roam montage is four days in the Flats (aid run, roof painting, solar-panel salvage, a cabinet to restore; Signal +5 each). Each one completes by skating to it. The roof paint takes the spray button. Then the grown Yard, then the rain. PLACEHOLDER lines stay marked. OPEN: digging the cabinet out as a played restore, and painting from on the roof, are not in this scene.",
    "steps": [
     {
      "do": "lines",
@@ -1858,7 +1858,8 @@
         -17.4
        ],
        "r": 2.0,
-       "verb": "E  help paint the community center roof white",
+       "skate": true,
+       "verb": "skate in and spray the community center",
        "paint": [
         "CommunityCenter",
         "#f2f2ee"
@@ -1881,7 +1882,9 @@
         -61.4
        ],
        "r": 2.0,
-       "verb": "E  hand over water and a fan",
+       "skate": true,
+       "auto": true,
+       "verb": "skate the aid run",
        "hook": "signal",
        "card": "DAY 5 · AID RUN",
        "sfx": "pickup",
@@ -1910,7 +1913,9 @@
         -24.0
        ],
        "r": 2.0,
-       "verb": "E  salvage two solar panels for the arcade roof",
+       "skate": true,
+       "auto": true,
+       "verb": "skate the salvage",
        "hide": "SalvagePanels",
        "hook": "signal",
        "card": "DAY 6 · SALVAGE\n\nTwo solar panels for the arcade roof.",
@@ -1930,7 +1935,9 @@
         -34.0
        ],
        "r": 2.0,
-       "verb": "E  dig out the dusty cabinet",
+       "skate": true,
+       "auto": true,
+       "verb": "skate the dusty cabinet home",
        "flag": "a1_cabinet_found",
        "hook": "signal",
        "card": "DAY 7 · A CABINET TO RESTORE",

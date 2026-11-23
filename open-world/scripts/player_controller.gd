@@ -3,6 +3,7 @@ extends CharacterBody3D
 const TrickSelect = preload("res://scripts/trick_select.gd")
 const BoostMeter = preload("res://scripts/boost_meter.gd")
 const Spray = preload("res://scripts/spray.gd")
+const SurfaceFriction = preload("res://scripts/surface_friction.gd")
 
 const WALK_SPEED := 4.5
 const SKATE_SPEED := 9.0
@@ -502,6 +503,8 @@ func _simulate(delta: float) -> void:
 	if grip_tape and skating:
 		accel *= GRIP_TAPE_PUSH_MULT
 		friction *= GRIP_TAPE_FRICTION_MULT
+	if is_on_floor():
+		friction *= SurfaceFriction.at(get_tree(), global_position)
 	if input_enabled and not external_move_active and not pad_menu:
 		var push := Input.get_action_strength("push") if InputMap.has_action("push") else 0.0
 		var brake := Input.get_action_strength("brake") if InputMap.has_action("brake") else 0.0

@@ -357,14 +357,19 @@ func _goals_tick(delta: float) -> void:
 	if g.is_empty():
 		host.hud.prompt("")
 		return
-	if bool(g.get("auto", false)):
+	if bool(g.get("skate", false)) and not host.player.skating:
+		host.hud.prompt(str(g.get("verb", "")))
+		return
+	if bool(g.get("auto", false)) or (bool(g.get("skate", false)) and not g.has("paint")):
 		if _traversed(g):
 			complete(str(g.id))
 		return
 	host.hud.prompt(str(g.get("verb", "E")))
 	_spray_can(g.has("paint"))
-	# A painted goal is the spray can: interact still works, and so does the spray button.
-	if Input.is_action_just_pressed("interact") or (g.has("paint") and Input.is_action_just_pressed("spray")):
+	# A painted goal is the spray can. A skated paint beat takes the spray button, not E.
+	var sprayed := g.has("paint") and Input.is_action_just_pressed("spray")
+	var pressed := Input.is_action_just_pressed("interact") and not bool(g.get("skate", false))
+	if pressed or sprayed:
 		if g.has("paint") and host.player.has_method("try_spray"):
 			host.player.try_spray()
 		complete(str(g.id))
@@ -378,6 +383,8 @@ func complete(id: String) -> bool:
 		if str(x.id) == id:
 			g = x
 	if g.is_empty():
+		return false
+	if bool(g.get("skate", false)) and host.player != null and not host.player.skating:
 		return false
 	done_goals[id] = true
 	if not bool(g.get("auto", false)) or str(g.get("traverse", "")) != "":
@@ -1245,8 +1252,12 @@ func _frost() -> void:
 		if root.get_node_or_null("FrostPatch%d" % i) != null:
 			continue
 		var at := Vector3(414.0 + rng.randf_range(-12.0, 12.0), 0.03, -60.0 + rng.randf_range(-10.0, 9.0))
-		var f := Blocks.visual(root, "FrostPatch%d" % i, at, Vector3(rng.randf_range(2.0, 4.0), 0.04, rng.randf_range(2.0, 4.0)), Color("dff4ff"))
+		var size := Vector3(rng.randf_range(2.0, 4.0), 0.04, rng.randf_range(2.0, 4.0))
+		var f := Blocks.visual(root, "FrostPatch%d" % i, at, size, Color("dff4ff"))
 		f.set_meta("frost", true)
+		f.set_meta("surface_id", "frost")
+		f.set_meta("surface_half", Vector2(size.x * 0.5, size.z * 0.5))
+		f.add_to_group("ride_surface")
 
 func _frost_nodes() -> Array:
 	var out: Array = []
@@ -1523,9 +1534,16 @@ func _pilot_tick(_delta: float) -> void:
 				if str(g.get("traverse", "")) == "launch":
 					_pilot_launch(g)
 					return
+				if bool(g.get("skate", false)):
+					pl.skating = true
 				if _walk(g.get("via", []), g.at, str(g.id)):
 					if not in_reach().is_empty() and str(in_reach().id) == str(g.id):
-						complete(str(g.id))
+						if bool(g.get("skate", false)) and g.has("paint"):
+							if pl.has_method("try_spray"):
+								pl.try_spray()
+							complete(str(g.id))
+						elif not bool(g.get("skate", false)):
+							complete(str(g.id))
 				return
 		"defend":
 			var best: Dictionary = {}

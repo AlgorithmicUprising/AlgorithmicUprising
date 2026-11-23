@@ -86,10 +86,14 @@ func _drive_step(story, main) -> void:
 			for g in st.goals:
 				if bool(g.get("optional", false)) and not bool(g.get("pilot", false)):
 					continue
-				if str(g.get("traverse", "")) != "":
+				if str(g.get("traverse", "")) != "" or bool(g.get("skate", false)):
 					a.pilot = {"on": true}
 					var guard := 0
-					var limit := 5200 if str(g.get("traverse", "")) == "launch" else 1000
+					var limit := 900
+					if str(g.get("traverse", "")) == "launch":
+						limit = 5200
+					elif str(g.get("traverse", "")) != "":
+						limit = 1000
 					var watch := str(a.step.get("counter", a.step.get("id", "")))
 					while not a.done_goals.has(str(g.id)) and str(a.step.get("counter", a.step.get("id", ""))) == watch and guard < limit:
 						guard += 1
@@ -486,6 +490,9 @@ func _scene_1_6() -> void:
 	var sig0 := int(main.flow.save.story.get("signal", 0))
 	await _until(story, func(): return str(a.step.get("do", "")) == "goals" and not a.waiting)
 	ok(a.scene == "1.6" and a._district("stillwater_flats") != null and a.root.get_node_or_null("Derelict") != null and a.root.get_node_or_null("DustyCabinet") != null and a.goals().size() == 4, "1.6: the heat-break days in the Flats (paint, aid, salvage, a cabinet)")
+	_put(main, a.goals()[0].at, 0.5)
+	main.player.skating = false
+	ok(not a.complete("paint"), "1.6: standing still does not finish a skated beat")
 	await _drive_step(story, main)
 	await _until(story, func(): return str(a.step.get("counter", "")) == "MET" and not a.waiting, 900)
 	ok(int(main.flow.save.story.get("signal", 0)) >= sig0 + 20 and main.flow.save.flag("a1_cabinet_found") and story.spoken.any(func(l): return str(l).begins_with("CARD|DAY 6 · SALVAGE")), "1.6: four days, Signal +20, a cabinet found")

@@ -52,7 +52,7 @@ Every guess below is a first pass, for you to change.
 - Zero's part: E at the switch-house panel; the panel reads ZERO; script lines.
 - Hold the line: 30 s reroute. Drones fly in from the edges every 3.5 s (max 4) toward the switch house; touching one knocks it down (+500); one that flies into tower mist drops; one that reaches the house costs 5%. Zero's barks at 30/60/90% (60% is the script's, the others placeholder).
 - Boss, three phases as goal steps:
-  - Phase 1: stomp three vents (E at each, 2,000). Frost patches are visual only (no slip physics yet).
+  - Phase 1: stomp three vents (E at each, 2,000). Frost patches slip. The multiplier is `data/surfaces.json` (`frost`). **Open call:** how slippery. The default 0.18 is a stand-in.
   - Phase 2: the dial reads HEAT; steam blows 2 s on / 2.5 s off within 6 m of the machine; inside it while it blows fills WATCH (full in 4 s) unless you're in the tower mist. Spray two sensor eyes (2,000 each).
   - Phase 3: the dial reads HOT · COLD · HOT. He rides the loading-bay quarter pipe. Its lip launch carries him onto the machine's top (`launch_forward` and `launch_up` on that pipe only; park pipes still drift back into the transition). E stomps the dial (3,000). The machine itself is still not a ramp.
 - Zero Score 22,000 (the script's); a full run scores about 25,000.
@@ -60,7 +60,7 @@ Every guess below is a first pass, for you to change.
 - 1.5C: the machine stops, the Capsule flies off, Zero on the panel; then the Flats at night: lit windows, people on the roofs, the billboard shows Zero's message.
 
 ## 1.6 Heat Break (+ 1.6B The rain) — END OF ACT I
-- The free-roam montage is a short checklist in the Flats, one E each with a DAY card and Signal +5: paint the community center roof (day 4), an aid run to Mrs. Okonkwo (day 5), salvage two solar panels from a condemned block (day 6), dig out a dusty cabinet (day 7). No real side-activity systems yet.
+- The four days are skated. Paint takes the spray button in front of the community center (the existing spot; he is not put on the roof). Aid, salvage, and the cabinet complete when he skates onto them. Signal +5 each. The lines stay PLACEHOLDER. **Open call:** digging the cabinet out as a played restore, and a real path onto the roof. Neither is in this scene.
 - The Yard, days later: shade cloth over the bowl, a water station by the gate, cots in the resistance rooms, kids on the quarter pipe; meet the neighbors, two teen skaters and the free-clinic woman (placeholder lines).
 - 1.6B: storm sky, falling rain streaks, the Yard in the rain, Zero in the arcade doorway (a block figure), Nana Ines paints THE YARD on the wall. Script dialogue. Then the card "END OF ACT I. / RUST & SIGNAL", then the end card: "Next: ACT II · 2.1 BACK TO PRACTICE (not built yet)."
 
