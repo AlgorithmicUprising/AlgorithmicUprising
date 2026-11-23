@@ -147,6 +147,7 @@ func start(id: String) -> void:
 	host.hud.fade_to(1.0, 0.01)
 	_spawn(sd.spawn)
 	host.player.input_enabled = false
+	_apply_grip()
 	host.hud.set_objective(str(sd.title), "")
 	host.hud.set_line("")
 	host.hud.phone_header("ZERO", str(sd.get("phone_sub", "")))
@@ -795,11 +796,16 @@ static func strand(a: Vector3, b: Vector3) -> Transform3D:
 
 # ------------------------------------------------------------------ hooks (steps and cinematics)
 
+func _apply_grip() -> void:
+	if host != null and host.player != null:
+		host.player.grip_tape = host.flow.save.flag("upgrade_grip_tape")
+
 func hook(name: String) -> void:
 	log.append("hook:" + name)
 	match name:
 		"board_back":
 			host.flow.save.set_flag("upgrade_grip_tape")
+			_apply_grip()
 		"workshop":
 			host.flow.save.set_flag("workshop_unlocked")
 		"bailey":

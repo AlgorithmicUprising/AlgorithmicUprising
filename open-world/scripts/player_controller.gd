@@ -117,6 +117,12 @@ signal skate_event(what: String, info: Dictionary)
 ## layer from the combo meter (scripts/mission/combo_meter.gd). 1.0 = unchanged; free roam never changes them.
 var combo_top_mult := 1.0
 var combo_push_mult := 1.0
+## Set when 1.1 hands the board back (upgrade_grip_tape). Off until then.
+var grip_tape := false
+## OPEN: how much the control-panel grip tape changes the board. Bearings quieter (less rolling
+## resistance) and a firmer push. The story does not give a number.
+const GRIP_TAPE_FRICTION_MULT := 0.82
+const GRIP_TAPE_PUSH_MULT := 1.12
 ## M1 move gating: grind tricks (GRIND_TRICKS keys) that cannot be switched into yet (story mode locks 5-0 and boardslide).
 var locked_grinds: Array = []
 var skating := true
@@ -460,6 +466,9 @@ func _simulate(delta: float) -> void:
 	var speed := SKATE_SPEED * combo_top_mult if skating else WALK_SPEED
 	var accel := 22.0 * combo_push_mult if skating else 40.0
 	var friction := 7.0 if skating else 30.0
+	if grip_tape and skating:
+		accel *= GRIP_TAPE_PUSH_MULT
+		friction *= GRIP_TAPE_FRICTION_MULT
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	if pipe_air:
 		pass    # Phase 2: off the curve he flies ballistic; no air steering, no turning to the stick

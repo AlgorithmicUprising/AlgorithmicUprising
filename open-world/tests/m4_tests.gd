@@ -85,6 +85,12 @@ func _data() -> void:
 	var z = Puppet.new()
 	t.add_child(z)
 	ok(z.body.texture != null and z.head_card.texture != null and z.face.texture != null and not z.body.double_sided and "ZR-0" in z.back_plate.text and z.back_plate.get_parent() == z.head, "Zero puppet: the sheet's layers as single-sided cards; the ZR-0 plate on the back of the CRT")
+	ok(z.get_node_or_null("ServoArmL/Elbow/Hand") != null and z.get_node_or_null("ServoArmR/Upper") != null and z.get_node_or_null("BodySeam") != null, "Zero puppet: servo arms and a jacket back")
+	z.stage("boot")
+	var bad: float = z.arm_l.rotation.z
+	z.shrug_t = z.JACKET_SHRUG_S
+	z._process(0.01)
+	ok(z.arm_l.rotation.z < bad and z.current == "boot", "Zero puppet: the shrug settles from badly to correctly")
 	z.stage("awake")
 	ok(z.visible and z.face.visible, "Zero puppet: stages")
 	z.queue_free()

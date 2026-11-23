@@ -161,6 +161,8 @@ func _run(op: Array) -> void:
 			host.spoken.append("CARD|" + str(op[1]))
 			host.hud.card(str(op[1]))
 			wait_left = float(op[2]) if op.size() > 2 else 5.0
+			if str(op[1]).contains("ALGORITHMIC UPRISING") and host.has_method("p4_title_song"):
+				host.p4_title_song()
 		"CAM":
 			# a fixed camera in world coordinates: ["CAM", [from x, y, z], [look x, y, z]] (P.4, inside the arcade)
 			cam_at(Vector3(float(op[1][0]), float(op[1][1]), float(op[1][2])), Vector3(float(op[2][0]), float(op[2][1]), float(op[2][2])))
