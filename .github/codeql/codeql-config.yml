@@ -1,0 +1,18 @@
+# CodeQL config. GDScript is omitted because CodeQL has no GDScript extractor.
+# The javascript extractor still sees .js/.mjs/.ts under these paths only,
+# so Godot art and packs are not part of the database.
+name: Project Zero
+paths:
+  - arcade
+  - open-world/tools
+  - .github
+paths-ignore:
+  - '**/*.gd'
+  - '**/*.png'
+  - '**/*.jpg'
+  - '**/*.webp'
+  - '**/*.glb'
+  - '**/*.ogg'
+  - '**/*.mp3'
+  - '**/*.wav'
+  - '**/*.pck'
