@@ -1,0 +1,17 @@
+{
+  "contract": "au.challenge_catalog",
+  "contract_version": 1,
+  "note": "In-repo seed. No download. Story scripts still play Act I. These objects are the serializable contract a runner executes.",
+  "challenges": [
+    "p1_practice_run.json",
+    "p2_run.json",
+    "p3_power_on.json",
+    "a1_fine_print.json",
+    "a1_water_run.json",
+    "a1_cool_roofs.json",
+    "a1_cold_row.json",
+    "a1_the_breaker.json",
+    "a1_heat_break.json",
+    "example_glass_prep.json"
+  ]
+}
