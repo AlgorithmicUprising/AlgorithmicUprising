@@ -24,7 +24,7 @@ Dev and test ways past the menu (first load only, so Quit to title still lands o
   - If the browser blocks sound autoplay, the video plays muted with a "CLICK FOR SOUND" button.
 - Skip: press-and-hold for 1 s the first time (a ring fills: any key, click or pad button). Once the intro has been seen through, a single press skips it (`skip.hold_s` / `skip.hold_s_after_seen`). `user://pz_prefs.json` keeps `intro_seen`.
 - Native: plays `res://media/intro/project-zero-intro.ogv` or `user://intro/project-zero-intro.ogv` if one exists, otherwise skips. Headless always skips.
-- The repo's media guard keeps video out of git. `tools/export-web.mjs` writes the placeholder with ffmpeg (6 s, 1280x720, title text, a quiet tone, about 70 KB). It also copies the real cut from `AU_INTRO_MP4=<file>` when that is set. Set `AU_INTRO_PLACEHOLDER=0` to skip the placeholder.
+- The repo's media guard keeps video out of git, and the real 720p cut (~14.8 MB) is too large to commit. `tools/export-web.mjs` writes the placeholder with ffmpeg (6 s, 1280x720, H.264/AAC faststart, title text, a quiet tone, about 70 KB). CI installs ffmpeg and **fails the export** if that file is missing (a prior warn-and-continue left GitHub Pages and the site without `media/intro/*.mp4`). It also copies the real cut from `AU_INTRO_MP4=<file>` when that is set. Set `AU_INTRO_PLACEHOLDER=0` only for local experiments. The ChatGPT-hosted site must republish `open-world/media/intro/` alongside the pack after a Pages deploy.
 
 ## Saves
 

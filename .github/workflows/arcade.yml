@@ -91,6 +91,8 @@ jobs:
       - name: Install pinned Godot 4.7.2
         id: godot
         run: echo "bin=$(bash open-world/tools/install-godot.sh)" >> "$GITHUB_OUTPUT"
+      - name: Install ffmpeg for the Act I intro placeholder
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Export the single-threaded HQ web build
         env:
           GODOT_BIN: ${{ steps.godot.outputs.bin }}
