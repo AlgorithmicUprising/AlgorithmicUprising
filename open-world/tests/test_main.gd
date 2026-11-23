@@ -69,6 +69,16 @@ func _ready() -> void:
 			print("FAIL ", item)
 		get_tree().quit(1 if fails.size() else 0)
 		return
+	if OS.get_environment("AU_TEST_ONLY") == "ground":
+		var probe = load("res://tests/bowl_ground_tests.gd")
+		if probe == null:
+			print("PROBE LOAD FAILED")
+			get_tree().quit(1)
+			return
+		await probe.new().run(self)
+		print("SUMMARY failed=", fails.size())
+		get_tree().quit(0)
+		return
 	if OS.get_environment("AU_TEST_ONLY") == "bowl":
 		await preload("res://tests/bowl_bounds_tests.gd").new().run(self)
 		print("SUMMARY failed=", fails.size())
@@ -166,6 +176,7 @@ func _ready() -> void:
 	await _fony_sprite()
 	await _district()
 	await preload("res://tests/bowl_bounds_tests.gd").new().run(self)
+	await preload("res://tests/bowl_ground_tests.gd").new().run(self)
 	await _m0_packs()
 	await preload("res://tests/m1_tests.gd").new().run(self)
 	await preload("res://tests/front_tests.gd").new().run(self)
