@@ -169,17 +169,20 @@ jobs:
           npm install --no-audit --no-fund
           npm run build
         working-directory: arcade
-      - name: Add Paradise at its direct preview path
+      - name: Add Paradise at its standard game path
         run: |
           set -euo pipefail
-          destination="main-site/arcade/.pages/previews/paradise-offline"
+          destination="main-site/arcade/.pages/games/paradise-offline-par1"
+          if [ -e "$destination" ]; then
+            echo "Refusing to overwrite an existing game: $destination" >&2
+            exit 1
+          fi
           mkdir -p "$destination"
           cp -R arcade/games/paradise-offline-par1/dist "$destination/dist"
           cp -R arcade/games/paradise-offline-par1/demo "$destination/demo"
-          mkdir -p "$destination/skins/au/assets"
-          cp arcade/games/paradise-offline-par1/skins/au/skin.json "$destination/skins/au/skin.json"
-          cp -R arcade/games/paradise-offline-par1/skins/au/assets/. "$destination/skins/au/assets/"
+          cp -R arcade/games/paradise-offline-par1/skins "$destination/skins"
           test -s "$destination/demo/index.html"
+          test -s "$destination/demo/embed.html"
           test -s "$destination/dist/paradise-offline-par1.js"
           test -s "$destination/skins/au/skin.json"
           test -s "$destination/skins/au/assets/yard-landscape.webp"
