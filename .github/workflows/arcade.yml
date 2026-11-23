@@ -74,6 +74,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     permissions:
+      actions: read
       contents: read
       pages: write
       id-token: write
@@ -109,8 +110,38 @@ jobs:
       - name: Add /open-world/ without changing arcade files
         run: node open-world/tools/stage-composite.mjs --into-staged
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - id: pages_artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: arcade/.pages
+      # deploy-pages lists artifacts through a different API than the upload
+      # confirmation. On #35 and #39 that list still had only the two CI
+      # artifacts (punk-arcade-browser-results and punk-arcade-demo) a fraction
+      # of a second after github-pages was finalized, so the deploy failed.
+      # Wait until this run's list actually contains that one artifact, then
+      # give the deploy lookup a moment to see it. One deploy-pages use stays
+      # the rule: a second use would publish twice, and a second upload would
+      # create a second github-pages artifact.
+      - name: Wait until the Pages artifact is listed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            count=$(curl -fsS \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts?per_page=100" \
+              | jq '[.artifacts[] | select(.name=="github-pages" and .expired==false)] | length')
+            echo "attempt ${attempt}: github-pages artifacts listed: ${count} (uploaded id ${{ steps.pages_artifact.outputs.artifact_id }})"
+            if [ "${count}" = "1" ]; then
+              echo "listed; waiting 20s so deploy-pages sees the same artifact"
+              sleep 20
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "github-pages artifact was not listed after 60s" >&2
+          exit 1
       - id: deployment
         uses: actions/deploy-pages@v4
