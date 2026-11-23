@@ -649,6 +649,7 @@ func _tick_talk(delta: float) -> void:
 	# front end: the protagonist's name is the player's chosen character name (Fony by default)
 	var pname := Protagonist.current(get_tree())
 	var text: String = Protagonist.text(next[1], pname)
+	var placeholder := next.size() > 3 and str(next[3]) == "placeholder"
 	spoken.append(who + "|" + text)
 	if who == "CARD":
 		hud.card(text)
@@ -657,20 +658,26 @@ func _tick_talk(delta: float) -> void:
 		return
 	talking = who
 	if TEXT_SPEAKERS.has(who):
-		_phone_line(who, text)
+		_phone_line(who, text, placeholder)
 		return
 	if act1 != null and act1.active() and act1.handles(who):
 		talk_left = act1.show_line(who, text)
 		return
 	if power != null and power.active() and power.handles(who):
-		talk_left = power.show_line(who, text)
+		talk_left = power.show_line(who, text, placeholder)
 		return
 	if run != null and run.handles(who):
-		talk_left = run.show_line(who, text)
+		talk_left = run.show_line(who, text, placeholder)
 		return
 	talk_left = clampf(1.0 + 0.045 * text.length(), 1.8, 6.0)
 	hud.protagonist_tag = pname.to_upper()
-	hud.say(Protagonist.speaker(who, pname) if who != "SYSTEM" else "", text if who != "MARQUEE" else "ON-SCREEN: " + text)
+	var speaker := Protagonist.speaker(who, pname) if who != "SYSTEM" else ""
+	if placeholder:
+		speaker = (speaker + " · PLACEHOLDER") if speaker != "" else "PLACEHOLDER"
+	var shown := text if who != "MARQUEE" else "ON-SCREEN: " + text
+	if placeholder and who != "MARQUEE":
+		shown = "PLACEHOLDER — " + shown
+	hud.say(speaker, shown)
 	if who == "CRT" or who.begins_with("VOICE"):
 		World.crt(dressing, true, face_on)
 		sfx.play("crt")
@@ -680,18 +687,19 @@ func _tick_talk(delta: float) -> void:
 		sfx.play("marquee")
 
 ## P.1 v2 phone speakers. Texts hold at least 2.5 s (never more than one Zero text every 2.5 s while skating).
-func _phone_line(who: String, text: String) -> void:
+func _phone_line(who: String, text: String, placeholder := false) -> void:
 	hud.hush()
+	var shown := ("PLACEHOLDER — " + text) if placeholder else text
 	match who:
 		"WAIT":
 			talk_left = float(text)
 		"TEXT ???":
-			hud.say_text(hud.phone_sender, text, false)
+			hud.say_text(hud.phone_sender, shown, false)
 			sfx.play("text_in")
 			blip_left = BLIP_S
 			talk_left = clampf(0.9 + 0.035 * text.length(), 2.5, 5.0)
 		"TEXT FONY":
-			hud.say_text(Protagonist.current(get_tree()), text, true)
+			hud.say_text(Protagonist.current(get_tree()), shown, true)
 			sfx.play("text_out")
 			talk_left = 1.6
 		"TYPING ???", "TYPING FONY":

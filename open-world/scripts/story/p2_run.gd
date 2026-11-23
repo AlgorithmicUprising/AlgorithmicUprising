@@ -13,6 +13,15 @@ extends Node
 
 signal finished(time_ms: int)
 
+## OPEN: the breakdown's proposal, not a script rule. Caught by the net restarts at the last checkpoint. No lives.
+const P2_FAIL_RULE := "checkpoint"
+## OPEN: Zero's time is the next whole 5 s under the first escape, never under 30 s.
+const P2_ZERO_TIME_ROUND_S := 5
+const P2_ZERO_TIME_MIN_S := 30
+## OPEN: the culvert is still a fade and a narration line, not a skateable tunnel.
+const P2_CULVERT_IS_FADE := true
+const P2_CULVERT_S := 3.2
+
 const JsonFile = preload("res://scripts/json_file.gd")
 const World = preload("res://scripts/story/story_world.gd")
 const Chase = preload("res://scripts/story/chase.gd")
@@ -110,7 +119,12 @@ func start(from := "") -> void:
 		var toggles: Dictionary = def.get("toggles", {})
 		if bool(toggles.get("title_card", false)):
 			host._say_all([["CARD", str(toggles.get("title_card_text", "MISSION P.2 · RUN"))]])
-		host._say_all(_fill(def.lines.start))
+		var start_lines: Array = _fill(def.lines.start)
+		if start_lines.size() > 2:
+			host._say_all(start_lines.slice(0, 2))
+			host._say_all([start_lines[2]], "", "placeholder")
+		else:
+			host._say_all(start_lines)
 	log.append("start:" + checkpoint)
 
 ## Leaves the run (story stop or slice end): the fence closes, the drones go.
@@ -209,7 +223,7 @@ func _triggers() -> void:
 		chase.spot()
 		host.sfx.play("alert")
 		host.hud.toast("SPOTTED · DRONE CAMERA")
-		host._say_all(_fill(def.lines.camera))
+		host._say_all(_fill(def.lines.camera), "", "placeholder")
 		log.append("camera")
 	if not fired.has("plaza") and p.x > 128.0:
 		fired["plaza"] = true
@@ -256,11 +270,13 @@ func _on_caught(kind: String) -> void:
 	host.hud.toast("CAUGHT")
 	host.hud.fade_to(1.0, float(def.get("fade_s", 0.6)))
 	host.queue.clear()
-	host._say_all(_fill(def.lines.caught))
+	host._say_all(_fill(def.lines.caught), "", "placeholder")
 	log.append("caught:" + kind + "@" + checkpoint)
 	host.flow.persist()
 
 func _restart() -> void:
+	if P2_FAIL_RULE != "checkpoint":
+		return
 	host.queue.clear()
 	host.talk_left = 0.0
 	_place(checkpoint)
@@ -285,7 +301,7 @@ func _on_enforcers() -> void:
 
 func _culvert() -> void:
 	state = "culvert"
-	state_left = float(def.get("culvert_s", 3.2))
+	state_left = float(def.get("culvert_s", P2_CULVERT_S)) if P2_CULVERT_IS_FADE else 0.0
 	chase.clear()
 	host.player.input_enabled = false
 	host.player.velocity = Vector3.ZERO
@@ -318,12 +334,12 @@ func _finish() -> void:
 		r["best_score"] = ms
 	var zero := int(r.get("zero_score", 0))
 	if zero <= 0:
-		zero = zero_for(ms, int(def.zero_time.get("round_s", 5)), int(def.zero_time.get("min_s", 30)))
+		zero = zero_for(ms, int(def.zero_time.get("round_s", P2_ZERO_TIME_ROUND_S)), int(def.zero_time.get("min_s", P2_ZERO_TIME_MIN_S)))
 		r["zero_score"] = zero
-		host._say_all(_fill(def.lines.zero_time_set, {"time": fmt_time(zero)}))
+		host._say_all(_fill(def.lines.zero_time_set, {"time": fmt_time(zero)}), "", "placeholder")
 	elif ms < zero and not host.flow.save.flag("p2_zero_beaten"):
 		host.flow.save.set_flag("p2_zero_beaten")
-		host._say_all(_fill(def.lines.zero_time_beaten, {"time": fmt_time(ms)}))
+		host._say_all(_fill(def.lines.zero_time_beaten, {"time": fmt_time(ms)}), "", "placeholder")
 	host.flow.save.set_flag("p2_run_done")
 	host.flow.persist()
 	_hud_zero()
@@ -437,11 +453,11 @@ func handles(who: String) -> bool:
 	return who.begins_with("SCREEN ") or who == "NARRATE"
 
 ## Shows a screen or narration line; returns how long it holds.
-func show_line(who: String, text: String) -> float:
+func show_line(who: String, text: String, placeholder := false) -> float:
 	var pname: String = Protagonist.current(get_tree())
 	var t: String = Protagonist.text(text, pname)
 	if who == "NARRATE":
-		host.hud.say("", "(" + t + ")")
+		host.hud.say("PLACEHOLDER" if placeholder else "", ("(PLACEHOLDER) " + t) if placeholder else ("(" + t + ")"))
 		host.spoken.append("NARRATE|" + t)
 		return clampf(1.0 + 0.04 * t.length(), 2.4, 6.0)
 	var key := who.trim_prefix("SCREEN ")

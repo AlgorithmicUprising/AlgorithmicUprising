@@ -168,6 +168,8 @@ func _run_full() -> void:
 		if a1 != null:
 			break
 	ok(a1 != null and a1.get_node_or_null("DeliveryVan") != null and a1.get_node_or_null("DockLedge") != null and a1.get_node_or_null("GarageDeck") != null, "A1: the district is in (van, dock ledge, garage deck)")
+	ok(a1.get_node("Shopper0/Body").mesh is CapsuleMesh and a1.get_node_or_null("DeliveryVan/Cab") != null and a1.get_node_or_null("DrainGrate/Mouth") != null, "A1: shoppers are capsules, the van has a cab, the grate has a mouth")
+	ok(run.P2_FAIL_RULE == "checkpoint" and run.P2_CULVERT_IS_FADE and run.chase.WELFARE_SPEED == 6.6 and run.chase.ENFORCER_SPEED == 7.2, "P.2: fail rule, culvert fade, and drone speeds are the named defaults")
 	ok(story.spoken.any(func(l): return "Nice name" in str(l)) or story.queue.any(func(q): return "Nice name" in str(q[1])), "P.2 Run: Zero texts as ??? at the start")
 	# enforcement drones after their delay
 	for d in run.chase.drones:

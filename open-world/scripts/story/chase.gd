@@ -15,6 +15,15 @@ signal enforcers_in
 
 const World = preload("res://scripts/story/story_world.gd")
 
+## OPEN: first-pass speeds (m/s). The mission JSON overrides these. Not retuned here.
+const WELFARE_SPEED := 6.6
+const WELFARE_CATCHUP := 11.5
+const WELFARE_CATCH_R := 2.0
+const ENFORCER_SPEED := 7.2
+const ENFORCER_CATCHUP := 12.0
+const ENFORCER_CATCH_R := 2.2
+const ENFORCER_DELAY_S := 4.0
+
 var cfg: Dictionary = {}
 var player: Node3D
 var root: Node3D
@@ -48,10 +57,13 @@ func begin(behind: Array, enforcers_now := false) -> void:
 		n.name = "%sDrone%d" % [kind.capitalize(), i]
 		var b: Array = behind[mini(i, behind.size() - 1)] if not behind.is_empty() else [player.global_position.x - 14.0, player.global_position.z]
 		n.global_position = Vector3(float(b[0]), _alt(player.global_position.y), float(b[1]))
-		var delay := 0.0 if kind == "welfare" or enforcers_now else float(c.get("delay_s", 4.0))
+		var delay := 0.0 if kind == "welfare" or enforcers_now else float(c.get("delay_s", ENFORCER_DELAY_S))
 		n.visible = delay <= 0.0
-		drones.append({"node": n, "kind": kind, "speed": float(c.get("speed", 7.0)), "catchup": float(c.get("catchup", 11.0)),
-			"catch_r": float(c.get("catch_r", 2.0)), "delay": delay, "crumb": 0, "active": delay <= 0.0})
+		var speed := WELFARE_SPEED if kind == "welfare" else ENFORCER_SPEED
+		var catchup := WELFARE_CATCHUP if kind == "welfare" else ENFORCER_CATCHUP
+		var catch_r := WELFARE_CATCH_R if kind == "welfare" else ENFORCER_CATCH_R
+		drones.append({"node": n, "kind": kind, "speed": float(c.get("speed", speed)), "catchup": float(c.get("catchup", catchup)),
+			"catch_r": float(c.get("catch_r", catch_r)), "delay": delay, "crumb": 0, "active": delay <= 0.0})
 	trail = [_ground(player.global_position)]
 	grace = float(cfg.get("grace_s", 3.0))
 	boost_left = 0.0

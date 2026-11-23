@@ -12,6 +12,10 @@ extends Node
 
 signal finished
 
+## OPEN: how long the thermal sweep takes, and what a full sweep does. The breakdown's proposal is 100 s, then reset to the last fuse found.
+const P3_SWEEP_S := 100.0
+const P3_SWEEP_FAIL := "last_fuse"
+
 const JsonFile = preload("res://scripts/json_file.gd")
 const Protagonist = preload("res://scripts/front/protagonist.gd")
 const World = preload("res://scripts/story/story_world.gd")
@@ -128,10 +132,10 @@ func tick(delta: float) -> void:
 			elif state_left <= 0.0 and host.hud.fade_alpha() > 0.99:
 				host.hud.fade_to(0.0, float(def.get("fade_s", 0.6)))
 		"play":
-			sweep += delta / maxf(1.0, float(def.get("sweep_s", 100.0)))
+			sweep += delta / maxf(1.0, float(def.get("sweep_s", P3_SWEEP_S)))
 			if sweep >= 0.8 and not fired.has("sweep_close"):
 				fired["sweep_close"] = true
-				host._say_all(_fill(def.lines.sweep_close))
+				host._say_all(_fill(def.lines.sweep_close), "", "placeholder")
 			if sweep >= 1.0:
 				_found()
 			else:
@@ -139,7 +143,8 @@ func tick(delta: float) -> void:
 		"found":
 			state_left -= delta
 			if state_left <= 0.0:
-				_place_reset()
+				if P3_SWEEP_FAIL == "last_fuse":
+					_place_reset()
 				sweep = 0.0
 				fired.erase("sweep_close")
 				host.hud.fade_to(0.0, float(def.get("fade_s", 0.6)))
@@ -202,7 +207,7 @@ func interact() -> bool:
 		if fuses.size() < 3:
 			if not fired.has("need_fuses"):
 				fired["need_fuses"] = true
-				host._say_all(_fill(def.lines.need_fuses))
+				host._say_all(_fill(def.lines.need_fuses), "", "placeholder")
 			return false
 		_throw()
 		return true
@@ -217,7 +222,7 @@ func interact() -> bool:
 	host.hud.toast("FUSE %d/3" % fuses.size())
 	host._say_all(_fill(def.fuses[what].line))
 	if fuses.size() == 3:
-		host._say_all(_fill(def.lines.all_fuses))
+		host._say_all(_fill(def.lines.all_fuses), "", "placeholder")
 	_hide_found()
 	host.hud.set_objective(str(def.get("title", "P.3 POWER ON")), _objective())
 	log.append("fuse:" + what)
@@ -240,7 +245,7 @@ func _found() -> void:
 	host.hud.prompt("")
 	host.hud.fade_to(1.0, float(def.get("fade_s", 0.6)))
 	host.queue.clear()
-	host._say_all(_fill(def.lines.found))
+	host._say_all(_fill(def.lines.found), "", "placeholder")
 	host.flow.persist()
 	log.append("found")
 
@@ -337,9 +342,10 @@ func _sweep_tick() -> void:
 func handles(who: String) -> bool:
 	return who == "NARRATE"
 
-func show_line(_who: String, text: String) -> float:
+func show_line(_who: String, text: String, placeholder := false) -> float:
 	var t: String = Protagonist.text(text, Protagonist.current(get_tree()))
-	host.hud.say("", "(" + t + ")")
+	var shown := ("(PLACEHOLDER) " + t) if placeholder else ("(" + t + ")")
+	host.hud.say("" if not placeholder else "PLACEHOLDER", shown)
 	host.spoken.append("NARRATE|" + t)
 	return clampf(1.0 + 0.04 * t.length(), 2.4, 6.0)
 
