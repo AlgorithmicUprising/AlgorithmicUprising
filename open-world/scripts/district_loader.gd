@@ -328,6 +328,10 @@ func _add_apron(id: String) -> void:
 	Blocks.solid(apron, "WallFar", Vector3(r.end.x, 0.6, c.y), Vector3(0.6, 1.2, r.size.y), wall)
 	Blocks.solid(apron, "WallNorth", Vector3(c.x, 0.6, r.position.y), Vector3(r.size.x, 1.2, 0.6), wall)
 	Blocks.solid(apron, "WallSouth", Vector3(c.x, 0.6, r.end.y), Vector3(r.size.x, 1.2, 0.6), wall)
+	# Off-map rooms (the dark arcade, the Flats, Cold Row) are reached by a fade, not from the west.
+	# Close that open side so the stand-in floor is a box until the district arrives.
+	if r.position.x > 100.0:
+		Blocks.solid(apron, "WallNear", Vector3(r.position.x, 0.6, c.y), Vector3(0.6, 1.2, r.size.y), wall)
 	info[id]["apron"] = apron
 
 ## --- card -----------------------------------------------------------------------------------------------------------

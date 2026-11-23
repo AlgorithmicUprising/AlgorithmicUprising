@@ -63,7 +63,8 @@ static func build(world: Node3D) -> Node3D:
 	var leaves: Array = []
 	var bags: Array = []
 	for i in 70:
-		var p := Vector3(rng.randf_range(-55.0, -41.0), -2.985, rng.randf_range(39.0, 61.0))
+		# Inner flat of the round bowl (skate_bowl.gd). The rounded corners rise, so leaves stay in the box.
+		var p := Vector3(rng.randf_range(-50.2, -45.8), -2.13, rng.randf_range(47.2, 52.8))
 		var t := Transform3D(Basis(Vector3.UP, rng.randf() * TAU), p)
 		if i % 3 == 0:
 			bags.append(t.scaled_local(Vector3(rng.randf_range(0.8, 1.6), 1.0, rng.randf_range(0.8, 1.4))))

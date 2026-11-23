@@ -2,6 +2,7 @@ extends RefCounted
 
 const Palette = preload("res://scripts/palette.gd")
 static var _cel: Shader
+static var _park_concrete: Texture2D
 
 static func material(color: Color) -> ShaderMaterial:
 	return cel(color)
@@ -10,6 +11,19 @@ static func cel_textured(color: Color, texture: Texture2D, bands := 3.0, outline
 	var mat := cel(color, bands, outline)
 	mat.set_shader_parameter("albedo_tex", texture)
 	mat.set_shader_parameter("texture_mix", 1.0)
+	return mat
+
+## Tiling skate-park concrete. triplanar samples world XZ on the ground and the vertical faces of a slab.
+## tint shifts the bowl deck a little cooler than the yard slabs.
+static func park_concrete(tint: Color) -> ShaderMaterial:
+	var mat := cel(tint, 3.0, 0.06)
+	if _park_concrete == null:
+		_park_concrete = load("res://assets/library/skate_park/park_concrete.png")
+	mat.set_shader_parameter("albedo_tex", _park_concrete)
+	mat.set_shader_parameter("texture_mix", 1.0)
+	mat.set_shader_parameter("triplanar", 1.0)
+	mat.set_shader_parameter("triplanar_scale", 0.42)
+	mat.set_shader_parameter("fill_light", 0.06)
 	return mat
 
 static func cel(color: Color, bands := 3.0, outline := 0.22) -> ShaderMaterial:
