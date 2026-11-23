@@ -4,17 +4,38 @@ Design only. No code in this pass. Nothing here is new canon. Any line a charact
 
 Sources that already exist: `data/missions/p2_run.json` (Glass Row chase, one parking camera, spot boost), `data/missions/act1_scenes.json` (1.4 Cold Row patrols, 1.5 six cameras and the swarm), `data/missions/p1_practice_run.json` (trick line and Zero Score), `data/spray_slot.json` (one color, no store), `data/intro_video.json` (Zero Admin upload, then a bundled fallback). The main pack budget is 50 MiB. District packs cap at 8 MiB.
 
-## What the owner is picking
+## Owner decisions (recorded)
 
-1. **Prep window.** Optional beat after the heat-alert cinematic and before the fence gap, or paint-on-the-way only.
-2. **How hard paint softens a chase.** Remove the spot burst only, or also delay the enforcers. Drone count does not change.
-3. **Cold Row carry.** Cameras painted in 1.4 count toward 1.5, or 1.5 still plays its own paint beats.
-4. **Sneak and paint.** Painting a camera before you are seen still counts as unseen, or any spray fails the sneak clear.
-5. **Season clock.** Device month plus a shipped catalog, or one bundled "season 1" until the next pack.
-6. **What points unlock now.** A counter only, or an empty spray-slot id that a later skin pack can fill.
-7. **Publish path.** Zero Admin spec below (recommended), a standalone editor, or git PRs only.
+These three are decided. The season clock, what points unlock, and the Zero Admin publish path are not. Those stay unbuilt.
 
-Recommendation is at the bottom. Defaults below are what we would build if the owner does not pick.
+### 1. Camera painting stays, and it is optional
+
+Lightest reason that is already in the game, not a new story:
+
+- P.2's parking camera is the thing that says "Visual confirmed. Parking level one." and adds the chase speed burst (`camera.boost_s`).
+- 1.5 already has the script line that those cameras are old and treat paint as weather.
+
+So paint on that one lens is the same act as 1.5, used on the one camera that already confirms him. It only skips the burst. The welfare drone and both enforcers still come. Skipping the paint leaves the chase as it is. It is never required.
+
+No new faction, plan, or speaker. The toast already in the build is `CAMERA BLINDED`. Any extra spoken line, if one is ever needed, is **PLACEHOLDER** and is not a script line.
+
+Side-quest rewards are not designed. The owner's ideas (skin mods for Fony, Zero, and the board, and maybe other upgrades) wait for a separate talk. The challenge data may carry a hook and nothing else:
+
+```json
+"reward": {"type": "placeholder", "id": "tbd"}
+```
+
+The game does not grant that hook.
+
+### 2. Spraying a drone in a chase calls the others
+
+The sprayed drone stays down for the existing 8 s. Drones inside `alert_radius` of that spot fly there for `investigate_s`, then scan for `tracking_s`. A scan is a cone of `scan_deg` degrees, out to `scan_range`, checked `scan_hz` times a second. While they are scanning, he has to stay out of the cone. A drone that sees him in the cone goes back to chasing. A drone whose tracking time runs out stops searching and returns to the trail. Numbers live on the chase data. The drone count does not change.
+
+### 3. Painted cameras are cleaned later
+
+A painted camera stays blind until a duration on a clock runs out. The clock is a parameter: `play_time` or `story_time`. **Open call:** which clock. The data default is `play_time`, because after the story the game is open world and story time may not move. Recovery uses the same save in a mission and in free roam. Paint is stored on the save, not only on the node.
+
+Still open, and not built from this note: whether 1.4 paint counts toward 1.5, whether sneak allows paint, the season clock, what points unlock, and Zero Admin publishing.
 
 ## Prep missions
 
@@ -210,4 +231,4 @@ Build the bundled seed and the five templates first, with Glass Row paint-on-the
 
 Author new seasons in Zero Admin with the API above. Owner approval is the only publish. The game fetches the catalog and falls back to the seed. Do not add a standalone editor. Do not put challenge images in the pck.
 
-Do not write this until the owner picks the seven calls at the top. No merge of this note is required to keep talking.
+The three decisions above are the ones to build. Rewards stay a hook. The clock choice stays open, with `play_time` as the data default. The other open calls stay unbuilt.
