@@ -13,11 +13,13 @@ Open `demo/index.html` through the arcade dev server, or the dedicated GitHub Pa
 
 There are 24 taggable wall bays, paint pickups, escalating waves and four drone types. Tagged drones cancel photos, earn STYLE and reduce TRAINING DATA. Scraped tags get the approved copyright stamp; their cooldown expires before retagging. A full TRAINING DATA meter ends the run.
 
-## Hunt and police preview rules (v0.4.0)
+## Hunt and police preview rules (v0.5.0)
 
 Ten seconds without a completed, unscraped wall tag makes ordinary drones hunt Fony. Watermark signs and partial tags do not reset that timer. A hunter must stay within 90 world pixels for a continuous two-second scan to identify him. Leaving scan range, tagging the scanner, or completing a fresh wall tag breaks the scan. Fresh art draws ordinary drones back to the walls.
 
-A completed player scan calls two police drones from opposite ends of the alley after a two-second warning. Police ignore wall tags and keep pursuing between waves. Two officers must remain within 40 world pixels of Fony together for 1.5 continuous seconds to arrest him. Leaving that radius or tagging either officer resets the hold immediately. A single officer cannot arrest, but calls one replacement after eight seconds. Tag both to clear the pursuit and restart the ten-second art timer.
+A completed player scan calls two police drones from opposite ends of the alley after a two-second warning. Police ignore wall tags and keep pursuing between waves. Fony is arrested if at least two officers stay within 40 world pixels of him for 1.5 continuous seconds. The arrest timer resets as soon as fewer than two active officers are in range. A single officer calls one replacement after eight seconds. Tag every officer to clear the pursuit and restart the ten-second art timer.
+
+Completing a repaint of a censored (scraped) art post immediately activates a new police wave. Each reclamation adds **1, 2, 3, 5, 8, 13, 21, 34…** new drones: the increasing Fibonacci sequence, skipping the duplicate opening 1. The count advances across all posts, including reclaiming the same post again, and persists across art waves and cleared pursuits. New officers reinforce any existing pursuit. Fresh tags, partial repaints and cooldowns do not trigger or advance it. Retrying starts the sequence at 1 again. Scan dispatches and lone-officer backup retain their existing counts and do not advance the reclamation sequence. Larger waves enter at different positions along both ends of the alley.
 
 Police take one second of spray, award 500 base STYLE, and reduce Training Data by five points like other drones. Their solid red/blue lights, shield, POLICE label, edge markers, scan warning and arrest progress distinguish each stage. Game over explicitly reports either Training Data reaching 100% or a police arrest. These timing values are preview defaults for playtesting.
 
@@ -42,7 +44,7 @@ To regenerate the art exports from the numbered approval PNGs, run `npm run prep
 
 ## Local checks
 
-`npm run check`, `npm test` and `npm run e2e` cover both games. Tag-specific tests check facing/range, can inventory, open-space drone tagging, photo interruption, hunt and scan escape, police distraction immunity, arrest interruption, backup, seeded waves, artwork loading, touch placement, custom local tags, pause and retry/share.
+`npm run check`, `npm test` and `npm run e2e` cover the arcade games. Tag-specific tests check facing/range, can inventory, open-space drone tagging, photo interruption, hunt and scan escape, Fibonacci reclamation reinforcements and reset, police distraction immunity, arrest interruption, backup, seeded waves, artwork loading, touch placement, custom local tags, pause and retry/share.
 
 Custom text and downscaled images stay in localStorage on the current origin; no upload, analytics or accounts are added. SVG imports reject scripts and external resources. If storage is unavailable, the game still runs with the session settings. Reduced motion freezes ornamental frame cycling and removes no gameplay information.
 
