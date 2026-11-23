@@ -16,6 +16,10 @@
     "default_url": "https://algorithmicuprising.com/media/uploads/1cd5a1cf-88d7-4fa3-a7b6-1832f0fae11f-pz-intro-web-720p.mp4",
     "note": "Tried in order, relative to the game page (open-world/index.html) unless absolute. 1) the AU_INTRO_MP4 copy that tools/export-web.mjs drops next to the pack (absent on a normal export, so it 404s straight to the next one), 2) the hosted 720p cut on the site (Zero Admin upload; 307 to media-edge.algorithmicuprising.com, byte ranges fixed by FR-040), 3) the ffmpeg placeholder. Override per page with ?intro=<url>, or ?intro=skip.",
     "load_timeout_s": 15.0,
+    "probe_ms": 2500,
+    "placeholders": [
+      "media/intro/intro-placeholder.mp4"
+    ],
     "stall_s": 8.0,
     "stall_giveup_s": 20.0,
     "max_extra_s": 45.0
@@ -31,5 +35,5 @@
   "missing_card_s": 4.0,
   "first_run_only": true,
   "status": "real cut hosted on the site (pz-intro-web-720p.mp4, 90 s, uploaded Nov 19 2026); the placeholder stays as the last fallback",
-  "fallback": "Any source that errors or does not start within load_timeout_s moves to the next. A stall of stall_s mid-play shows TRY AGAIN / SKIP INTRO and continues to the game after stall_giveup_s more. Blocked autoplay (even muted) shows TAP TO PLAY / SKIP INTRO. No source at all shows the in-production card for missing_card_s. The overlay never outlives the clip by more than max_extra_s."
+  "fallback": "A same-origin source is probed with a 2.5 s range request before the video element waits on it, so a missing export copy does not sit on a black screen for load_timeout_s. Any source that errors or does not start within load_timeout_s moves to the next. A stall of stall_s mid-play shows TRY AGAIN / SKIP INTRO and continues to the game after stall_giveup_s more. Blocked autoplay (even muted) shows TAP TO PLAY / SKIP INTRO. The ffmpeg placeholder, if it is the clip that plays, is labelled PLACEHOLDER CUT and does not count as having seen the intro. No source at all shows the in-production card for missing_card_s. The overlay never outlives the clip by more than max_extra_s."
 }

@@ -165,7 +165,14 @@ static func _docks(parent: Node) -> void:
 	for i in 3:
 		Blocks.solid(parent, "Dock%d" % i, Vector3(-2.0 + float(i) * 5.0, 0.6, -24), Vector3(3.4, 1.2, 6.0), Color("8d6248"))
 	Blocks.add_slope(parent, "DockRamp", Vector3(-12, 0.08, -24), Vector3(-4, 1.2, -24), 4.0, Palette.RAMP)
-	Blocks.label(parent, "DOCKS +1.2m", Vector3(2, 2.4, -20), Palette.LABEL, 28)
+	for i in 3:
+		var x := -2.0 + float(i) * 5.0
+		Blocks.visual(parent, "DockPostA%d" % i, Vector3(x - 1.4, 1.9, -26.4), Vector3(0.14, 1.5, 0.14), Color("5c4034"))
+		Blocks.visual(parent, "DockPostB%d" % i, Vector3(x + 1.4, 1.9, -26.4), Vector3(0.14, 1.5, 0.14), Color("5c4034"))
+		Blocks.visual(parent, "DockPostC%d" % i, Vector3(x - 1.4, 1.9, -21.6), Vector3(0.14, 1.5, 0.14), Color("5c4034"))
+		Blocks.visual(parent, "DockPostD%d" % i, Vector3(x + 1.4, 1.9, -21.6), Vector3(0.14, 1.5, 0.14), Color("5c4034"))
+		Blocks.visual(parent, "DockRoof%d" % i, Vector3(x, 2.72, -24), Vector3(3.8, 0.12, 6.4), Color("6a4632"))
+	Blocks.label(parent, "DOCKS +1.2m", Vector3(2, 3.3, -20), Palette.LABEL, 28)
 
 static func _skate(parent: Node) -> void:
 	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
@@ -178,8 +185,13 @@ static func _skate(parent: Node) -> void:
 	_quarter_steps(parent, pipe)
 	Pieces.dress_box(Blocks.solid(parent, "Funbox", Vector3(-48, 0.45, -2), Vector3(4.2, 0.9, 4.2), Palette.FUNBOX), true)
 	_park_expansion(parent)
+	# Painted lanes on the concrete: a pale worn band, yellow edges, a thin centre line. Visual only.
 	for i in 4:
-		Blocks.visual(parent, "SkateLane%d" % i, Vector3(-46, 0.03, -18.0 + float(i) * 8.0), Vector3(22, 0.02, 0.7), Color("8d5a48"))
+		var z := -18.0 + float(i) * 8.0
+		Blocks.visual(parent, "SkateLane%d" % i, Vector3(-46, 0.018, z), Vector3(22, 0.012, 1.2), Color("c4b7a6"))
+		Blocks.visual(parent, "SkateLaneEdgeN%d" % i, Vector3(-46, 0.026, z - 0.52), Vector3(22, 0.008, 0.08), Color("d6c36a"))
+		Blocks.visual(parent, "SkateLaneEdgeS%d" % i, Vector3(-46, 0.026, z + 0.52), Vector3(22, 0.008, 0.08), Color("d6c36a"))
+		Blocks.visual(parent, "SkateLaneCentre%d" % i, Vector3(-46, 0.026, z), Vector3(22, 0.006, 0.06), Color("efe6d4"))
 	_grind_spots(parent)
 	Blocks.label(parent, "SKATE YARD", Vector3(-52, 3.4, -6), Palette.LABEL, 48)
 
@@ -229,6 +241,11 @@ static func _park_expansion(parent: Node) -> void:
 		q.closed_back = true
 		q.add_to_group("mini_ramp")
 		parent.add_child(q)
+	# The two low lips face each other across x -50 .. -44. The flat and the cheeks are visual;
+	# the ride stays on the yard slab (tests/test_main.gd _mini_run).
+	Blocks.visual(parent, "MiniRampFlat", Vector3(-47, 0.02, -30), Vector3(6.0, 0.028, 6.2), Color("8d847c"))
+	Blocks.visual(parent, "MiniRampCheekN", Vector3(-47, 0.22, -33.4), Vector3(6.0, 0.4, 0.1), Color("3a3540"))
+	Blocks.visual(parent, "MiniRampCheekS", Vector3(-47, 0.22, -26.6), Vector3(6.0, 0.4, 0.1), Color("3a3540"))
 	_quarter_steps(parent, parent.get_node("HalfPipeEast"), "MiniRampSteps")
 	Pieces.wedge(parent, "FunboxKickerEast", Vector3(-43.4, 0, -2), PI, 2.5, 0.9, 4.2)
 	Pieces.wedge(parent, "FunboxKickerWest", Vector3(-52.6, 0, -2), 0.0, 2.5, 0.9, 4.2)
@@ -332,6 +349,8 @@ static func _plaza(parent: Node) -> void:
 
 static func _gate(parent: Node) -> void:
 	Blocks.solid(parent, "Lookout", Vector3(66, 1.6, 62), Vector3(3.2, 3.2, 3.2), Color("5c4038"))
+	Blocks.visual(parent, "LookoutRoof", Vector3(66, 3.36, 62), Vector3(4.0, 0.16, 4.0), Color("3e322c"))
+	Blocks.visual(parent, "LookoutDoor", Vector3(66, 1.05, 63.62), Vector3(0.9, 1.8, 0.06), Color("1c1916"))
 	for i in 6:
 		Blocks.visual(parent, "DronePost%d" % i, Vector3(62, 1.3, 56.0 + float(i) * 2.2), Vector3(0.18, 2.6, 0.18), Palette.SURVEILLANCE)
 	Blocks.visual(parent, "DroneNet", Vector3(62, 2.2, 61.5), Vector3(0.08, 1.2, 12), Color("7fd0e0"))
@@ -359,6 +378,31 @@ static func _shell(parent: Node, node_name: String, x0: float, x1: float, z0: fl
 	if door_x1 < x1 - 1.0:
 		Blocks.solid(root, "FrontEast", Vector3((door_x1 + x1) * 0.5, y, z1), Vector3(x1 - door_x1, height, t), color)
 	Blocks.solid(root, "Lintel", Vector3((door_x0 + door_x1) * 0.5, height - 0.6, z1), Vector3(door_x1 - door_x0, 1.2, t), color)
+	# Roof and a door frame, visual only, so the opening stays the way through. The shell was four walls and a lintel.
+	var roof_color := color.darkened(0.18)
+	Blocks.visual(root, "Roof", Vector3((x0 + x1) * 0.5, height + 0.14, (z0 + z1) * 0.5), Vector3((x1 - x0) + 0.9, 0.22, (z1 - z0) + 0.9), roof_color)
+	Blocks.visual(root, "Fascia", Vector3((x0 + x1) * 0.5, height - 0.08, z1 + 0.08), Vector3((x1 - x0) + 0.4, 0.16, 0.12), roof_color)
+	if door_x1 > door_x0 + 0.4:
+		var jamb_h := height - 1.3
+		Blocks.visual(root, "DoorJambW", Vector3(door_x0, jamb_h * 0.5, z1 + 0.08), Vector3(0.16, jamb_h, 0.18), color.lightened(0.12))
+		Blocks.visual(root, "DoorJambE", Vector3(door_x1, jamb_h * 0.5, z1 + 0.08), Vector3(0.16, jamb_h, 0.18), color.lightened(0.12))
+	_shell_windows(root, x0, x1, z1, height, door_x0, door_x1)
+
+## Dark window marks on the front wall, kept off the door. Visual only.
+static func _shell_windows(root: Node, x0: float, x1: float, z1: float, height: float, door_x0: float, door_x1: float) -> void:
+	var spans: Array[Vector2] = []
+	if door_x0 - x0 > 4.0:
+		spans.append(Vector2(x0 + 0.8, door_x0 - 0.8))
+	if x1 - door_x1 > 4.0:
+		spans.append(Vector2(door_x1 + 0.8, x1 - 0.8))
+	var y := height * 0.55
+	for span in spans:
+		var left: float = span.x
+		var right: float = span.y
+		var n := clampi(int((right - left) / 4.5), 1, 4)
+		for i in n:
+			var x := lerpf(left, right, (float(i) + 0.5) / float(n))
+			Blocks.visual(root, "Window", Vector3(x, y, z1 + 0.06), Vector3(1.4, 0.9, 0.08), Color("1c1916"))
 
 static func _marks(parent: Node) -> void:
 	# Original flat marks. Not copies of the reference painting, and not collision.

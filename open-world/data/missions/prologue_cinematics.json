@@ -48,12 +48,20 @@
           "CHIME"
         ],
         [
+          "WAIT",
+          1.1
+        ],
+        [
           "BILLBOARD",
           "emergency"
         ],
         [
           "SHOT",
           "billboard"
+        ],
+        [
+          "WAIT",
+          1.25
         ],
         [
           "SAY",
@@ -83,6 +91,10 @@
           "sting"
         ],
         [
+          "WAIT",
+          1.25
+        ],
+        [
           "SAY",
           "BILLBOARD",
           "NOTICE: The Sunburn Open qualifiers are postponed until the Heat Emergency ends. Dusk Dynamics thanks you for your patience."
@@ -90,6 +102,10 @@
         [
           "SHOT",
           "fony"
+        ],
+        [
+          "WAIT",
+          0.55
         ],
         [
           "SAY",
@@ -103,6 +119,10 @@
         [
           "SHOT",
           "arcade"
+        ],
+        [
+          "WAIT",
+          0.55
         ],
         [
           "SAY",
@@ -173,7 +193,7 @@
         ],
         [
           "WAIT",
-          1.6
+          2.95
         ],
         [
           "NARRATE",
@@ -182,6 +202,10 @@
         [
           "DRONE",
           "scan_on"
+        ],
+        [
+          "WAIT",
+          0.55
         ],
         [
           "SAY",
@@ -201,6 +225,10 @@
           "drone"
         ],
         [
+          "WAIT",
+          0.55
+        ],
+        [
           "SAY",
           "WELFARE DRONE",
           "Identity confirmed: Sprock, {name}. Status: unsupported dependent. Collection order active. Don't worry! A Dusk Dynamics care van is on its way. Please stay where you are."
@@ -212,6 +240,10 @@
         [
           "SFX",
           "net"
+        ],
+        [
+          "WAIT",
+          0.55
         ],
         [
           "NARRATE",
@@ -233,6 +265,10 @@
         [
           "SHOT",
           "arcade"
+        ],
+        [
+          "WAIT",
+          0.55
         ],
         [
           "SAY",

@@ -177,11 +177,13 @@ func _intro() -> void:
 	ip.sources = srcs
 	var oc: Dictionary = ip.overlay_config()
 	ok(int(oc.load_ms) >= 5000 and int(oc.stall_ms) >= 3000 and int(oc.giveup_ms) > 0 and int(oc.extra_ms) > 0, "intro: load timeout, stall watchdog, give-up and hard cap are configured %s" % oc)
+	ok(int(oc.probe_ms) == 2500 and (oc.placeholders as Array).has("media/intro/intro-placeholder.mp4"), "intro: a missing local file is probed in 2.5 s, and the ffmpeg stand-in is marked as a placeholder")
 	var js: String = ip._overlay_js()
 	ok("TAP TO PLAY" in js and "SKIP INTRO" in js and "showFallback('tap')" in js, "intro: blocked autoplay (even muted) shows TAP TO PLAY / SKIP INTRO")
 	ok("showFallback('stall')" in js and "done('stalled')" in js and "TRY AGAIN" in js, "intro: a stall shows TRY AGAIN / SKIP INTRO, then carries on by itself")
 	ok("if (!downKeys[e.code]) return;" in js, "intro: only keys pressed during the intro are swallowed; an Enter held from the name panel still releases in the game")
 	ok("'timeout: '" in js and "done('timeout')" in js and "missing()" in js, "intro: a source that never starts moves on; a hard cap and the missing card end it")
+	ok("probe fail" in js and "PLACEHOLDER CUT" in js and "st.placeholder ? 'placeholder'" in js, "intro: a failed probe skips the source, and a placeholder ending does not count as the real cut")
 	var ip_src := FileAccess.get_file_as_string("res://scripts/front/intro_player.gd")
 	ok("URLSearchParams" in ip_src and "get('intro')" in ip_src and "sources = [q]" in ip_src, "intro: ?intro=<url> still overrides the sources")
 	ok(js.contains(hosted.replace("/", "\\/")) or js.contains(hosted), "intro: the overlay script carries the hosted URL")

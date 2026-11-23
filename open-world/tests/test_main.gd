@@ -2611,8 +2611,16 @@ func _park() -> void:
 	var host := _host()
 	load("res://scripts/yard.gd").build(host)
 	await frames(3)
-	for n in ["HalfPipeWest", "HalfPipeEast", "MiniRampSteps", "FunboxKickerEast", "FunboxKickerWest", "ManualPad", "Bank", "SkateQuarter", "Funbox"]:
+	for n in ["HalfPipeWest", "HalfPipeEast", "MiniRampSteps", "MiniRampFlat", "FunboxKickerEast", "FunboxKickerWest", "ManualPad", "Bank", "SkateQuarter", "Funbox"]:
 		expect(host.get_node_or_null(n) != null, "park has " + n)
+	var flat: MeshInstance3D = host.get_node("MiniRampFlat")
+	var west: Node3D = host.get_node("HalfPipeWest")
+	var east: Node3D = host.get_node("HalfPipeEast")
+	expect(flat.global_position.x > west.global_position.x - 0.2 and flat.global_position.x < east.global_position.x + 0.2, "park: the mini ramp flat sits between the two low lips")
+	var lane_mat: ShaderMaterial = host.get_node("SkateLane0").material_override
+	expect((lane_mat.get_shader_parameter("albedo") as Color) != Color("8d5a48"), "park: the skate lanes are paint, not the old dirt strips")
+	expect(host.get_node_or_null("Workshop/Roof") != null and host.get_node_or_null("Workshop/DoorJambW") != null, "park: the workshop has a roof and a door frame")
+	expect(host.get_node_or_null("ResistanceRooms/Roof") != null and host.get_node_or_null("DockRoof0") != null and host.get_node_or_null("LookoutRoof") != null, "park: resistance, the docks and the lookout read as buildings")
 	var pipes := []
 	for q in [host.get_node("SkateQuarter"), host.get_node("HalfPipeWest"), host.get_node("HalfPipeEast")]:
 		pipes.append(q)

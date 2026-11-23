@@ -42,6 +42,14 @@ func _def() -> Dictionary:
 
 # ------------------------------------------------------------------ framework units
 
+func _wait_follows(steps: Array, op: String, seconds: float) -> bool:
+	for i in steps.size() - 1:
+		var here: Array = steps[i]
+		var nxt: Array = steps[i + 1]
+		if str(here[0]) == op and str(nxt[0]) == "WAIT" and absf(float(nxt[1]) - seconds) < 0.011:
+			return true
+	return false
+
 func _runner() -> void:
 	var r = Runner.new()
 	ok(r.load_def({}).get("reason") == "id", "runner rejects a mission without an id")
@@ -51,7 +59,7 @@ func _runner() -> void:
 	var def := _def()
 	r = Runner.new()
 	ok(bool(r.load_def(def).get("ok")), "P.1 definition loads")
-	ok(r.fail_rule == "none" and r.required.size() == 7 and r.optional.size() == 1, "P.1: no fail, 7 required objectives, 1 optional")
+	ok(r.fail_rule == r.P1_FAIL_RULE and r.fail_rule == "none" and r.required.size() == 7 and r.optional.size() == 1, "P.1: no fail (P1_FAIL_RULE), 7 required objectives, 1 optional")
 	var started: Array = []
 	var finished: Array = []
 	var saves: Array = []
@@ -480,6 +488,12 @@ func _act1() -> void:
 	ok(story.hud.phone_name.text == "???" and story.hud.phone_log.size() >= 1 and "back foot" in str(story.hud.phone_log[0].text), "Beat 0: the intro's first text is already in the ??? thread")
 	ok(story.contact and main.flow.save.flag("p1_contact"), "Beat 0: contact made (barks may fire)")
 	ok(story.World.billboard_text(main.world_sim.get_node("DerelictDressing")).contains("108°F"), "billboard: the forecast reads HIGH 108°F (Fahrenheit)")
+	ok(main.world_sim.get_node_or_null("DerelictDressing/BillboardFace") != null and main.world_sim.get_node_or_null("DerelictDressing/BillboardPoleW") != null, "billboard: the forecast sits on a panel with a pole")
+	var p2_steps: Array = story.cinematic.def("p2_heat_alert").get("steps", [])
+	var p3_steps: Array = story.cinematic.def("p3_flagged").get("steps", [])
+	ok(_wait_follows(p2_steps, "CHIME", story.cinematic.CHIME_READ_S), "P.2: the chime is heard before the emergency line")
+	ok(_wait_follows(p2_steps, "SHOT", story.cinematic.BILLBOARD_READ_S) and _wait_follows(p2_steps, "SHOT", story.cinematic.SHOT_READ_S), "P.2: a shot holds before the line")
+	ok(_wait_follows(p3_steps, "SHOT", story.cinematic.DRONE_ARRIVE_S + story.cinematic.DRONE_LOOK_S), "P.3: the drone arrives before the line about it")
 	for _i in 240:
 		story.talk_left = 0.001
 		await t.get_tree().process_frame

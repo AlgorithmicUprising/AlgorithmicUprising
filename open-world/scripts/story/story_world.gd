@@ -156,7 +156,12 @@ static func build(world: Node3D) -> Node3D:
 	dot.position = CRT + Vector3(0, 0.02, 0.263)
 	dot.visible = false
 	root.add_child(dot)
-	# the Glass Row billboard on the skyline (script: EXT. THE YARD - DAWN)
+	# the Glass Row billboard on the skyline (script: EXT. THE YARD - DAWN). The face matches the
+	# existing label size (font 220 at pixel_size 0.02) so the forecast stays readable from the yard.
+	_box(root, "BillboardFace", BILLBOARD + Vector3(0.16, 0.0, 0.0), Vector3(0.2, 12.0, 108.0), Color("14161c"))
+	_box(root, "BillboardTrim", BILLBOARD + Vector3(0.32, 0.0, 0.0), Vector3(0.1, 12.8, 109.0), Color("c8c2b4"))
+	_box(root, "BillboardPoleW", BILLBOARD + Vector3(0.4, -16.0, -40.0), Vector3(0.45, 20.0, 0.45), Color("3a3540"))
+	_box(root, "BillboardPoleE", BILLBOARD + Vector3(0.4, -16.0, 40.0), Vector3(0.45, 20.0, 0.45), Color("3a3540"))
 	var bb := Label3D.new()
 	bb.name = "GlassRowBillboard"
 	bb.text = BB_FORECAST

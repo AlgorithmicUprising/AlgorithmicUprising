@@ -500,6 +500,7 @@ func start_new(n: String) -> void:
 
 func _on_intro_done(reason: String) -> void:
 	if gs != null:
+		# "ended" is the real cut finishing. The ffmpeg placeholder reports "placeholder" and does not count as seen.
 		gs.mark_intro(reason == "ended")
 	panel_kind = "loading"
 	_finish_park_load()
