@@ -7,6 +7,7 @@ const FlowScript = preload("res://scripts/hq_flow.gd")
 const DistrictLoader = preload("res://scripts/district_loader.gd")
 const PracticeRun = preload("res://scripts/story/practice_run.gd")
 const SaveScript = preload("res://contracts/save_record.gd")
+const CameraPaint = preload("res://scripts/story/camera_paint.gd")
 const FREE_AUTOSAVE_S := 90.0
 
 var flow: Node
@@ -33,6 +34,12 @@ var gs: Node
 var session_intent := ""
 var session_buttons: HBoxContainer
 var session_status: Label
+var controls_button: Button
+var boost_label: Label
+var boost_fill: ColorRect
+var boost_tier: Label
+var log_panel: PanelContainer
+var log_label: Label
 var free_autosave_clock := 0.0
 var load_result := {}
 
@@ -79,6 +86,9 @@ func _process(_delta: float) -> void:
 		return
 	if gs != null and gs.has_character() and not flow.paused and flow.boundary.phase == "world":
 		gs.play_time += _delta
+		var story_on := story != null and bool(story.active)
+		CameraPaint.advance(flow.save, _delta, story_on)
+		CameraPaint.sync(get_tree(), flow.save, gs.play_time)
 		if story == null or not story.active:
 			free_autosave_clock += _delta
 			if free_autosave_clock >= FREE_AUTOSAVE_S:
@@ -95,7 +105,9 @@ func _process(_delta: float) -> void:
 	var target = null
 	if player.input_enabled and flow.boundary.phase == "world" and not flow.dialogue_open and not flow.paused:
 		target = _nearest(2.5)
-	prompt_label.text = target.prompt() if target != null and target.has_method("prompt") and not story_hides_prompts() else ""
+	var raw: String = target.prompt() if target != null and target.has_method("prompt") and not story_hides_prompts() else ""
+	prompt_label.text = InputBindings.prompt_text(raw)
+	_sync_boost()
 	if player.look_captured and not _can_look():
 		_release_look()
 	_sync_look_catch()
@@ -103,16 +115,18 @@ func _process(_delta: float) -> void:
 	_publish_web_state()
 
 func _unhandled_input(event: InputEvent) -> void:
+	InputBindings.note(event)
 	if flow == null:
 		return
 	if flow.boundary.phase == "in_session":
 		return
 	if flow.paused:
-		if session_buttons != null and session_buttons.visible and (event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down") or event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right")) and get_viewport().gui_get_focus_owner() == null:
-			session_buttons.get_child(0).grab_focus()
+		var focus := get_viewport().gui_get_focus_owner()
+		if (event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down") or event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right")) and focus == null and controls_button != null:
+			controls_button.grab_focus()
 			get_viewport().set_input_as_handled()
 			return
-		if event.is_action_pressed("pause") or event.is_action_pressed("session_confirm"):
+		if event.is_action_pressed("pause") or (event.is_action_pressed("session_confirm") and focus == null):
 			flow.set_paused(false)
 			get_viewport().set_input_as_handled()
 		return
@@ -126,6 +140,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		_release_look()
 		flow.set_paused(true)
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("open_log"):
+		_toggle_log()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("zero_vision"):
+		var opened: bool = story != null and story.has_method("toggle_vision") and story.toggle_vision()
+		if not opened and story != null and story.hud != null:
+			story.hud.toast("ZERO VISION ISN'T ON THIS PHONE YET")
 		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventMouseMotion and player.look_captured and _can_look():
@@ -165,6 +189,82 @@ func _unhandled_input(event: InputEvent) -> void:
 			target.interact(flow)
 			get_viewport().set_input_as_handled()
 
+func _build_boost_hud(layer: CanvasLayer) -> void:
+	var panel := PanelContainer.new()
+	panel.name = "BoostMeter"
+	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	panel.offset_left = -150
+	panel.offset_right = 150
+	panel.offset_top = -86
+	panel.offset_bottom = -18
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var box := VBoxContainer.new()
+	panel.add_child(box)
+	boost_label = Label.new()
+	boost_label.text = "BOOST"
+	boost_label.add_theme_font_size_override("font_size", 14)
+	boost_label.add_theme_color_override("font_color", Color("c8ff3a"))
+	box.add_child(boost_label)
+	var back := ColorRect.new()
+	back.custom_minimum_size = Vector2(280, 14)
+	back.color = Color(0.05, 0.05, 0.06, 0.9)
+	box.add_child(back)
+	boost_fill = ColorRect.new()
+	boost_fill.color = Color("c8ff3a")
+	boost_fill.size = Vector2(0, 14)
+	back.add_child(boost_fill)
+	boost_tier = Label.new()
+	boost_tier.add_theme_font_size_override("font_size", 12)
+	boost_tier.add_theme_color_override("font_color", Color("fff6ea"))
+	box.add_child(boost_tier)
+	layer.add_child(panel)
+
+func _build_log_panel(layer: CanvasLayer) -> void:
+	log_panel = PanelContainer.new()
+	log_panel.name = "LogPanel"
+	log_panel.visible = false
+	log_panel.set_anchors_preset(Control.PRESET_CENTER)
+	log_panel.offset_left = -240
+	log_panel.offset_right = 240
+	log_panel.offset_top = -120
+	log_panel.offset_bottom = 120
+	log_label = Label.new()
+	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	log_label.text = "No map of the city yet.\nView / M opens the phone log once a story is running."
+	log_panel.add_child(log_label)
+	layer.add_child(log_panel)
+
+func _sync_boost() -> void:
+	if boost_fill == null or player == null or player.boost == null:
+		return
+	var tank = player.boost
+	var amount: float = float(tank.amount)
+	boost_fill.size = Vector2(280.0 * clampf(amount, 0.0, 1.0), 14)
+	boost_fill.color = Color("c8ff3a") if amount > 0.35 else Color("f0a25a")
+	var tier: int = int(tank.tier())
+	var pips := ""
+	for i in 4:
+		pips += "●" if i <= tier and tank.chain > 0 else "○"
+	boost_label.text = "BOOST"
+	boost_tier.text = "chain %d    tier %d    %s    %s spends it" % [tank.chain, tier, pips, InputBindings.glyph("boost")]
+
+func _toggle_log() -> void:
+	if story != null and story.get("hud") != null and story.hud.phone_panel != null:
+		if story.hud.phone_panel.visible:
+			story.hud.phone_panel.visible = false
+		else:
+			story.hud.phone_open()
+		if log_panel != null:
+			log_panel.visible = false
+		return
+	if log_panel != null:
+		log_panel.visible = not log_panel.visible
+
+func _open_controls() -> void:
+	var menu = load("res://scripts/controls_menu.gd").new()
+	add_child(menu)
+	menu.open(self)
+
 func zone_at(point: Vector3) -> String:
 	return Yard.zone_at(point)
 
@@ -183,6 +283,8 @@ func show_pause(show_panel: bool) -> void:
 	pause_panel.visible = show_panel
 	if show_panel and invert_check != null:
 		invert_check.set_pressed_no_signal(player.look_invert_y)
+	if show_panel and controls_button != null:
+		controls_button.grab_focus()
 	if session_buttons != null:
 		session_buttons.visible = show_panel and gs != null and gs.has_character()
 	if session_status != null and show_panel:
@@ -257,7 +359,7 @@ func _hud() -> void:
 	mode_label = Label.new()
 	hint_label = Label.new()
 	var hint := hint_label
-	hint.text = "Click to look. Mouse turns the view; W moves that way. [ ] look speed\nWASD move   Space jump   Shift skate/walk   E talk or cabinet   Enter confirm   Esc pause\nQ ollie   R kickflip   F grab   On a rail: F 5-0, R boardslide   Quarter pipe: hold S up high to kickturn, F off the coping for a backside air\nGamepad: left stick move, right stick look, A jump, Y skate, X interact, Start pause"
+	hint.text = InputBindings.hint_line()
 	prompt_label = Label.new()
 	for label in [zone_label, mode_label, hint, prompt_label]:
 		label.add_theme_font_size_override("font_size", 18)
@@ -271,11 +373,11 @@ func _hud() -> void:
 	layer.add_child(dialogue_panel)
 	pause_panel = _center_panel()
 	var pause_label: Label = pause_panel.get_child(0).get_child(0)
-	pause_label.text = "Paused. Click outside this panel to resume and look. Esc or Enter resumes."
+	pause_label.text = "Paused. Esc resumes. D-pad moves. A confirms the highlighted row."
 	invert_check = CheckButton.new()
 	invert_check.name = "InvertMouseY"
 	invert_check.text = "Invert mouse Y"
-	invert_check.focus_mode = Control.FOCUS_NONE
+	invert_check.focus_mode = Control.FOCUS_ALL
 	invert_check.process_mode = Node.PROCESS_MODE_ALWAYS
 	invert_check.set_pressed_no_signal(player.look_invert_y)
 	invert_check.toggled.connect(_on_invert_y)
@@ -283,11 +385,29 @@ func _hud() -> void:
 	var sprite_check := CheckButton.new()
 	sprite_check.name = "PaintedSprite"
 	sprite_check.text = "Painted sprite"
-	sprite_check.focus_mode = Control.FOCUS_NONE
+	sprite_check.focus_mode = Control.FOCUS_ALL
 	sprite_check.process_mode = Node.PROCESS_MODE_ALWAYS
 	sprite_check.set_pressed_no_signal(player.use_painted_sprite)
 	sprite_check.toggled.connect(_on_painted_sprite)
 	pause_panel.get_child(0).add_child(sprite_check)
+	controls_button = Button.new()
+	controls_button.name = "Controls"
+	controls_button.text = "Controls"
+	controls_button.focus_mode = Control.FOCUS_ALL
+	controls_button.process_mode = Node.PROCESS_MODE_ALWAYS
+	controls_button.pressed.connect(_open_controls)
+	pause_panel.get_child(0).add_child(controls_button)
+	var retry_button := Button.new()
+	retry_button.name = "RetryObjective"
+	retry_button.text = "Retry objective"
+	retry_button.focus_mode = Control.FOCUS_ALL
+	retry_button.process_mode = Node.PROCESS_MODE_ALWAYS
+	retry_button.pressed.connect(func():
+		if story != null and story.active and story.has_method("retry"):
+			story.retry()
+			flow.set_paused(false)
+	)
+	pause_panel.get_child(0).add_child(retry_button)
 	# front end: Save / Load / Quit to title, only when playing a character from the start screen
 	session_buttons = HBoxContainer.new()
 	session_buttons.name = "SessionButtons"
@@ -308,6 +428,8 @@ func _hud() -> void:
 	pause_panel.get_child(0).add_child(session_status)
 	pause_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	layer.add_child(pause_panel)
+	_build_boost_hud(layer)
+	_build_log_panel(layer)
 	look_catch = Control.new()
 	look_catch.set_anchors_preset(Control.PRESET_FULL_RECT)
 	look_catch.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -400,7 +522,7 @@ func _sync_look_catch() -> void:
 	look_catch.visible = show
 	look_catch.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
 	if hint_label != null:
-		hint_label.text = "Click to look. Mouse turns the view; W moves that way. Look speed %.3f  [ ]\nWASD move   Space jump   Shift skate/walk   Q ollie   R kickflip   F grab   E talk\nOn a rail: F 5-0, R boardslide.  Quarter pipe: hold S high up to kickturn, F off the coping for a backside air\nEnter confirm   Esc pause. Invert mouse Y is in the pause menu.   P story: Practice Run" % player.look_sensitivity
+		hint_label.text = "%s\nLook speed %.3f  [ ]    stick %.1f. Invert is in the pause menu. Hold S high on a quarter to kickturn." % [InputBindings.hint_line(), player.look_sensitivity, InputBindings.stick_look]
 
 ## True while the story plays a cutscene (or a chase fade): HUD input prompts stay hidden.
 func story_hides_prompts() -> bool:

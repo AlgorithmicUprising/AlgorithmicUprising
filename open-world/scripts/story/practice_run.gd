@@ -101,6 +101,13 @@ func toggle() -> void:
 
 ## resume (front end, Load Game): a mission saved mid-run picks up at its last checkpoint instead of starting over.
 ## The P key and ?story=p1 keep starting P.1 from the top (resume false), as in M1.
+## OPEN: the band chooses the song under the P.4 title card. Empty plays nothing and loads no file.
+const P4_TITLE_SONG := ""
+
+func p4_title_song() -> void:
+	if P4_TITLE_SONG == "":
+		return
+
 func start(resume := false) -> bool:
 	if active or player == null:
 		return false
@@ -134,6 +141,8 @@ func start(resume := false) -> bool:
 	best_line = int(rec.get("best_score", 0))
 	voice_heard = flow.save.flag("p1_voice_heard")
 	face_on = flow.save.flag("p1_crt_face")
+	if player != null:
+		player.grip_tape = flow.save.flag("upgrade_grip_tape")
 	contact = false
 	rail_bailed = flow.save.flag("p1_rail_bail_said")
 	hesitated = {}
@@ -649,6 +658,7 @@ func _tick_talk(delta: float) -> void:
 	# front end: the protagonist's name is the player's chosen character name (Fony by default)
 	var pname := Protagonist.current(get_tree())
 	var text: String = Protagonist.text(next[1], pname)
+	var placeholder := next.size() > 3 and str(next[3]) == "placeholder"
 	spoken.append(who + "|" + text)
 	if who == "CARD":
 		hud.card(text)
@@ -657,20 +667,26 @@ func _tick_talk(delta: float) -> void:
 		return
 	talking = who
 	if TEXT_SPEAKERS.has(who):
-		_phone_line(who, text)
+		_phone_line(who, text, placeholder)
 		return
 	if act1 != null and act1.active() and act1.handles(who):
 		talk_left = act1.show_line(who, text)
 		return
 	if power != null and power.active() and power.handles(who):
-		talk_left = power.show_line(who, text)
+		talk_left = power.show_line(who, text, placeholder)
 		return
 	if run != null and run.handles(who):
-		talk_left = run.show_line(who, text)
+		talk_left = run.show_line(who, text, placeholder)
 		return
 	talk_left = clampf(1.0 + 0.045 * text.length(), 1.8, 6.0)
 	hud.protagonist_tag = pname.to_upper()
-	hud.say(Protagonist.speaker(who, pname) if who != "SYSTEM" else "", text if who != "MARQUEE" else "ON-SCREEN: " + text)
+	var speaker := Protagonist.speaker(who, pname) if who != "SYSTEM" else ""
+	if placeholder:
+		speaker = (speaker + " · PLACEHOLDER") if speaker != "" else "PLACEHOLDER"
+	var shown := text if who != "MARQUEE" else "ON-SCREEN: " + text
+	if placeholder and who != "MARQUEE":
+		shown = "PLACEHOLDER — " + shown
+	hud.say(speaker, shown)
 	if who == "CRT" or who.begins_with("VOICE"):
 		World.crt(dressing, true, face_on)
 		sfx.play("crt")
@@ -680,18 +696,19 @@ func _tick_talk(delta: float) -> void:
 		sfx.play("marquee")
 
 ## P.1 v2 phone speakers. Texts hold at least 2.5 s (never more than one Zero text every 2.5 s while skating).
-func _phone_line(who: String, text: String) -> void:
+func _phone_line(who: String, text: String, placeholder := false) -> void:
 	hud.hush()
+	var shown := ("PLACEHOLDER — " + text) if placeholder else text
 	match who:
 		"WAIT":
 			talk_left = float(text)
 		"TEXT ???":
-			hud.say_text(hud.phone_sender, text, false)
+			hud.say_text(hud.phone_sender, shown, false)
 			sfx.play("text_in")
 			blip_left = BLIP_S
 			talk_left = clampf(0.9 + 0.035 * text.length(), 2.5, 5.0)
 		"TEXT FONY":
-			hud.say_text(Protagonist.current(get_tree()), text, true)
+			hud.say_text(Protagonist.current(get_tree()), shown, true)
 			sfx.play("text_out")
 			talk_left = 1.6
 		"TYPING ???", "TYPING FONY":
@@ -732,7 +749,8 @@ func _prompt() -> void:
 		_say_all(ht, str(o.id), "hesitate")
 		hud.phone_open()
 	var p: Dictionary = o.prompt
-	hud.prompt("%s    [ %s ]    pad: %s" % [p.get("verb", ""), p.get("kb", ""), p.get("pad", "")])
+	var mark := str(p.get("pad", "")) if InputBindings.using_pad() else str(p.get("kb", ""))
+	hud.prompt("%s    %s" % [p.get("verb", ""), mark])
 	sfx.play("prompt")
 
 func _free_barks(delta: float) -> void:

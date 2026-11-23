@@ -1,0 +1,25 @@
+{
+  "contract": "au.challenge",
+  "contract_version": 1,
+  "id": "p2_run",
+  "title": "P.2 RUN",
+  "mechanic": "chase",
+  "district": "glass_row_edge",
+  "spawn": {"mission": "p2_run", "checkpoint": "yard"},
+  "source": {"path": "res://data/missions/p2_run.json", "id": "p2_run"},
+  "parameters": {
+    "fail_rule": "checkpoint",
+    "zero_round_s": 5,
+    "zero_min_s": 30,
+    "welfare_speed": 6.6,
+    "enforcer_speed": 7.2,
+    "enforcer_delay_s": 4.0,
+    "camera_boost_s": 5.0
+  },
+  "goals": [
+    {"id": "door", "event": "door"}
+  ],
+  "scoring": {},
+  "points": {"clear": 0},
+  "repeatable": true
+}

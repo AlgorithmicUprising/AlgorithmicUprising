@@ -273,7 +273,7 @@ func hush() -> void:
 	talk_panel.visible = false
 
 func prompt(text: String) -> void:
-	prompt_label.text = text
+	prompt_label.text = InputBindings.prompt_text(text)
 	prompt_panel.visible = text != ""
 
 func card(text: String) -> void:

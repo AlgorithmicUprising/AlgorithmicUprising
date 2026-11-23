@@ -19,6 +19,7 @@ var session_serial := 0
 var save_path := "user://au-open-world-save-v1.json"
 
 func bind(world: Node, body: Node, audio_owner: Node, session: Node, announcer: Node) -> void:
+	add_to_group("hq_flow")
 	world_sim = world
 	player = body
 	audio = audio_owner

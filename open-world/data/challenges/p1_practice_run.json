@@ -1,0 +1,28 @@
+{
+  "contract": "au.challenge",
+  "contract_version": 1,
+  "id": "p1_practice_run",
+  "title": "P.1 PRACTICE RUN",
+  "mechanic": "objectives",
+  "district": "yard",
+  "spawn": {"mission": "p1_practice_run", "checkpoint": "yard"},
+  "source": {"path": "res://data/missions/p1_practice_run.json", "id": "p1_practice_run"},
+  "parameters": {
+    "fail_rule": "none",
+    "line_steps": ["bowl", "quarter", "rail"],
+    "line_limit_s": 60.0,
+    "zero_round_to": 500
+  },
+  "goals": [
+    {"id": "push", "event": "push"},
+    {"id": "kick_up", "event": "kick_up"},
+    {"id": "drop_on", "event": "drop_on"},
+    {"id": "ollie", "event": "ollie"},
+    {"id": "quarter", "event": "quarter"},
+    {"id": "rail", "event": "rail"},
+    {"id": "line", "event": "line"}
+  ],
+  "scoring": {},
+  "points": {"clear": 0},
+  "repeatable": true
+}

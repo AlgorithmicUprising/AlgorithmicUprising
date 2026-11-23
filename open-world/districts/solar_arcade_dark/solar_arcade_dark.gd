@@ -59,14 +59,17 @@ func _cabinets() -> void:
 	# the north row under dust sheets; the one at x 230 has its coin box hanging open
 	for i in 7:
 		var x := 221.0 + i * 3.0
-		var cab := Blocks.solid(self, "Cabinet%d" % i, Vector3(x, 0.95, -40.6), Vector3(1.3, 1.9, 1.2), SHEET)
+		var cab := Blocks.solid(self, "Cabinet%d" % i, Vector3(x, 0.95, -40.6), Vector3(1.3, 1.9, 1.2), Color("2c2826"))
 		cab.set_meta("sheet", true)
+		_cloth(cab)
 		var glow := Blocks.visual(self, "CabinetGlow%d" % i, Vector3(x, 1.3, -39.98), Vector3(0.9, 0.7, 0.02), Color("101010"))
 		glow.set_meta("glow", true)
 	Blocks.visual(self, "CoinBoxDoor", Vector3(230.0, 0.6, -39.9), Vector3(0.5, 0.35, 0.05), Color("8a7a52"))
 	# a second row mid-floor (west half), out of the walking lanes
 	for i in 3:
-		Blocks.solid(self, "CabinetMid%d" % i, Vector3(222.0 + i * 3.0, 0.95, -30.5), Vector3(1.3, 1.9, 1.2), SHEET)
+		var mid := Blocks.solid(self, "CabinetMid%d" % i, Vector3(222.0 + i * 3.0, 0.95, -30.5), Vector3(1.3, 1.9, 1.2), Color("2c2826"))
+		mid.set_meta("sheet", true)
+		_cloth(mid)
 
 func _counter() -> void:
 	Blocks.solid(self, "TokenCounter", Vector3(218.0, 0.55, -17.5), Vector3(4.0, 1.1, 1.0), Color("5a3f2c"))
@@ -87,8 +90,15 @@ func _bench() -> void:
 
 func _climb() -> void:
 	# the tall cabinet under the light fixture, and the toppled one leaning on it (walk up it)
-	Blocks.solid(self, "TallCabinet", Vector3(236.0, 0.8, -12.6), Vector3(2.0, 1.6, 1.6), SHEET)
-	Blocks.add_slope(self, "ToppledCabinet", Vector3(236.0, 0.0, -18.6), Vector3(236.0, 1.6, -13.4), 1.6, Color("8f887c"))
+	var tall := Blocks.solid(self, "TallCabinet", Vector3(236.0, 0.8, -12.6), Vector3(2.0, 1.6, 1.6), Color("2c2826"))
+	tall.set_meta("sheet", true)
+	_cloth(tall)
+	var ramp := Blocks.add_slope(self, "ToppledCabinet", Vector3(236.0, 0.0, -18.6), Vector3(236.0, 1.6, -13.4), 1.6, Color("3a342f"))
+	for child in ramp.get_children():
+		if child is MeshInstance3D:
+			(child as MeshInstance3D).material_override = Blocks.cel(Color("3a342f"), 3.0, 0.2)
+	# The walk-up stays the slope. The shell is the cabinet at the high end, not a slab through the ramp.
+	Blocks.visual(ramp, "CabinetShell", Vector3(0.0, 0.85, 2.15), Vector3(1.45, 0.55, 1.15), SHEET)
 	Blocks.visual(self, "LightFixture", FIXTURE + Vector3(0.0, 0.45, 0.0), Vector3(1.6, 0.12, 0.4), Color("9a9a90"))
 	Blocks.visual(self, "FixtureChain", FIXTURE + Vector3(0.0, 1.6, 0.0), Vector3(0.04, 2.2, 0.04), Color("5a5a52"))
 
@@ -139,6 +149,15 @@ func _lamp(n: String, at: Vector3, c: Color, energy: float, r: float) -> OmniLig
 	add_child(l)
 	return l
 
+## A dust sheet over a cabinet. The cabinet collision is unchanged.
+func _cloth(body: Node3D) -> void:
+	Blocks.visual(body, "Cloth", Vector3(0.0, 0.12, 0.0), Vector3(1.42, 2.05, 1.32), SHEET)
+	_cloth_fold(body)
+
+func _cloth_fold(body: Node3D) -> void:
+	var fold := Blocks.visual(body, "ClothFold", Vector3(0.0, -0.55, 0.62), Vector3(1.2, 0.55, 0.06), SHEET.darkened(0.12))
+	fold.rotation.x = -0.35
+
 static func _haze(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -151,6 +170,11 @@ static func _haze(c: Color) -> StandardMaterial3D:
 ## Bailey lives in it; 1.1B pulls the sheet), and four ceiling fans (still until the power is on; act1.gd turns them).
 func _act1() -> void:
 	Blocks.solid(self, "BaileyCabinet", Vector3(226.5, 1.25, -12.2), Vector3(1.8, 2.5, 1.4), Color("2a2f5a"))
+	var play := Node3D.new()
+	play.name = "BaileyPlay"
+	play.set_script(preload("res://scripts/story/bailey_cabinet.gd"))
+	play.position = Vector3(226.5, 1.25, -12.2)
+	add_child(play)
 	var scr := Blocks.visual(self, "BaileyScreen", Vector3(226.5, 1.7, -12.93), Vector3(1.3, 0.9, 0.03), Color("0d1020"))
 	scr.set_meta("bailey", true)
 	var side := Label3D.new()
@@ -165,6 +189,7 @@ func _act1() -> void:
 	add_child(side)
 	var sheet := Blocks.visual(self, "BaileySheet", Vector3(226.5, 1.3, -12.2), Vector3(2.0, 2.7, 1.6), SHEET)
 	sheet.set_meta("sheet", true)
+	_cloth_fold(sheet)
 	for i in 4:
 		var fan := Node3D.new()
 		fan.name = "Fan%d" % i

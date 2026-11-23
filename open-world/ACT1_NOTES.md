@@ -34,7 +34,8 @@ Every guess below is a first pass, for you to change.
 ## 1.4 Cold Row (+ 1.4B The Benefactor, Zero Vision)
 - Three marks (lawn, substation, water intake), any order; the workers' smoke break plays when you walk near them (optional).
 - Drones: three fixed loops; WATCH fills when within 5.5 m (no cone, no line of sight), full in 2.5 s, drains at 0.35/s. The mist boxes under the towers hide you. Full WATCH = SPOTTED, back to the last mark (or the start).
-- 5,000 per mark (Zero Score 18,000 shown; the mist/stealth bonus isn't built).
+- 5,000 per mark (Zero Score 18,000 shown).
+- OPEN owner call: the mist/stealth bonus has no formula, and WATCH has no vision cone. Both stay unbuilt until those rules are written. Do not invent an angle or a bonus.
 - Placeholder lines: Zero at the substation ("Maintenance line. It runs toward the Flats."), at the intake ("Sustaining is doing a lot of work..."), after all three ("Get under a tower..."), and when spotted.
 - 1.4B: the hologram is a placeholder (translucent boxes, red eyes, lime fingertips, a white Halo sphere with a ring) over the river; the studio stage is narrated; screens switch to FEEDLINE LIVE.
 - Zero Vision: E raises the phone; a dark green screen tint plus 600 lime lines from the fingertips into the City (random endpoints), then the unlock card. It's the first use only; Zero Vision in free roam (the meter, recharging) isn't built.
@@ -47,21 +48,21 @@ Every guess below is a first pass, for you to change.
 
 ## 1.5 The Breaker (+ 1.5B The Thermostat, BOSS The Thermostat, 1.5C Lights on in the Flats)
 - Six cameras on poles around the substation; E sprays a lens black (1,500 each). Two drones patrol (WATCH as in 1.4, range 4.5 m).
-- Open the gate: E at the end of the substation fence = "grind the fence-top rail" (PLACEHOLDER: a hop to the switch house, no real fence grind).
+- Open the gate: grind the ollie-height fence rail (FenceRail) from the south end of the substation fence to the switch house. The goal completes when that grind delivers him. No teleport.
 - Zero's part: E at the switch-house panel; the panel reads ZERO; script lines.
 - Hold the line: 30 s reroute. Drones fly in from the edges every 3.5 s (max 4) toward the switch house; touching one knocks it down (+500); one that flies into tower mist drops; one that reaches the house costs 5%. Zero's barks at 30/60/90% (60% is the script's, the others placeholder).
 - Boss, three phases as goal steps:
-  - Phase 1: stomp three vents (E at each, 2,000). Frost patches are visual only (no slip physics yet).
+  - Phase 1: stomp three vents (E at each, 2,000). Frost patches slip. The multiplier is `data/surfaces.json` (`frost`). **Open call:** how slippery. The default 0.18 is a stand-in.
   - Phase 2: the dial reads HEAT; steam blows 2 s on / 2.5 s off within 6 m of the machine; inside it while it blows fills WATCH (full in 4 s) unless you're in the tower mist. Spray two sensor eyes (2,000 each).
-  - Phase 3: the dial reads HOT · COLD · HOT; E at the loading bay = launch onto the machine's top (PLACEHOLDER: a teleport, not a real quarter-pipe launch); E stomps the dial (3,000).
+  - Phase 3: the dial reads HOT · COLD · HOT. He rides the loading-bay quarter pipe. Its lip launch carries him onto the machine's top (`launch_forward` and `launch_up` on that pipe only; park pipes still drift back into the transition). E stomps the dial (3,000). The machine itself is still not a ramp.
 - Zero Score 22,000 (the script's); a full run scores about 25,000.
 - Egon's four boss barks are spread over the vents and eyes; Zero's three over the reroute and phases.
 - 1.5C: the machine stops, the Capsule flies off, Zero on the panel; then the Flats at night: lit windows, people on the roofs, the billboard shows Zero's message.
 
 ## 1.6 Heat Break (+ 1.6B The rain) — END OF ACT I
-- The free-roam montage is a short checklist in the Flats, one E each with a DAY card and Signal +5: paint the community center roof (day 4), an aid run to Mrs. Okonkwo (day 5), salvage two solar panels from a condemned block (day 6), dig out a dusty cabinet (day 7). No real side-activity systems yet.
+- The four days are skated. Paint takes the spray button in front of the community center (the existing spot; he is not put on the roof). Aid, salvage, and the cabinet complete when he skates onto them. Signal +5 each. The lines stay PLACEHOLDER. **Open call:** digging the cabinet out as a played restore, and a real path onto the roof. Neither is in this scene.
 - The Yard, days later: shade cloth over the bowl, a water station by the gate, cots in the resistance rooms, kids on the quarter pipe; meet the neighbors, two teen skaters and the free-clinic woman (placeholder lines).
-- 1.6B: storm sky, falling rain streaks, the Yard in the rain, Zero in the arcade doorway (a block figure), Nana Ines paints THE YARD on the wall. Script dialogue. Then the card "END OF ACT I. / RUST & SIGNAL", then the end card: "Next: ACT II · 2.1 BACK TO PRACTICE (not built yet)."
+- 1.6B: storm sky, falling rain streaks, the Yard in the rain, Zero in the arcade doorway (a block figure). Nana paints THE YARD on the arcade wall just west of the bay door: a yard-lime panel and block letters. PLACEHOLDER, not a finished mural. Script dialogue. Then the card "END OF ACT I. / RUST & SIGNAL", then the end card: "Next: ACT II · 2.1 BACK TO PRACTICE (not built yet)." **Open call:** the real lettering. Real art is still missing for Nana Ines, the residents, Egon, Halo, and Zero's face on the phone.
 
 ## Fixes this round
 - Zero Vision strings now render on the web build: thin unshaded boxes in one MultiMesh (ImmediateMesh GL lines drew nothing on the Compatibility renderer), no depth test, no fog; raising the phone tilts the camera up at the hologram. The camera pitch resets on every scene spawn.
@@ -74,7 +75,7 @@ Every guess below is a first pass, for you to change.
 
 ## Known rough spots (seen in the browser runs)
 - The lower SCORE box (the skate combo) reads 0 through the Act I scenes; the scene score is in the box above it (e.g. ROOFS 3/4 · SCORE 11,250).
-- At the community center drop in 1.2 the camera squeezes in against Fony's back for a moment.
+- At the community center drop in 1.2 the review walk used to leave the camera pointed at the wall, so it shortened onto Fony's back. The walk now looks along the leg.
 - The 1.1 camera starts very close to the dust-sheeted cabinet on the dev jump.
 - Name labels over the block people were halved in size after they filled the 1.3B close-ups.
 

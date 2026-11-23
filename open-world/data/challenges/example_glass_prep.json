@@ -1,0 +1,20 @@
+{
+  "contract": "au.challenge",
+  "contract_version": 1,
+  "id": "example_glass_prep",
+  "title": "PLACEHOLDER Glass Row cameras",
+  "placeholder": true,
+  "story": [
+    {"speaker": "", "text": "PLACEHOLDER Paint the parking camera before the chase. This is not a script line."}
+  ],
+  "mechanic": "camera-prep",
+  "district": "glass_row_edge",
+  "spawn": {"mission": "p2_run", "checkpoint": "yard"},
+  "goals": [
+    {"id": "parking", "event": "camera_painted", "match": {"camera": "parking"}}
+  ],
+  "scoring": {},
+  "points": {"clear": 1},
+  "repeatable": true,
+  "reward": {"type": "placeholder", "id": "tbd"}
+}

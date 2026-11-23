@@ -85,6 +85,12 @@ func _data() -> void:
 	var z = Puppet.new()
 	t.add_child(z)
 	ok(z.body.texture != null and z.head_card.texture != null and z.face.texture != null and not z.body.double_sided and "ZR-0" in z.back_plate.text and z.back_plate.get_parent() == z.head, "Zero puppet: the sheet's layers as single-sided cards; the ZR-0 plate on the back of the CRT")
+	ok(z.get_node_or_null("ServoArmL/Elbow/Hand") != null and z.get_node_or_null("ServoArmR/Upper") != null and z.get_node_or_null("BodySeam") != null, "Zero puppet: servo arms and a jacket back")
+	z.stage("boot")
+	var bad: float = z.arm_l.rotation.z
+	z.shrug_t = z.JACKET_SHRUG_S
+	z._process(0.01)
+	ok(z.arm_l.rotation.z < bad and z.current == "boot", "Zero puppet: the shrug settles from badly to correctly")
 	z.stage("awake")
 	ok(z.visible and z.face.visible, "Zero puppet: stages")
 	z.queue_free()
@@ -93,6 +99,8 @@ func _data() -> void:
 	var room = load(str(e.scene)).instantiate()
 	t.add_child(room)
 	ok(room.get_node_or_null("BreakerLabel") != null and room.get_node_or_null("FuseCoinBox") != null and room.get_node_or_null("FuseToolbox") != null and room.get_node_or_null("FuseFixture") != null and room.get_node_or_null("ToppledCabinet") != null and room.get_node_or_null("BenchCRT") != null, "pack: breaker, three fuses, the toppled cabinet, the CRT on the workbench")
+	ok(room.get_node_or_null("Cabinet0/Cloth") != null and room.get_node_or_null("ToppledCabinet/CabinetShell") != null, "pack: the cabinets wear cloth and the climb reads as the fallen cabinet")
+	ok(P3.P3_SWEEP_S == 100.0 and P3.P3_SWEEP_FAIL == "last_fuse", "P.3: sweep length and the last-fuse reset are the named defaults")
 	room.queue_free()
 
 func _power_full() -> void:

@@ -40,6 +40,11 @@ func _alley() -> void:
 	# the back walls of Glass Row (north) and the garage block (south)
 	Blocks.solid(self, "AlleyWallNorth", Vector3(104.0, 4.0, 21.7), Vector3(44.0, 8.0, 0.6), BACKS)
 	Blocks.solid(self, "AlleyWallSouth", Vector3(104.0, 4.0, 36.3), Vector3(44.0, 8.0, 0.6), BACKS)
+	for i in 7:
+		Blocks.visual(self, "AlleyWindowN%d" % i, Vector3(88.0 + i * 5.2, 3.4, 22.08), Vector3(1.6, 1.1, 0.06), GLASS)
+		Blocks.visual(self, "AlleyWindowS%d" % i, Vector3(88.0 + i * 5.2, 3.4, 35.92), Vector3(1.6, 1.1, 0.06), GLASS.darkened(0.2))
+	Blocks.visual(self, "AlleyCorniceN", Vector3(104.0, 7.85, 22.05), Vector3(44.0, 0.22, 0.28), BACKS.lightened(0.08))
+	Blocks.visual(self, "AlleyCorniceS", Vector3(104.0, 7.85, 35.95), Vector3(44.0, 0.22, 0.28), BACKS.lightened(0.08))
 	for i in 6:
 		Blocks.visual(self, "AlleyStain%d" % i, Vector3(86.0 + i * 7.0, 0.02, 29.0 + (i % 2) * 1.4), Vector3(2.2, 0.02, 0.9), Color("5b605e"))
 	# the van in the middle lane: you cannot go straight through
@@ -47,6 +52,7 @@ func _alley() -> void:
 	Blocks.visual(self, "VanStripe", Vector3(112.0, 1.6, 26.68), Vector3(8.6, 0.4, 0.02), SERA_BLUE)
 	var van := Blocks.label(self, "DUSK DYNAMICS · COMFORT, DELIVERED.", Vector3(112.0, 2.1, 26.6), Color("2a3a44"), 22)
 	van.name = "VanLabel"
+	_van_shape(get_node("DeliveryVan"))
 	var sign := Blocks.label(self, "GLASS ROW · SERVICE ALLEY", Vector3(90.0, 5.2, 22.1), Palette.LABEL, 34)
 	sign.name = "AlleySign"
 	# dumpster by the dock ramp ("over the dumpster")
@@ -77,6 +83,10 @@ func _garage() -> void:
 	var cam := Node3D.new()
 	cam.name = "DroneCamera"
 	cam.position = Vector3(114.0, 5.0, 35.6)
+	cam.add_to_group("spray_target")
+	cam.add_to_group("painted_camera")
+	cam.set_meta("camera_id", "parking")
+	cam.set_meta("camera_lens_color", Color("ff3b1f"))
 	add_child(cam)
 	Blocks.visual(cam, "Body", Vector3.ZERO, Vector3(0.5, 0.35, 0.7), Color("2b2d30"))
 	Blocks.visual(cam, "Lens", Vector3(0, -0.05, -0.38), Vector3(0.18, 0.18, 0.06), Color("ff3b1f"))
@@ -122,20 +132,18 @@ func _plaza() -> void:
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	tag.position = Vector3(0, 3.0, 0)
 	kiosk.add_child(tag)
-	# early shoppers (placeholders) who watch him go by
+	# early shoppers. Capsules, not boxes. They are still stand-ins, not named residents.
 	var spots := [Vector3(142, 0, 7), Vector3(144.5, 0, 6.2), Vector3(156, 0, 8.5), Vector3(160, 0, 14), Vector3(138, 0, 40)]
+	var coats := [Color("d9a0b0"), Color("8fb3d9"), Color("e0d28f"), Color("a0d9b4"), Color("c8b8e8")]
 	for i in spots.size():
-		var s := Node3D.new()
-		s.name = "Shopper%d" % i
-		s.position = spots[i]
-		add_child(s)
-		Blocks.visual(s, "Body", Vector3(0, 0.85, 0), Vector3(0.5, 1.7, 0.35), [Color("d9a0b0"), Color("8fb3d9"), Color("e0d28f"), Color("a0d9b4"), Color("c8b8e8")][i])
-		Blocks.visual(s, "Head", Vector3(0, 1.85, 0), Vector3(0.32, 0.32, 0.32), Color("e6c3a5"))
+		_shopper("Shopper%d" % i, spots[i], coats[i])
 	# planters and a low wall line the plaza
 	for p in [Vector3(134, 0.45, 18), Vector3(134, 0.45, 32), Vector3(158, 0.45, 40)]:
 		Blocks.solid(self, "Planter%d" % int(p.z), p, Vector3(3.0, 0.9, 1.6), Color("6d6359"))
 	Blocks.solid(self, "PlazaWallSouth", Vector3(152.0, 0.6, 50.3), Vector3(52.0, 1.2, 0.6), Palette.PARK_WALL)
 	Blocks.solid(self, "PlazaWallEast", Vector3(178.3, 2.0, 25.0), Vector3(0.6, 4.0, 50.0), BACKS)
+	# The curb already stops the plaza. A taller face makes that edge read as the end of the street.
+	Blocks.visual(self, "PlazaEdge", Vector3(178.55, 6.0, 25.0), Vector3(0.35, 8.0, 50.0), BACKS.darkened(0.12))
 	# side walls of the plaza mouth so the alley reads as an alley
 	Blocks.solid(self, "PlazaMouthNorth", Vector3(127.0, 4.0, 11.0), Vector3(2.0, 8.0, 21.4), BACKS)
 	Blocks.solid(self, "PlazaMouthSouth", Vector3(127.0, 4.0, 43.3), Vector3(2.0, 8.0, 14.0), BACKS)
@@ -156,6 +164,8 @@ func _stairs_and_drain() -> void:
 	Blocks.visual(grate, "Frame", Vector3(0, 0.02, 0), Vector3(1.6, 0.03, 1.2), Color("2b2a28"))
 	for i in 5:
 		Blocks.visual(grate, "Bar%d" % i, Vector3(-0.6 + i * 0.3, 0.04, 0), Vector3(0.08, 0.03, 1.1), Color("5a5650"))
+	# The drop is still a fade (P2_CULVERT_IS_FADE). The mouth only shows where he goes.
+	Blocks.visual(grate, "Mouth", Vector3(0, 0.012, 0), Vector3(1.3, 0.02, 0.95), Color("0c0b0a"))
 	var lbl := Label3D.new()
 	lbl.name = "GrateTag"
 	lbl.text = "STORM DRAIN"
@@ -202,6 +212,56 @@ func _skyline() -> void:
 	for i in spots.size():
 		var h := 22.0 + float(i % 3) * 9.0
 		Blocks.visual(self, "Tower%d" % i, spots[i] + Vector3(0, h * 0.5, 0), Vector3(10.0, h, 10.0), TOWER if i % 2 == 0 else GLASS.darkened(0.25))
+
+func _shopper(node_name: String, pos: Vector3, coat: Color) -> void:
+	var s := Node3D.new()
+	s.name = node_name
+	s.position = pos
+	add_child(s)
+	var body := MeshInstance3D.new()
+	body.name = "Body"
+	var cap := CapsuleMesh.new()
+	cap.radius = 0.22
+	cap.height = 1.05
+	body.mesh = cap
+	body.position = Vector3(0, 0.78, 0)
+	body.material_override = Blocks.cel(coat, 3.0, 0.16)
+	s.add_child(body)
+	var head := MeshInstance3D.new()
+	head.name = "Head"
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.16
+	sphere.height = 0.32
+	head.mesh = sphere
+	head.position = Vector3(0, 1.48, 0)
+	head.material_override = Blocks.cel(Color("e6c3a5"), 3.0, 0.1)
+	s.add_child(head)
+
+## Cab and wheels on the existing van box. The box collision stays the lane block.
+func _van_shape(body: Node3D) -> void:
+	var plain: Array = []
+	for child in body.get_children():
+		if child is MeshInstance3D:
+			plain.append(child)
+	for child in plain:
+		(child as MeshInstance3D).visible = false
+	# Same footprint as the collision box (9 x 2.6 x 4.6). The cab is the west end, the end he approaches.
+	Blocks.visual(body, "Cargo", Vector3(1.15, 0.0, 0.0), Vector3(6.5, 2.5, 4.5), Color("e8e4dc"))
+	Blocks.visual(body, "Cab", Vector3(-3.35, -0.1, 0.0), Vector3(2.3, 2.3, 4.4), Color("d8d3cb"))
+	Blocks.visual(body, "Windshield", Vector3(-4.42, 0.25, 0.0), Vector3(0.08, 0.85, 3.3), GLASS)
+	for side in [-1.0, 1.0]:
+		for along in [-2.8, 2.6]:
+			var wheel := MeshInstance3D.new()
+			wheel.name = "Wheel"
+			var cyl := CylinderMesh.new()
+			cyl.top_radius = 0.38
+			cyl.bottom_radius = 0.38
+			cyl.height = 0.28
+			wheel.mesh = cyl
+			wheel.rotation.x = PI * 0.5
+			wheel.position = Vector3(along, -1.15, side * 2.35)
+			wheel.material_override = Blocks.cel(Color("1c1c1c"), 3.0, 0.08)
+			body.add_child(wheel)
 
 ## The screen nodes p2_run.gd borrows, by key.
 func screen(key: String) -> Node3D:

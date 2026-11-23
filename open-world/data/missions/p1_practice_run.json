@@ -189,7 +189,7 @@
       "prompt": {
         "verb": "OLLIE",
         "kb": "Q",
-        "pad": "not bound yet"
+        "pad": "B"
       },
       "on_done": [
         [
@@ -254,7 +254,7 @@
       "prompt": {
         "verb": "50-50",
         "kb": "Q to ollie onto the rail, nearly parallel",
-        "pad": "not bound yet"
+        "pad": "B to ollie onto the rail, nearly parallel"
       },
       "on_start": [
         [

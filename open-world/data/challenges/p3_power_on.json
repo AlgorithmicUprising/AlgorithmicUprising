@@ -1,0 +1,23 @@
+{
+  "contract": "au.challenge",
+  "contract_version": 1,
+  "id": "p3_power_on",
+  "title": "P.3 POWER ON",
+  "mechanic": "objectives",
+  "district": "solar_arcade_dark",
+  "spawn": {"mission": "p3_power_on"},
+  "source": {"path": "res://data/missions/p3_power_on.json", "id": "p3_power_on"},
+  "parameters": {
+    "fail_rule": "checkpoint",
+    "sweep_s": 100.0,
+    "fuses": ["coin_box", "toolbox", "fixture"]
+  },
+  "goals": [
+    {"id": "fuses", "event": "fuse", "count": 3},
+    {"id": "breaker", "event": "breaker"},
+    {"id": "sweep", "event": "sweep", "fail_on": true}
+  ],
+  "scoring": {},
+  "points": {"clear": 0},
+  "repeatable": true
+}

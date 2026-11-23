@@ -1,0 +1,17 @@
+{
+  "contract": "au.challenge",
+  "contract_version": 1,
+  "id": "a1_cool_roofs",
+  "title": "1.3 COOL ROOFS",
+  "mechanic": "objectives",
+  "district": "stillwater_flats",
+  "spawn": {"mission": "a1_cool_roofs"},
+  "source": {"path": "res://data/missions/act1_scenes.json", "id": "1.3"},
+  "parameters": {"fail_rule": "none", "flag": "a1_cool_roofs_done"},
+  "goals": [
+    {"id": "roofs", "event": "roof", "count": 4}
+  ],
+  "scoring": {},
+  "points": {"clear": 0},
+  "repeatable": true
+}

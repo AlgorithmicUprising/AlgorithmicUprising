@@ -440,6 +440,22 @@ func open_new() -> void:
 	name_edit.text_submitted.connect(func(_t): confirm_name())
 	box.add_child(name_edit)
 	box.add_child(_label("Fony is a placeholder name. Play under any name you like: your saves are kept under it.", 11, DIM))
+	var keys := GridContainer.new()
+	keys.name = "PadKeys"
+	keys.columns = 9
+	keys.add_theme_constant_override("h_separation", 6)
+	keys.add_theme_constant_override("v_separation", 4)
+	box.add_child(keys)
+	var alphabet := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	for i in alphabet.length():
+		var letter := alphabet.substr(i, 1)
+		var key := _button(keys, letter, _type_letter.bind(letter), 14)
+		key.focus_mode = Control.FOCUS_ALL
+	var back := _button(keys, "DEL", func():
+		if name_edit != null and name_edit.text.length() > 0:
+			name_edit.text = name_edit.text.substr(0, name_edit.text.length() - 1)
+	, 14)
+	back.focus_mode = Control.FOCUS_ALL
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 24)
 	box.add_child(row)
@@ -447,6 +463,11 @@ func open_new() -> void:
 	_button(row, "BACK", close_panel, 18).name = "Back"
 	name_edit.grab_focus.call_deferred()
 	name_edit.select_all.call_deferred()
+
+func _type_letter(letter: String) -> void:
+	if name_edit == null:
+		return
+	name_edit.text = (name_edit.text + letter).substr(0, Slots.NAME_MAX)
 
 func confirm_name() -> void:
 	var raw := name_edit.text if name_edit != null else Slots.DEFAULT_NAME

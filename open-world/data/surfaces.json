@@ -1,0 +1,9 @@
+{
+  "contract": "au.surface",
+  "contract_version": 1,
+  "open_call": "OPEN: frost friction_mult. 1 is asphalt. Lower keeps more speed on the patch. The owner has not picked the slip.",
+  "surfaces": {
+    "asphalt": {"friction_mult": 1.0},
+    "frost": {"friction_mult": 0.18}
+  }
+}
