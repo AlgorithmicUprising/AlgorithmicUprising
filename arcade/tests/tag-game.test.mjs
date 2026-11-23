@@ -7,6 +7,10 @@ const {TagGame,waveKinds,CAN_CAPACITY,MAX_CANS,HUNT_AFTER}=await import('data:te
 const step=(g,seconds)=>{for(let i=0;i<Math.round(seconds*60);i++)g.step(1/60)};
 const drone=(kind='scout',overrides={})=>({id:1,kind,x:484,y:177,target:6,phase:'lock',timer:2.5,lockTime:2.5,paint:0,photos:0,age:0,spin:0,touchCooldown:0,...overrides});
 const officer=(side,overrides={})=>({id:side+10,x:480+side*18,y:335,side,paint:0,tagged:false,timer:0,spin:0,...overrides});
+const reclaim=(g,index=6)=>{
+ const t=g.tags[index];g.x=t.x;g.y=index<12?190:488;g.facing=index<12?-Math.PI/2:Math.PI/2;g.paint=CAN_CAPACITY;
+ Object.assign(t,{fill:.99,ever:true,scraped:true,cooldown:0});g.input('spray',true);g.step(1/60);g.input('spray',false);assert.equal(t.fill,1);
+};
 
 test('spray follows facing and completes a wall tag once, at the paint cost',()=>{
  const g=new TagGame(1);g.x=484;g.y=190;g.facing=-Math.PI/2;g.input('spray',true);step(g,1);
@@ -35,6 +39,40 @@ test('a completed photo scrapes the tag and ends the game at 100 percent',()=>{
 test('Hoover captures adjacent bays; Watermarker extends the retag lock',()=>{
  const g=new TagGame(2);for(const i of [5,6,7]){g.tags[i].fill=1;g.tags[i].ever=true}g.drones=[drone('hoover',{timer:.001})];g.step(1/60);assert.equal(g.meter,30);assert.equal(g.stats.tagsScraped,3);
  g.drones=[drone('marker',{timer:.001})];g.step(1/60);assert.equal(g.tags[6].cooldown,8);assert.equal(g.meter,30);
+});
+test('police activate once on completed reclamation, after the censor cooldown and partial repaint',()=>{
+ const g=new TagGame(1);g.x=484;g.y=190;g.facing=-Math.PI/2;g.input('spray',true);step(g,1);g.input('spray',false);
+ assert.equal(g.tags[6].fill,1);assert.equal(g.police.length,0);
+ g.drones=[drone('scout',{timer:.001})];g.step(1/60);g.drones=[];
+ assert.equal(g.tags[6].scraped,true);assert.equal(g.tags[6].cooldown,3);assert.equal(g.police.length,0);
+ g.input('spray',true);step(g,2);assert.equal(g.tags[6].fill,0);assert.equal(g.police.length,0);
+ step(g,1.3);assert.ok(g.tags[6].fill>0&&g.tags[6].fill<1);assert.equal(g.police.length,0);
+ step(g,.7);assert.equal(g.tags[6].scraped,false);assert.equal(g.tags[6].fill,1);assert.equal(g.police.length,1);assert.equal(g.wanted,true);assert.equal(g.stats.scansTriggered,0);
+ step(g,.2);assert.equal(g.police.length,1);
+});
+test('each reclamation adds the next Fibonacci police wave even during an active pursuit',()=>{
+ const arrivals=[],g=new TagGame(1,(name,detail)=>{if(name==='game:police-arrived')arrivals.push(detail)});
+ const existing=officer(1,{id:999,x:930});g.police=[existing];g.wanted=true;let total=1;
+ for(const [index,count] of [1,2,3,5,8,13,21,34].entries()){
+  reclaim(g,index%2?18:6);total+=count;
+  assert.equal(g.police.length,total);assert.ok(g.police.includes(existing));assert.equal(g.alive,true);
+  assert.deepEqual(arrivals[index],{count,source:'reclaim'});
+ }
+ assert.equal(new Set(g.police.map(p=>p.id)).size,total);assert.equal(g.stats.scansTriggered,0);
+});
+test('reclamation escalation survives clearing police and changing art waves, and resets on retry',()=>{
+ const g=new TagGame(1);reclaim(g);assert.equal(g.police.length,1);
+ for(const p of g.police){p.tagged=true;p.timer=0}g.step(1/60);assert.equal(g.wanted,false);assert.equal(g.police.length,0);
+ g.breather=1/60;g.step(1/60);assert.equal(g.wave,2);reclaim(g,18);assert.equal(g.police.length,2);
+ g.reset();assert.equal(g.police.length,0);assert.equal(g.wanted,false);reclaim(g);assert.equal(g.police.length,1);reclaim(g);assert.equal(g.police.length,3);
+});
+test('reclamation reinforcements preserve a pending scan dispatch without advancing the sequence',()=>{
+ const arrivals=[],g=new TagGame(1,(name,detail)=>{if(name==='game:police-arrived')arrivals.push(detail)});
+ g.x=480;g.y=335;g.noFreshArtTime=HUNT_AFTER;g.drones=[drone('scout',{x:540,y:335,target:-1,phase:'scan',timer:.001})];g.step(1/60);
+ assert.equal(g.wanted,true);assert.ok(g.dispatchIn>0);assert.equal(g.stats.scansTriggered,1);
+ reclaim(g);assert.equal(g.police.length,1);assert.ok(g.dispatchIn>0);
+ step(g,2.1);assert.equal(g.police.length,3);assert.equal(g.dispatchIn,0);assert.deepEqual(arrivals,[{count:1,source:'reclaim'},{count:2,source:'scan'}]);
+ reclaim(g);assert.equal(g.police.length,5);assert.deepEqual(arrivals.at(-1),{count:2,source:'reclaim'});
 });
 test('paint pickups refill a can and release clears continuous input',()=>{
  const g=new TagGame(1);g.paint=20;g.x=270;g.y=335;g.step(1/60);assert.equal(g.paint,220);assert.equal(g.pickups.length,0);
