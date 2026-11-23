@@ -28,10 +28,13 @@ export class TagGame{
  props:Prop[]=[{kind:'dumpster',x:95,y:230,w:64,h:48},{kind:'crate',x:840,y:398,w:32,h:32},{kind:'crate',x:175,y:446,w:32,h:32}];
  stats:TagStats={wave:1,tagsSprayed:0,tagsScraped:0,dronesTagged:0,perfectWaves:0,policeTagged:0,scansTriggered:0};
  private seed:number;private randomState=1;private droneId=0;private queue:DroneKind[]=[];private spawned=0;private pickupTime=0;private scrapedThisWave=0;private axis:Point={x:0,y:0};private held=new Set<string>();
+ // Start at 1, 2 so every reclamation brings a larger Fibonacci wave.
+ private reclaimPolicePrevious=1;private reclaimPoliceNext=1;
  constructor(seed=1,private emit:(event:string,detail?:Record<string,unknown>)=>void=()=>{}){this.seed=seed||1;this.reset()}
  reset(){
   this.x=480;this.y=235;this.vx=this.vy=0;this.facing=-Math.PI/2;this.score=this.meter=0;this.paint=CAN_CAPACITY;this.wave=1;this.elapsed=this.waveElapsed=this.breather=this.stun=0;this.spraying=false;this.alive=true;this.combo=this.chainTime=this.pickupTime=this.scrapedThisWave=this.droneId=0;this.message='TAG WALLS. KEEP THEM DISTRACTED.';this.messageTime=5;this.shutter=0;this.axis={x:0,y:0};this.held.clear();this.randomState=this.seed;
   this.noFreshArtTime=this.dispatchIn=this.backupIn=this.arrestTime=0;this.wanted=false;this.cause='trained';this.police=[];
+  this.reclaimPolicePrevious=this.reclaimPoliceNext=1;
   this.tags=Array.from({length:24},(_,i)=>({id:i,x:52+(i%12)*72,y:i<12?151:525,fill:0,ever:false,scraped:false,cooldown:0}));
   this.drones=[];this.pickups=[{...spots[0],phase:0}];this.stats={wave:1,tagsSprayed:0,tagsScraped:0,dronesTagged:0,perfectWaves:0,policeTagged:0,scansTriggered:0};this.beginWave();
  }
@@ -79,9 +82,24 @@ export class TagGame{
   this.wanted=true;this.dispatchIn=2;this.stats.scansTriggered++;this.say('IDENTIFIED. POLICE INBOUND.',2);
   this.emit('game:identified',{dispatchSeconds:2});
  }
- private spawnPolice(side:number){this.police.push({id:++this.droneId,x:side<0?-30:990,y:Math.max(190,Math.min(480,this.y+side*65)),side,paint:0,tagged:false,timer:0,spin:0})}
+ private spawnPolice(side:number,y=Math.max(190,Math.min(480,this.y+side*65))){this.police.push({id:++this.droneId,x:side<0?-30:990,y,side,paint:0,tagged:false,timer:0,spin:0})}
+ private activatePolice(count:number,source:'scan'|'reclaim'){
+  this.wanted=true;this.backupIn=0;
+  for(let i=0;i<count;i++){
+   // Spread larger waves along both alley edges rather than stacking them.
+   const y=count>2?190+(Math.floor(i/2)+1)*290/(Math.ceil(count/2)+1):undefined;
+   this.spawnPolice(i%2===0?-1:1,y);
+  }
+  this.say(source==='reclaim'?'RECLAIMED. POLICE +'+count+'. TAG DIRECTLY.':'POLICE: TAG THEM DIRECTLY.',2);
+  this.emit('game:police-arrived',{count,source});
+ }
+ private callReclaimPolice(){
+  const count=this.reclaimPoliceNext;
+  this.reclaimPoliceNext+=this.reclaimPolicePrevious;this.reclaimPolicePrevious=count;
+  this.activatePolice(count,'reclaim');
+ }
  private updatePolice(dt:number){
-  if(this.dispatchIn>0){this.dispatchIn=Math.max(0,this.dispatchIn-dt);if(this.dispatchIn===0){this.spawnPolice(-1);this.spawnPolice(1);this.say('POLICE: TAG THEM DIRECTLY.',2);this.emit('game:police-arrived')}}
+  if(this.dispatchIn>0){this.dispatchIn=Math.max(0,this.dispatchIn-dt);if(this.dispatchIn===0)this.activatePolice(2,'scan')}
   for(let i=this.police.length-1;i>=0;i--){
    const p=this.police[i];
    if(p.tagged){p.timer-=dt;p.spin+=dt*7;if(p.timer<=0)this.police.splice(i,1);continue}
@@ -129,7 +147,13 @@ export class TagGame{
   if(this.spraying){
    this.paint=Math.max(0,this.paint-25*dt);
    const wall=this.tags.filter(t=>t.fill<1&&t.cooldown===0&&this.canSprayWall(t)).sort((a,b)=>Math.hypot(a.x-this.x,a.y-this.y)-Math.hypot(b.x-this.x,b.y-this.y))[0];
-   if(wall){wall.fill=Math.min(1,wall.fill+dt/.9);if(wall.fill>=1){const repeated=wall.ever;wall.scraped=false;wall.ever=true;this.stats.tagsSprayed++;this.add(repeated?50:100,'tag');this.say(repeated?'RECLAIMED.':'FRESH PAINT.',1.1);this.emit('game:tag',{segment:wall.id,repeated});}}
+   if(wall){
+    wall.fill=Math.min(1,wall.fill+dt/.9);
+    if(wall.fill>=1){
+     const repeated=wall.ever,reclaimed=wall.scraped;wall.scraped=false;wall.ever=true;this.stats.tagsSprayed++;this.add(repeated?50:100,'tag');this.say(repeated?'RECLAIMED.':'FRESH PAINT.',1.1);this.emit('game:tag',{segment:wall.id,repeated,reclaimed});
+     if(reclaimed)this.callReclaimPolice();
+    }
+   }
    if(this.paint===0){this.say("CAN'S DRY");this.emit('game:paint-empty')}
   }
   const wasHunting=this.noFreshArtTime>=HUNT_AFTER;
