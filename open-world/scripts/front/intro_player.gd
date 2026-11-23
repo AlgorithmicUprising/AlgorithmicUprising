@@ -131,6 +131,8 @@ func overlay_config() -> Dictionary:
 		"hold_ms": int(hold_s * 1000.0),
 		"card_ms": int(float(config.get("missing_card_s", 4.0)) * 1000.0),
 		"load_ms": int(float(web.get("load_timeout_s", 15.0)) * 1000.0),
+		"probe_ms": int(web.get("probe_ms", 2500)),
+		"placeholders": web.get("placeholders", []),
 		"stall_ms": int(float(web.get("stall_s", 8.0)) * 1000.0),
 		"giveup_ms": int(float(web.get("stall_giveup_s", 20.0)) * 1000.0),
 		"extra_ms": int(float(web.get("max_extra_s", 45.0)) * 1000.0),
@@ -160,6 +162,8 @@ func _overlay_js() -> String:
   var card = document.createElement('div');
   card.style.cssText = 'display:none;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:24px';
   card.innerHTML = '<div style="color:#c6ff3d;font:900 34px/1 Impact,Arial Black,sans-serif;letter-spacing:.04em">PROJECT ZERO</div><div style="font-size:15px;letter-spacing:.12em">INTRO VIDEO IN PRODUCTION</div><div style="color:#aaa592;font-size:12px">Glitchport. Heat dome day 9. A kid on a roof. A camera that watches back.</div>';
+  var badge = document.createElement('div'); badge.textContent = 'PLACEHOLDER CUT';
+  badge.style.cssText = 'display:none;position:absolute;left:18px;top:16px;padding:6px 10px;background:rgba(13,13,11,.82);border:1px solid #c6ff3d;color:#c6ff3d;font-size:12px;letter-spacing:.14em';
   var hint = document.createElement('div');
   hint.style.cssText = 'position:absolute;right:18px;bottom:16px;display:flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(13,13,11,.72);border:1px solid #3a3a31;color:#efeadb;font-size:12px;letter-spacing:.08em';
   var ring = document.createElement('span');
@@ -178,7 +182,7 @@ func _overlay_js() -> String:
   var fbSkip = document.createElement('button'); fbSkip.type = 'button'; fbSkip.id = 'pz-intro-skip'; fbSkip.textContent = 'SKIP INTRO \\u203A';
   fbSkip.style.cssText = 'font:inherit;font-size:13px;letter-spacing:.1em;padding:8px 14px;background:transparent;color:#efeadb;border:1px solid #6a6a5a;cursor:pointer';
   fb.appendChild(fbMsg); fb.appendChild(fbPlay); fb.appendChild(fbSkip);
-  o.appendChild(v); o.appendChild(card); o.appendChild(hint); o.appendChild(sound); o.appendChild(fb);
+  o.appendChild(v); o.appendChild(card); o.appendChild(badge); o.appendChild(hint); o.appendChild(sound); o.appendChild(fb);
   document.body.appendChild(o);
   var i = 0, held = 0, holding = 0, last = performance.now(), raf = 0, cardTimer = 0, loadTimer = 0, giveTimer = 0;
   var lastT = -1, lastMove = performance.now();
@@ -206,13 +210,37 @@ func _overlay_js() -> String:
       } else { clearTimeout(loadTimer); showFallback('tap'); }
     });
   }
-  function next() {
-    hideFallback();
-    if (i >= cfg.sources.length) { missing(); return; }
-    var s = cfg.sources[i++]; st.src = s; st.tried.push(s); st.state = 'loading'; lastT = -1; lastMove = performance.now();
+  function isRemote(s) { return /^https?:/i.test(s); }
+  function isPlaceholder(s) { return (cfg.placeholders || []).indexOf(s) >= 0; }
+  function startVideo(s) {
+    st.placeholder = isPlaceholder(s);
+    badge.style.display = st.placeholder ? 'block' : 'none';
     try { v.src = new URL(s, window.location.href).href; } catch (e) { st.errors.push('bad url: ' + s); next(); return; }
     armLoad();
     tryPlay();
+  }
+  // Same-origin files (the export copy, the ffmpeg stand-in) are probed with a tiny range
+  // request so a 404 moves on in probe_ms instead of sitting on the video element's load timeout.
+  // Remote cuts go straight to the video element: a fetch can fail CORS on a file the <video> can still play.
+  function next() {
+    hideFallback();
+    if (i >= cfg.sources.length) { missing(); return; }
+    var s = cfg.sources[i++]; st.src = s; st.tried.push(s); st.state = 'loading'; st.placeholder = false; badge.style.display = 'none'; lastT = -1; lastMove = performance.now();
+    if (isRemote(s)) { startVideo(s); return; }
+    var href = '';
+    try { href = new URL(s, window.location.href).href; } catch (e) { st.errors.push('bad url: ' + s); next(); return; }
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var probe = setTimeout(function () { if (ctrl) ctrl.abort(); }, cfg.probe_ms || 2500);
+    fetch(href, { headers: { 'Range': 'bytes=0-1' }, signal: ctrl ? ctrl.signal : undefined }).then(function (res) {
+      clearTimeout(probe);
+      try { if (res.body && res.body.cancel) res.body.cancel(); } catch (e2) {}
+      if (!res.ok && res.status !== 206) { st.errors.push('probe ' + res.status + ': ' + s); next(); return; }
+      startVideo(s);
+    }).catch(function () {
+      clearTimeout(probe);
+      st.errors.push('probe fail: ' + s);
+      next();
+    });
   }
   function missing() { st.state = 'card'; v.style.display = 'none'; card.style.display = 'flex'; cardTimer = setTimeout(function () { done('missing'); }, cfg.card_ms); }
   function done(r) {
@@ -229,7 +257,7 @@ func _overlay_js() -> String:
     if (st.state === 'done' || st.state === 'card' || !v.getAttribute('src')) return;
     st.errors.push('error ' + (v.error ? v.error.code : '?') + ': ' + st.src); clearTimeout(loadTimer); next();
   });
-  v.addEventListener('ended', function () { done('ended'); });
+  v.addEventListener('ended', function () { done(st.placeholder ? 'placeholder' : 'ended'); });
   v.addEventListener('playing', function () { if (st.state === 'loading') st.state = 'playing'; clearTimeout(loadTimer); if (st.fallback) hideFallback(); });
   v.addEventListener('timeupdate', function () { st.t = v.currentTime; st.dur = v.duration || 0; });
   fbPlay.addEventListener('pointerdown', function (e) { e.stopPropagation(); });

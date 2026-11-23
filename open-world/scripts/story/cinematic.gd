@@ -14,6 +14,13 @@ const Protagonist = preload("res://scripts/front/protagonist.gd")
 const JsonFile = preload("res://scripts/json_file.gd")
 const DEF_PATH := "res://data/missions/prologue_cinematics.json"
 const SKIP_HOLD_S := 1.0
+## P.2 / P.3 read holds. A picture change used to share its first frame with the next line.
+## The drone flies in over DRONE_ARRIVE_S (_drone_tick). These match the WAIT steps in prologue_cinematics.json.
+const SHOT_READ_S := 0.55
+const BILLBOARD_READ_S := 1.25
+const CHIME_READ_S := 1.1
+const DRONE_ARRIVE_S := 2.4
+const DRONE_LOOK_S := 0.55
 const BILLBOARDS := {
 	"forecast": [World.BB_FORECAST, Color("9fe8ff")],
 	"ad": [World.BB_AD, Color("ffb36b")],

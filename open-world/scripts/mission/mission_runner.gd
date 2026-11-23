@@ -38,6 +38,8 @@ var checkpoint := ""              # objective id retry() returns to ("" = the fi
 var time_on := 0.0                # seconds on the current required objective (hesitation clock)
 var fails := 0
 var completions := 0
+## P.1's script: the line can be repeated and a bail is a text, not a fail. Open call (not applied): the breakdown also floated a checkpoint fail for later missions.
+const P1_FAIL_RULE := "none"
 var fail_rule := "none"
 var fail_rule_status := "script"  # "script" (from the game script) or "proposed" (provisional, needs the user's OK)
 
@@ -48,7 +50,8 @@ func load_def(data: Dictionary) -> Dictionary:
 	var objs = data.get("objectives", null)
 	if typeof(objs) != TYPE_ARRAY or objs.is_empty():
 		return {"ok": false, "reason": "objectives"}
-	var rule := str(data.get("fail_rule", "none"))
+	var fallback := P1_FAIL_RULE if str(data.get("id", "")) == "p1_practice_run" else "none"
+	var rule := str(data.get("fail_rule", fallback))
 	if not FAIL_RULES.has(rule):
 		return {"ok": false, "reason": "fail_rule"}
 	var seen := {}
