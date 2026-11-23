@@ -167,25 +167,22 @@ func _face(color: Color, outline: float, fill: float, tex: Texture2D = null) -> 
 		mat.set_shader_parameter("texture_mix", 1.0)
 	return mat
 
-## A smooth box over the north deck. The ground slab ends on this seam, and a capsule landing
-## on that edge was sticking. The box stops short of the coping so the roll-in still catches.
+## Boxes over the whole deck. The deck mesh is visual, and its thickened shell sits about
+## half a metre under that surface, so a capsule that steps off the old narrow approach
+## drops into the shell and cannot climb back out. The boxes stop short of the coping
+## so the roll-in still catches, and the south box overlaps the yard slab so that seam
+## is not the trimesh edge.
 func _approach() -> void:
-	var coping_z := -(HZ + lip_u())
-	# North deck is the negative local Z side. Stop just short of the coping so the roll-in still catches.
-	var z1 := coping_z - 0.08
-	var z0 := -40.0
-	var body := StaticBody3D.new()
-	body.name = "BowlApproach"
-	body.collision_layer = 1
-	body.collision_mask = 1
-	var shape := BoxShape3D.new()
-	var depth := z1 - z0
-	shape.size = Vector3(HX * 2.0 + 6.0, 1.0, depth)
-	var col := CollisionShape3D.new()
-	col.shape = shape
-	col.position = Vector3(0.0, -0.5, (z0 + z1) * 0.5)
-	body.add_child(col)
-	add_child(body)
+	var lip := lip_u()
+	var gap := 0.08
+	var ix := HX + lip + gap
+	var iz := HZ + lip + gap
+	# South side reaches back over the yard slab (local z -40 is world z 10).
+	_deck_pad("DeckSouth", OUTER_MIN_X, -40.0, OUTER_MAX_X, -iz)
+	_deck_pad("DeckNorth", OUTER_MIN_X, iz, OUTER_MAX_X, OUTER_MAX_Z)
+	_deck_pad("DeckWest", OUTER_MIN_X, -iz, -ix, iz)
+	_deck_pad("DeckEast", ix, -iz, OUTER_MAX_X, iz)
+	_fill_deck_corners(ix, iz, lip + gap)
 	# Smooth flat bottom, slightly above the sunk trimesh.
 	var floor_body := StaticBody3D.new()
 	floor_body.name = "BowlFlat"
@@ -198,6 +195,44 @@ func _approach() -> void:
 	floor_col.position = Vector3(0.0, FLOOR_Y - 0.2, 0.0)
 	floor_body.add_child(floor_col)
 	add_child(floor_body)
+
+## The side pads leave the rounded corners of the deck inside their rectangular hole.
+## Fill any cell there whose whole footprint is still on the deck, past the coping.
+func _fill_deck_corners(ix: float, iz: float, limit: float) -> void:
+	var cell := 0.8
+	var n := 0
+	var x := -ix
+	while x < ix - 0.01:
+		var z := -iz
+		while z < iz - 0.01:
+			var x1 := minf(x + cell, ix)
+			var z1 := minf(z + cell, iz)
+			if _deck_cell(x, z, x1, z1, limit):
+				_deck_pad("DeckFill%d" % n, x, z, x1, z1)
+				n += 1
+			z += cell
+		x += cell
+
+func _deck_cell(x0: float, z0: float, x1: float, z1: float, limit: float) -> bool:
+	var mid := Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5)
+	for p in [Vector2(x0, z0), Vector2(x1, z0), Vector2(x0, z1), Vector2(x1, z1), mid]:
+		if sdf(p.x, p.y) < limit:
+			return false
+	return true
+
+## A 1 m box whose top is the deck plane (y = 0). x0 < x1, z0 < z1, local metres.
+func _deck_pad(node_name: String, x0: float, z0: float, x1: float, z1: float) -> void:
+	var body := StaticBody3D.new()
+	body.name = node_name
+	body.collision_layer = 1
+	body.collision_mask = 1
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(x1 - x0, 1.0, z1 - z0)
+	var col := CollisionShape3D.new()
+	col.shape = shape
+	col.position = Vector3((x0 + x1) * 0.5, -0.5, (z0 + z1) * 0.5)
+	body.add_child(col)
+	add_child(body)
 
 func _mesh(node_name: String, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, mat: Material) -> void:
 	if verts.is_empty():

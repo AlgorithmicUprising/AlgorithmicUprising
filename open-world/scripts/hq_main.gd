@@ -107,6 +107,8 @@ func _process(_delta: float) -> void:
 		target = _nearest(2.5)
 	var raw: String = target.prompt() if target != null and target.has_method("prompt") and not story_hides_prompts() else ""
 	prompt_label.text = InputBindings.prompt_text(raw)
+	if story != null and story.hud != null and story.hud.has_method("set_prompts_hidden"):
+		story.hud.set_prompts_hidden(flow.paused)
 	_sync_boost()
 	if player.look_captured and not _can_look():
 		_release_look()
@@ -281,6 +283,8 @@ func hide_dialogue() -> void:
 
 func show_pause(show_panel: bool) -> void:
 	pause_panel.visible = show_panel
+	if story != null and story.hud != null and story.hud.has_method("set_prompts_hidden"):
+		story.hud.set_prompts_hidden(show_panel)
 	if show_panel and invert_check != null:
 		invert_check.set_pressed_no_signal(player.look_invert_y)
 	if show_panel and controls_button != null:

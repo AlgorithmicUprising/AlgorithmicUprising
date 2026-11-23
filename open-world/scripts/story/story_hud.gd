@@ -26,6 +26,8 @@ var protagonist_tag := "FONY"
 var talk_label: Label
 var prompt_panel: PanelContainer
 var prompt_label: Label
+var prompt_held := ""
+var prompts_hidden := false
 var card_panel: PanelContainer
 var card_label: Label
 var toast_label: Label
@@ -273,8 +275,19 @@ func hush() -> void:
 	talk_panel.visible = false
 
 func prompt(text: String) -> void:
+	prompt_held = text
 	prompt_label.text = InputBindings.prompt_text(text)
-	prompt_panel.visible = text != ""
+	_apply_prompt()
+
+## The pause menu sits on this prompt. Hide it while paused and put it back after.
+func set_prompts_hidden(hidden: bool) -> void:
+	prompts_hidden = hidden
+	_apply_prompt()
+
+func _apply_prompt() -> void:
+	if prompt_panel == null:
+		return
+	prompt_panel.visible = prompt_held != "" and not prompts_hidden
 
 func card(text: String) -> void:
 	card_label.text = text
