@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -56,6 +56,7 @@ if (process.env.AU_INTRO_PLACEHOLDER !== '0') {
     text('THE REAL CUT REPLACES THIS FILE', 16, 400),
     `drawtext=fontfile='${font}':text='%{eif\\:6-t\\:d}':fontsize=40:fontcolor=0xff3b1f:x=(w-text_w)/2:y=480`,
   ].join(',');
+  const placeholder = join(media, 'intro-placeholder.mp4');
   const status = await run('ffmpeg', [
     '-hide_banner', '-loglevel', 'error', '-y',
     '-f', 'lavfi', '-i', 'color=c=0x0b0a10:s=1280x720:r=30:d=6',
@@ -63,15 +64,27 @@ if (process.env.AU_INTRO_PLACEHOLDER !== '0') {
     '-vf', filter, '-af', 'volume=0.15,afade=t=out:st=5:d=1',
     '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-profile:v', 'main', '-crf', '30',
     '-c:a', 'aac', '-b:a', '64k', '-movflags', '+faststart', '-shortest',
-    join(media, 'intro-placeholder.mp4'),
+    placeholder,
   ]);
-  if (status !== 0) console.warn('intro: ffmpeg placeholder failed (' + status + '); the game will show the in-production card');
+  // Do not ship a web build without the last-resort fallback. CI used to warn and
+  // continue when ffmpeg was missing (exit 127), so GitHub Pages and the site went
+  // out with no media/intro/*.mp4.
+  if (status !== 0) {
+    console.error('intro: ffmpeg placeholder failed (' + status + '). Install ffmpeg (CI: apt-get install ffmpeg) and rerun.');
+    process.exit(status === 127 ? 127 : 1);
+  }
+  const info = await stat(placeholder).catch(() => null);
+  if (!info?.isFile() || info.size < 10000) {
+    console.error('intro: placeholder missing or too small after ffmpeg:', info?.size ?? 0);
+    process.exit(1);
+  }
+  console.log('intro: wrote', placeholder, info.size, 'bytes');
 }
 
 function run(command, args) {
   return new Promise((resolve) => {
     const child = spawn(command, args, { cwd: world, stdio: 'inherit' });
     child.on('exit', (status) => resolve(status ?? 1));
-    child.on('error', () => resolve(127)); // e.g. ffmpeg not installed: carry on without the placeholder
+    child.on('error', () => resolve(127)); // e.g. ffmpeg not installed
   });
 }

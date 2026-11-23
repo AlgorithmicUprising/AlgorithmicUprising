@@ -55,3 +55,20 @@ test('No-art player scan dispatches police; direct spray breaks a hold and arres
  await el.screenshot({path:`test-results/screenshots/tag-busted-${info.project.name}.png`});
  await el.locator('[part=again]').click();expect(await el.evaluate(e=>e.game.world.police.length)).toBe(0);expect(await el.evaluate(e=>e.game.world.cans)).toBe(1);expect(await el.evaluate(e=>e.game.world.wanted)).toBe(false);
 });
+test('Completed censored posts activate Fibonacci reinforcements and retry starts at one',async({page},info)=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));const el=await start(page);
+ await el.evaluate(e=>{e.arrivals=[];e.addEventListener('game:police-arrived',ev=>e.arrivals.push(ev.detail));e.game.world.breather=60});
+ let total=0;
+ for(const count of [1,2,3,5,8,13]){
+  await el.evaluate(e=>{const g=e.game.world;g.x=484;g.y=190;g.vx=g.vy=0;g.facing=-Math.PI/2;g.paint=600;Object.assign(g.tags[6],{fill:.99,ever:true,scraped:true,cooldown:0})});
+  await page.keyboard.down(' ');total+=count;
+  await expect.poll(()=>el.evaluate(e=>e.game.world.police.length),{intervals:[20]}).toBe(total);await page.keyboard.up(' ');
+  expect(await el.evaluate(e=>e.arrivals.at(-1))).toMatchObject({count,source:'reclaim'});
+ }
+ expect(await el.evaluate(e=>e.game.world.stats.scansTriggered)).toBe(0);expect(await el.evaluate(e=>e.game.world.wanted)).toBe(true);
+ await el.screenshot({path:`test-results/screenshots/tag-fibonacci-${info.project.name}.png`});
+ await el.evaluate(e=>e.game.world.alive=false);await expect(el.locator('[part=again]')).toBeVisible();await el.locator('[part=again]').click();
+ expect(await el.evaluate(e=>e.game.world.police.length)).toBe(0);
+ await el.evaluate(e=>{const g=e.game.world;g.x=484;g.y=190;g.facing=-Math.PI/2;Object.assign(g.tags[6],{fill:.99,ever:true,scraped:true,cooldown:0})});
+ await page.keyboard.down(' ');await expect.poll(()=>el.evaluate(e=>e.game.world.police.length),{intervals:[20]}).toBe(1);await page.keyboard.up(' ');expect(errors).toEqual([]);
+});
