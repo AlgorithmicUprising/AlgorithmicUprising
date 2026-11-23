@@ -15,6 +15,7 @@ const JsonFile = preload("res://scripts/json_file.gd")
 const Protagonist = preload("res://scripts/front/protagonist.gd")
 const World = preload("res://scripts/story/story_world.gd")
 const Kit = preload("res://scripts/story/act1_kit.gd")
+const Spray = preload("res://scripts/spray.gd")
 const Blocks = preload("res://scripts/world_blocks.gd")
 const Hud = preload("res://scripts/story/story_hud.gd")
 const DEF_PATH := "res://data/missions/act1_scenes.json"
@@ -293,6 +294,34 @@ func _step_tick(delta: float) -> void:
 
 # ------------------------------------------------------------------ goals (spray, talk, reach)
 
+## A short can on the board while a paint goal is in reach. Not a character.
+func _spray_can(show: bool) -> void:
+	var pl = host.player
+	if pl == null:
+		return
+	var can := pl.get_node_or_null("SprayCan") as MeshInstance3D
+	if not show:
+		if can != null:
+			can.visible = false
+		return
+	if can == null:
+		can = MeshInstance3D.new()
+		can.name = "SprayCan"
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.04
+		mesh.bottom_radius = 0.045
+		mesh.height = 0.16
+		can.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		can.material_override = mat
+		can.position = Vector3(0.28, 0.9, -0.15)
+		pl.add_child(can)
+	can.visible = true
+	var mat := can.material_override as StandardMaterial3D
+	if mat != null:
+		mat.albedo_color = Spray.color()
+
 func goals() -> Array:
 	return step.get("goals", [])
 
@@ -331,7 +360,11 @@ func _goals_tick(delta: float) -> void:
 		complete(str(g.id))
 		return
 	host.hud.prompt(str(g.get("verb", "E")))
-	if Input.is_action_just_pressed("interact"):
+	_spray_can(g.has("paint"))
+	# A painted goal is the spray can: interact still works, and so does the spray button.
+	if Input.is_action_just_pressed("interact") or (g.has("paint") and Input.is_action_just_pressed("spray")):
+		if g.has("paint") and host.player.has_method("try_spray"):
+			host.player.try_spray()
 		complete(str(g.id))
 
 ## Completes a goal (E, an auto zone, the autopilot or a test).

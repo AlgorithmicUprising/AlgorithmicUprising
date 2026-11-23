@@ -325,6 +325,17 @@ func _scene_1_3() -> void:
 	_put(main, [290.0, -60.0], 0.5)
 	await frames(3)
 	ok(pl.global_position.y > 5.0 and a.log.has("reset:fell") and Vector2(pl.global_position.x - 282.0, pl.global_position.z + 70.0).length() < 1.0, "1.3: falling off puts him back on the last white roof")
+	_put(main, [298.0, -70.0], 6.6)
+	await frames(3)
+	ok(pl.get_node_or_null("SprayCan") != null and pl.get_node("SprayCan").visible, "1.3: a spray can shows on a roof that still needs paint")
+	var spray := InputEventAction.new()
+	spray.action = "spray"
+	spray.pressed = true
+	Input.parse_input_event(spray)
+	await frames(3)
+	spray.pressed = false
+	Input.parse_input_event(spray)
+	ok(a.done_goals.has("roof1"), "1.3: the spray button coats the next roof")
 	_put(main, [324.0, -70.0], 6.6)
 	await frames(3)
 	ok(a.done_goals.has("billboard_seen"), "1.3: near the billboard Zero describes the anatomy of a lie")
