@@ -66,6 +66,7 @@ var budget := 0                    # 1.2: bags the money still buys
 var delivered := 0                 # 1.2: bags delivered
 var score := 0
 var vision := false                # 1.4B: Zero Vision overlay on
+var topic_i := 0
 var vision_used := false
 var root: Node3D                   # per-scene props (drones, crowd, hologram, strings)
 var drones: Array = []             # [{node, path, i, speed}]
@@ -213,6 +214,9 @@ func _next_step() -> void:
 	checkpoint = ""
 	waiting = false
 	host.hud.prompt("")
+	if host.player != null:
+		host.player.pad_menu = false
+	topic_i = 0
 	if step_i >= steps.size():
 		state = "between"
 		state_left = 0.4
@@ -410,6 +414,7 @@ func _make_drones(list: Array) -> void:
 		var n: Node3D = World.enforcement_drone(root)
 		var path: Array = d.path
 		n.global_position = Vector3(float(path[0][0]), float(d.get("y", 4.0)), float(path[0][1]))
+		n.add_to_group("spray_target")
 		drones.append({"node": n, "path": path, "i": 1, "speed": float(d.get("speed", 3.0)), "y": float(d.get("y", 4.0))})
 
 func _clear_drones() -> void:
@@ -422,6 +427,8 @@ func _drones(delta: float) -> void:
 	for d in drones:
 		var n: Node3D = d.node
 		if not is_instance_valid(n) or d.has("chase"):
+			continue
+		if _spray_frozen(n, delta):
 			continue
 		var tgt: Array = d.path[d.i]
 		var to := Vector3(float(tgt[0]), d.y, float(tgt[1])) - n.global_position
@@ -437,6 +444,14 @@ func in_mist(p: Vector3) -> bool:
 			return true
 	return false
 
+## Spray paint holds a patrol drone in place and takes its eyes off the player.
+func _spray_frozen(n: Node3D, delta: float) -> bool:
+	var left: float = float(n.get_meta("spray_left", 0.0))
+	if left <= 0.0:
+		return false
+	n.set_meta("spray_left", maxf(0.0, left - delta))
+	return true
+
 func seen_by_drone() -> bool:
 	var p: Vector3 = host.player.global_position
 	if in_mist(p):
@@ -444,7 +459,7 @@ func seen_by_drone() -> bool:
 	if in_hazard(p):
 		return true
 	for d in drones:
-		if is_instance_valid(d.node) and Vector2(p.x - d.node.global_position.x, p.z - d.node.global_position.z).length() < float(step.get("det_r", 6.0)):
+		if is_instance_valid(d.node) and float(d.node.get_meta("spray_left", 0.0)) <= 0.0 and Vector2(p.x - d.node.global_position.x, p.z - d.node.global_position.z).length() < float(step.get("det_r", 6.0)):
 			return true
 	return false
 
@@ -535,14 +550,29 @@ func _defend_tick(delta: float) -> void:
 # ------------------------------------------------------------------ 1.1: the topic menu
 
 func _topics_tick() -> void:
+	host.player.pad_menu = true
 	var list: Array = step.get("topics", [])
+	var open: Array = []
+	for tp in list:
+		if not topic_done.has(str(tp.key)):
+			open.append(tp)
+	if open.is_empty() or topic_i >= open.size() or topic_i < 0:
+		topic_i = 0
 	var text := ""
 	for i in list.size():
 		var tp: Dictionary = list[i]
-		if not topic_done.has(str(tp.key)):
-			text += "%d  %s    " % [i + 1, str(tp.label)]
+		if topic_done.has(str(tp.key)):
+			continue
+		var mark := "> " if not open.is_empty() and str(open[topic_i].key) == str(tp.key) else "  "
+		text += "%s%d  %s    " % [mark, i + 1, str(tp.label)]
 	text += "E  " + str(step.get("done_label", "done"))
 	host.hud.prompt(text)
+	if Input.is_action_just_pressed("ui_down") or Input.is_action_just_pressed("ui_right"):
+		topic_i = (topic_i + 1) % maxi(open.size(), 1)
+	elif Input.is_action_just_pressed("ui_up") or Input.is_action_just_pressed("ui_left"):
+		topic_i = (topic_i - 1 + open.size()) % maxi(open.size(), 1)
+	elif not open.is_empty() and (Input.is_action_just_pressed("session_confirm") or Input.is_action_just_pressed("ui_accept")):
+		ask(str(open[topic_i].key))
 	for i in list.size():
 		if _key_edge(KEY_1 + i):
 			ask(str(list[i].key))
@@ -687,6 +717,17 @@ func _budget_check() -> void:
 		log.append("budget_reset")
 
 # ------------------------------------------------------------------ 1.4B: raise the phone (Zero Vision)
+
+## Z / L3. Before the unlock, only the scripted raise accepts it. After, it toggles the overlay.
+func toggle_vision() -> bool:
+	if host == null or host.flow == null:
+		return false
+	if state == "step" and str(step.get("do", "")) == "raise":
+		return raise_phone()
+	if not host.flow.save.flag("zero_vision_unlocked"):
+		return false
+	_vision(not vision)
+	return true
 
 func raise_phone() -> bool:
 	if state != "step" or waiting or str(step.get("do", "")) != "raise":

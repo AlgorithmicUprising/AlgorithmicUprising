@@ -220,11 +220,19 @@ func _triggers() -> void:
 	var cr: Array = cam.get("rect", [0, 0, 0, 0])
 	if not fired.has("camera") and p.x >= cr[0] and p.x <= cr[2] and p.z >= cr[1] and p.z <= cr[3]:
 		fired["camera"] = true
-		chase.spot()
-		host.sfx.play("alert")
-		host.hud.toast("SPOTTED · DRONE CAMERA")
-		host._say_all(_fill(def.lines.camera), "", "placeholder")
-		log.append("camera")
+		var blinded: bool = false
+		for node in host.get_tree().get_nodes_in_group("spray_target"):
+			if str(node.name) == "DroneCamera" and float(node.get_meta("spray_left", 0.0)) > 0.0:
+				blinded = true
+		if blinded:
+			host.hud.toast("CAMERA BLINDED")
+			log.append("camera:blinded")
+		else:
+			chase.spot()
+			host.sfx.play("alert")
+			host.hud.toast("SPOTTED · DRONE CAMERA")
+			host._say_all(_fill(def.lines.camera), "", "placeholder")
+			log.append("camera")
 	if not fired.has("plaza") and p.x > 128.0:
 		fired["plaza"] = true
 		host._say_all(_fill(def.lines.plaza))

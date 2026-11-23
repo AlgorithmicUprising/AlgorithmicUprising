@@ -1,5 +1,9 @@
 extends CharacterBody3D
 
+const TrickSelect = preload("res://scripts/trick_select.gd")
+const BoostMeter = preload("res://scripts/boost_meter.gd")
+const Spray = preload("res://scripts/spray.gd")
+
 const WALK_SPEED := 4.5
 const SKATE_SPEED := 9.0
 const JUMP_VELOCITY := 6.2
@@ -192,7 +196,15 @@ var external_camera_yaw_delta := 0.0
 var look_captured := false
 var look_sensitivity := 0.0028
 var look_invert_y := true
+var look_invert_x := false
+var stick_invert_y := false
 var look_invert_chosen := false
+var pad_menu := false
+var boost = null
+var spray_cool := 0.0
+var spray_puff: Node3D
+var spray_puff_t := 0.0
+var _boost_was := false
 var _mouse_pending := Vector2.ZERO
 var spawn_position := Vector3.ZERO
 var spawn_yaw := 0.0
@@ -237,6 +249,7 @@ func _ready() -> void:
 	floor_max_angle = deg_to_rad(76.0)
 	camera_yaw = rotation.y
 	_load_look()
+	boost = BoostMeter.new()
 	spawn_position = global_position
 	spawn_yaw = rotation.y
 	last_safe_position = spawn_position
@@ -286,7 +299,8 @@ func push_mouse_look(relative: Vector2) -> void:
 	if get_tree() != null and get_tree().paused:
 		return
 	var vertical := -relative.y if look_invert_y else relative.y
-	_mouse_pending += Vector2(relative.x, vertical)
+	var horizontal := -relative.x if look_invert_x else relative.x
+	_mouse_pending += Vector2(horizontal, vertical)
 
 func clear_mouse_look() -> void:
 	_mouse_pending = Vector2.ZERO
@@ -298,6 +312,14 @@ func adjust_look_sensitivity(step: float) -> void:
 func choose_invert_y(value: bool) -> void:
 	look_invert_y = value
 	look_invert_chosen = true
+	_save_look()
+
+func choose_invert_x(value: bool) -> void:
+	look_invert_x = value
+	_save_look()
+
+func choose_stick_invert_y(value: bool) -> void:
+	stick_invert_y = value
 	_save_look()
 
 func camera_flat_forward() -> Vector3:
@@ -335,6 +357,10 @@ func _load_look() -> void:
 	if bool(parsed.get("invert_chosen", false)):
 		look_invert_y = bool(parsed.get("invert_y", true))
 		look_invert_chosen = true
+	look_invert_x = bool(parsed.get("invert_x", false))
+	stick_invert_y = bool(parsed.get("stick_invert_y", false))
+	if parsed.has("stick_look"):
+		InputBindings.stick_look = clampf(float(parsed.get("stick_look", 1.0)), 0.4, 2.2)
 
 func _save_look() -> void:
 	var file := FileAccess.open("user://au-look-v1.json", FileAccess.WRITE)
@@ -343,7 +369,10 @@ func _save_look() -> void:
 	file.store_string(JSON.stringify({
 		"sensitivity": look_sensitivity,
 		"invert_y": look_invert_y,
+		"invert_x": look_invert_x,
+		"stick_invert_y": stick_invert_y,
 		"invert_chosen": look_invert_chosen,
+		"stick_look": InputBindings.stick_look,
 	}))
 
 func respawn() -> void:
@@ -376,6 +405,10 @@ func begin_grind(rail, along: float) -> void:
 func _physics_process(delta: float) -> void:
 	if qp_state == "commit" or qp_state == "roll":
 		qp_elapsed += delta
+	if boost != null:
+		boost.tick(delta)
+	spray_cool = maxf(0.0, spray_cool - delta)
+	_tick_spray_puff(delta)
 	_simulate(delta)
 	_keep_in_bounds()
 	_pose(delta)
@@ -454,7 +487,7 @@ func _simulate(delta: float) -> void:
 	if ramp_mode == "bowl":
 		_bowl_step(delta)
 		return
-	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
+	var jumping := _wants_jump()
 	external_jump = false
 	if is_on_floor() and jumping:
 		velocity.y = JUMP_VELOCITY
@@ -469,6 +502,20 @@ func _simulate(delta: float) -> void:
 	if grip_tape and skating:
 		accel *= GRIP_TAPE_PUSH_MULT
 		friction *= GRIP_TAPE_FRICTION_MULT
+	if input_enabled and not external_move_active and not pad_menu:
+		var push := Input.get_action_strength("push") if InputMap.has_action("push") else 0.0
+		var brake := Input.get_action_strength("brake") if InputMap.has_action("brake") else 0.0
+		if skating and push > 0.0:
+			accel *= 1.0 + 0.35 * push
+		if brake > 0.0:
+			friction *= 1.0 + 2.2 * brake
+		var power := 0.0
+		if boost != null and skating:
+			power = boost.spend(delta, Input.is_action_pressed("boost"))
+			speed *= boost.speed_mult(power)
+		if power > 0.0 and not _boost_was:
+			InputBindings.rumble(0.25, 0.55, 0.12)
+		_boost_was = power > 0.0
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	if pipe_air:
 		pass    # Phase 2: off the curve he flies ballistic; no air steering, no turning to the stick
@@ -533,18 +580,23 @@ func _wish() -> Vector3:
 		wish = wish.normalized()
 	return wish
 
+func _wants_jump() -> bool:
+	return external_jump or (not external_move_active and not pad_menu and Input.is_action_just_pressed("jump"))
+
 func _hardware_move() -> Vector2:
 	var vector := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	return Vector2(vector.x, -vector.y)
+	return Vector2(InputBindings.curve(vector.x), -InputBindings.curve(vector.y))
 
 func _update_camera(delta: float) -> void:
 	camera_yaw += external_camera_yaw_delta
 	external_camera_yaw_delta = 0.0
 	if not external_move_active:
-		var stick_right := Input.get_action_strength("camera_right") - Input.get_action_strength("camera_left")
-		var stick_down := Input.get_action_strength("camera_down") - Input.get_action_strength("camera_up")
-		camera_yaw -= stick_right * 1.7 * delta
-		camera_pitch += stick_down * 1.0 * delta
+		var stick_right := InputBindings.curve(Input.get_action_strength("camera_right") - Input.get_action_strength("camera_left"))
+		var stick_down := InputBindings.curve(Input.get_action_strength("camera_down") - Input.get_action_strength("camera_up"))
+		var yaw_sign := -1.0 if look_invert_x else 1.0
+		var pitch_sign := -1.0 if stick_invert_y else 1.0
+		camera_yaw -= stick_right * 1.7 * InputBindings.stick_look * yaw_sign * delta
+		camera_pitch += stick_down * 1.0 * InputBindings.stick_look * pitch_sign * delta
 		camera_yaw -= _mouse_pending.x * look_sensitivity
 		camera_pitch += _mouse_pending.y * look_sensitivity
 	_mouse_pending = Vector2.ZERO
@@ -654,7 +706,11 @@ func grind_check(rail) -> String:
 	# a down rail falls away under an ollie's arc (at 9 m/s a 0.4 slope drops 3.6 m/s), so it catches from higher up; the lock
 	# then eases him down onto it (GRIND_SNAP_S) instead of a pop
 	var up_window: float = GRIND_CATCH_UP + GRIND_DOWN_CATCH * absf(float(rail.drop)) / maxf(length, 0.001)
-	if absf(lateral) > float(rail.catch_r) or above > up_window or above < -GRIND_CATCH_DOWN or velocity.y > 0.5:
+	var catch_r: float = float(rail.catch_r)
+	if _grind_held():
+		catch_r += 0.45
+		up_window += 0.25
+	if absf(lateral) > catch_r or above > up_window or above < -GRIND_CATCH_DOWN or velocity.y > 0.5:
 		return ""
 	if along < GRIND_END_MARGIN * 0.5 or along > length - GRIND_END_MARGIN:
 		return ""
@@ -703,6 +759,8 @@ func _grind_lock(rail, along_m: float, how: String, angle := 0.0) -> void:
 	grind_last = {"trick": grind_trick, "rail": str(rail.name), "kind": str(rail.kind), "entry_speed": absf(grind_v),
 		"angle_deg": angle, "start_along": grind_along, "how": how, "msec": Time.get_ticks_msec()}
 	_event("grind_lock", {"rail": str(rail.name), "speed": absf(grind_v), "angle": angle})
+	_note_boost_trick()
+	InputBindings.rumble(0.35, 0.55, 0.08)
 	var before := global_position
 	grind_snap = Vector3.ZERO
 	grind_snap_t = 0.0
@@ -727,23 +785,20 @@ func _step_grind(delta: float) -> void:
 	if rail == null or not is_instance_valid(rail):
 		grind = null
 		return
-	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
+	var jumping := _wants_jump()
 	external_jump = false
-	var popping := trick_request == "ollie" or (not external_move_active and InputMap.has_action("trick_ollie") and Input.is_action_just_pressed("trick_ollie"))
+	var popping := trick_request == "ollie"
 	var asked := trick_request
 	trick_request = ""
 	wish_len = 0.0
 	if jumping or popping:
 		_leave_grind(true, JUMP_VELOCITY if jumping else OLLIE_POP_VELOCITY)
 		return
-	if asked == "" and not external_move_active:
-		if InputMap.has_action("trick_grab") and Input.is_action_just_pressed("trick_grab"):
-			asked = "grab"
-		elif InputMap.has_action("trick_flip") and Input.is_action_just_pressed("trick_flip"):
-			asked = "flip"
 	if asked == "grab" or asked == "flip":
 		var want := "5o" if asked == "grab" else "board"
 		set_grind_trick("5050" if grind_trick == want else want)
+	elif asked == "" and not external_move_active and not pad_menu and Input.is_action_just_pressed("trick"):
+		_apply_trick_button()
 	grind_time += delta
 	grind_clip_t += delta
 	grind_snap_t += delta
@@ -838,6 +893,8 @@ func _leave_grind(jumped: bool, pop := JUMP_VELOCITY) -> void:
 		grind_land_pending = true
 		grind_last["exit"] = "end"
 		_event("grind_end", {"speed": speed})
+		if boost != null:
+			boost.note_grind(float(grind_last.get("distance", 0.0)))
 
 ## Bad approach, a stall, or running into the rail: same bail as a bad landing (Phase 1e), he ends up beside the rail.
 func _grind_bail(rail, reason: String, along: float, lateral: float, angle := -1.0) -> void:
@@ -868,6 +925,9 @@ func _grind_bail(rail, reason: String, along: float, lateral: float, angle := -1
 		"was_grinding": was_on, "msec": Time.get_ticks_msec()}
 	grind_snap = Vector3.ZERO
 	_event("grind_bail", {"reason": reason, "angle": angle})
+	if boost != null:
+		boost.note_bail()
+	InputBindings.rumble(0.85, 0.4, 0.16)
 	say("BAIL!", "bail")
 
 var trick := ""
@@ -885,8 +945,98 @@ var visual_demo := ""
 var demo_clock := 0.0
 var demo_cam: Camera3D
 
+func _input(event: InputEvent) -> void:
+	InputBindings.note(event)
+	if event.is_action_pressed("spray") and look_captured and input_enabled and not pad_menu and not external_move_active:
+		try_spray()
+
 func request_trick(kind: String) -> void:
 	trick_request = kind
+
+func _trick_context() -> String:
+	if grind != null:
+		return "grind"
+	if ramp_mode == "ride" or ramp_mode == "bowl" or (qp_state != "" and qp_state != "roll"):
+		return "ramp"
+	if not is_on_floor() or pipe_air:
+		return "air"
+	return "flat"
+
+## The one trick button. On a rail it picks the grind for this tier. Everywhere else it returns
+## ollie / flip / grab for the existing trick starter. A backside air fires itself.
+func _apply_trick_button() -> String:
+	var chain: int = boost.chain if boost != null else 0
+	var picked: String = TrickSelect.pick(_trick_context(), chain)
+	if grind != null:
+		if picked in ["5050", "5o", "board"]:
+			var before := grind_trick
+			set_grind_trick(picked)
+			if grind_trick != before:
+				_note_boost_trick()
+		return ""
+	if picked == "bs_air":
+		if bsair_ready():
+			_bsair_begin()
+			return ""
+		return "grab"
+	return picked
+
+func _note_boost_trick() -> void:
+	if boost == null:
+		return
+	boost.note_trick(TrickSelect.tier_for(boost.chain))
+
+func try_spray() -> int:
+	if spray_cool > 0.0 or get_tree() == null:
+		return 0
+	spray_cool = Spray.COOLDOWN_S
+	var origin := global_position + Vector3.UP * 1.15
+	var dir := camera_flat_forward()
+	var cam := get_node_or_null("CameraPivot/SpringArm/Camera") as Camera3D
+	if cam != null:
+		dir = -cam.global_transform.basis.z
+	var hits := Spray.fire(get_tree(), origin, dir)
+	_spray_puff(origin + dir.normalized() * 1.1)
+	if hits > 0:
+		InputBindings.rumble(0.15, 0.4, 0.08)
+	return hits
+
+func _spray_puff(at: Vector3) -> void:
+	if spray_puff != null and is_instance_valid(spray_puff):
+		spray_puff.queue_free()
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.16
+	mesh.height = 0.32
+	var inst := MeshInstance3D.new()
+	inst.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(Spray.color(), 0.85)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	inst.material_override = mat
+	var parent := get_parent()
+	if parent == null:
+		return
+	parent.add_child(inst)
+	inst.global_position = at
+	spray_puff = inst
+	spray_puff_t = 0.22
+
+func _tick_spray_puff(delta: float) -> void:
+	if spray_puff == null or not is_instance_valid(spray_puff):
+		return
+	spray_puff_t -= delta
+	var mat := spray_puff.material_override as StandardMaterial3D
+	if mat != null:
+		var c := mat.albedo_color
+		c.a = clampf(spray_puff_t / 0.22, 0.0, 0.85)
+		mat.albedo_color = c
+	if spray_puff_t <= 0.0:
+		spray_puff.queue_free()
+		spray_puff = null
+
+func _grind_held() -> bool:
+	return not external_move_active and not pad_menu and InputMap.has_action("grind") and Input.is_action_pressed("grind")
 
 func _tricks(delta: float) -> void:
 	if bail_time > 0.0:
@@ -900,13 +1050,8 @@ func _tricks(delta: float) -> void:
 		return
 	var asked := trick_request
 	trick_request = ""
-	if asked == "" and not external_move_active:
-		if Input.is_action_just_pressed("trick_ollie"):
-			asked = "ollie"
-		elif Input.is_action_just_pressed("trick_flip"):
-			asked = "flip"
-		elif Input.is_action_just_pressed("trick_grab"):
-			asked = "grab"
+	if asked == "" and not external_move_active and not pad_menu and Input.is_action_just_pressed("trick"):
+		asked = _apply_trick_button()
 	if asked == "ollie" and is_on_floor() and skating and trick == "":
 		trick = "crouch"
 		trick_next = "ollie"
@@ -976,13 +1121,16 @@ func _start_air(kind: String) -> void:
 func _grab_held() -> bool:
 	if grab_hold:
 		return true
-	return not external_move_active and InputMap.has_action("trick_grab") and Input.is_action_pressed("trick_grab")
+	return not external_move_active and InputMap.has_action("trick") and Input.is_action_pressed("trick")
 
 func _finish_trick() -> void:
 	var grab_bail := trick == "grab" and _grab_held()
 	if (trick == "flip" and not board_caught) or grab_bail:
 		last_bail_reason = "grab_held" if grab_bail else "flip_not_caught"
 		say("BAIL!", "bail")
+		if boost != null:
+			boost.note_bail()
+		InputBindings.rumble(0.7, 0.35, 0.14)
 		trick = "bail"
 		bail_time = 0.6
 		skating = false
@@ -994,6 +1142,7 @@ func _finish_trick() -> void:
 		trick = "land"
 		trick_time = 0.0
 		board_caught = true
+		_note_boost_trick()
 		_event("trick_land", {"trick": landed_trick})
 	_push_trick()
 
@@ -1112,7 +1261,7 @@ func _ramp_step(delta: float) -> void:
 		ramp_mode = ""
 		ramp = null
 		return
-	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
+	var jumping := _wants_jump()
 	external_jump = false
 	_tricks(delta)
 	if ramp_mode != "ride":
@@ -1357,7 +1506,7 @@ func _bowl_step(delta: float) -> void:
 		pumping = false
 		return
 	var s: Dictionary = bowl.sample(bowl_xz)
-	var jumping := external_jump or (not external_move_active and Input.is_action_just_pressed("jump"))
+	var jumping := _wants_jump()
 	external_jump = false
 	_tricks(delta)
 	if ramp_mode != "bowl":
@@ -1838,6 +1987,8 @@ func _bsair_land() -> void:
 		bsair_last["result"] = "bail"
 		last_bail_reason = "bs_air_grab_held" if u >= BSAIR_RELEASE_U else "bs_air_short"
 		say("BAIL!", "bail")
+		if boost != null:
+			boost.note_bail()
 		trick = "bail"
 		bail_time = 0.6
 		skating = false
@@ -1845,6 +1996,7 @@ func _bsair_land() -> void:
 		velocity.z *= 0.35
 		_event("bs_air_bail", {"u": u})
 		return
+	_note_boost_trick()
 	bsair_count += 1
 	bsair_last["result"] = "landed"
 	if rig != null and rig.has_method("face_world"):

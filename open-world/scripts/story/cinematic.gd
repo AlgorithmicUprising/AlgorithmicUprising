@@ -73,7 +73,7 @@ func play(cid: String) -> bool:
 	skip_armed = not Input.is_action_pressed("ui_accept")
 	playing = true
 	last_skipped = false
-	host.hud.skip_hint("HOLD ENTER TO SKIP")
+	host.hud.skip_hint(InputBindings.skip_label(0))
 	return true
 
 func skip() -> void:
@@ -89,7 +89,7 @@ func _process(delta: float) -> void:
 		skip_armed = not holding
 		holding = false
 	held = held + delta if holding else maxf(0.0, held - delta * 2.0)
-	host.hud.skip_hint("HOLD ENTER TO SKIP  " + "|".repeat(int(clampf(held / SKIP_HOLD_S, 0.0, 1.0) * 10.0)))
+	host.hud.skip_hint(InputBindings.skip_label(int(clampf(held / SKIP_HOLD_S, 0.0, 1.0) * 10.0)))
 	if held >= SKIP_HOLD_S:
 		_end(true)
 		return

@@ -59,6 +59,7 @@ func begin(behind: Array, enforcers_now := false) -> void:
 		n.global_position = Vector3(float(b[0]), _alt(player.global_position.y), float(b[1]))
 		var delay := 0.0 if kind == "welfare" or enforcers_now else float(c.get("delay_s", ENFORCER_DELAY_S))
 		n.visible = delay <= 0.0
+		n.add_to_group("spray_target")
 		var speed := WELFARE_SPEED if kind == "welfare" else ENFORCER_SPEED
 		var catchup := WELFARE_CATCHUP if kind == "welfare" else ENFORCER_CATCHUP
 		var catch_r := WELFARE_CATCH_R if kind == "welfare" else ENFORCER_CATCH_R
@@ -115,7 +116,7 @@ func tick(delta: float) -> void:
 	# line of sight: any active drone that sees him keeps the chase hot
 	var seen := false
 	for d in drones:
-		if d.active and _sees(d.node.global_position):
+		if d.active and float(d.node.get_meta("spray_left", 0.0)) <= 0.0 and _sees(d.node.global_position):
 			seen = true
 			break
 	if seen:
@@ -134,6 +135,10 @@ func tick(delta: float) -> void:
 				d.node.visible = true
 				if d.kind == "enforcement" and drones.filter(func(x): return x.kind == "enforcement" and x.active).size() == 1:
 					enforcers_in.emit()
+			continue
+		var sprayed: float = float(d.node.get_meta("spray_left", 0.0))
+		if sprayed > 0.0:
+			d.node.set_meta("spray_left", maxf(0.0, sprayed - delta))
 			continue
 		_move(d, delta, p)
 		if grace <= 0.0 and caught_kind == "" and _flat(d.node.global_position, player.global_position) < d.catch_r and absf(d.node.global_position.y - player.global_position.y) < 5.0:

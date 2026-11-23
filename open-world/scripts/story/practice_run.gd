@@ -749,7 +749,8 @@ func _prompt() -> void:
 		_say_all(ht, str(o.id), "hesitate")
 		hud.phone_open()
 	var p: Dictionary = o.prompt
-	hud.prompt("%s    [ %s ]    pad: %s" % [p.get("verb", ""), p.get("kb", ""), p.get("pad", "")])
+	var mark := str(p.get("pad", "")) if InputBindings.using_pad() else str(p.get("kb", ""))
+	hud.prompt("%s    %s" % [p.get("verb", ""), mark])
 	sfx.play("prompt")
 
 func _free_barks(delta: float) -> void:
