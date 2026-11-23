@@ -1,0 +1,18 @@
+{
+  "contract": "au.challenge",
+  "contract_version": 1,
+  "id": "a1_fine_print",
+  "title": "1.1 FINE PRINT",
+  "mechanic": "objectives",
+  "district": "solar_arcade_dark",
+  "spawn": {"mission": "a1_fine_print"},
+  "source": {"path": "res://data/missions/act1_scenes.json", "id": "1.1"},
+  "parameters": {"fail_rule": "none", "flag": "a1_fine_print_done"},
+  "goals": [
+    {"id": "topics", "event": "topics"},
+    {"id": "workshop", "event": "workshop"}
+  ],
+  "scoring": {},
+  "points": {"clear": 0},
+  "repeatable": true
+}

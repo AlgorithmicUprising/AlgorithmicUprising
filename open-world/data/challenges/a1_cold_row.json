@@ -1,0 +1,20 @@
+{
+  "contract": "au.challenge",
+  "contract_version": 1,
+  "id": "a1_cold_row",
+  "title": "1.4 COLD ROW",
+  "mechanic": "sneak",
+  "district": "cold_row",
+  "spawn": {"mission": "a1_cold_row"},
+  "source": {"path": "res://data/missions/act1_scenes.json", "id": "1.4"},
+  "parameters": {"fail_rule": "none", "flag": "a1_cold_row_done", "det_r": 5.5, "fill_s": 2.5},
+  "goals": [
+    {"id": "lawn", "event": "mark"},
+    {"id": "substation", "event": "mark"},
+    {"id": "intake", "event": "mark"},
+    {"id": "spotted", "event": "spotted", "fail_on": true}
+  ],
+  "scoring": {},
+  "points": {"clear": 0},
+  "repeatable": true
+}

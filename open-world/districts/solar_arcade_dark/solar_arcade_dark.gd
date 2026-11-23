@@ -170,6 +170,11 @@ static func _haze(c: Color) -> StandardMaterial3D:
 ## Bailey lives in it; 1.1B pulls the sheet), and four ceiling fans (still until the power is on; act1.gd turns them).
 func _act1() -> void:
 	Blocks.solid(self, "BaileyCabinet", Vector3(226.5, 1.25, -12.2), Vector3(1.8, 2.5, 1.4), Color("2a2f5a"))
+	var play := Node3D.new()
+	play.name = "BaileyPlay"
+	play.set_script(preload("res://scripts/story/bailey_cabinet.gd"))
+	play.position = Vector3(226.5, 1.25, -12.2)
+	add_child(play)
 	var scr := Blocks.visual(self, "BaileyScreen", Vector3(226.5, 1.7, -12.93), Vector3(1.3, 0.9, 0.03), Color("0d1020"))
 	scr.set_meta("bailey", true)
 	var side := Label3D.new()

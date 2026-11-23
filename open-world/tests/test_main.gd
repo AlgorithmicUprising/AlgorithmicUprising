@@ -55,6 +55,13 @@ func _ready() -> void:
 			print("FAIL ", item)
 		get_tree().quit(1 if fails.size() else 0)
 		return
+	if OS.get_environment("AU_TEST_ONLY") == "traverse":
+		await preload("res://tests/m5_tests.gd").new().run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	if OS.get_environment("AU_TEST_ONLY") == "m5":
 		await preload("res://tests/m5_tests.gd").new().run(self)
 		print("SUMMARY failed=", fails.size())
@@ -83,6 +90,43 @@ func _ready() -> void:
 			print("FAIL ", item)
 		get_tree().quit(1 if fails.size() else 0)
 		return
+	if OS.get_environment("AU_TEST_ONLY") == "controls":
+		await _input_map()
+		await _controls()
+		await _look()
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
+	if OS.get_environment("AU_TEST_ONLY") == "surfaces":
+		await preload("res://tests/surface_tests.gd").new().run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
+	if OS.get_environment("AU_TEST_ONLY") == "cameras":
+		await preload("res://tests/camera_paint_tests.gd").new().run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
+	if OS.get_environment("AU_TEST_ONLY") == "chase":
+		await preload("res://tests/chase_alert_tests.gd").new().run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
+	if OS.get_environment("AU_TEST_ONLY") == "challenges":
+		await preload("res://tests/challenge_tests.gd").new().run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	if OS.get_environment("AU_TEST_ONLY") == "front":
 		await preload("res://tests/front_tests.gd").new().run(self)
 		print("SUMMARY failed=", fails.size())
@@ -102,6 +146,7 @@ func _ready() -> void:
 	_contracts()
 	await _boot()
 	await _input_map()
+	await _controls()
 	await _look()
 	await _heading()
 	await _invert()
@@ -126,6 +171,10 @@ func _ready() -> void:
 	await preload("res://tests/front_tests.gd").new().run(self)
 	await preload("res://tests/m3_tests.gd").new().run(self)
 	await preload("res://tests/m4_tests.gd").new().run(self)
+	await preload("res://tests/challenge_tests.gd").new().run(self)
+	await preload("res://tests/chase_alert_tests.gd").new().run(self)
+	await preload("res://tests/camera_paint_tests.gd").new().run(self)
+	await preload("res://tests/surface_tests.gd").new().run(self)
 	await preload("res://tests/m5_tests.gd").new().run(self)
 	print("SUMMARY failed=", fails.size())
 	for item in fails:
@@ -314,6 +363,85 @@ func _input_map() -> void:
 	Input.action_release("move_right")
 	Input.action_release("jump")
 	await get_tree().process_frame
+
+func _controls() -> void:
+	var TrickSelect = load("res://scripts/trick_select.gd")
+	var BoostMeter = load("res://scripts/boost_meter.gd")
+	var Spray = load("res://scripts/spray.gd")
+	expect(TrickSelect.pick("flat", 0) == "ollie" and TrickSelect.pick("flat", 2) == "flip" and TrickSelect.pick("air", 0) == "flip", "trick button: flat tier 0 is an ollie, tier 1 flips, air flips")
+	expect(TrickSelect.pick("grind", 0) == "5050" and TrickSelect.pick("grind", 2) == "5o" and TrickSelect.pick("grind", 4) == "board", "trick button: grind tier follows the chain")
+	expect(TrickSelect.pick("ramp", 2) == "bs_air" and TrickSelect.tier_for(6) == 3, "trick button: a hot ramp chain is a backside air, tier 3 at chain 6")
+	var tank = BoostMeter.new()
+	tank.note_trick(0)
+	var first: float = tank.amount
+	tank.note_trick(3)
+	expect(first > 0.05 and tank.amount > first and tank.chain == 2, "boost fills from a trick and a higher tier fills more")
+	var spent: float = tank.spend(0.5, true)
+	expect(spent > 0.5 and tank.amount < 0.5, "boost spends the tank while the action is held")
+	tank.note_bail()
+	expect(tank.chain == 0 and tank.amount > 0.0, "a bail ends the chain and keeps the accumulated boost")
+	expect(Spray.slot_id() == "default" and Spray.color_name() == "Yard lime", "spray color is the one default slot, no store")
+	var origin := Vector3.ZERO
+	var dir := Vector3(0, 0, -1)
+	expect(Spray.in_cone(origin, dir, Vector3(0, 0, -4)) and not Spray.in_cone(origin, dir, Vector3(4, 0, -1)), "spray hits in a cone and misses a wide angle")
+	var drone := Node3D.new()
+	add_child(drone)
+	drone.global_position = Vector3(0, 1, -3)
+	drone.add_to_group("spray_target")
+	expect(Spray.fire(get_tree(), origin + Vector3(0, 1, 0), dir) == 1 and float(drone.get_meta("spray_left")) > 1.0, "spray disables a drone in front of the camera")
+	drone.queue_free()
+	for action in ["trick", "grind", "spray", "boost", "brake", "push", "open_log", "zero_vision", "interact", "jump"]:
+		expect(InputMap.has_action(action), "action %s is bound" % action)
+	var e_elsewhere := false
+	for action in InputMap.get_actions():
+		if str(action) == "interact":
+			continue
+		for event in InputMap.action_get_events(action):
+			if event is InputEventKey and event.physical_keycode == KEY_E:
+				e_elsewhere = true
+	expect(not e_elsewhere, "E is interact only, never a camera key")
+	var spray_rt := false
+	var spray_click := false
+	for event in InputMap.action_get_events("spray"):
+		if event is InputEventJoypadMotion and event.axis == JOY_AXIS_TRIGGER_RIGHT:
+			spray_rt = true
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			spray_click = true
+	expect(spray_rt and spray_click, "spray is RT and left click")
+	var lb := false
+	for event in InputMap.action_get_events("grind"):
+		if event is InputEventJoypadButton and event.button_index == JOY_BUTTON_LEFT_SHOULDER:
+			lb = true
+	expect(lb, "grind is LB")
+	var trick_b := false
+	for event in InputMap.action_get_events("trick"):
+		if event is InputEventJoypadButton and event.button_index == JOY_BUTTON_B:
+			trick_b = true
+		if event is InputEventKey and event.physical_keycode == KEY_Q:
+			trick_b = trick_b
+	expect(trick_b and InputMap.action_get_events("trick").size() >= 2, "trick is one button: Q and B")
+	expect(is_equal_approx(InputBindings.curve(0.0), 0.0) and is_equal_approx(InputBindings.curve(1.0), 1.0) and InputBindings.curve(0.5) < 0.5, "stick curve is soft through the middle and full at the edge")
+	var light := InputEventJoypadMotion.new()
+	light.axis = JOY_AXIS_TRIGGER_LEFT
+	light.axis_value = 0.05
+	Input.parse_input_event(light)
+	await get_tree().process_frame
+	expect(not Input.is_action_pressed("brake"), "trigger inside the brake deadzone is ignored")
+	light.axis_value = 0.0
+	Input.parse_input_event(light)
+	Input.action_release("brake")
+	var saved := InputBindings.rebind_key("push", KEY_C)
+	expect(saved == "" and InputBindings.binding_label("push", "key") == "C", "a rebind replaces the key and saves")
+	expect(InputBindings.rebind_key("camera_right", KEY_E) == "E stays interact", "remap refuses to put E on the camera")
+	InputBindings.rebind_key("push", KEY_R)
+	var user := DirAccess.open("user://")
+	if user != null and user.file_exists("pz-input-v1.json"):
+		user.remove("pz-input-v1.json")
+	expect(InputBindings.rumble(0.2, 0.2, 0.05) == false, "rumble is a no-op without a pad")
+	InputBindings.last_device = "xbox"
+	expect(InputBindings.glyph("interact") == "X" and InputBindings.prompt_text("E  talk") == "X  talk", "prompts switch to the Xbox mark after a pad event")
+	InputBindings.last_device = "keyboard"
+	expect(InputBindings.prompt_text("E  talk") == "E  talk", "prompts switch back to the keyboard mark")
 
 func _look() -> void:
 	var camera_keys := 0

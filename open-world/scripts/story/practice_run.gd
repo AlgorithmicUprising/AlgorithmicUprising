@@ -101,6 +101,13 @@ func toggle() -> void:
 
 ## resume (front end, Load Game): a mission saved mid-run picks up at its last checkpoint instead of starting over.
 ## The P key and ?story=p1 keep starting P.1 from the top (resume false), as in M1.
+## OPEN: the band chooses the song under the P.4 title card. Empty plays nothing and loads no file.
+const P4_TITLE_SONG := ""
+
+func p4_title_song() -> void:
+	if P4_TITLE_SONG == "":
+		return
+
 func start(resume := false) -> bool:
 	if active or player == null:
 		return false
@@ -134,6 +141,8 @@ func start(resume := false) -> bool:
 	best_line = int(rec.get("best_score", 0))
 	voice_heard = flow.save.flag("p1_voice_heard")
 	face_on = flow.save.flag("p1_crt_face")
+	if player != null:
+		player.grip_tape = flow.save.flag("upgrade_grip_tape")
 	contact = false
 	rail_bailed = flow.save.flag("p1_rail_bail_said")
 	hesitated = {}
@@ -740,7 +749,8 @@ func _prompt() -> void:
 		_say_all(ht, str(o.id), "hesitate")
 		hud.phone_open()
 	var p: Dictionary = o.prompt
-	hud.prompt("%s    [ %s ]    pad: %s" % [p.get("verb", ""), p.get("kb", ""), p.get("pad", "")])
+	var mark := str(p.get("pad", "")) if InputBindings.using_pad() else str(p.get("kb", ""))
+	hud.prompt("%s    %s" % [p.get("verb", ""), mark])
 	sfx.play("prompt")
 
 func _free_barks(delta: float) -> void:

@@ -337,6 +337,7 @@ func _practice_run() -> void:
 	# hesitation prompt: nothing until 6 s on push
 	ok(not story.hud.prompt_panel.visible, "prompt: hidden while he has not hesitated")
 	story.runner.time_on = 6.2
+	InputBindings.last_device = "keyboard"
 	await frames(3)
 	ok(story.hud.prompt_panel.visible and "PUSH" in story.hud.prompt_label.text and "W" in story.hud.prompt_label.text, "prompt: shows PUSH [W] after hesitating")
 	# push: real physics

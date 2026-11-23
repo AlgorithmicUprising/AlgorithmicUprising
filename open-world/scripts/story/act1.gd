@@ -15,6 +15,8 @@ const JsonFile = preload("res://scripts/json_file.gd")
 const Protagonist = preload("res://scripts/front/protagonist.gd")
 const World = preload("res://scripts/story/story_world.gd")
 const Kit = preload("res://scripts/story/act1_kit.gd")
+const Spray = preload("res://scripts/spray.gd")
+const CameraPaint = preload("res://scripts/story/camera_paint.gd")
 const Blocks = preload("res://scripts/world_blocks.gd")
 const Hud = preload("res://scripts/story/story_hud.gd")
 const DEF_PATH := "res://data/missions/act1_scenes.json"
@@ -66,6 +68,7 @@ var budget := 0                    # 1.2: bags the money still buys
 var delivered := 0                 # 1.2: bags delivered
 var score := 0
 var vision := false                # 1.4B: Zero Vision overlay on
+var topic_i := 0
 var vision_used := false
 var root: Node3D                   # per-scene props (drones, crowd, hologram, strings)
 var drones: Array = []             # [{node, path, i, speed}]
@@ -147,6 +150,7 @@ func start(id: String) -> void:
 	host.hud.fade_to(1.0, 0.01)
 	_spawn(sd.spawn)
 	host.player.input_enabled = false
+	_apply_grip()
 	host.hud.set_objective(str(sd.title), "")
 	host.hud.set_line("")
 	host.hud.phone_header("ZERO", str(sd.get("phone_sub", "")))
@@ -212,6 +216,9 @@ func _next_step() -> void:
 	checkpoint = ""
 	waiting = false
 	host.hud.prompt("")
+	if host.player != null:
+		host.player.pad_menu = false
+	topic_i = 0
 	if step_i >= steps.size():
 		state = "between"
 		state_left = 0.4
@@ -288,6 +295,34 @@ func _step_tick(delta: float) -> void:
 
 # ------------------------------------------------------------------ goals (spray, talk, reach)
 
+## A short can on the board while a paint goal is in reach. Not a character.
+func _spray_can(show: bool) -> void:
+	var pl = host.player
+	if pl == null:
+		return
+	var can := pl.get_node_or_null("SprayCan") as MeshInstance3D
+	if not show:
+		if can != null:
+			can.visible = false
+		return
+	if can == null:
+		can = MeshInstance3D.new()
+		can.name = "SprayCan"
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.04
+		mesh.bottom_radius = 0.045
+		mesh.height = 0.16
+		can.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		can.material_override = mat
+		can.position = Vector3(0.28, 0.9, -0.15)
+		pl.add_child(can)
+	can.visible = true
+	var mat := can.material_override as StandardMaterial3D
+	if mat != null:
+		mat.albedo_color = Spray.color()
+
 func goals() -> Array:
 	return step.get("goals", [])
 
@@ -322,11 +357,21 @@ func _goals_tick(delta: float) -> void:
 	if g.is_empty():
 		host.hud.prompt("")
 		return
-	if bool(g.get("auto", false)):
-		complete(str(g.id))
+	if bool(g.get("skate", false)) and not host.player.skating:
+		host.hud.prompt(str(g.get("verb", "")))
+		return
+	if bool(g.get("auto", false)) or (bool(g.get("skate", false)) and not g.has("paint")):
+		if _traversed(g):
+			complete(str(g.id))
 		return
 	host.hud.prompt(str(g.get("verb", "E")))
-	if Input.is_action_just_pressed("interact"):
+	_spray_can(g.has("paint"))
+	# A painted goal is the spray can. A skated paint beat takes the spray button, not E.
+	var sprayed := g.has("paint") and Input.is_action_just_pressed("spray")
+	var pressed := Input.is_action_just_pressed("interact") and not bool(g.get("skate", false))
+	if pressed or sprayed:
+		if g.has("paint") and host.player.has_method("try_spray"):
+			host.player.try_spray()
 		complete(str(g.id))
 
 ## Completes a goal (E, an auto zone, the autopilot or a test).
@@ -339,14 +384,24 @@ func complete(id: String) -> bool:
 			g = x
 	if g.is_empty():
 		return false
+	if bool(g.get("skate", false)) and host.player != null and not host.player.skating:
+		return false
 	done_goals[id] = true
-	if not bool(g.get("auto", false)):
+	if not bool(g.get("auto", false)) or str(g.get("traverse", "")) != "":
 		checkpoint = id
+	if str(g.get("traverse", "")) != "":
+		# The ride is finished. Drop the stick before the next step starts.
+		pilot = {}
+		if host.player != null:
+			host.player.external_move_active = false
+			host.player.external_move = Vector2.ZERO
+			host.player.external_jump = false
 	var r: Dictionary = host.flow.save.mission(str(sdef().id))
 	r["done"] = done_goals.keys()
 	r["checkpoint"] = checkpoint
 	if str(g.get("flag", "")) != "":
 		host.flow.save.set_flag(str(g.flag))
+	_note_camera(g)
 	host.flow.persist()
 	score += int(g.get("points", 0))
 	if g.has("paint"):
@@ -381,6 +436,39 @@ func complete(id: String) -> bool:
 		_clear_drones()
 	return true
 
+## A grind or a launch is not done just because he is standing in the zone.
+func _traversed(g: Dictionary) -> bool:
+	var kind := str(g.get("traverse", ""))
+	if kind == "":
+		return true
+	var pl = host.player
+	if kind == "grind":
+		var want := str(g.get("rail", ""))
+		var riding: bool = pl.grind != null and str(pl.grind.name) == want
+		return riding or str(pl.grind_last.get("rail", "")) == want
+	if kind == "launch":
+		return str(pl.get_meta("last_lip_pipe", "")) == str(g.get("pipe", ""))
+	return true
+
+## A goal that paints a camera head records it on the save. The 8 s drone timer is not used.
+func _note_camera(g: Dictionary) -> void:
+	if not g.has("paint"):
+		return
+	var lens_path := str(g.paint[0])
+	if not lens_path.ends_with("/Lens"):
+		return
+	var head := _node(lens_path.get_slice("/", 0))
+	if head == null or not head.is_in_group("painted_camera"):
+		return
+	var id := str(head.get_meta("camera_id", ""))
+	if id == "":
+		return
+	var play := 0.0
+	if host.get("main") != null and host.main != null and host.main.get("gs") != null and host.main.gs != null:
+		play = float(host.main.gs.play_time)
+	CameraPaint.mark(host.flow.save, id, CameraPaint.now_s(host.flow.save, play))
+	head.set_meta("camera_painted", true)
+
 func _reset(why: String) -> void:
 	var pos: Array = sdef().spawn
 	if checkpoint != "":
@@ -409,6 +497,7 @@ func _make_drones(list: Array) -> void:
 		var n: Node3D = World.enforcement_drone(root)
 		var path: Array = d.path
 		n.global_position = Vector3(float(path[0][0]), float(d.get("y", 4.0)), float(path[0][1]))
+		n.add_to_group("spray_target")
 		drones.append({"node": n, "path": path, "i": 1, "speed": float(d.get("speed", 3.0)), "y": float(d.get("y", 4.0))})
 
 func _clear_drones() -> void:
@@ -421,6 +510,8 @@ func _drones(delta: float) -> void:
 	for d in drones:
 		var n: Node3D = d.node
 		if not is_instance_valid(n) or d.has("chase"):
+			continue
+		if _spray_frozen(n, delta):
 			continue
 		var tgt: Array = d.path[d.i]
 		var to := Vector3(float(tgt[0]), d.y, float(tgt[1])) - n.global_position
@@ -436,6 +527,14 @@ func in_mist(p: Vector3) -> bool:
 			return true
 	return false
 
+## Spray paint holds a patrol drone in place and takes its eyes off the player.
+func _spray_frozen(n: Node3D, delta: float) -> bool:
+	var left: float = float(n.get_meta("spray_left", 0.0))
+	if left <= 0.0:
+		return false
+	n.set_meta("spray_left", maxf(0.0, left - delta))
+	return true
+
 func seen_by_drone() -> bool:
 	var p: Vector3 = host.player.global_position
 	if in_mist(p):
@@ -443,7 +542,7 @@ func seen_by_drone() -> bool:
 	if in_hazard(p):
 		return true
 	for d in drones:
-		if is_instance_valid(d.node) and Vector2(p.x - d.node.global_position.x, p.z - d.node.global_position.z).length() < float(step.get("det_r", 6.0)):
+		if is_instance_valid(d.node) and float(d.node.get_meta("spray_left", 0.0)) <= 0.0 and Vector2(p.x - d.node.global_position.x, p.z - d.node.global_position.z).length() < float(step.get("det_r", 6.0)):
 			return true
 	return false
 
@@ -534,14 +633,29 @@ func _defend_tick(delta: float) -> void:
 # ------------------------------------------------------------------ 1.1: the topic menu
 
 func _topics_tick() -> void:
+	host.player.pad_menu = true
 	var list: Array = step.get("topics", [])
+	var open: Array = []
+	for tp in list:
+		if not topic_done.has(str(tp.key)):
+			open.append(tp)
+	if open.is_empty() or topic_i >= open.size() or topic_i < 0:
+		topic_i = 0
 	var text := ""
 	for i in list.size():
 		var tp: Dictionary = list[i]
-		if not topic_done.has(str(tp.key)):
-			text += "%d  %s    " % [i + 1, str(tp.label)]
+		if topic_done.has(str(tp.key)):
+			continue
+		var mark := "> " if not open.is_empty() and str(open[topic_i].key) == str(tp.key) else "  "
+		text += "%s%d  %s    " % [mark, i + 1, str(tp.label)]
 	text += "E  " + str(step.get("done_label", "done"))
 	host.hud.prompt(text)
+	if Input.is_action_just_pressed("ui_down") or Input.is_action_just_pressed("ui_right"):
+		topic_i = (topic_i + 1) % maxi(open.size(), 1)
+	elif Input.is_action_just_pressed("ui_up") or Input.is_action_just_pressed("ui_left"):
+		topic_i = (topic_i - 1 + open.size()) % maxi(open.size(), 1)
+	elif not open.is_empty() and (Input.is_action_just_pressed("session_confirm") or Input.is_action_just_pressed("ui_accept")):
+		ask(str(open[topic_i].key))
 	for i in list.size():
 		if _key_edge(KEY_1 + i):
 			ask(str(list[i].key))
@@ -687,6 +801,17 @@ func _budget_check() -> void:
 
 # ------------------------------------------------------------------ 1.4B: raise the phone (Zero Vision)
 
+## Z / L3. Before the unlock, only the scripted raise accepts it. After, it toggles the overlay.
+func toggle_vision() -> bool:
+	if host == null or host.flow == null:
+		return false
+	if state == "step" and str(step.get("do", "")) == "raise":
+		return raise_phone()
+	if not host.flow.save.flag("zero_vision_unlocked"):
+		return false
+	_vision(not vision)
+	return true
+
 func raise_phone() -> bool:
 	if state != "step" or waiting or str(step.get("do", "")) != "raise":
 		return false
@@ -795,11 +920,16 @@ static func strand(a: Vector3, b: Vector3) -> Transform3D:
 
 # ------------------------------------------------------------------ hooks (steps and cinematics)
 
+func _apply_grip() -> void:
+	if host != null and host.player != null:
+		host.player.grip_tape = host.flow.save.flag("upgrade_grip_tape")
+
 func hook(name: String) -> void:
 	log.append("hook:" + name)
 	match name:
 		"board_back":
 			host.flow.save.set_flag("upgrade_grip_tape")
+			_apply_grip()
 		"workshop":
 			host.flow.save.set_flag("workshop_unlocked")
 		"bailey":
@@ -858,12 +988,15 @@ func hook(name: String) -> void:
 		"cameras":
 			_cameras()
 			_switch_house()
+			_fence_rail()
 			for w in ["Worker1", "Worker2"]:
 				var wn := _node(w) as Node3D
 				if wn != null:
 					wn.visible = false  # their smoke break was 1.4; their name tags filled the boss camera
 		"over_fence":
-			_spawn([442.0, 0.5, -60.5, 90.0])
+			pass # the fence-top grind already carried him here
+		"launch":
+			pass # the quarter-pipe launch already put him on the machine
 		"switch_house":
 			Kit.paint(_node("PanelScreen"), LIME)
 			var pl := _node("PanelFace") as Label3D
@@ -880,8 +1013,6 @@ func hook(name: String) -> void:
 			_dial("HEAT", Color("ff5a3a"))
 		"dial_wild":
 			_dial("HOT · COLD · HOT", Color("ffd24a"))
-		"launch":
-			_spawn([414.0, 6.6, -61.6, 0.0])
 		"thermostat_down":
 			_dial("OFF", Color("7a7f88"))
 			var tm := _node("Thermostat") as Node3D
@@ -918,8 +1049,7 @@ func hook(name: String) -> void:
 			_rain()
 			_rain_crowd()
 		"the_yard":
-			if root != null and root.get_node_or_null("TheYardSign") == null:
-				Kit.sign(root, "TheYardSign", "THE YARD", Vector3(25.0, 3.6, -7.6), 0.0, Color("f4f4ee"), 120, 0.02)
+			_yard_mural()
 			host.flow.save.set_flag("a1_the_yard_named")
 	host.flow.persist()
 
@@ -966,6 +1096,17 @@ func _yard() -> void:
 	Blocks.visual(root, "ClinicTable", Vector3(32.0, 0.45, 6.6), Vector3(2.0, 0.9, 0.8), Color("e8e8e8"))
 	Kit.person(root, "ZeroAtDoor", "ZERO", Vector3(32.0, 0.45, -7.0), Color("3a3f48"), 1.8)
 	host.flow.save.set_flag("a1_yard_grown")
+
+## PLACEHOLDER blockout. Nana paints the word on the arcade wall beside the bay door
+## (the script line). Yard lime is the spray color already in the game. Not a finished mural.
+func _yard_mural() -> void:
+	if root == null or root.get_node_or_null("YardMural") != null:
+		return
+	# Front wall outer face is z = -7.7. The bay door is x 28..36. This panel sits just west of it.
+	var panel := Blocks.visual(root, "YardMural", Vector3(26.0, 3.3, -7.66), Vector3(2.6, 2.4, 0.05), Color("c8ff3a"))
+	panel.set_meta("placeholder", true)
+	var word := Kit.sign(panel, "TheYardSign", "THE YARD", Vector3(0, 0, 0.04), 0.0, Color("1a1408"), 96, 0.012)
+	word.set_meta("placeholder", true)
 
 ## 1.6B: rain streaks (PLACEHOLDER: a few hundred thin boxes falling over the Yard).
 func _rain() -> void:
@@ -1024,7 +1165,31 @@ func _cameras() -> void:
 			continue
 		Blocks.visual(root, "CamPole%d" % i, Vector3(float(c[0]), 1.6, float(c[1])), Vector3(0.18, 3.2, 0.18), Color("6a7480"))
 		var head := Blocks.visual(root, "Cam%d" % i, Vector3(float(c[0]), 3.3, float(c[1])), Vector3(0.6, 0.4, 0.9), Color("e8eef4"))
+		head.add_to_group("painted_camera")
+		head.set_meta("camera_id", "cam%d" % i)
+		head.set_meta("camera_lens_color", Color("ff3030"))
 		Blocks.visual(head, "Lens", Vector3(0, 0, 0.46), Vector3(0.3, 0.3, 0.04), Color("ff3030")).name = "Lens"
+
+## Ollie-height bar from the south end of the substation fence to the switch house.
+## The yard's flat bar is 0.30 m because that is what an ollie can catch. This one sits in that same band.
+func _fence_rail() -> void:
+	if root == null or root.get_node_or_null("FenceRail") != null:
+		return
+	var rail = load("res://scenes/grind_rail.tscn").instantiate()
+	rail.name = "FenceRail"
+	var start := Vector3(438.6, 0.36, -56.4)
+	var finish := Vector3(443.0, 0.32, -60.8)
+	var flat := Vector3(finish.x - start.x, 0.0, finish.z - start.z)
+	rail.length = flat.length()
+	rail.drop = start.y - finish.y
+	rail.friction = 0.25
+	rail.position = (start + finish) * 0.5
+	rail.rotation.y = atan2(-(finish.z - start.z), finish.x - start.x)
+	root.add_child(rail)
+	# _ready samples the global basis before it flushes, so pin the riding line to the
+	# start-to-finish direction ourselves.
+	rail.direction = flat.normalized()
+	rail.mount_y = rail.position.y
 
 ## The maintenance switch house just south of the substation fence, with a panel for Zero.
 func _switch_house() -> void:
@@ -1068,9 +1233,27 @@ func _thermostat() -> void:
 	var steam := Blocks.visual(t, "Steam", Vector3(0, 2.0, 0), Vector3(14.0, 4.0, 14.0), Color(1, 1, 1))
 	steam.material_override = Kit.unshaded(Color("f4f4f4"), 0.28)
 	steam.visible = false
-	var ramp := Blocks.visual(root, "LoadingBay", Vector3(401.0, 0.6, -62.0), Vector3(5.0, 1.2, 6.0), Color("5a6470"))
-	ramp.rotation.z = 0.25
-	Kit.sign(root, "BaySign", "LOADING BAY 2", Vector3(401.0, 2.6, -58.9), 0.0, Color("ffd24a"), 32, 0.01)
+	_loading_bay()
+	Kit.sign(root, "BaySign", "LOADING BAY 2", Vector3(404.0, 2.4, -57.6), 0.0, Color("ffd24a"), 32, 0.01)
+
+## Quarter pipe on the asphalt, lip toward the machine. launch_up clears the roof.
+func _loading_bay() -> void:
+	if root.get_node_or_null("LoadingBayPipe") != null:
+		return
+	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	pipe.name = "LoadingBayPipe"
+	pipe.radius = 2.4
+	pipe.width = 6.0
+	pipe.deck_length = 0.3
+	pipe.closed_back = false
+	# Lip just west of the machine. Skate speed keeps a real lip pop; launch_up is what
+	# clears a 6 m roof, because a stock lip launch only drifts back into the pipe.
+	var lip_x := 2.4 * sin(deg_to_rad(70.0))
+	# Far enough west of the machine face that the arc clears the 6 m wall.
+	pipe.position = Vector3(406.0 - lip_x, 0.0, -61.2)
+	pipe.set_meta("launch_forward", 6.0)
+	pipe.set_meta("launch_up", 14.0)
+	root.add_child(pipe)
 
 func _frost() -> void:
 	var rng := RandomNumberGenerator.new()
@@ -1079,8 +1262,12 @@ func _frost() -> void:
 		if root.get_node_or_null("FrostPatch%d" % i) != null:
 			continue
 		var at := Vector3(414.0 + rng.randf_range(-12.0, 12.0), 0.03, -60.0 + rng.randf_range(-10.0, 9.0))
-		var f := Blocks.visual(root, "FrostPatch%d" % i, at, Vector3(rng.randf_range(2.0, 4.0), 0.04, rng.randf_range(2.0, 4.0)), Color("dff4ff"))
+		var size := Vector3(rng.randf_range(2.0, 4.0), 0.04, rng.randf_range(2.0, 4.0))
+		var f := Blocks.visual(root, "FrostPatch%d" % i, at, size, Color("dff4ff"))
 		f.set_meta("frost", true)
+		f.set_meta("surface_id", "frost")
+		f.set_meta("surface_half", Vector2(size.x * 0.5, size.z * 0.5))
+		f.add_to_group("ride_surface")
 
 func _frost_nodes() -> Array:
 	var out: Array = []
@@ -1351,9 +1538,22 @@ func _pilot_tick(_delta: float) -> void:
 					continue
 				if step.has("hazards") and _pilot_hold(g.at):
 					return
+				if str(g.get("traverse", "")) == "grind":
+					_pilot_grind(g)
+					return
+				if str(g.get("traverse", "")) == "launch":
+					_pilot_launch(g)
+					return
+				if bool(g.get("skate", false)):
+					pl.skating = true
 				if _walk(g.get("via", []), g.at, str(g.id)):
 					if not in_reach().is_empty() and str(in_reach().id) == str(g.id):
-						complete(str(g.id))
+						if bool(g.get("skate", false)) and g.has("paint"):
+							if pl.has_method("try_spray"):
+								pl.try_spray()
+							complete(str(g.id))
+						elif not bool(g.get("skate", false)):
+							complete(str(g.id))
 				return
 		"defend":
 			var best: Dictionary = {}
@@ -1383,6 +1583,107 @@ func _pilot_tick(_delta: float) -> void:
 				if _walk(dv.get("via", []), dv.at, str(dv.id)):
 					deliver(str(dv.id))
 				return
+
+func _face(dir: Vector3) -> void:
+	var flat := Vector3(dir.x, 0.0, dir.z)
+	if flat.length() < 0.05:
+		return
+	flat = flat.normalized()
+	# camera_yaw is relative to the body. The walk aims with the live camera axes instead.
+	host.player.camera_yaw = atan2(-flat.x, -flat.z) - host.player.rotation.y
+
+## Point the stick so the current camera axes carry him along a world direction.
+func _steer(world_dir: Vector3) -> void:
+	var d := Vector3(world_dir.x, 0.0, world_dir.z)
+	if d.length() < 0.05:
+		host.player.external_move = Vector2.ZERO
+		return
+	d = d.normalized()
+	var axes: Array = host.player._camera_flat_axes()
+	var forward: Vector3 = axes[0]
+	var right: Vector3 = axes[1]
+	host.player.external_move = Vector2(d.dot(right), d.dot(forward))
+
+## Skate to the rail, ollie on, and let the grind carry him. The goal completes at the far end.
+func _pilot_grind(g: Dictionary) -> void:
+	var pl = host.player
+	pl.skating = true
+	var rail = _node(str(g.get("rail", "")))
+	if rail == null or not rail.has_method("start_point"):
+		return
+	var want := str(rail.name)
+	if pl.grind != null and str(pl.grind.name) == want:
+		pl.external_move = Vector2.ZERO
+		pl.external_jump = false
+		pilot["grind_phase"] = "ride"
+		return
+	if str(pl.grind_last.get("rail", "")) == want:
+		pl.external_move = Vector2.ZERO
+		var at: Array = g.at
+		if Vector2(pl.global_position.x - float(at[0]), pl.global_position.z - float(at[1])).length() < float(g.get("r", 2.2)):
+			complete(str(g.id))
+		else:
+			_walk([], at, "grind-off-" + str(g.id))
+		return
+	var dir: Vector3 = rail.line_dir()
+	var flat := Vector3(dir.x, 0.0, dir.z).normalized()
+	if flat.length() < 0.5:
+		flat = Vector3(dir.x, 0.0, dir.z)
+	var start: Vector3 = rail.start_point()
+	var approach := start - flat * 3.2
+	var at_rail: Dictionary = rail.locate(pl.global_position)
+	var along_m := float(at_rail.get("along", -99.0))
+	var lateral := float(at_rail.get("lateral", 0.0))
+	if along_m > float(rail.length) * 0.55 and pl.grind == null:
+		pilot["grind_phase"] = ""
+	if str(pilot.get("grind_phase", "")) != "hop":
+		if Vector2(pl.global_position.x - approach.x, pl.global_position.z - approach.z).length() > 0.45:
+			_walk([], [approach.x, approach.z], "grind-on-" + str(g.id))
+			return
+		pilot["grind_phase"] = "hop"
+	_face(flat)
+	var side: Vector3 = at_rail.get("side", Vector3.ZERO)
+	_steer(flat - side * clampf(lateral, -1.0, 1.0))
+	# Keep the trucks on the bar's line. An ollie a metre out front is what the catch window wants.
+	if absf(lateral) > 0.2 and along_m > -2.0 and along_m < float(rail.length):
+		var axis: Vector3 = rail.line_point(clampf(along_m, 0.0, float(rail.length)))
+		pl.global_position.x = lerpf(pl.global_position.x, axis.x, 0.35)
+		pl.global_position.z = lerpf(pl.global_position.z, axis.z, 0.35)
+	var speed := Vector2(pl.velocity.x, pl.velocity.z).length()
+	if pl.is_on_floor() and speed > 3.0 and along_m > -1.8 and along_m < 0.6 and str(pl.trick) == "":
+		pl.request_trick("ollie")
+
+## Skate into the loading-bay quarter pipe. The lip launch puts him on the machine.
+func _pilot_launch(g: Dictionary) -> void:
+	var pl = host.player
+	pl.skating = true
+	var pipe := _node(str(g.get("pipe", ""))) as Node3D
+	if pipe == null:
+		return
+	if pl.ramp == pipe or (pl.pipe_air and pl.pipe_air_pipe == pipe):
+		_steer(pipe.global_transform.basis.x)
+		pl.external_jump = false
+		# Hold a cresting speed up the transition. A walk-speed entry rolls back down.
+		if pl.ramp == pipe and pl.ramp_s < pipe.lip_arc() * 0.92 and pl.ramp_v < 8.0:
+			pl.ramp_v = 8.0
+		return
+	var mouth: Vector3 = pipe.to_global(Vector3(-6.0, 0.4, 0.0))
+	var speed := Vector2(pl.velocity.x, pl.velocity.z).length()
+	var local: Vector3 = pipe.to_local(pl.global_position)
+	pilot["stuck"] = 0 if speed > 0.8 else int(pilot.get("stuck", 0)) + 1
+	if int(pilot.get("stuck", 0)) > 45:
+		pl.global_position = mouth
+		pl.velocity = pipe.global_transform.basis.x * 9.0
+		pilot["stuck"] = 0
+		return
+	# Enter before the shell, already at skate speed, so the ride crests.
+	if local.x < -1.0 and local.x > -5.5 and absf(local.z) < 1.2 and speed > 7.5 and pl.is_on_floor() and pl.velocity.dot(pipe.global_transform.basis.x) > 0.0:
+		pl._ramp_enter(pipe, 0.55, 0.0)
+		return
+	if Vector2(pl.global_position.x - mouth.x, pl.global_position.z - mouth.z).length() > 0.9:
+		_steer(mouth - pl.global_position)
+		return
+	_steer(pipe.global_transform.basis.x)
 
 ## Boss phase 2: wait outside the steam while it blows if the target is inside it.
 func _pilot_hold(at: Array) -> bool:
@@ -1414,6 +1715,16 @@ func _walk(via: Array, at: Array, key: String) -> bool:
 	var t: Array = pts[leg]
 	var to := Vector3(float(t[0]) - pl.global_position.x, 0, float(t[1]) - pl.global_position.z)
 	var last := leg == pts.size() - 1
+	# Look along the leg, including the last step. A camera left pointing at a wall
+	# (the community-center drop) shortens onto his back.
+	var aim_from: Vector3 = pl.global_position
+	if leg > 0:
+		var prev: Array = pts[leg - 1]
+		aim_from = Vector3(float(prev[0]), pl.global_position.y, float(prev[1]))
+	var aim := Vector3(float(t[0]) - aim_from.x, 0, float(t[1]) - aim_from.z)
+	if aim.length() > 0.2:
+		var look := aim.normalized()
+		pl.camera_yaw = atan2(-look.x, -look.z)
 	if to.length() < (1.2 if last else 0.8):
 		if last:
 			return true

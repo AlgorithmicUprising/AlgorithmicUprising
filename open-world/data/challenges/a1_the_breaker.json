@@ -1,0 +1,18 @@
+{
+  "contract": "au.challenge",
+  "contract_version": 1,
+  "id": "a1_the_breaker",
+  "title": "1.5 THE BREAKER",
+  "mechanic": "chase",
+  "district": "cold_row",
+  "spawn": {"mission": "a1_the_breaker"},
+  "source": {"path": "res://data/missions/act1_scenes.json", "id": "1.5"},
+  "parameters": {"fail_rule": "checkpoint", "flag": "a1_the_breaker_done", "cameras": 6, "patrol_drones": 2},
+  "goals": [
+    {"id": "cameras", "event": "camera", "count": 6},
+    {"id": "line", "event": "line_held"}
+  ],
+  "scoring": {},
+  "points": {"clear": 0},
+  "repeatable": true
+}

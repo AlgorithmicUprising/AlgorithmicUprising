@@ -1,58 +1,107 @@
-# Controls (provisional)
+# Controls
 
-Running list of every binding in `scripts/input_bindings.gd`, plus raw keys handled in code. **All controls are provisional.** New actions go on a temporary key that is easy to test, and are listed here with the milestone that added them. Nothing here is a final layout.
+Keyboard, mouse, and a wireless Xbox pad on the standard layout. Godot's joy buttons are the same buttons the WebGL export reads from the browser Gamepad API (the standard mapping). Everything below is remappable from the pause menu. Binds and stick look save to `user://pz-input-v1.json`. Mouse look, invert, and stick look also save with the look prefs.
 
-Last updated: front end (start menu, intro video, saves), Nov 19 2026 (branch `pz-m1-practice-run`, local only).
+Button marks in the HUD are original letterforms from this project (E, A, LB, RT, and the rest). They are not Microsoft's Xbox icons.
 
-## Movement and skating
+Last device wins. A key, mouse button, or mouse move shows the keyboard marks. A stick or pad button shows the Xbox marks.
 
-| Action | Keyboard | Gamepad | Notes |
-|---|---|---|---|
-| `move_forward` / `move_back` / `move_left` / `move_right` | W A S D, arrow keys | Left stick | Relative to the camera |
-| `jump` | Space | A | Plain jump; also pops out of a grind |
-| `skate_toggle` | Shift | Y | Kick up (walk) / drop the board (skate). On a quarter-pipe deck facing the coping: set up / back out of a drop-in |
-| `trick_ollie` | Q | not bound | Ollie; pops out of a grind |
-| `trick_flip` | R | not bound | Kickflip; on a rail: boardslide (locked in story mode) |
-| `trick_grab` | F | not bound | Melon grab; off the coping: backside air; on a rail: 5-0 (locked in story mode) |
-| Kickturn | hold S high on a quarter pipe | | |
-| `camera_*` | Mouse (click to capture) | Right stick | |
-| Look speed | `[` and `]` | | Raw keys in `hq_main.gd` |
+## Dead zones and curves
 
-## World and menus
+| Stick | Dead zone | Curve |
+|---|---|---|
+| Move (left stick) | 0.25 | power 1.65 after the dead zone |
+| Camera (right stick) | 0.18 | power 1.65, times the stick-look scale (0.4 to 2.2) |
+| Triggers | 0.12 | linear, so a rest trigger does not spray or brake |
 
-| Action | Keyboard | Gamepad | Notes |
-|---|---|---|---|
-| `interact` | E | X | Talk, cabinets, doors |
-| `pause` | Esc | Start | Pause menu has Invert mouse Y and Painted sprite |
-| `session_confirm` | Enter, keypad Enter | A | |
-| `session_cancel` | Backspace | B | |
+A left-stick deflection of 0.1 stays inside the move dead zone.
 
-## Story mode (added in M1, provisional, keyboard only)
+## Xbox
 
-| Action | Keyboard | Gamepad | Notes |
-|---|---|---|---|
-| `story_toggle` | **P** | not bound | Starts P.1 Practice Run from free roam; P again leaves story mode and puts free roam back |
-| `mission_retry` | **T** | not bound | Back to the current objective's checkpoint; once the line is open, back to the bowl rim |
+| Action | Button | Notes |
+|---|---|---|
+| Move | Left stick | Camera-relative |
+| Camera | Right stick | Mouse invert Y does not flip the stick. Invert stick Y is its own option and starts off. Invert X flips both |
+| Jump / ollie pop | A | Walk hop, or the pop off a rail. Also confirms menus and hold-to-skip |
+| Trick | B | One button. Context and combo tier pick the maneuver |
+| Interact | X | Talk, cabinets, doors, topic menu done |
+| Skate / walk | Y | On a quarter deck facing the coping: set up or back out |
+| Grind | LB | Separate from tricks. Hold to widen the rail catch. Riding onto a rail still locks |
+| Boost | RB | Spends the boost tank. A burst of speed while it lasts |
+| Brake | LT | Extra friction |
+| Spray / attack | RT | Disables a drone in the cone for 8 s. Color is the one data slot |
+| Menus | D-pad | Also the left stick on the start screen |
+| Pause | Menu (Start) | |
+| Map / log | View | Phone log when a story is running. No city map yet |
+| Zero Vision | L3 | Toggles it after 1.4B unlocks it. Before that, the phone says it isn't on yet |
+| Retry objective | R3 | Also a row in the pause menu |
+| Story mode | Share | P on a keyboard. Share is the pad button when the browser reports it |
+| Push | Left stick | The stick is the push. R on a keyboard is an extra pump |
 
-Ways in without a key, for testing: `story=p1` after `--` on the command line, or `?story=p1` on the web build. `story_demo=1` / `?story=p1&story_demo=1` lets the review autopilot play P.1 (it presses the same inputs the headless tests do).
+## Keyboard and mouse
 
-## Start screen and front end (added Nov 19 2026, provisional)
+| Action | Binding | Notes |
+|---|---|---|
+| Move | WASD, arrows | |
+| Camera | Mouse | Click to capture. `[` `]` change mouse look speed |
+| Jump / ollie pop | Space | |
+| Trick | Q | One button. See the tier table |
+| Grind | F | |
+| Spray / attack | Left click | Only once the mouse is captured, so the first click still grabs the view |
+| Boost | X | |
+| Push | R | Extra acceleration |
+| Brake | Ctrl | |
+| Interact | E | E is never a camera key. The remap screen refuses to move it |
+| Skate / walk | Shift | |
+| Pause | Esc | |
+| Confirm | Enter | |
+| Back | Backspace | |
+| Map / log | M | |
+| Zero Vision | Z | |
+| Story mode | P | |
+| Retry objective | T | |
+| Topics | 1–4, or arrows and Enter | The topic list highlights a row for the pad |
+| Kickturn | Hold S high on a quarter | Unchanged |
+| Name entry | Type, or the on-screen letters | The letter grid is there so a pad never needs the mouse |
 
-| Where | Keyboard | Mouse | Gamepad | Notes |
-|---|---|---|---|---|
-| Title (PRESS START) | any key | any click | any button | Shows the menu row in place of PRESS START |
-| Menu row | Left / Right (also Tab / Shift+Tab), Enter | hover + click | D-pad / left stick, A | New Game, Load Game, Uprising Arcade, Credits. Load Game is greyed out and skipped when there are no saves. Down reaches the account chip |
-| Any menu panel | Esc or Backspace closes | BACK button | B | Name, Start over?, Load, Arcade, Credits |
-| Character name | type, Enter to start | | | Default "Fony" (placeholder). A name that already has a save asks "Start over?" with Cancel focused |
-| Intro video (first time) | hold Space / Enter / Esc for 1 s | hold the button | hold A / B / Start | Hold-to-skip ring. After the intro has been seen once, a single press skips it |
-| Intro video, no sound | | click "CLICK FOR SOUND" | | Only when the browser blocks sound autoplay |
-| Pause menu (with a character) | Up / Down to reach the buttons, Enter | click | D-pad, A | Save game, Load game, Quit to title |
-| Arcade overlay | the overlay's back button | click | | "BACK TO PROJECT ZERO" from the start screen |
+## The one trick button
 
-Dev shortcuts past the start screen (first load only): `?play=free` (free roam, as before the front end), `?story=p1`, `?story=p1&story_demo=1`, `?district=…`, `?demo=…`. The same words work after `--` on the command line. Intro overrides: `?intro=skip` (straight to P.1) and `?intro=<url>` (play another file). Free roam autosaves every 90 s once a character is loaded.
+The button reads where the board is and how long the current chain is.
 
-## Gaps to decide
+| Chain | Tier | Flat | Air | Ramp | Grind |
+|---|---|---|---|---|---|
+| 0–1 | 0 | Ollie | Kickflip | Ollie | 50-50 |
+| 2–3 | 1 | Kickflip | Grab | Backside air | 5-0 |
+| 4–5 | 2 | Grab | Kickflip | Backside air | Boardslide |
+| 6+ | 3 | Kickflip | Grab | Backside air | Boardslide |
 
-- Tricks (Q, R, F) and the two story keys have no gamepad buttons yet, so P.1's ollie and 50-50 prompts say "pad: not bound yet".
-- P and T were picked only because they were free. P may want to become the pause or map key later.
-- The hold-to-skip time (1 s first time, single press after) is a guess. The intro can be made skippable from the first play by setting `skip.hold_s` in `data/intro_video.json`.
+A locked grind (story mode still locks 5-0 and boardslide until they open) stays on the grind he already has. Holding the trick button keeps a grab, and a grab still held at the landing is still a bail. Tests can still request an ollie, flip, or grab by name.
+
+## Boost
+
+Landing a trick, locking a grind, switching grind, or landing a backside air fills the tank. A higher tier fills more. The chain lasts 2.8 s. A bail ends the chain and leaves the tank where it was. The meter sits at the bottom of the screen: fill, chain, tier pips, and which button spends it.
+
+## Spray
+
+`data/spray_slot.json` has one slot, `default`, color Yard lime (`#c8ff3a`). Skin packs can add colors later. There is no store.
+
+Spray disables:
+
+- Cold Row patrol drones (1.4, and the camera patrols in 1.5). They stop and stop filling WATCH for 8 s.
+- Glass Row chase drones. A disabled drone does not catch and does not keep line of sight.
+- The Glass Row parking camera. Painting it before the zone blinds it, so the chase does not get the spot boost.
+
+The 1.5 swarm is still knocked by a touch or the tower mist. Spray is not that fight.
+
+## Conflicts
+
+- A is jump in the world and confirm in a menu. Esc still leaves the pause menu. A confirms the highlighted row.
+- B is the trick button in the world and back in a menu.
+- E is interact only. It used to be named as a camera-right key as well. Nothing in the map binds it to the camera, and a remap cannot put it there.
+- The left stick is both move and push. Keyboard push is R, so the pad does not spend a second button on it.
+- Share (story mode) only arrives if the browser's gamepad mapping reports that button. Retry is also a pause-menu row, so a pad can reach it without Share.
+- There is no city map. View / M opens the phone log.
+
+## Rumble
+
+Land a grind, bail, or spray a drone and the pad rumbles when the browser exposes `vibrationActuator` or a haptic actuator. Headless and a keyboard do not rumble.

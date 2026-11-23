@@ -83,6 +83,10 @@ func _garage() -> void:
 	var cam := Node3D.new()
 	cam.name = "DroneCamera"
 	cam.position = Vector3(114.0, 5.0, 35.6)
+	cam.add_to_group("spray_target")
+	cam.add_to_group("painted_camera")
+	cam.set_meta("camera_id", "parking")
+	cam.set_meta("camera_lens_color", Color("ff3b1f"))
 	add_child(cam)
 	Blocks.visual(cam, "Body", Vector3.ZERO, Vector3(0.5, 0.35, 0.7), Color("2b2d30"))
 	Blocks.visual(cam, "Lens", Vector3(0, -0.05, -0.38), Vector3(0.18, 0.18, 0.06), Color("ff3b1f"))

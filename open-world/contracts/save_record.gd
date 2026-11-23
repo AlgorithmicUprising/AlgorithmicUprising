@@ -29,7 +29,7 @@ var player := {}
 var settings := {}
 
 static func _fresh_story() -> Dictionary:
-	return {"version": STORY_VERSION, "missions": {}, "flags": {}, "day": 1, "time_of_day": "dawn", "signal": 0, "current": ""}
+	return {"version": STORY_VERSION, "missions": {}, "flags": {}, "day": 1, "time_of_day": "dawn", "signal": 0, "current": "", "cameras": {}, "clock_s": 0.0}
 
 static func _fresh_meta() -> Dictionary:
 	return {"character": "", "account": "", "created_unix": 0, "saved_unix": 0, "play_time_s": 0.0, "kind": "auto", "build": ""}
@@ -303,6 +303,16 @@ func _apply_story(data) -> Dictionary:
 	clean["time_of_day"] = str(data.get("time_of_day", "dawn"))
 	clean["signal"] = maxi(0, int(data.get("signal", 0)))
 	clean["current"] = str(data.get("current", ""))
+	clean["clock_s"] = maxf(0.0, float(data.get("clock_s", 0.0)))
+	var cameras: Dictionary = {}
+	var raw = data.get("cameras", {})
+	if typeof(raw) == TYPE_DICTIONARY:
+		for id in raw:
+			var sid := str(id)
+			if sid == "" or typeof(raw[id]) != TYPE_DICTIONARY:
+				continue
+			cameras[sid] = {"at_s": float((raw[id] as Dictionary).get("at_s", 0.0))}
+	clean["cameras"] = cameras
 	story = clean
 	return {"ok": true}
 

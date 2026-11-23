@@ -1,0 +1,12 @@
+{
+  "contract": "au.spray_slot",
+  "slot": "default",
+  "note": "Spray color is one data slot. Skin packs can add entries later. There is no store and no second color in this build.",
+  "colors": {
+    "default": {
+      "id": "default",
+      "name": "Yard lime",
+      "hex": "c8ff3a"
+    }
+  }
+}

@@ -15,6 +15,9 @@ var t: Node
 func run(host: Node) -> void:
 	t = host
 	_data()
+	if OS.get_environment("AU_TEST_ONLY") == "traverse":
+		await _scene_1_5()
+		return
 	await _scene_1_1()
 	await _reload_after(["1.1"])
 	await _scene_1_2()
@@ -83,10 +86,27 @@ func _drive_step(story, main) -> void:
 			for g in st.goals:
 				if bool(g.get("optional", false)) and not bool(g.get("pilot", false)):
 					continue
-				_put(main, g.at, float(g.get("min_y", -9.0)) + 1.5 if g.has("min_y") else 0.5)
-				await frames(2)
-				if not a.done_goals.has(str(g.id)):
-					a.complete(str(g.id))
+				if str(g.get("traverse", "")) != "" or bool(g.get("skate", false)):
+					a.pilot = {"on": true}
+					var guard := 0
+					var limit := 900
+					if str(g.get("traverse", "")) == "launch":
+						limit = 5200
+					elif str(g.get("traverse", "")) != "":
+						limit = 1000
+					var watch := str(a.step.get("counter", a.step.get("id", "")))
+					while not a.done_goals.has(str(g.id)) and str(a.step.get("counter", a.step.get("id", ""))) == watch and guard < limit:
+						guard += 1
+						await t.get_tree().physics_frame
+					a.pilot = {}
+					main.player.external_move_active = false
+					main.player.external_move = Vector2.ZERO
+					main.player.external_jump = false
+				else:
+					_put(main, g.at, float(g.get("min_y", -9.0)) + 1.5 if g.has("min_y") else 0.5)
+					await frames(2)
+					if not a.done_goals.has(str(g.id)):
+						a.complete(str(g.id))
 				await _until(story, func(): return story.queue.is_empty() and story.talking == "", 400)
 		"topics":
 			for tp in st.topics:
@@ -183,7 +203,8 @@ func _scene_1_1() -> void:
 	await _until(story, func(): return story.queue.is_empty() and story.talking == "", 400)
 	a.ask("")
 	await _until(story, func(): return str(a.step.get("do", "")) == "goals" and not a.waiting)
-	ok(main.flow.save.flag("upgrade_grip_tape") and story.spoken.any(func(l): return "Upgrade one." in str(l)) and not story.spoken.any(func(l): return "six years watching weeds" in str(l)), "1.1: the board back with grip tape (topics are optional: the skipped ones never play)")
+	ok(main.flow.save.flag("upgrade_grip_tape") and main.player.grip_tape and story.spoken.any(func(l): return "Upgrade one." in str(l)) and not story.spoken.any(func(l): return "six years watching weeds" in str(l)), "1.1: the board back with grip tape (topics are optional: the skipped ones never play)")
+	ok(main.player.GRIP_TAPE_PUSH_MULT > 1.0 and main.player.GRIP_TAPE_FRICTION_MULT < 1.0 and story.P4_TITLE_SONG == "", "1.1: grip tape changes the board; the P.4 title song hook is empty")
 	await _drive_step(story, main)
 	await _until(story, func(): return story.in_cinematic() or a.scene != "1.1", 600)
 	ok(main.flow.save.flag("workshop_unlocked") and story.spoken.any(func(l): return str(l).begins_with("CARD|WORKSHOP")), "1.1: the workshop opens (upgrade one shown)")
@@ -191,6 +212,11 @@ func _scene_1_1() -> void:
 	await _until(story, func(): return not story.in_cinematic(), 2400)
 	var room = a._district("solar_arcade_dark")
 	ok(story.cinematic.ran.has("a1_plan:CAM") and story.cinematic.ran.has("a1_plan:HOST") and room.get_node("BaileySheet").visible == false and main.flow.save.flag("cabinet_grind_the_terms"), "1.1B: the sheet comes off GRIND THE TERMS; the cabinet unlocks")
+	var play = room.get_node("BaileyPlay")
+	ok(play.prompt() == "Play Grind the Terms", "1.1B: the unlocked cabinet offers the real game")
+	play.interact(main.flow)
+	ok(play.overlay != null and play.overlay.opens == 1 and play.overlay.game_id == "grind-the-terms" and play.overlay.last_path == "games/grind-the-terms/demo/embed.html", "1.1B: E opens the existing Grind the Terms page")
+	play.overlay.close()
 	ok(story.spoken.any(func(l): return "BAILEY|" in str(l) and "deny insurance claims" in str(l)) and story.spoken.any(func(l): return "Then go and see Nana Ines." in str(l)), "1.1B: Bailey says hello; Nana Ines")
 	await _until(story, func(): return a.scene != "1.1" or story.phase == "slice_end", 600)
 	var r: Dictionary = main.flow.save.mission("a1_fine_print")
@@ -254,6 +280,24 @@ func _scene_1_2() -> void:
 		if str(dv.id) == "center":
 			center = dv
 	ok(nana != null and nana.position.z > -18.5 and not center.is_empty() and float(center.at[1]) > -18.0, "1.2: the community center drop and Nana Ines stand clear of the wall (camera room)")
+	var had_pilot: bool = not a.pilot.is_empty()
+	a.pilot = {}
+	main.player.external_move_active = false
+	main.player.external_move = Vector2.ZERO
+	main.player.global_position = Vector3(290.0, 0.5, -17.2)
+	main.player.velocity = Vector3.ZERO
+	main.player.camera_yaw = PI
+	a._walk(center.get("via", []), center.at, "center-cam")
+	a.pilot = {}
+	main.player.external_move = Vector2.ZERO
+	main.player.external_move_active = false
+	await frames(8)
+	ok(main.player.camera_distance() > 3.2, "1.2: the walk keeps the camera off the community-center wall (%.2f m)" % main.player.camera_distance())
+	main.player.external_move = Vector2.ZERO
+	main.player.external_move_active = false
+	main.player.global_position = Vector3(310.0, 0.5, -40.0)
+	main.player.velocity = Vector3.ZERO
+	a.pilot = {"on": true} if had_pilot else {}
 	ok(tag is Label3D and tag.visibility_range_begin >= 4.0, "name tags hide when the camera is right on them (close-ups)")
 	a.bags = 0
 	a.budget = int(a.step.budget)
@@ -301,6 +345,17 @@ func _scene_1_3() -> void:
 	_put(main, [290.0, -60.0], 0.5)
 	await frames(3)
 	ok(pl.global_position.y > 5.0 and a.log.has("reset:fell") and Vector2(pl.global_position.x - 282.0, pl.global_position.z + 70.0).length() < 1.0, "1.3: falling off puts him back on the last white roof")
+	_put(main, [298.0, -70.0], 6.6)
+	await frames(3)
+	ok(pl.get_node_or_null("SprayCan") != null and pl.get_node("SprayCan").visible, "1.3: a spray can shows on a roof that still needs paint")
+	var spray := InputEventAction.new()
+	spray.action = "spray"
+	spray.pressed = true
+	Input.parse_input_event(spray)
+	await frames(3)
+	spray.pressed = false
+	Input.parse_input_event(spray)
+	ok(a.done_goals.has("roof1"), "1.3: the spray button coats the next roof")
 	_put(main, [324.0, -70.0], 6.6)
 	await frames(3)
 	ok(a.done_goals.has("billboard_seen"), "1.3: near the billboard Zero describes the anatomy of a lie")
@@ -371,17 +426,20 @@ func _scene_1_5() -> void:
 	ok(a.log.has("goal:cam5") and a.score >= 9000, "1.5: six cameras blinded (score %d)" % a.score)
 	await _drive_step(story, main)
 	await _until(story, func(): return str(a.step.get("counter", "")) == "PANEL" and not a.waiting)
-	ok(main.player.global_position.x > 440.5, "1.5: over the fence (the fence-top rail) to the switch house")
+	ok(main.player.global_position.x > 440.5 and str(main.player.grind_last.get("rail", "")) == "FenceRail", "1.5: he ground FenceRail to the switch house (x %.1f)" % main.player.global_position.x)
 	await _drive_step(story, main)
-	await _until(story, func(): return str(a.step.get("do", "")) == "defend" and not a.waiting, 900)
+	await _until(story, func(): return str(a.step.get("do", "")) == "defend", 900)
 	ok(main.flow.save.flag("a1_switch_house_plugged") and story.spoken.any(func(l): return "I'm going to tell it the Flats are a hospital." in str(l)) and story.spoken.any(func(l): return "comfortable with the paperwork" in str(l)), "1.5: Zero on the panel (the hospital line)")
 	await _until(story, func(): return a.drones.size() >= 1, 600)
-	ok(a.drones.size() >= 1 and a.reroute > 0.0, "1.5: hold the line: drones fly in, the reroute climbs")
-	var dr: Node3D = a.drones[0].node
-	dr.global_position = Vector3(441.0, 1.4, -61.0)
-	_put(main, [441.0, -61.0], 0.5)
-	await frames(2)
-	ok(a.knocked >= 1, "1.5: touching a drone knocks it down")
+	ok(a.drones.size() >= 1 and a.reroute > 0.0, "1.5: hold the line: drones fly in, the reroute climbs (step %s/%s drones %d reroute %.2f)" % [str(a.step.get("do", "")), str(a.step.get("counter", "")), a.drones.size(), a.reroute])
+	if a.drones.is_empty():
+		ok(false, "1.5: no drone spawned to knock down")
+	else:
+		var dr: Node3D = a.drones[0].node
+		dr.global_position = Vector3(441.0, 1.4, -61.0)
+		_put(main, [441.0, -61.0], 0.5)
+		await frames(2)
+		ok(a.knocked >= 1, "1.5: touching a drone knocks it down")
 	await _drive_step(story, main)
 	await _until(story, func(): return story.in_cinematic(), 900)
 	ok(a.reroute >= 1.0 and story.spoken.any(func(l): return "Rerouting at sixty percent" in str(l)), "1.5: the reroute completes (Zero's sixty percent bark)")
@@ -408,7 +466,7 @@ func _scene_1_5() -> void:
 	ok(story.spoken.any(func(l): return "He thinks it's a personality." in str(l)), "boss phase 3: Zero calls the pattern")
 	await _drive_step(story, main)
 	await _until(story, func(): return a.goals().size() > 0 and str(a.goals()[0].id) == "dial" and not a.waiting)
-	ok(main.player.global_position.y > 5.0, "boss phase 3: the loading-bay launch puts him on the machine's top")
+	ok(main.player.global_position.y > 5.0 and str(main.player.get_meta("last_lip_pipe", "")) == "LoadingBayPipe", "boss phase 3: the loading-bay quarter pipe launches him onto the machine (y %.1f)" % main.player.global_position.y)
 	await _drive_step(story, main)
 	await _until(story, func(): return story.in_cinematic(), 900)
 	ok(story.cinematic.id == "a1_lights_on", "1.5C: Lights on in the Flats")
@@ -432,6 +490,9 @@ func _scene_1_6() -> void:
 	var sig0 := int(main.flow.save.story.get("signal", 0))
 	await _until(story, func(): return str(a.step.get("do", "")) == "goals" and not a.waiting)
 	ok(a.scene == "1.6" and a._district("stillwater_flats") != null and a.root.get_node_or_null("Derelict") != null and a.root.get_node_or_null("DustyCabinet") != null and a.goals().size() == 4, "1.6: the heat-break days in the Flats (paint, aid, salvage, a cabinet)")
+	_put(main, a.goals()[0].at, 0.5)
+	main.player.skating = false
+	ok(not a.complete("paint"), "1.6: standing still does not finish a skated beat")
 	await _drive_step(story, main)
 	await _until(story, func(): return str(a.step.get("counter", "")) == "MET" and not a.waiting, 900)
 	ok(int(main.flow.save.story.get("signal", 0)) >= sig0 + 20 and main.flow.save.flag("a1_cabinet_found") and story.spoken.any(func(l): return str(l).begins_with("CARD|DAY 6 · SALVAGE")), "1.6: four days, Signal +20, a cabinet found")
@@ -441,7 +502,9 @@ func _scene_1_6() -> void:
 	await _until(story, func(): return story.in_cinematic(), 900)
 	ok(story.cinematic.id == "a1_rain", "1.6B: The rain")
 	await _until(story, func(): return not story.in_cinematic(), 2400)
-	ok(a.root.get_node_or_null("Rain") != null and a.root.get_node_or_null("TheYardSign") != null and main.flow.save.flag("a1_the_yard_named") and story.spoken.any(func(l): return "harder to bulldoze" in str(l)) and story.spoken.any(func(l): return "You're going to need a coach." in str(l)), "1.6B: rain, the coach line, THE YARD on the wall")
+	var mural := a.root.get_node_or_null("YardMural") as Node3D
+	var on_wall := mural != null and mural.position.x > 24.4 and mural.position.x < 27.8 and mural.position.z > -7.75 and mural.position.z < -7.5
+	ok(a.root.get_node_or_null("Rain") != null and mural != null and mural.get_node_or_null("TheYardSign") != null and on_wall and bool(mural.get_meta("placeholder", false)) and main.flow.save.flag("a1_the_yard_named") and story.spoken.any(func(l): return "harder to bulldoze" in str(l)) and story.spoken.any(func(l): return "You're going to need a coach." in str(l)), "1.6B: rain, the coach line, THE YARD painted on the wall beside the door")
 	await _until(story, func(): return not a.active() or story.phase == "slice_end", 900)
 	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|END OF ACT I.")) and main.flow.save.flag("a1_heat_break_done"), "END OF ACT I.")
 	await _until(story, func(): return story.phase == "slice_end" and story.queue.is_empty(), 600)
