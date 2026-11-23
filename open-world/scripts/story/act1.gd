@@ -1461,6 +1461,16 @@ func _walk(via: Array, at: Array, key: String) -> bool:
 	var t: Array = pts[leg]
 	var to := Vector3(float(t[0]) - pl.global_position.x, 0, float(t[1]) - pl.global_position.z)
 	var last := leg == pts.size() - 1
+	# Look along the leg, including the last step. A camera left pointing at a wall
+	# (the community-center drop) shortens onto his back.
+	var aim_from: Vector3 = pl.global_position
+	if leg > 0:
+		var prev: Array = pts[leg - 1]
+		aim_from = Vector3(float(prev[0]), pl.global_position.y, float(prev[1]))
+	var aim := Vector3(float(t[0]) - aim_from.x, 0, float(t[1]) - aim_from.z)
+	if aim.length() > 0.2:
+		var look := aim.normalized()
+		pl.camera_yaw = atan2(-look.x, -look.z)
 	if to.length() < (1.2 if last else 0.8):
 		if last:
 			return true

@@ -260,6 +260,24 @@ func _scene_1_2() -> void:
 		if str(dv.id) == "center":
 			center = dv
 	ok(nana != null and nana.position.z > -18.5 and not center.is_empty() and float(center.at[1]) > -18.0, "1.2: the community center drop and Nana Ines stand clear of the wall (camera room)")
+	var had_pilot: bool = not a.pilot.is_empty()
+	a.pilot = {}
+	main.player.external_move_active = false
+	main.player.external_move = Vector2.ZERO
+	main.player.global_position = Vector3(290.0, 0.5, -17.2)
+	main.player.velocity = Vector3.ZERO
+	main.player.camera_yaw = PI
+	a._walk(center.get("via", []), center.at, "center-cam")
+	a.pilot = {}
+	main.player.external_move = Vector2.ZERO
+	main.player.external_move_active = false
+	await frames(8)
+	ok(main.player.camera_distance() > 3.2, "1.2: the walk keeps the camera off the community-center wall (%.2f m)" % main.player.camera_distance())
+	main.player.external_move = Vector2.ZERO
+	main.player.external_move_active = false
+	main.player.global_position = Vector3(310.0, 0.5, -40.0)
+	main.player.velocity = Vector3.ZERO
+	a.pilot = {"on": true} if had_pilot else {}
 	ok(tag is Label3D and tag.visibility_range_begin >= 4.0, "name tags hide when the camera is right on them (close-ups)")
 	a.bags = 0
 	a.budget = int(a.step.budget)

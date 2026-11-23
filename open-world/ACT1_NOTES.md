@@ -74,7 +74,7 @@ Every guess below is a first pass, for you to change.
 
 ## Known rough spots (seen in the browser runs)
 - The lower SCORE box (the skate combo) reads 0 through the Act I scenes; the scene score is in the box above it (e.g. ROOFS 3/4 · SCORE 11,250).
-- At the community center drop in 1.2 the camera squeezes in against Fony's back for a moment.
+- At the community center drop in 1.2 the review walk used to leave the camera pointed at the wall, so it shortened onto Fony's back. The walk now looks along the leg.
 - The 1.1 camera starts very close to the dust-sheeted cabinet on the dev jump.
 - Name labels over the block people were halved in size after they filled the 1.3B close-ups.
 
