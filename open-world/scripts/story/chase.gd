@@ -23,6 +23,14 @@ const ENFORCER_SPEED := 7.2
 const ENFORCER_CATCHUP := 12.0
 const ENFORCER_CATCH_R := 2.2
 const ENFORCER_DELAY_S := 4.0
+## Spraying one drone in the chase. The downed drone uses the existing 8 s disable.
+## Neighbors inside the radius investigate the spot, then scan until tracking runs out.
+const ALERT_RADIUS := 22.0
+const INVESTIGATE_S := 3.5
+const TRACKING_S := 6.0
+const SCAN_DEG := 50.0
+const SCAN_HZ := 1.0
+const SCAN_RANGE := 16.0
 
 var cfg: Dictionary = {}
 var player: Node3D
@@ -136,9 +144,9 @@ func tick(delta: float) -> void:
 				if d.kind == "enforcement" and drones.filter(func(x): return x.kind == "enforcement" and x.active).size() == 1:
 					enforcers_in.emit()
 			continue
-		var sprayed: float = float(d.node.get_meta("spray_left", 0.0))
-		if sprayed > 0.0:
-			d.node.set_meta("spray_left", maxf(0.0, sprayed - delta))
+		if _downed(d, delta):
+			continue
+		if _alert_move(d, delta):
 			continue
 		_move(d, delta, p)
 		if grace <= 0.0 and caught_kind == "" and _flat(d.node.global_position, player.global_position) < d.catch_r and absf(d.node.global_position.y - player.global_position.y) < 5.0:
@@ -147,6 +155,91 @@ func tick(delta: float) -> void:
 			running = false
 			caught.emit(d.kind)
 			return
+
+func _alert(key: String, fallback: float) -> float:
+	var block = cfg.get("spray_alert", {})
+	if typeof(block) != TYPE_DICTIONARY:
+		return fallback
+	return float((block as Dictionary).get(key, fallback))
+
+## True while this drone is down from spray. The first frame alerts neighbors.
+func _downed(d: Dictionary, delta: float) -> bool:
+	var left := float(d.node.get_meta("spray_left", 0.0))
+	var was: bool = bool(d.get("down", false))
+	if left <= 0.0:
+		d["down"] = false
+		return false
+	if not was:
+		d["down"] = true
+		d["spot"] = d.node.global_position
+		_call_neighbors(d)
+	d.node.set_meta("spray_left", maxf(0.0, left - delta))
+	return true
+
+func _call_neighbors(downed: Dictionary) -> void:
+	var spot: Vector3 = downed.get("spot", downed.node.global_position)
+	var radius := _alert("alert_radius", ALERT_RADIUS)
+	var hold := _alert("investigate_s", INVESTIGATE_S)
+	for other in drones:
+		if other == downed or not bool(other.get("active", false)):
+			continue
+		if float(other.node.get_meta("spray_left", 0.0)) > 0.0:
+			continue
+		if _flat(other.node.global_position, spot) > radius:
+			continue
+		other["mode"] = "investigate"
+		other["mode_left"] = hold
+		other["focus"] = spot
+		other["scan_acc"] = 0.0
+
+## True when this drone is investigating or scanning instead of following the trail.
+func _alert_move(d: Dictionary, delta: float) -> bool:
+	var mode := str(d.get("mode", ""))
+	if mode == "":
+		return false
+	d["mode_left"] = float(d.get("mode_left", 0.0)) - delta
+	var focus: Vector3 = d.get("focus", d.node.global_position)
+	if mode == "investigate":
+		_step_toward(d, focus, float(d.speed), delta)
+		if float(d["mode_left"]) <= 0.0:
+			d["mode"] = "tracking"
+			d["mode_left"] = _alert("tracking_s", TRACKING_S)
+			d["scan_acc"] = 0.0
+		return true
+	_step_toward(d, focus, float(cfg.get("search_speed", 2.5)), delta)
+	if _scan_sees(d, delta):
+		d["mode"] = ""
+		return true
+	if float(d["mode_left"]) <= 0.0:
+		d["mode"] = ""
+	return true
+
+func _scan_sees(d: Dictionary, delta: float) -> bool:
+	var hz := maxf(_alert("scan_hz", SCAN_HZ), 0.1)
+	d["scan_acc"] = float(d.get("scan_acc", 0.0)) + delta
+	if float(d["scan_acc"]) < 1.0 / hz:
+		return false
+	d["scan_acc"] = 0.0
+	var to: Vector3 = player.global_position - d.node.global_position
+	var flat := Vector2(to.x, to.z)
+	if flat.length() > _alert("scan_range", SCAN_RANGE) or flat.length() < 0.05:
+		return false
+	var fwd: Vector3 = -d.node.global_transform.basis.z
+	var fwd2 := Vector2(fwd.x, fwd.z)
+	if fwd2.length() < 0.01:
+		return false
+	var ang := rad_to_deg(absf(fwd2.angle_to(flat)))
+	return ang <= _alert("scan_deg", SCAN_DEG) * 0.5
+
+func _step_toward(d: Dictionary, focus: Vector3, speed: float, delta: float) -> void:
+	var n: Node3D = d.node
+	var t3 := Vector3(focus.x, _alt(focus.y), focus.z)
+	var to := t3 - n.global_position
+	var dist := to.length()
+	if dist > 0.05:
+		n.global_position += to / dist * minf(dist, speed * delta)
+		if dist > 0.3:
+			n.look_at(n.global_position + to, Vector3.UP)
 
 func _move(d: Dictionary, delta: float, p: Vector3) -> void:
 	var n: Node3D = d.node

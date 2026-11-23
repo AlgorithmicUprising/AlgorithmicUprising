@@ -193,7 +193,16 @@
     "search_s": 4.0,
     "search_speed": 2.5,
     "altitude": 3.4,
-    "crumb_m": 1.2
+    "crumb_m": 1.2,
+    "spray_alert": {
+      "disable_s": 8.0,
+      "alert_radius": 22.0,
+      "investigate_s": 3.5,
+      "tracking_s": 6.0,
+      "scan_deg": 50.0,
+      "scan_hz": 1.0,
+      "scan_range": 16.0
+    }
   },
   "fade_s": 0.6,
   "culvert_s": 3.2,
