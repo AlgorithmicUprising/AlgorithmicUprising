@@ -1,0 +1,7 @@
+{
+  "contract": "au.camera_paint",
+  "contract_version": 1,
+  "clock": "play_time",
+  "recover_s": 900,
+  "open_call": "Which clock is OPEN. play_time or story_time. play_time is the default so a painted camera still recovers in free roam after the story, when story time may not move. recover_s is seconds on that clock."
+}

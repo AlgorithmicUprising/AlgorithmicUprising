@@ -16,6 +16,7 @@ const Protagonist = preload("res://scripts/front/protagonist.gd")
 const World = preload("res://scripts/story/story_world.gd")
 const Kit = preload("res://scripts/story/act1_kit.gd")
 const Spray = preload("res://scripts/spray.gd")
+const CameraPaint = preload("res://scripts/story/camera_paint.gd")
 const Blocks = preload("res://scripts/world_blocks.gd")
 const Hud = preload("res://scripts/story/story_hud.gd")
 const DEF_PATH := "res://data/missions/act1_scenes.json"
@@ -385,6 +386,7 @@ func complete(id: String) -> bool:
 	r["checkpoint"] = checkpoint
 	if str(g.get("flag", "")) != "":
 		host.flow.save.set_flag(str(g.flag))
+	_note_camera(g)
 	host.flow.persist()
 	score += int(g.get("points", 0))
 	if g.has("paint"):
@@ -418,6 +420,25 @@ func complete(id: String) -> bool:
 		waiting = true
 		_clear_drones()
 	return true
+
+## A goal that paints a camera head records it on the save. The 8 s drone timer is not used.
+func _note_camera(g: Dictionary) -> void:
+	if not g.has("paint"):
+		return
+	var lens_path := str(g.paint[0])
+	if not lens_path.ends_with("/Lens"):
+		return
+	var head := _node(lens_path.get_slice("/", 0))
+	if head == null or not head.is_in_group("painted_camera"):
+		return
+	var id := str(head.get_meta("camera_id", ""))
+	if id == "":
+		return
+	var play := 0.0
+	if host.get("main") != null and host.main != null and host.main.get("gs") != null and host.main.gs != null:
+		play = float(host.main.gs.play_time)
+	CameraPaint.mark(host.flow.save, id, CameraPaint.now_s(host.flow.save, play))
+	head.set_meta("camera_painted", true)
 
 func _reset(why: String) -> void:
 	var pos: Array = sdef().spawn
@@ -1104,6 +1125,9 @@ func _cameras() -> void:
 			continue
 		Blocks.visual(root, "CamPole%d" % i, Vector3(float(c[0]), 1.6, float(c[1])), Vector3(0.18, 3.2, 0.18), Color("6a7480"))
 		var head := Blocks.visual(root, "Cam%d" % i, Vector3(float(c[0]), 3.3, float(c[1])), Vector3(0.6, 0.4, 0.9), Color("e8eef4"))
+		head.add_to_group("painted_camera")
+		head.set_meta("camera_id", "cam%d" % i)
+		head.set_meta("camera_lens_color", Color("ff3030"))
 		Blocks.visual(head, "Lens", Vector3(0, 0, 0.46), Vector3(0.3, 0.3, 0.04), Color("ff3030")).name = "Lens"
 
 ## The maintenance switch house just south of the substation fence, with a panel for Zero.

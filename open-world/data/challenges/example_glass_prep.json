@@ -15,5 +15,6 @@
   ],
   "scoring": {},
   "points": {"clear": 1},
-  "repeatable": true
+  "repeatable": true,
+  "reward": {"type": "placeholder", "id": "tbd"}
 }

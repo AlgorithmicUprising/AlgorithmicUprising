@@ -64,6 +64,13 @@ static func validate(data: Variant) -> Dictionary:
 		return _bad("source")
 	if body.has("parameters") and typeof(body.get("parameters")) != TYPE_DICTIONARY:
 		return _bad("parameters")
+	if body.has("reward"):
+		var reward = body.get("reward")
+		if typeof(reward) != TYPE_DICTIONARY:
+			return _bad("reward")
+		var spec: Dictionary = reward
+		if str(spec.get("type", "")) == "" or str(spec.get("id", "")) == "":
+			return _bad("reward")
 	return {"ok": true}
 
 static func validate_catalog(data: Variant) -> Dictionary:

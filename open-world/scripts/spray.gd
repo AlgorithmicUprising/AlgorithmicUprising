@@ -2,6 +2,8 @@ extends RefCounted
 ## Spray paint / attack. RT on a pad, left click once the mouse is captured.
 ## The color comes from data/spray_slot.json (one default). Hitting a drone in the
 ## cone sets its spray_left meta; patrol and chase code treat that as disabled.
+## A painted_camera stays painted until camera_paint.gd says the cleaners have it.
+## It does not use the 8 s drone timer.
 
 const DATA := "res://data/spray_slot.json"
 const RANGE := 14.0
@@ -62,8 +64,12 @@ static func fire(tree: SceneTree, origin: Vector3, dir: Vector3) -> int:
 		var body := node as Node3D
 		if not in_cone(origin, dir, body.global_position):
 			continue
-		body.set_meta("spray_left", DISABLE_S)
 		body.set_meta("spray_color", _color)
+		if body.is_in_group("painted_camera"):
+			body.set_meta("camera_painted", true)
+			body.set_meta("camera_paint_dirty", true)
+		else:
+			body.set_meta("spray_left", DISABLE_S)
 		hits += 1
 	return hits
 

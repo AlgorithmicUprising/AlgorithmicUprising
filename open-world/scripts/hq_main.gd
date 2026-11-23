@@ -7,6 +7,7 @@ const FlowScript = preload("res://scripts/hq_flow.gd")
 const DistrictLoader = preload("res://scripts/district_loader.gd")
 const PracticeRun = preload("res://scripts/story/practice_run.gd")
 const SaveScript = preload("res://contracts/save_record.gd")
+const CameraPaint = preload("res://scripts/story/camera_paint.gd")
 const FREE_AUTOSAVE_S := 90.0
 
 var flow: Node
@@ -85,6 +86,9 @@ func _process(_delta: float) -> void:
 		return
 	if gs != null and gs.has_character() and not flow.paused and flow.boundary.phase == "world":
 		gs.play_time += _delta
+		var story_on := story != null and bool(story.active)
+		CameraPaint.advance(flow.save, _delta, story_on)
+		CameraPaint.sync(get_tree(), flow.save, gs.play_time)
 		if story == null or not story.active:
 			free_autosave_clock += _delta
 			if free_autosave_clock >= FREE_AUTOSAVE_S:
