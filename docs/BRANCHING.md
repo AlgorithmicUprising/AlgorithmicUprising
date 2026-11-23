@@ -22,7 +22,7 @@ Zero does not edit the website or Zero Admin. ChatGPT does not edit the Godot ga
 
 GitHub Pages builds from `main` with the job **Publish arcade and HQ Pages from main** in [`.github/workflows/arcade.yml`](../.github/workflows/arcade.yml) (`actions/deploy-pages`). The public URL is <https://algorithmicuprising.github.io/AlgorithmicUprising/>. [algorithmicuprising.com](https://algorithmicuprising.com) iframes the Pages `/open-world/` build. A merge that touches `arcade/**`, `open-world/**`, or that workflow file starts a publish of both trees. One publish always rebuilds both, so an arcade-only change cannot drop `/open-world/`.
 
-A commit that stays outside those paths does not start a publish. `docs/pages-release-2026-11-08.md` is the pattern for a release note that records a publish without kicking off another one.
+A commit that stays outside those paths does not start a publish. `docs/pages-release-2026-11-08.md` is the pattern for a release note that records a publish without kicking off another one. A markdown edit under `arcade/` or `open-world/` is still inside the filter, so it publishes. Put release notes and strategy docs under `docs/` when you want the commit to stay off the publisher.
 
 There is no `develop` branch, no release branch, and no git tags.
 
@@ -127,6 +127,7 @@ Before asking the owner to merge, the checks that apply to the diff are green:
 | `arcade/**` or `open-world/**` or `arcade.yml` | Punk Arcade CI `build-and-browser-test` |
 | `open-world/**` | that job, and the composite workflow |
 | docs only, outside those paths | no Actions run; say so in the pull request |
+| a markdown file that still lives under `arcade/` or `open-world/` | the same checks as code, and the merge publishes |
 
 `main` has no branch protection and no required status checks (confirmed 2026-11-23: `protected: false`, rulesets empty). The rule above is the working rule until the owner turns protection on. See the last section for the settings worth turning on, and the trap if required checks are added before docs pull requests have a check to satisfy.
 

@@ -21,7 +21,7 @@ Leave these alone. No push, rebase, retarget, or close:
 2. Open the pull request into `main`. Say whether merging publishes the live site.
 3. Stack only when the later work cannot be reviewed without the earlier commits. The child pull request targets the parent branch, not `main`. After the parent merges, retarget the child to `main` and merge `main` into it.
 4. Update your branch by merging `main` in. Force-push only your own branch, only right after a rebase you announced, and never when another open pull request uses it as a base. Never force-push `main` or another agent's branch.
-5. Wait until the checks that match your diff are green. Arcade and open-world changes need Punk Arcade CI. Open-world changes also need the composite workflow, which does not deploy. Docs outside `arcade/**`, `open-world/**`, and `.github/workflows/arcade.yml` do not run those workflows and do not publish.
+5. Wait until the checks that match your diff are green. Arcade and open-world changes need Punk Arcade CI. Open-world changes also need the composite workflow, which does not deploy. Docs outside `arcade/**`, `open-world/**`, and `.github/workflows/arcade.yml` do not run those workflows and do not publish. A markdown file that lives inside `arcade/` or `open-world/` still does.
 6. Do not merge.
 
 ## Live site
