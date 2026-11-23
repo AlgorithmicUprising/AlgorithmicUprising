@@ -1349,11 +1349,21 @@ func _lip_launch() -> void:
 	air_peak_above_lip = 0.0
 	air_from_y = global_position.y
 	air_anchor = sprite_anchor_offset()
-	velocity = b * Vector3(-LIP_DRIFT, v_lip, ramp_vz)
+	# Park pipes pop straight up and drift back into the transition. A pipe that names
+	# launch_forward carries that many m/s along its climb instead, so a story ramp can
+	# clear the gap past its own coping. Every other pipe keeps the park drift.
+	var along := -LIP_DRIFT
+	if pipe.has_meta("launch_forward"):
+		along = float(pipe.get_meta("launch_forward"))
+	var up := v_lip
+	if pipe.has_meta("launch_up"):
+		up = maxf(up, float(pipe.get_meta("launch_up")))
+	set_meta("last_lip_pipe", str(pipe.name))
+	velocity = b * Vector3(along, up, ramp_vz)
 	air_kind = "lip"
 	air_time = 0.0
 	air_total = 2.0 * v_lip / GRAVITY
-	_event("lip_launch", {"speed": v_lip})
+	_event("lip_launch", {"speed": v_lip, "pipe": str(pipe.name)})
 	ramp_mode = ""
 	pipe_air = true
 	pipe_air_pipe = pipe

@@ -358,7 +358,8 @@ func _goals_tick(delta: float) -> void:
 		host.hud.prompt("")
 		return
 	if bool(g.get("auto", false)):
-		complete(str(g.id))
+		if _traversed(g):
+			complete(str(g.id))
 		return
 	host.hud.prompt(str(g.get("verb", "E")))
 	_spray_can(g.has("paint"))
@@ -379,8 +380,15 @@ func complete(id: String) -> bool:
 	if g.is_empty():
 		return false
 	done_goals[id] = true
-	if not bool(g.get("auto", false)):
+	if not bool(g.get("auto", false)) or str(g.get("traverse", "")) != "":
 		checkpoint = id
+	if str(g.get("traverse", "")) != "":
+		# The ride is finished. Drop the stick before the next step starts.
+		pilot = {}
+		if host.player != null:
+			host.player.external_move_active = false
+			host.player.external_move = Vector2.ZERO
+			host.player.external_jump = false
 	var r: Dictionary = host.flow.save.mission(str(sdef().id))
 	r["done"] = done_goals.keys()
 	r["checkpoint"] = checkpoint
@@ -419,6 +427,20 @@ func complete(id: String) -> bool:
 			host._say_all(_fill(step.done_lines))
 		waiting = true
 		_clear_drones()
+	return true
+
+## A grind or a launch is not done just because he is standing in the zone.
+func _traversed(g: Dictionary) -> bool:
+	var kind := str(g.get("traverse", ""))
+	if kind == "":
+		return true
+	var pl = host.player
+	if kind == "grind":
+		var want := str(g.get("rail", ""))
+		var riding: bool = pl.grind != null and str(pl.grind.name) == want
+		return riding or str(pl.grind_last.get("rail", "")) == want
+	if kind == "launch":
+		return str(pl.get_meta("last_lip_pipe", "")) == str(g.get("pipe", ""))
 	return true
 
 ## A goal that paints a camera head records it on the save. The 8 s drone timer is not used.
@@ -959,12 +981,15 @@ func hook(name: String) -> void:
 		"cameras":
 			_cameras()
 			_switch_house()
+			_fence_rail()
 			for w in ["Worker1", "Worker2"]:
 				var wn := _node(w) as Node3D
 				if wn != null:
 					wn.visible = false  # their smoke break was 1.4; their name tags filled the boss camera
 		"over_fence":
-			_spawn([442.0, 0.5, -60.5, 90.0])
+			pass # the fence-top grind already carried him here
+		"launch":
+			pass # the quarter-pipe launch already put him on the machine
 		"switch_house":
 			Kit.paint(_node("PanelScreen"), LIME)
 			var pl := _node("PanelFace") as Label3D
@@ -981,8 +1006,6 @@ func hook(name: String) -> void:
 			_dial("HEAT", Color("ff5a3a"))
 		"dial_wild":
 			_dial("HOT · COLD · HOT", Color("ffd24a"))
-		"launch":
-			_spawn([414.0, 6.6, -61.6, 0.0])
 		"thermostat_down":
 			_dial("OFF", Color("7a7f88"))
 			var tm := _node("Thermostat") as Node3D
@@ -1130,6 +1153,27 @@ func _cameras() -> void:
 		head.set_meta("camera_lens_color", Color("ff3030"))
 		Blocks.visual(head, "Lens", Vector3(0, 0, 0.46), Vector3(0.3, 0.3, 0.04), Color("ff3030")).name = "Lens"
 
+## Ollie-height bar from the south end of the substation fence to the switch house.
+## The yard's flat bar is 0.30 m because that is what an ollie can catch. This one sits in that same band.
+func _fence_rail() -> void:
+	if root == null or root.get_node_or_null("FenceRail") != null:
+		return
+	var rail = load("res://scenes/grind_rail.tscn").instantiate()
+	rail.name = "FenceRail"
+	var start := Vector3(438.6, 0.36, -56.4)
+	var finish := Vector3(443.0, 0.32, -60.8)
+	var flat := Vector3(finish.x - start.x, 0.0, finish.z - start.z)
+	rail.length = flat.length()
+	rail.drop = start.y - finish.y
+	rail.friction = 0.25
+	rail.position = (start + finish) * 0.5
+	rail.rotation.y = atan2(-(finish.z - start.z), finish.x - start.x)
+	root.add_child(rail)
+	# _ready samples the global basis before it flushes, so pin the riding line to the
+	# start-to-finish direction ourselves.
+	rail.direction = flat.normalized()
+	rail.mount_y = rail.position.y
+
 ## The maintenance switch house just south of the substation fence, with a panel for Zero.
 func _switch_house() -> void:
 	if root.get_node_or_null("SwitchHouse") != null:
@@ -1172,9 +1216,27 @@ func _thermostat() -> void:
 	var steam := Blocks.visual(t, "Steam", Vector3(0, 2.0, 0), Vector3(14.0, 4.0, 14.0), Color(1, 1, 1))
 	steam.material_override = Kit.unshaded(Color("f4f4f4"), 0.28)
 	steam.visible = false
-	var ramp := Blocks.visual(root, "LoadingBay", Vector3(401.0, 0.6, -62.0), Vector3(5.0, 1.2, 6.0), Color("5a6470"))
-	ramp.rotation.z = 0.25
-	Kit.sign(root, "BaySign", "LOADING BAY 2", Vector3(401.0, 2.6, -58.9), 0.0, Color("ffd24a"), 32, 0.01)
+	_loading_bay()
+	Kit.sign(root, "BaySign", "LOADING BAY 2", Vector3(404.0, 2.4, -57.6), 0.0, Color("ffd24a"), 32, 0.01)
+
+## Quarter pipe on the asphalt, lip toward the machine. launch_up clears the roof.
+func _loading_bay() -> void:
+	if root.get_node_or_null("LoadingBayPipe") != null:
+		return
+	var pipe: Node3D = load("res://assets/library/quarter_pipe/quarter_pipe.tscn").instantiate()
+	pipe.name = "LoadingBayPipe"
+	pipe.radius = 2.4
+	pipe.width = 6.0
+	pipe.deck_length = 0.3
+	pipe.closed_back = false
+	# Lip just west of the machine. Skate speed keeps a real lip pop; launch_up is what
+	# clears a 6 m roof, because a stock lip launch only drifts back into the pipe.
+	var lip_x := 2.4 * sin(deg_to_rad(70.0))
+	# Far enough west of the machine face that the arc clears the 6 m wall.
+	pipe.position = Vector3(406.0 - lip_x, 0.0, -61.2)
+	pipe.set_meta("launch_forward", 6.0)
+	pipe.set_meta("launch_up", 14.0)
+	root.add_child(pipe)
 
 func _frost() -> void:
 	var rng := RandomNumberGenerator.new()
@@ -1455,6 +1517,12 @@ func _pilot_tick(_delta: float) -> void:
 					continue
 				if step.has("hazards") and _pilot_hold(g.at):
 					return
+				if str(g.get("traverse", "")) == "grind":
+					_pilot_grind(g)
+					return
+				if str(g.get("traverse", "")) == "launch":
+					_pilot_launch(g)
+					return
 				if _walk(g.get("via", []), g.at, str(g.id)):
 					if not in_reach().is_empty() and str(in_reach().id) == str(g.id):
 						complete(str(g.id))
@@ -1487,6 +1555,107 @@ func _pilot_tick(_delta: float) -> void:
 				if _walk(dv.get("via", []), dv.at, str(dv.id)):
 					deliver(str(dv.id))
 				return
+
+func _face(dir: Vector3) -> void:
+	var flat := Vector3(dir.x, 0.0, dir.z)
+	if flat.length() < 0.05:
+		return
+	flat = flat.normalized()
+	# camera_yaw is relative to the body. The walk aims with the live camera axes instead.
+	host.player.camera_yaw = atan2(-flat.x, -flat.z) - host.player.rotation.y
+
+## Point the stick so the current camera axes carry him along a world direction.
+func _steer(world_dir: Vector3) -> void:
+	var d := Vector3(world_dir.x, 0.0, world_dir.z)
+	if d.length() < 0.05:
+		host.player.external_move = Vector2.ZERO
+		return
+	d = d.normalized()
+	var axes: Array = host.player._camera_flat_axes()
+	var forward: Vector3 = axes[0]
+	var right: Vector3 = axes[1]
+	host.player.external_move = Vector2(d.dot(right), d.dot(forward))
+
+## Skate to the rail, ollie on, and let the grind carry him. The goal completes at the far end.
+func _pilot_grind(g: Dictionary) -> void:
+	var pl = host.player
+	pl.skating = true
+	var rail = _node(str(g.get("rail", "")))
+	if rail == null or not rail.has_method("start_point"):
+		return
+	var want := str(rail.name)
+	if pl.grind != null and str(pl.grind.name) == want:
+		pl.external_move = Vector2.ZERO
+		pl.external_jump = false
+		pilot["grind_phase"] = "ride"
+		return
+	if str(pl.grind_last.get("rail", "")) == want:
+		pl.external_move = Vector2.ZERO
+		var at: Array = g.at
+		if Vector2(pl.global_position.x - float(at[0]), pl.global_position.z - float(at[1])).length() < float(g.get("r", 2.2)):
+			complete(str(g.id))
+		else:
+			_walk([], at, "grind-off-" + str(g.id))
+		return
+	var dir: Vector3 = rail.line_dir()
+	var flat := Vector3(dir.x, 0.0, dir.z).normalized()
+	if flat.length() < 0.5:
+		flat = Vector3(dir.x, 0.0, dir.z)
+	var start: Vector3 = rail.start_point()
+	var approach := start - flat * 3.2
+	var at_rail: Dictionary = rail.locate(pl.global_position)
+	var along_m := float(at_rail.get("along", -99.0))
+	var lateral := float(at_rail.get("lateral", 0.0))
+	if along_m > float(rail.length) * 0.55 and pl.grind == null:
+		pilot["grind_phase"] = ""
+	if str(pilot.get("grind_phase", "")) != "hop":
+		if Vector2(pl.global_position.x - approach.x, pl.global_position.z - approach.z).length() > 0.45:
+			_walk([], [approach.x, approach.z], "grind-on-" + str(g.id))
+			return
+		pilot["grind_phase"] = "hop"
+	_face(flat)
+	var side: Vector3 = at_rail.get("side", Vector3.ZERO)
+	_steer(flat - side * clampf(lateral, -1.0, 1.0))
+	# Keep the trucks on the bar's line. An ollie a metre out front is what the catch window wants.
+	if absf(lateral) > 0.2 and along_m > -2.0 and along_m < float(rail.length):
+		var axis: Vector3 = rail.line_point(clampf(along_m, 0.0, float(rail.length)))
+		pl.global_position.x = lerpf(pl.global_position.x, axis.x, 0.35)
+		pl.global_position.z = lerpf(pl.global_position.z, axis.z, 0.35)
+	var speed := Vector2(pl.velocity.x, pl.velocity.z).length()
+	if pl.is_on_floor() and speed > 3.0 and along_m > -1.8 and along_m < 0.6 and str(pl.trick) == "":
+		pl.request_trick("ollie")
+
+## Skate into the loading-bay quarter pipe. The lip launch puts him on the machine.
+func _pilot_launch(g: Dictionary) -> void:
+	var pl = host.player
+	pl.skating = true
+	var pipe := _node(str(g.get("pipe", ""))) as Node3D
+	if pipe == null:
+		return
+	if pl.ramp == pipe or (pl.pipe_air and pl.pipe_air_pipe == pipe):
+		_steer(pipe.global_transform.basis.x)
+		pl.external_jump = false
+		# Hold a cresting speed up the transition. A walk-speed entry rolls back down.
+		if pl.ramp == pipe and pl.ramp_s < pipe.lip_arc() * 0.92 and pl.ramp_v < 8.0:
+			pl.ramp_v = 8.0
+		return
+	var mouth: Vector3 = pipe.to_global(Vector3(-6.0, 0.4, 0.0))
+	var speed := Vector2(pl.velocity.x, pl.velocity.z).length()
+	var local: Vector3 = pipe.to_local(pl.global_position)
+	pilot["stuck"] = 0 if speed > 0.8 else int(pilot.get("stuck", 0)) + 1
+	if int(pilot.get("stuck", 0)) > 45:
+		pl.global_position = mouth
+		pl.velocity = pipe.global_transform.basis.x * 9.0
+		pilot["stuck"] = 0
+		return
+	# Enter before the shell, already at skate speed, so the ride crests.
+	if local.x < -1.0 and local.x > -5.5 and absf(local.z) < 1.2 and speed > 7.5 and pl.is_on_floor() and pl.velocity.dot(pipe.global_transform.basis.x) > 0.0:
+		pl._ramp_enter(pipe, 0.55, 0.0)
+		return
+	if Vector2(pl.global_position.x - mouth.x, pl.global_position.z - mouth.z).length() > 0.9:
+		_steer(mouth - pl.global_position)
+		return
+	_steer(pipe.global_transform.basis.x)
 
 ## Boss phase 2: wait outside the steam while it blows if the target is inside it.
 func _pilot_hold(at: Array) -> bool:

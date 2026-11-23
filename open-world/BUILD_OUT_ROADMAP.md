@@ -60,7 +60,7 @@ The room is a dark box: sheet cubes, one slope, labels, practical lights. The th
 
 **Size.** Large. `districts/cold_row/`, plus the 1.5 script where a teleport stands in for a grind or a launch.
 
-1.4 is a night blockout (asphalt, fences, three towers, a river wall, three marks). 1.5's fence crossing and the thermostat launch are still teleports, called out as placeholders in `ACT1_NOTES.md`. The boss phases play, but the machine is not a ramp.
+1.4 is a night blockout (asphalt, fences, three towers, a river wall, three marks). 1.5's fence crossing is a grind and the thermostat launch is the loading-bay quarter pipe. The boss phases play. The machine is not a ramp.
 
 **Review.** 1.4: all three marks, once spotted and once not. 1.5: cameras, the fence, the panel, the hold-the-line, then the three boss phases. A fall off the machine or the fence should return to the last checkpoint inside Cold Row. The river stays out of bounds.
 
@@ -95,9 +95,9 @@ The early cut already plays from New Game through 1.6B (`ACT1.md`, `ACT1_NOTES.m
 8. **1.1B The plan.** The dust sheet comes off GRIND THE TERMS and `cabinet_grind_the_terms` unlocks it. E on that cabinet opens the existing Punk Arcade page. The game files are untouched. The HQ arcade cabinets stay as they were.
 9. **1.2 Water Run, Stillwater.** Five drops, melt, and Signal play on one slab with block people (phase 5). There is no street from Glass Row (the fade stays; that join is still an open call). Nana Ines's community-center line is unchanged. The review walk now looks along the leg, so the camera no longer shortens onto his back at that drop.
 10. **1.3 Cool Roofs and 1.3B First night.** Four roofs, bridges, and the billboard tag play. A paint goal still accepts E, and it also accepts the spray button. A small can shows while one is in reach. The procession is narrated. Nana's and Zero's closing lines are placeholders. The night crowd in the arcade is block figures.
-11. **1.4 Cold Row and 1.4B The Benefactor.** The three marks and the drone loops play on the night blockout (phase 6). WATCH has no vision cone. The stealth bonus is not built. Mark lines are placeholders. The hologram is boxes, not Halo. Zero Vision here is the first-use phone raise only.
+11. **1.4 Cold Row and 1.4B The Benefactor.** The three marks and the drone loops play on the night blockout (phase 6). Mark lines are placeholders. The hologram is boxes, not Halo. Zero Vision here is the first-use phone raise only. **Open calls:** the stealth-bonus formula, and a WATCH vision cone. WATCH stays a 5.5 m radius with no angle and no line of sight. Neither rule is invented here.
 12. **Zero Vision in free roam.** The meter and the recharge are not built. After 1.4B it does not come back.
-13. **1.5 The Breaker, 1.5B The Thermostat, 1.5C Lights on.** Cameras, the reroute, and the three boss phases play. The fence-top grind is a teleport. The launch onto the machine is a teleport. Frost does not slip. The machine is not a ramp. 1.5C is the same Flats slab with lit windows.
+13. **1.5 The Breaker, 1.5B The Thermostat, 1.5C Lights on.** Cameras, the reroute, and the three boss phases play. The fence crossing is a grind on FenceRail. The loading bay is a quarter pipe whose lip launch lands on the machine. Frost does not slip. The machine is not a ramp. 1.5C is the same Flats slab with lit windows.
 14. **1.6 Heat Break.** Four E prompts stand in for the day montage. Shade cloth, the water station, the cots, and the neighbors are placeholders, not activities.
 15. **1.6B The rain.** The storm, the doorway, and the end card play. Nana's THE YARD mural is not a painted wall. Real art is still missing for Nana Ines, the residents, Egon, Halo, and Zero's face on the phone (the thread header only).
 16. **One Glitchport.** The yard, Glass Row, the Flats, and Cold Row are separate slabs joined by fades (phase 7). A finished Act I shows the same skyline on both sides of a fade, or replaces a fade with a bounded street. No new hole at the join.

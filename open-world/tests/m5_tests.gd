@@ -15,6 +15,9 @@ var t: Node
 func run(host: Node) -> void:
 	t = host
 	_data()
+	if OS.get_environment("AU_TEST_ONLY") == "traverse":
+		await _scene_1_5()
+		return
 	await _scene_1_1()
 	await _reload_after(["1.1"])
 	await _scene_1_2()
@@ -83,10 +86,23 @@ func _drive_step(story, main) -> void:
 			for g in st.goals:
 				if bool(g.get("optional", false)) and not bool(g.get("pilot", false)):
 					continue
-				_put(main, g.at, float(g.get("min_y", -9.0)) + 1.5 if g.has("min_y") else 0.5)
-				await frames(2)
-				if not a.done_goals.has(str(g.id)):
-					a.complete(str(g.id))
+				if str(g.get("traverse", "")) != "":
+					a.pilot = {"on": true}
+					var guard := 0
+					var limit := 5200 if str(g.get("traverse", "")) == "launch" else 1000
+					var watch := str(a.step.get("counter", a.step.get("id", "")))
+					while not a.done_goals.has(str(g.id)) and str(a.step.get("counter", a.step.get("id", ""))) == watch and guard < limit:
+						guard += 1
+						await t.get_tree().physics_frame
+					a.pilot = {}
+					main.player.external_move_active = false
+					main.player.external_move = Vector2.ZERO
+					main.player.external_jump = false
+				else:
+					_put(main, g.at, float(g.get("min_y", -9.0)) + 1.5 if g.has("min_y") else 0.5)
+					await frames(2)
+					if not a.done_goals.has(str(g.id)):
+						a.complete(str(g.id))
 				await _until(story, func(): return story.queue.is_empty() and story.talking == "", 400)
 		"topics":
 			for tp in st.topics:
@@ -406,17 +422,20 @@ func _scene_1_5() -> void:
 	ok(a.log.has("goal:cam5") and a.score >= 9000, "1.5: six cameras blinded (score %d)" % a.score)
 	await _drive_step(story, main)
 	await _until(story, func(): return str(a.step.get("counter", "")) == "PANEL" and not a.waiting)
-	ok(main.player.global_position.x > 440.5, "1.5: over the fence (the fence-top rail) to the switch house")
+	ok(main.player.global_position.x > 440.5 and str(main.player.grind_last.get("rail", "")) == "FenceRail", "1.5: he ground FenceRail to the switch house (x %.1f)" % main.player.global_position.x)
 	await _drive_step(story, main)
-	await _until(story, func(): return str(a.step.get("do", "")) == "defend" and not a.waiting, 900)
+	await _until(story, func(): return str(a.step.get("do", "")) == "defend", 900)
 	ok(main.flow.save.flag("a1_switch_house_plugged") and story.spoken.any(func(l): return "I'm going to tell it the Flats are a hospital." in str(l)) and story.spoken.any(func(l): return "comfortable with the paperwork" in str(l)), "1.5: Zero on the panel (the hospital line)")
 	await _until(story, func(): return a.drones.size() >= 1, 600)
-	ok(a.drones.size() >= 1 and a.reroute > 0.0, "1.5: hold the line: drones fly in, the reroute climbs")
-	var dr: Node3D = a.drones[0].node
-	dr.global_position = Vector3(441.0, 1.4, -61.0)
-	_put(main, [441.0, -61.0], 0.5)
-	await frames(2)
-	ok(a.knocked >= 1, "1.5: touching a drone knocks it down")
+	ok(a.drones.size() >= 1 and a.reroute > 0.0, "1.5: hold the line: drones fly in, the reroute climbs (step %s/%s drones %d reroute %.2f)" % [str(a.step.get("do", "")), str(a.step.get("counter", "")), a.drones.size(), a.reroute])
+	if a.drones.is_empty():
+		ok(false, "1.5: no drone spawned to knock down")
+	else:
+		var dr: Node3D = a.drones[0].node
+		dr.global_position = Vector3(441.0, 1.4, -61.0)
+		_put(main, [441.0, -61.0], 0.5)
+		await frames(2)
+		ok(a.knocked >= 1, "1.5: touching a drone knocks it down")
 	await _drive_step(story, main)
 	await _until(story, func(): return story.in_cinematic(), 900)
 	ok(a.reroute >= 1.0 and story.spoken.any(func(l): return "Rerouting at sixty percent" in str(l)), "1.5: the reroute completes (Zero's sixty percent bark)")
@@ -443,7 +462,7 @@ func _scene_1_5() -> void:
 	ok(story.spoken.any(func(l): return "He thinks it's a personality." in str(l)), "boss phase 3: Zero calls the pattern")
 	await _drive_step(story, main)
 	await _until(story, func(): return a.goals().size() > 0 and str(a.goals()[0].id) == "dial" and not a.waiting)
-	ok(main.player.global_position.y > 5.0, "boss phase 3: the loading-bay launch puts him on the machine's top")
+	ok(main.player.global_position.y > 5.0 and str(main.player.get_meta("last_lip_pipe", "")) == "LoadingBayPipe", "boss phase 3: the loading-bay quarter pipe launches him onto the machine (y %.1f)" % main.player.global_position.y)
 	await _drive_step(story, main)
 	await _until(story, func(): return story.in_cinematic(), 900)
 	ok(story.cinematic.id == "a1_lights_on", "1.5C: Lights on in the Flats")
