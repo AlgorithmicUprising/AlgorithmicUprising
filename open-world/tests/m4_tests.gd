@@ -93,6 +93,8 @@ func _data() -> void:
 	var room = load(str(e.scene)).instantiate()
 	t.add_child(room)
 	ok(room.get_node_or_null("BreakerLabel") != null and room.get_node_or_null("FuseCoinBox") != null and room.get_node_or_null("FuseToolbox") != null and room.get_node_or_null("FuseFixture") != null and room.get_node_or_null("ToppledCabinet") != null and room.get_node_or_null("BenchCRT") != null, "pack: breaker, three fuses, the toppled cabinet, the CRT on the workbench")
+	ok(room.get_node_or_null("Cabinet0/Cloth") != null and room.get_node_or_null("ToppledCabinet/CabinetShell") != null, "pack: the cabinets wear cloth and the climb reads as the fallen cabinet")
+	ok(P3.P3_SWEEP_S == 100.0 and P3.P3_SWEEP_FAIL == "last_fuse", "P.3: sweep length and the last-fuse reset are the named defaults")
 	room.queue_free()
 
 func _power_full() -> void:
