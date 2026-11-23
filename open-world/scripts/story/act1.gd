@@ -1049,8 +1049,7 @@ func hook(name: String) -> void:
 			_rain()
 			_rain_crowd()
 		"the_yard":
-			if root != null and root.get_node_or_null("TheYardSign") == null:
-				Kit.sign(root, "TheYardSign", "THE YARD", Vector3(25.0, 3.6, -7.6), 0.0, Color("f4f4ee"), 120, 0.02)
+			_yard_mural()
 			host.flow.save.set_flag("a1_the_yard_named")
 	host.flow.persist()
 
@@ -1097,6 +1096,17 @@ func _yard() -> void:
 	Blocks.visual(root, "ClinicTable", Vector3(32.0, 0.45, 6.6), Vector3(2.0, 0.9, 0.8), Color("e8e8e8"))
 	Kit.person(root, "ZeroAtDoor", "ZERO", Vector3(32.0, 0.45, -7.0), Color("3a3f48"), 1.8)
 	host.flow.save.set_flag("a1_yard_grown")
+
+## PLACEHOLDER blockout. Nana paints the word on the arcade wall beside the bay door
+## (the script line). Yard lime is the spray color already in the game. Not a finished mural.
+func _yard_mural() -> void:
+	if root == null or root.get_node_or_null("YardMural") != null:
+		return
+	# Front wall outer face is z = -7.7. The bay door is x 28..36. This panel sits just west of it.
+	var panel := Blocks.visual(root, "YardMural", Vector3(26.0, 3.3, -7.66), Vector3(2.6, 2.4, 0.05), Color("c8ff3a"))
+	panel.set_meta("placeholder", true)
+	var word := Kit.sign(panel, "TheYardSign", "THE YARD", Vector3(0, 0, 0.04), 0.0, Color("1a1408"), 96, 0.012)
+	word.set_meta("placeholder", true)
 
 ## 1.6B: rain streaks (PLACEHOLDER: a few hundred thin boxes falling over the Yard).
 func _rain() -> void:

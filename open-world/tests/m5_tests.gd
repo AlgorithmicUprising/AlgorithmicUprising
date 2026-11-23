@@ -502,7 +502,9 @@ func _scene_1_6() -> void:
 	await _until(story, func(): return story.in_cinematic(), 900)
 	ok(story.cinematic.id == "a1_rain", "1.6B: The rain")
 	await _until(story, func(): return not story.in_cinematic(), 2400)
-	ok(a.root.get_node_or_null("Rain") != null and a.root.get_node_or_null("TheYardSign") != null and main.flow.save.flag("a1_the_yard_named") and story.spoken.any(func(l): return "harder to bulldoze" in str(l)) and story.spoken.any(func(l): return "You're going to need a coach." in str(l)), "1.6B: rain, the coach line, THE YARD on the wall")
+	var mural := a.root.get_node_or_null("YardMural") as Node3D
+	var on_wall := mural != null and mural.position.x > 24.4 and mural.position.x < 27.8 and mural.position.z > -7.75 and mural.position.z < -7.5
+	ok(a.root.get_node_or_null("Rain") != null and mural != null and mural.get_node_or_null("TheYardSign") != null and on_wall and bool(mural.get_meta("placeholder", false)) and main.flow.save.flag("a1_the_yard_named") and story.spoken.any(func(l): return "harder to bulldoze" in str(l)) and story.spoken.any(func(l): return "You're going to need a coach." in str(l)), "1.6B: rain, the coach line, THE YARD painted on the wall beside the door")
 	await _until(story, func(): return not a.active() or story.phase == "slice_end", 900)
 	ok(story.spoken.any(func(l): return str(l).begins_with("CARD|END OF ACT I.")) and main.flow.save.flag("a1_heat_break_done"), "END OF ACT I.")
 	await _until(story, func(): return story.phase == "slice_end" and story.queue.is_empty(), 600)
