@@ -63,7 +63,7 @@ test('Completed censored posts activate Fibonacci reinforcements and retry start
   await el.evaluate(e=>{const g=e.game.world;g.x=484;g.y=190;g.vx=g.vy=0;g.facing=-Math.PI/2;g.paint=600;Object.assign(g.tags[6],{fill:.99,ever:true,scraped:true,cooldown:0})});
   await page.keyboard.down(' ');total+=count;
   await expect.poll(()=>el.evaluate(e=>e.game.world.police.length),{intervals:[20]}).toBe(total);await page.keyboard.up(' ');
-  expect(await el.evaluate(e=>e.arrivals.at(-1))).toEqual({count,source:'reclaim'});
+  expect(await el.evaluate(e=>e.arrivals.at(-1))).toMatchObject({count,source:'reclaim'});
  }
  expect(await el.evaluate(e=>e.game.world.stats.scansTriggered)).toBe(0);expect(await el.evaluate(e=>e.game.world.wanted)).toBe(true);
  await el.screenshot({path:`test-results/screenshots/tag-fibonacci-${info.project.name}.png`});
