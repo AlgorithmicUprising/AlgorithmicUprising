@@ -13,15 +13,29 @@ function fail(message) {
   failures.push(message);
 }
 
-const deployFiles = [];
+function actionUses(text, action) {
+  let count = 0;
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('#')) continue;
+    if (trimmed.includes(action)) count += 1;
+  }
+  return count;
+}
+
+let deployUses = 0;
 const uploadFiles = [];
 for (const name of files) {
   const text = readFileSync(join(workflowDir, name), 'utf8');
-  if (text.includes('uses: actions/deploy-pages')) deployFiles.push(name);
+  const uses = actionUses(text, 'uses: actions/deploy-pages');
+  deployUses += uses;
+  if (uses > 0 && name !== 'arcade.yml') {
+    fail('actions/deploy-pages must appear only in .github/workflows/arcade.yml, found in ' + name);
+  }
   if (text.includes('uses: actions/upload-pages-artifact')) uploadFiles.push(name);
 }
-if (deployFiles.length !== 1 || deployFiles[0] !== 'arcade.yml') {
-  fail('actions/deploy-pages must appear only in .github/workflows/arcade.yml, found ' + deployFiles.join(', '));
+if (deployUses !== 1) {
+  fail('actions/deploy-pages must appear exactly once. A second job publishes over the live site. Found ' + deployUses);
 }
 if (uploadFiles.length !== 1 || uploadFiles[0] !== 'arcade.yml') {
   fail('actions/upload-pages-artifact must appear only in arcade.yml, found ' + uploadFiles.join(', '));
