@@ -1,6 +1,8 @@
 # Algorithmic Uprising
 
-Public code workspace for Algorithmic Uprising experiments. The Punk Arcade project lives under [`arcade/`](arcade/README.md) and is developed on the `arcade` branch.
+Public code workspace for Algorithmic Uprising experiments. Punk Arcade lives under [`arcade/`](arcade/README.md). Project Zero, the open-world game, lives under [`open-world/`](open-world/README.md).
+
+Work branches off `main`. Branch names, review, and the Pages publish are in [docs/BRANCHING.md](docs/BRANCHING.md). Short rules for the AI agents are in [AGENTS.md](AGENTS.md).
 
 ## Project boundaries
 

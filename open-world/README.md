@@ -16,6 +16,6 @@ Headless checks:
 godot --headless --path open-world res://tests/test_main.tscn
 ```
 
-The yard, the cel shader, and the list of art still to draw are in [BUILD_GUIDE.md](BUILD_GUIDE.md) and [ASSET_MANIFEST.md](ASSET_MANIFEST.md). Merging to `main` publishes this yard over the live HQ, so that waits for a visual OK.
+The yard, the cel shader, and the list of art still to draw are in [BUILD_GUIDE.md](BUILD_GUIDE.md) and [ASSET_MANIFEST.md](ASSET_MANIFEST.md). Merging to `main` publishes this yard over the live HQ, so that waits for a visual OK. Branch and review rules are in [docs/BRANCHING.md](../docs/BRANCHING.md).
 
 Code in this directory is MIT. Branding, character art, and music are not included. See [NOTICE.md](NOTICE.md).

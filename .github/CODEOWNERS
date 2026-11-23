@@ -1,0 +1,11 @@
+# Agent ownership is by directory and branch prefix, not by GitHub login.
+# Zero and ChatGPT both push as @AlgorithmicUprising, so this file cannot
+# tell them apart. The map is docs/BRANCHING.md.
+#
+# These lines ask the owner to look at the rules and the publisher.
+# They do not block a merge. main has no branch protection yet.
+
+/.github/                       @AlgorithmicUprising
+/AGENTS.md                      @AlgorithmicUprising
+/docs/BRANCHING.md              @AlgorithmicUprising
+/README.md                      @AlgorithmicUprising
