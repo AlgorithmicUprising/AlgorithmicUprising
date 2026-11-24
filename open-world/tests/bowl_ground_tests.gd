@@ -32,6 +32,22 @@ func _deck_samples() -> void:
 	bowl.position = Vector3.ZERO
 	host.add_child(bowl)
 	await frames(2)
+	var deck_mesh := bowl.get_node("Deck") as MeshInstance3D
+	var surface: Array = (deck_mesh.mesh as ArrayMesh).surface_get_arrays(0)
+	var dverts: PackedVector3Array = surface[Mesh.ARRAY_VERTEX]
+	var front := 0
+	var flat := 0
+	var vi := 0
+	while vi + 2 < dverts.size():
+		var face: Vector3 = (dverts[vi + 1] - dverts[vi]).cross(dverts[vi + 2] - dverts[vi])
+		# Horizontal triangles only. The skirt is vertical. Clockwise front faces point down,
+		# which is what the renderer draws when you look from above.
+		if absf(face.y) > face.length() * 0.5:
+			flat += 1
+			if face.y < 0.0:
+				front += 1
+		vi += 3
+	ok(flat > 0 and front == flat, "deck: the concrete faces up instead of being culled (%d/%d)" % [front, flat])
 	var space: PhysicsDirectSpaceState3D = host.get_world_3d().direct_space_state
 	var lip: float = Bowl.HX + float(bowl.lip_u())
 	var deep: float = Bowl.HZ + float(bowl.lip_u())

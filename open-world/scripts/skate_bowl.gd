@@ -133,13 +133,16 @@ func _build() -> void:
 	var concrete: Texture2D = load("res://assets/library/quarter_pipe/concrete_albedo.png")
 	var wall_mat := _face(Color("d5ebe4"), 0.34, 0.42, concrete)
 	var band_mat := _face(Color("e7e4dc"), 0.12, 0.55)
-	# Cooler than the yard slabs so the pool deck reads as its own pad.
-	var deck_mat := Blocks.park_concrete(Color("b7aea4"))
+	# Same concrete as the yard slabs, so the walk up to the pool is ground and not a void.
+	var deck_mat := Blocks.park_concrete(Color(1.0, 0.98, 0.95))
 	var flat_mat := _face(Color("3c5962"), 0.16, 0.28)
 	_mesh("Flat", flat_v, flat_n, flat_uv, flat_mat)
 	_mesh("Transition", wall_v, wall_n, wall_uv, wall_mat)
 	_mesh("LipBand", band_v, band_n, band_uv, band_mat)
-	_mesh("Deck", deck_v, deck_n, deck_uv, deck_mat)
+	# Godot treats clockwise as the front face. _tri_visual emits the opposite, and cel_block
+	# culls the back, so the deck was invisible and the sky showed through the collision.
+	var deck := _mesh("Deck", deck_v, deck_n, deck_uv, deck_mat)
+	_face_up(deck)
 	_coping(lip)
 	_coping_grinds()
 	_approach()
@@ -234,9 +237,12 @@ func _deck_pad(node_name: String, x0: float, z0: float, x1: float, z1: float) ->
 	body.add_child(col)
 	add_child(body)
 
-func _mesh(node_name: String, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, mat: Material) -> void:
+func _mesh(node_name: String, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, mat: Material) -> MeshInstance3D:
+	var inst := MeshInstance3D.new()
+	inst.name = node_name
 	if verts.is_empty():
-		return
+		add_child(inst)
+		return inst
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = verts
@@ -244,11 +250,41 @@ func _mesh(node_name: String, verts: PackedVector3Array, norms: PackedVector3Arr
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var inst := MeshInstance3D.new()
-	inst.name = node_name
 	inst.mesh = mesh
 	inst.material_override = mat
 	add_child(inst)
+	return inst
+
+## Reverse triangle order so the face that points up is a Godot front face (clockwise).
+func _face_up(inst: MeshInstance3D) -> void:
+	var src := inst.mesh as ArrayMesh
+	if src == null or src.get_surface_count() == 0:
+		return
+	var arrays: Array = src.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var norms: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var i := 0
+	while i + 2 < verts.size():
+		var swap_v: Vector3 = verts[i + 1]
+		verts[i + 1] = verts[i + 2]
+		verts[i + 2] = swap_v
+		var swap_n: Vector3 = norms[i + 1]
+		norms[i + 1] = norms[i + 2]
+		norms[i + 2] = swap_n
+		if uvs.size() == verts.size():
+			var swap_u: Vector2 = uvs[i + 1]
+			uvs[i + 1] = uvs[i + 2]
+			uvs[i + 2] = swap_u
+		i += 3
+	var mesh := ArrayMesh.new()
+	var out: Array = []
+	out.resize(Mesh.ARRAY_MAX)
+	out[Mesh.ARRAY_VERTEX] = verts
+	out[Mesh.ARRAY_NORMAL] = norms
+	out[Mesh.ARRAY_TEX_UV] = uvs
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, out)
+	inst.mesh = mesh
 
 func _fill_flat(loop: Array, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, faces: PackedVector3Array) -> void:
 	var center := Vector3(0.0, FLOOR_Y, 0.0)
