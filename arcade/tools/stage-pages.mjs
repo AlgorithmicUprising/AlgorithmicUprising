@@ -39,6 +39,11 @@ const required = ['index.html', 'demo/index.html', 'games/tag-before-training/sk
 for (const game of pagesGames) {
   const prefix = 'games/' + game + '/';
   required.push(prefix + 'dist/' + game + '.js', prefix + 'demo/index.html', prefix + 'demo/embed.html', prefix + 'skins/placeholder/skin.json');
+  if (game === 'paradise-offline-par1') {
+    for (const asset of ['skin.json', 'assets/yard-landscape.webp', 'assets/yard-portrait.webp', 'assets/hosts.webp', 'assets/props.webp']) {
+      required.push(prefix + 'skins/au/' + asset);
+    }
+  }
 }
 for (const path of required) {
   const file = join(root, path), info = await stat(file);
@@ -46,7 +51,8 @@ for (const path of required) {
 }
 const demo = await readFile(join(root, 'demo/index.html'), 'utf8');
 for (const game of pagesGames) {
-  if (!demo.includes('../games/' + game + '/dist/' + game + '.js')) throw Error('Missing demo import: ' + game);
+  // Paradise has a direct preview URL but remains absent from the Arcade launcher until its balance pass.
+  if (game !== 'paradise-offline-par1' && !demo.includes('../games/' + game + '/dist/' + game + '.js')) throw Error('Missing demo import: ' + game);
 }
 for(const page of ['games/grind-the-terms/demo/index.html','games/grind-the-terms/demo/embed.html']){
  const content=await readFile(join(root,page),'utf8');
@@ -57,6 +63,12 @@ for(const page of ['games/grind-the-terms/demo/index.html','games/grind-the-term
 for(const page of ['games/tag-before-training/demo/index.html','games/tag-before-training/demo/embed.html']){
  const content=await readFile(join(root,page),'utf8');
  for(const expected of ['src="../dist/tag-before-training.js','skin="../skins/au/skin.json'])if(!content.includes(expected))throw Error('Standalone Tag resource path invalid: '+page);
+}
+for (const page of ['games/paradise-offline-par1/demo/index.html', 'games/paradise-offline-par1/demo/embed.html']) {
+  const content = await readFile(join(root, page), 'utf8');
+  for (const expected of ['src="../dist/paradise-offline-par1.js', 'skin="../skins/au/skin.json']) {
+    if (!content.includes(expected)) throw Error('Standalone Paradise resource path invalid in ' + page + ': ' + expected);
+  }
 }
 console.log('Pages staged and validated. Root redirects to ./demo/; all game bundles present.');
 
