@@ -1,0 +1,13 @@
+{
+  "id": "placeholder",
+  "game": "paradise-offline-par1",
+  "name": "PAR-2 procedural campaign prototype",
+  "procedural": true,
+  "render": { "pixelated": false },
+  "palette": {
+    "ink": "#17151e",
+    "paper": "#f6eddf",
+    "acid": "#d7ff00",
+    "pink": "#ff4382"
+  }
+}

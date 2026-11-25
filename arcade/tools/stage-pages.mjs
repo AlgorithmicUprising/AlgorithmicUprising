@@ -1,11 +1,11 @@
-import { games } from './games.mjs';
+import { pagesGames } from './games.mjs';
 import {cp,mkdir,rm,writeFile,stat,readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 const root='.pages';
 await rm(root,{recursive:true,force:true});
 await mkdir(root,{recursive:true});
 await cp('demo',join(root,'demo'),{recursive:true});
-for(const game of games){
+for(const game of pagesGames){
   await mkdir(join(root,'games',game),{recursive:true});
   await cp(join('games',game,'dist'),join(root,'games',game,'dist'),{recursive:true});
   await cp(join('games',game,'skins'),join(root,'games',game,'skins'),{recursive:true});
@@ -36,7 +36,7 @@ await writeFile(join(root,'index.html'),landing);
 await writeFile(join(root,'.nojekyll'),'');
 // Fail deployment before upload if a required entrypoint or game bundle is missing.
 const required = ['index.html', 'demo/index.html', 'games/tag-before-training/skins/au/background.png', 'games/tag-before-training/skins/au/skater.png', 'games/cookie-wall/demo/page.js', 'games/bars-per-watt/catalog.json', 'games/bars-per-watt/demo/page.js', 'games/grind-the-terms/music/terms-and-conditions-loop-94.54bpm-8bars.ogg', 'games/grind-the-terms/music/terms-and-conditions-loop-8bars.mid', 'games/grind-the-terms/music/terms-and-conditions-loop-3x-preview.mp3'];
-for (const game of games) {
+for (const game of pagesGames) {
   const prefix = 'games/' + game + '/';
   required.push(prefix + 'dist/' + game + '.js', prefix + 'demo/index.html', prefix + 'demo/embed.html', prefix + 'skins/placeholder/skin.json');
 }
@@ -45,7 +45,7 @@ for (const path of required) {
   if (!info.isFile() || !info.size) throw Error('Missing or empty Pages file: ' + path);
 }
 const demo = await readFile(join(root, 'demo/index.html'), 'utf8');
-for (const game of games) {
+for (const game of pagesGames) {
   if (!demo.includes('../games/' + game + '/dist/' + game + '.js')) throw Error('Missing demo import: ' + game);
 }
 for(const page of ['games/grind-the-terms/demo/index.html','games/grind-the-terms/demo/embed.html']){
