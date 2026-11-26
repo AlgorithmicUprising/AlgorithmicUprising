@@ -79,6 +79,13 @@ func _ready() -> void:
 		print("SUMMARY failed=", fails.size())
 		get_tree().quit(0)
 		return
+	if OS.get_environment("AU_TEST_ONLY") == "arcade":
+		await load("res://tests/arcade_light_tests.gd").new().run(self)
+		print("SUMMARY failed=", fails.size())
+		for item in fails:
+			print("FAIL ", item)
+		get_tree().quit(1 if fails.size() else 0)
+		return
 	if OS.get_environment("AU_TEST_ONLY") == "bowl":
 		await preload("res://tests/bowl_bounds_tests.gd").new().run(self)
 		print("SUMMARY failed=", fails.size())
@@ -177,6 +184,7 @@ func _ready() -> void:
 	await _district()
 	await preload("res://tests/bowl_bounds_tests.gd").new().run(self)
 	await preload("res://tests/bowl_ground_tests.gd").new().run(self)
+	await preload("res://tests/arcade_light_tests.gd").new().run(self)
 	await _m0_packs()
 	await preload("res://tests/m1_tests.gd").new().run(self)
 	await preload("res://tests/front_tests.gd").new().run(self)

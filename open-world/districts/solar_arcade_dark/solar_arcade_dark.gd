@@ -125,7 +125,7 @@ func _fuses() -> void:
 
 func _dark_light() -> void:
 	# moody practicals: no fill from the sky, only what is in the room
-	_lamp("DimFill", Vector3(230.0, 5.0, -26.0), Color("ff9a5a"), 0.08, 30.0)
+	_lamp("DimFill", Vector3(230.0, 5.0, -26.0), Color("ffb080"), 0.85, 40.0)
 	_lamp("ExitGlow", Vector3(214.6, 2.8, -11.0), Color("ff2a1a"), 0.9, 6.0)
 	var exit := Blocks.label(self, "EXIT", Vector3(214.6, 2.75, -10.4), Color("ff3a2a"), 40)
 	exit.name = "ExitSign"

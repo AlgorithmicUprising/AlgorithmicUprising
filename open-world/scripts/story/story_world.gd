@@ -25,8 +25,8 @@ const DAWN := {
 ## Inside the Solar Arcade (P.3): no sun, a near-black sky (the roof is closed anyway) and a low warm ambient, so the
 ## room is lit by its practicals. Applied on top of dawn(); the saved originals in dawn()'s dictionary are untouched.
 const INTERIOR_DARK := {
-	"sky_top": Color("07060a"), "sky_horizon": Color("0d0a0c"), "ground_horizon": Color("0d0a0c"), "ground_bottom": Color("050404"),
-	"ambient": Color("3a2c26"), "ambient_energy": 0.12, "sun_rot": Vector3(-26, 95, 0), "sun_color": Color("ffc29a"), "sun_energy": 0.0,
+	"sky_top": Color("07060a"), "sky_horizon": Color("1a1214"), "ground_horizon": Color("1a1214"), "ground_bottom": Color("0c0a0c"),
+	"ambient": Color("e0c2b0"), "ambient_energy": 0.7, "sun_rot": Vector3(-26, 95, 0), "sun_color": Color("ffc29a"), "sun_energy": 0.0,
 }
 
 ## Sets a lighting preset (DAWN or INTERIOR_DARK) without saving anything (dawn() already saved the originals).
